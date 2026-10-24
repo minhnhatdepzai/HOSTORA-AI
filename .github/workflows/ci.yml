@@ -21,9 +21,15 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
+          cache-dependency-path: |
+            pnpm-lock.yaml
+            mobile/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile --ignore-scripts
+      - run: pnpm --dir mobile install --frozen-lockfile --ignore-scripts
       - run: pnpm typecheck
       - run: pnpm lint
       - run: pnpm test
+      - run: pnpm --dir mobile typecheck
+      - run: pnpm --dir mobile lint
       - run: pnpm build
       - run: docker build --tag hostora-ai:ci .
