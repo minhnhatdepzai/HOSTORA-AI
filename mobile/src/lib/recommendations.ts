@@ -56,7 +56,7 @@ function fallbackPlans(requirements: Requirements): RecommendedPlan[] {
     sourceUrl: "https://www.hostinger.com/vn/web-hosting",
     verifiedAt: "2026-10-23",
     caution:
-      "Snapshot đóng gói ngày 23/10/2026, không phải giá hiện hành. Kiểm tra nguồn và checkout trước khi mua.",
+      "Dữ liệu được lưu ngày 23/10/2026 và có thể chưa phải giá hiện tại. Hãy kiểm tra trang chính thức trước khi mua.",
   }));
 }
 
@@ -76,7 +76,7 @@ export function useRecommendedPlans(requirements: Requirements) {
           !Array.isArray(response.recommendations) ||
           response.recommendations.length !== 3
         ) {
-          throw new Error("Catalog chưa trả đủ ba gói.");
+          throw new Error("Chưa nhận đủ ba gói để so sánh.");
         }
         setResult({
           key,

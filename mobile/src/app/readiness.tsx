@@ -86,12 +86,20 @@ const stages: [Stage, string][] = [
 ];
 const checks = [
   ["contentReady", "Nội dung/sản phẩm đã sẵn sàng"],
-  ["seoKeywordReady", "Đã chọn nhóm từ khóa SEO"],
+  ["seoKeywordReady", "Đã chọn cụm từ khách thường tìm"],
   ["analyticsReady", "Đã có kế hoạch đo chuyển đổi"],
-  ["backupOwner", "Có người phụ trách backup/restore"],
+  ["backupOwner", "Có người phụ trách sao lưu và khôi phục"],
   ["paymentReady", "Đã chuẩn bị thanh toán/đơn hàng"],
   ["teamCanOperate", "Có người vận hành sau bàn giao"],
 ] as const;
+
+function customerText(text: string, sources: Report["sources"]) {
+  return sources.reduce(
+    (copy, source, index) =>
+      copy.split(`[${source.citation}]`).join(`[Nguồn ${index + 1}]`),
+    text,
+  );
+}
 
 export default function ReadinessScreen() {
   const { requirements } = useApp();
@@ -119,9 +127,9 @@ export default function ReadinessScreen() {
     setResult(null);
     try {
       setResult(await postJson<Report>("/api/ai/readiness", form));
-    } catch (reason) {
+    } catch {
       setError(
-        reason instanceof Error ? reason.message : "Không thể chấm hồ sơ.",
+        "Chưa thể kiểm tra lúc này. Vui lòng kiểm tra kết nối và thử lại.",
       );
     } finally {
       setLoading(false);
@@ -131,18 +139,18 @@ export default function ReadinessScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <DetailHeader
-        title="Launch Score AI"
-        action={<Pill tone="mint">CV CHECKER</Pill>}
+        title="Mức sẵn sàng"
+        action={<Pill tone="mint">KIỂM TRA NHANH</Pill>}
       />
       <Screen>
         <View style={styles.intro}>
-          <Eyebrow>AI launch readiness</Eyebrow>
+          <Eyebrow>Chuẩn bị mở website</Eyebrow>
           <Title style={{ marginTop: 8 }}>
-            Chấm hồ sơ website trước khi launch.
+            Kiểm tra website trước ngày ra mắt.
           </Title>
           <Body style={{ marginTop: 10 }}>
-            Điểm do code tính. Ollama local phản biện điểm yếu và lập kế hoạch 7
-            ngày, không nhận tên hay số điện thoại.
+            HOSTORA chỉ ra điểm mạnh, việc còn thiếu và kế hoạch ưu tiên; không
+            cần tên hay số điện thoại.
           </Body>
         </View>
         <View style={styles.content}>
@@ -182,7 +190,7 @@ export default function ReadinessScreen() {
               />
             </View>
 
-            <Label text="THỜI GIAN TỚI LAUNCH" />
+            <Label text="THỜI GIAN TỚI NGÀY RA MẮT" />
             <ChoiceRow
               values={[
                 [1, "1 tuần"],
@@ -205,7 +213,7 @@ export default function ReadinessScreen() {
               onSelect={(domainStatus) => setForm({ ...form, domainStatus })}
             />
 
-            <Label text="CHECKLIST SẴN SÀNG" />
+            <Label text="NHỮNG VIỆC ĐÃ SẴN SÀNG" />
             <View style={styles.checks}>
               {checks
                 .filter(
@@ -237,7 +245,7 @@ export default function ReadinessScreen() {
                 ))}
             </View>
             <Button
-              label={loading ? "AI đang phản biện…" : "Chấm Launch Score"}
+              label={loading ? "Đang xem xét…" : "Kiểm tra ngay"}
               icon="award"
               onPress={() => void analyze()}
               disabled={loading}
@@ -264,8 +272,8 @@ function ReportView({ result }: { result: Report }) {
         <View style={{ flex: 1 }}>
           <Text style={styles.aiMode}>
             {result.aiMode === "local-ai"
-              ? "OLLAMA ĐÃ PHẢN BIỆN"
-              : "AI OFFLINE · ĐIỂM CODE"}
+              ? "ĐÃ PHÂN TÍCH CHI TIẾT"
+              : "KẾT QUẢ CƠ BẢN"}
           </Text>
           <Text style={styles.band}>{result.band.label}</Text>
           <Text style={styles.bandCopy}>{result.band.copy}</Text>
@@ -293,9 +301,13 @@ function ReportView({ result }: { result: Report }) {
       <Card style={styles.resultCard}>
         <View style={styles.sectionRow}>
           <Feather name="cpu" color={colors.primary} size={18} />
-          <Text style={styles.sectionTitle}>{result.ai.headline}</Text>
+          <Text style={styles.sectionTitle}>
+            {customerText(result.ai.headline, result.sources)}
+          </Text>
         </View>
-        <Text style={styles.summary}>{result.ai.summary}</Text>
+        <Text style={styles.summary}>
+          {customerText(result.ai.summary, result.sources)}
+        </Text>
         <Text style={styles.subheading}>Kế hoạch ưu tiên</Text>
         {result.ai.nextActions.map((item, index) => (
           <View key={item} style={styles.action}>
@@ -316,7 +328,7 @@ function ReportView({ result }: { result: Report }) {
           {result.recommendation.provider} {result.recommendation.name}
         </Text>
         <Text style={styles.note}>
-          Fit {result.recommendation.fitScore}/100 · kỳ{" "}
+          Phù hợp {result.recommendation.fitScore}/100 · kỳ{" "}
           {result.recommendation.billingMonths} tháng ·{" "}
           {result.recommendation.promoMonthlyVnd.toLocaleString("vi-VN")}đ/tháng
         </Text>
@@ -333,11 +345,13 @@ function ReportView({ result }: { result: Report }) {
       <Card style={[styles.resultCard, styles.questionsCard]}>
         <View style={styles.sectionRow}>
           <Feather name="help-circle" color="#6D28D9" size={18} />
-          <Text style={styles.questionTitle}>AI phản biện như giám khảo</Text>
+          <Text style={styles.questionTitle}>
+            Câu hỏi cần chuẩn bị trước khi ra mắt
+          </Text>
         </View>
         {result.ai.judgeQuestions.map((question, index) => (
           <View key={question} style={styles.question}>
-            <Text style={styles.questionIndex}>Q{index + 1}</Text>
+            <Text style={styles.questionIndex}>Câu {index + 1}</Text>
             <Text style={styles.questionText}>{question}</Text>
           </View>
         ))}
@@ -347,7 +361,7 @@ function ReportView({ result }: { result: Report }) {
         <Card style={styles.resultCard}>
           <View style={styles.sectionRow}>
             <Feather name="alert-triangle" color={colors.warning} size={18} />
-            <Text style={styles.sectionTitle}>Điểm nghẽn</Text>
+            <Text style={styles.sectionTitle}>Việc còn thiếu</Text>
           </View>
           {result.blockers.map((blocker) => (
             <Text key={blocker} style={styles.blocker}>
@@ -359,14 +373,15 @@ function ReportView({ result }: { result: Report }) {
 
       <Card style={styles.resultCard}>
         <Text style={styles.note}>{result.disclaimer}</Text>
-        {result.sources.map((source) => (
+        {result.sources.map((source, sourceIndex) => (
           <Text
             key={source.citation}
             accessibilityRole="link"
             onPress={() => void Linking.openURL(source.sourceUrl)}
             style={styles.source}
           >
-            [{source.citation}] {source.title} · {source.verifiedAt}
+            Nguồn tham khảo {sourceIndex + 1} · kiểm tra ngày{" "}
+            {source.verifiedAt}
           </Text>
         ))}
       </Card>
@@ -382,8 +397,8 @@ function EmptyState() {
       </View>
       <Text style={styles.emptyTitle}>Một điểm số, một lộ trình rõ</Text>
       <Text style={styles.emptyCopy}>
-        Giống CV checker: HOSTORA chỉ ra điểm mạnh, điểm nghẽn và ba câu hỏi
-        phản biện trước khi launch.
+        HOSTORA chỉ ra điểm mạnh, việc còn thiếu và ba câu hỏi quan trọng trước
+        ngày ra mắt.
       </Text>
     </Card>
   );

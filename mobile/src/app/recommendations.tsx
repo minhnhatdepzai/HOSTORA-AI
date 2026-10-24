@@ -42,7 +42,7 @@ const faqItems: [string, string][] = [
   ],
   [
     "Shop mới có cần VPS không?",
-    "Thường có thể bắt đầu bằng hosting được quản lý. VPS phù hợp khi cần cấu hình riêng và có người vận hành kỹ thuật.",
+    "Thường có thể bắt đầu bằng hosting được quản lý. VPS phù hợp khi website cần cách vận hành riêng và đã có người có kinh nghiệm phụ trách.",
   ],
   [
     "Giá ưu đãi có phải giá lâu dài?",
@@ -54,7 +54,7 @@ const faqItems: [string, string][] = [
   ],
   [
     "Gói được đề xuất có chịu được flash sale?",
-    "Điểm phù hợp chỉ để ra quyết định ban đầu. Cần đo tải website thật, cache và thời gian phản hồi trước chiến dịch lớn.",
+    "Mức phù hợp chỉ giúp chọn ban đầu. Hãy chạy thử website với lượng khách cao trước chiến dịch lớn.",
   ],
 ];
 export default function RecommendationsScreen() {
@@ -72,12 +72,12 @@ export default function RecommendationsScreen() {
 
   async function shareSummary() {
     const lines = [
-      `HOSTORA AI · 3 gói ${status === "verified" ? "phù hợp" : "snapshot offline ngày 23/10/2026 (chưa kiểm tra giá hiện hành)"}`,
+      `HOSTORA · 3 gói ${status === "verified" ? "phù hợp" : "tham khảo từ dữ liệu ngày 23/10/2026 (chưa kiểm tra giá hiện tại)"}`,
       ...ranked.map(
         (plan, index) =>
           `${index + 1}. ${plan.provider} ${plan.name}: ${formatVnd(plan.promo)}/tháng với kỳ ${plan.billingMonths} tháng; gia hạn ${plan.renewal == null ? "chưa xác minh" : `${formatVnd(plan.renewal)}/tháng`}; ${plan.storage}; băng thông ${plan.bandwidth ?? "chưa xác minh"}.`,
       ),
-      "Giá là snapshot; kiểm tra nguồn và checkout trước khi mua.",
+      "Giá có thể thay đổi; hãy kiểm tra trang chính thức trước khi mua.",
     ];
     await Share.share({ message: lines.join("\n") });
   }
@@ -118,9 +118,9 @@ export default function RecommendationsScreen() {
           .filter(Boolean)
           .join("\n\n"),
       );
-    } catch (error) {
+    } catch {
       setExplanation(
-        error instanceof Error ? error.message : "Local AI chưa sẵn sàng.",
+        "Chưa thể tạo lời giải thích lúc này. Bạn vẫn có thể xem các lý do đã liệt kê ở từng gói.",
       );
     } finally {
       setLoading(false);
@@ -136,25 +136,24 @@ export default function RecommendationsScreen() {
         title="Gói đề xuất"
         action={
           <Pill tone={status === "verified" ? "mint" : "warning"}>
-            {status === "verified" ? "CATALOG" : "OFFLINE"}
+            {status === "verified" ? "ĐÃ KIỂM TRA" : "THAM KHẢO"}
           </Pill>
         }
       />
       <Screen>
         <View style={styles.intro}>
-          <Eyebrow>Recommendation result</Eyebrow>
-          <Title style={{ marginTop: 8 }}>
-            Ba lựa chọn. Một logic rõ ràng.
-          </Title>
+          <Eyebrow>Kết quả tư vấn</Eyebrow>
+          <Title style={{ marginTop: 8 }}>Ba lựa chọn. Lý do rõ ràng.</Title>
           <Body style={{ marginTop: 10 }}>
-            Điểm được tính bằng code. AI không thể sửa giá hoặc thứ hạng.
+            Thứ tự dựa trên nhu cầu và bảng giá đã kiểm tra, không dựa trên lời
+            quảng cáo.
           </Body>
           <Text style={styles.catalogStatus}>
             {status === "verified"
-              ? "Xếp hạng từ catalog 13 gói đã đối chiếu nguồn"
+              ? "So sánh từ 13 gói đã đối chiếu với trang chính thức"
               : status === "offline"
-                ? "Snapshot offline 23/10/2026 · chỉ tham khảo, kết nối lại để xếp hạng đủ 13 gói"
-                : "Đang tải catalog đã xác minh..."}
+                ? "Dữ liệu ngày 23/10/2026 · chỉ để tham khảo, hãy kết nối lại để cập nhật"
+                : "Đang kiểm tra bảng giá..."}
           </Text>
         </View>
         <View style={styles.content}>
@@ -202,8 +201,8 @@ export default function RecommendationsScreen() {
               </View>
               <View style={styles.specRow}>
                 <Spec label="Lưu trữ" value={plan.storage} />
-                <Spec label="Backup" value={plan.backup} />
-                <Spec label="CDN" value={plan.cdn} />
+                <Spec label="Sao lưu" value={plan.backup} />
+                <Spec label="Tăng tốc" value={plan.cdn} />
               </View>
               <View style={styles.caution}>
                 <Feather name="alert-circle" color={colors.warning} size={15} />
@@ -295,10 +294,13 @@ export default function RecommendationsScreen() {
           <Card dark style={{ gap: 14 }}>
             <View style={styles.explainTop}>
               <Feather name="zap" color={colors.mint} size={20} />
-              <Text style={styles.explainTitle}>Vì sao AI chọn gói đầu?</Text>
+              <Text style={styles.explainTitle}>
+                Vì sao gói này phù hợp nhất?
+              </Text>
             </View>
             <Text style={styles.explainCopy}>
-              AI chỉ diễn giải score và catalog đã khóa; không tự tạo thông số.
+              HOSTORA giải thích từ nhu cầu của bạn và thông tin đã kiểm tra;
+              không tự thêm giá hay tính năng.
             </Text>
             {explanation ? (
               <Text style={styles.explanation}>{explanation}</Text>
@@ -307,7 +309,7 @@ export default function RecommendationsScreen() {
               <ActivityIndicator color={colors.mint} />
             ) : (
               <Button
-                label="Giải thích bằng AI local"
+                label="Giải thích dễ hiểu"
                 icon="cpu"
                 variant="mint"
                 disabled={status !== "verified"}
@@ -366,12 +368,12 @@ function ComparisonTable({ plans }: { plans: RecommendedPlan[] }) {
     ["Dung lượng", (p) => p.storage],
     ["Băng thông", (p) => p.bandwidth ?? "Chưa xác minh"],
     [
-      "SSL",
+      "Kết nối an toàn",
       (p) =>
         p.ssl === true ? "Có" : p.ssl === false ? "Không" : "Chưa xác minh",
     ],
-    ["Backup", (p) => p.backup],
-    ["CDN", (p) => p.cdn],
+    ["Sao lưu", (p) => p.backup],
+    ["Tăng tốc", (p) => p.cdn],
     ["Bán hàng", (p) => (p.ecommerce ? "Có hỗ trợ" : "Chưa xác nhận")],
     ["Điểm mạnh", (p) => p.reasons[0] ?? "Chưa có dữ liệu"],
   ];
@@ -379,7 +381,7 @@ function ComparisonTable({ plans }: { plans: RecommendedPlan[] }) {
     <Card style={{ gap: 10 }}>
       <Text style={styles.formTitle}>So sánh 3 gói</Text>
       <Text style={styles.formCopy}>
-        Vuốt ngang để xem đầy đủ; số liệu từ catalog, không do AI tạo.
+        Vuốt ngang để xem đầy đủ; số liệu lấy từ trang chính thức đã kiểm tra.
       </Text>
       <View style={styles.tableFrame}>
         <View style={styles.tableFrozen}>

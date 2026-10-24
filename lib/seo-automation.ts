@@ -39,66 +39,66 @@ function draftFor(
 function instruction(finding: SeoFinding) {
   const actions: Record<string, [string, string]> = {
     title: [
-      "Thêm title riêng, mô tả đúng nội dung trang.",
-      "HTML trả về có đúng một title không rỗng và đã được người phụ trách duyệt.",
+      "Thêm tên riêng, mô tả đúng nội dung của trang.",
+      "Tên trang rõ ràng, không bỏ trống và đã được người phụ trách duyệt.",
     ],
     description: [
-      "Thêm meta description riêng; coi bản nháp là gợi ý cần biên tập.",
-      "HTML trả về có meta description đúng với nội dung thật của trang.",
+      "Thêm đoạn mô tả ngắn; coi gợi ý là bản nháp cần biên tập.",
+      "Đoạn mô tả đúng với nội dung thật và dễ hiểu với khách hàng.",
     ],
     headings: [
-      "Sắp xếp lại heading để có một H1 chính.",
-      "HTML trả về có đúng một H1 và thứ bậc heading đọc được.",
+      "Sắp xếp nội dung để có một tiêu đề chính rõ ràng.",
+      "Trang có một tiêu đề chính và các tiêu đề phụ theo thứ tự dễ đọc.",
     ],
     language: [
-      "Khai báo ngôn ngữ tài liệu trên thẻ html.",
-      "Thuộc tính lang khớp ngôn ngữ nội dung chính.",
+      "Cho trình duyệt biết ngôn ngữ chính của trang.",
+      "Ngôn ngữ khai báo khớp với nội dung khách nhìn thấy.",
     ],
     viewport: [
-      "Thêm mobile viewport và kiểm tra lại trên màn hình hẹp.",
-      "Trang có viewport và không tràn ngang ở kích thước mobile.",
+      "Điều chỉnh cách hiển thị và kiểm tra lại trên điện thoại.",
+      "Trang dễ đọc, dễ bấm và không bị tràn ngang trên điện thoại.",
     ],
     https: [
-      "Bật HTTPS bằng quy trình của nhà cung cấp hạ tầng.",
-      "URL cuối cùng dùng HTTPS và không phát sinh cảnh báo chứng chỉ.",
+      "Bật kết nối an toàn theo hướng dẫn của nhà cung cấp.",
+      "Website mở an toàn và trình duyệt không hiển thị cảnh báo.",
     ],
     indexable: [
-      "Xác minh noindex có chủ đích trước khi thay đổi.",
-      "Trạng thái index phù hợp môi trường production hoặc staging.",
+      "Hỏi người quản lý website xem việc ẩn trang khỏi Google có chủ đích hay không.",
+      "Trang cần bán hàng hoặc giới thiệu đã được phép xuất hiện trên Google.",
     ],
     canonical: [
-      "Thêm canonical tự tham chiếu sau khi xác minh URL chuẩn.",
-      "Canonical là URL tuyệt đối, trả thành công và đúng phiên bản trang cần index.",
+      "Chọn một địa chỉ chính cho trang sau khi kiểm tra các bản trùng lặp.",
+      "Địa chỉ chính mở được và đúng là phiên bản muốn khách tìm thấy.",
     ],
     robots: [
-      "Kiểm tra vị trí robots.txt và quy tắc crawl.",
-      "robots.txt truy cập được và không vô tình chặn khu vực cần index.",
+      "Kiểm tra hướng dẫn dành cho công cụ tìm kiếm.",
+      "Google không bị chặn nhầm khỏi những trang cần xuất hiện.",
     ],
     sitemap: [
-      "Xác minh hoặc tạo sitemap chứa các URL chuẩn cần index.",
-      "Sitemap truy cập được, hợp lệ và chỉ chứa URL canonical mong muốn.",
+      "Tạo danh sách các trang chính muốn Google khám phá.",
+      "Danh sách mở được và chỉ chứa những trang thật sự muốn giới thiệu.",
     ],
     "structured-data": [
-      "Chọn schema đúng với loại nội dung thật rồi tạo bản nháp JSON-LD.",
-      "Markup khớp nội dung nhìn thấy; không thêm rating, giá hay tồn kho không có thật.",
+      "Bổ sung thông tin để Google hiểu đúng loại nội dung của trang.",
+      "Thông tin bổ sung khớp nội dung khách nhìn thấy; không thêm đánh giá, giá hay tồn kho không có thật.",
     ],
     "open-graph": [
-      "Tạo metadata chia sẻ xã hội từ nội dung đã duyệt.",
-      "Preview chia sẻ có tiêu đề, mô tả và ảnh đúng nội dung trang.",
+      "Chuẩn bị tiêu đề, mô tả và ảnh khi chia sẻ lên mạng xã hội.",
+      "Bản xem trước khi chia sẻ hiển thị đúng nội dung của trang.",
     ],
     "image-alt": [
-      "Bổ sung alt mô tả mục đích của ảnh; để trống nếu ảnh chỉ trang trí.",
-      "Mỗi ảnh nội dung có alt đúng ngữ cảnh, không nhồi từ khóa.",
+      "Bổ sung mô tả ngắn cho những ảnh truyền tải nội dung.",
+      "Mỗi ảnh quan trọng có mô tả đúng ngữ cảnh và không lặp từ khóa gượng ép.",
     ],
     "internal-links": [
-      "Thêm liên kết nội bộ hữu ích tới nội dung liên quan.",
-      "Liên kết crawlable, anchor rõ nghĩa và URL đích hoạt động.",
+      "Thêm liên kết tới những nội dung liên quan trong cùng website.",
+      "Tên liên kết dễ hiểu và trang được dẫn tới vẫn hoạt động.",
     ],
   };
   return (
     actions[finding.id] ?? [
-      "Kiểm tra và xử lý phát hiện này trên mã nguồn website.",
-      "Chạy lại audit và xác nhận phát hiện đã chuyển sang pass.",
+      "Nhờ người quản lý website kiểm tra và xử lý mục này.",
+      "Kiểm tra lại và xác nhận mục này đã đạt.",
     ]
   );
 }

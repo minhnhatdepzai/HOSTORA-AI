@@ -30,13 +30,13 @@ type Result = {
   disclaimer: string;
 };
 const labels: Record<string, string> = {
-  title: "Page title",
-  description: "Meta description",
-  viewport: "Mobile viewport",
-  favicon: "Favicon",
+  title: "Tên trang",
+  description: "Mô tả trên Google",
+  viewport: "Hiển thị trên điện thoại",
+  favicon: "Biểu tượng website",
   language: "Ngôn ngữ trang",
   https: "HTTPS",
-  headings: "Một heading H1",
+  headings: "Một tiêu đề chính",
 };
 
 export default function AnalyzerScreen() {
@@ -51,12 +51,8 @@ export default function AnalyzerScreen() {
     setResult(null);
     try {
       setResult(await postJson<Result>("/api/website-analyzer", { url }));
-    } catch (cause) {
-      setError(
-        cause instanceof Error
-          ? cause.message
-          : "Không phân tích được website.",
-      );
+    } catch {
+      setError("Chưa thể kiểm tra website. Hãy kiểm tra địa chỉ và thử lại.");
     } finally {
       setLoading(false);
     }
@@ -69,22 +65,22 @@ export default function AnalyzerScreen() {
     >
       <DetailHeader
         title="Phân tích website"
-        action={<Pill tone="mint">SAFE URL</Pill>}
+        action={<Pill tone="mint">KIỂM TRA AN TOÀN</Pill>}
       />
       <Screen>
         <View style={styles.intro}>
-          <Eyebrow>Public website analyzer</Eyebrow>
+          <Eyebrow>Kiểm tra website công khai</Eyebrow>
           <Title style={{ marginTop: 8 }}>
             Kiểm tra đúng thứ nhìn thấy được.
           </Title>
           <Body style={{ marginTop: 10 }}>
-            Đọc HTML công khai với lớp chống SSRF; không suy đoán CPU, RAM hay
-            traffic thật.
+            Kiểm tra những gì khách truy cập và Google có thể nhìn thấy; không
+            đoán hiệu năng khi chưa có dữ liệu thực tế.
           </Body>
         </View>
         <View style={styles.content}>
           <Card dark style={{ gap: 12 }}>
-            <Text style={styles.label}>URL WEBSITE CÔNG KHAI</Text>
+            <Text style={styles.label}>ĐỊA CHỈ WEBSITE</Text>
             <View style={styles.inputWrap}>
               <Feather name="globe" color={colors.mint} size={17} />
               <TextInput
@@ -126,17 +122,18 @@ export default function AnalyzerScreen() {
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.resultTitle}>
-                    {result.title || "Chưa có page title"}
+                    {result.title || "Chưa có tên trang"}
                   </Text>
                   <Text style={styles.resultUrl} numberOfLines={1}>
                     {result.url}
                   </Text>
                   <Text style={styles.resultCopy} numberOfLines={3}>
-                    {result.description || "Chưa có meta description."}
+                    {result.description ||
+                      "Chưa có mô tả hiển thị trên Google."}
                   </Text>
                 </View>
               </Card>
-              <Text style={styles.sectionTitle}>Checklist công khai</Text>
+              <Text style={styles.sectionTitle}>Các mục cần thiết</Text>
               <Card style={{ padding: 4, overflow: "hidden" }}>
                 {Object.entries(result.checks).map(([key, passed], index) => (
                   <View
@@ -181,10 +178,10 @@ export default function AnalyzerScreen() {
               <View style={styles.radar}>
                 <Feather name="crosshair" color={colors.primary} size={26} />
               </View>
-              <Text style={styles.emptyTitle}>Sẵn sàng quét</Text>
+              <Text style={styles.emptyTitle}>Sẵn sàng kiểm tra</Text>
               <Text style={styles.emptyCopy}>
-                Nhập URL công khai để xem metadata và checklist trải nghiệm cơ
-                bản.
+                Nhập địa chỉ website để xem những mục đang đạt và những mục cần
+                cải thiện.
               </Text>
             </Card>
           )}

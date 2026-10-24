@@ -56,6 +56,12 @@ type Audit = {
   limits: string[];
 };
 
+const impactLabel: Record<Finding["impact"], string> = {
+  high: "Quan trọng",
+  medium: "Nên cải thiện",
+  low: "Bổ sung khi có thể",
+};
+
 export default function SeoScreen() {
   const [url, setUrl] = useState("https://example.com");
   const [keyword, setKeyword] = useState("");
@@ -68,10 +74,8 @@ export default function SeoScreen() {
     setResult(null);
     try {
       setResult(await postJson<Audit>("/api/seo/audit", { url, keyword }));
-    } catch (reason) {
-      setError(
-        reason instanceof Error ? reason.message : "Không thể audit website.",
-      );
+    } catch {
+      setError("Chưa thể kiểm tra website. Hãy kiểm tra địa chỉ và thử lại.");
     } finally {
       setLoading(false);
     }
@@ -79,24 +83,24 @@ export default function SeoScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <DetailHeader
-        title="SEO Intelligence"
-        action={<Pill tone="blue">RAG + AUDIT</Pill>}
+        title="Kiểm tra tìm kiếm Google"
+        action={<Pill tone="blue">GỢI Ý CÓ NGUỒN</Pill>}
       />
       <Screen>
         <View style={styles.intro}>
-          <Eyebrow>Search visibility</Eyebrow>
+          <Eyebrow>Khả năng được tìm thấy</Eyebrow>
           <Title style={{ marginTop: 8 }}>
-            Tìm điểm nghẽn SEO có thể hành động.
+            Tìm những điểm đang cản khách thấy website.
           </Title>
           <Body style={{ marginTop: 10 }}>
-            Quét HTML công khai, robots, sitemap và dùng RAG local để ưu tiên
-            việc cần làm.
+            Kiểm tra các thông tin công khai và tự sắp xếp việc cần làm theo mức
+            quan trọng.
           </Body>
         </View>
         <View style={styles.content}>
           <Card style={styles.form}>
             <Field
-              label="URL website"
+              label="Địa chỉ website"
               value={url}
               onChangeText={setUrl}
               placeholder="https://tenmien.vn"
@@ -108,7 +112,7 @@ export default function SeoScreen() {
               placeholder="hosting WordPress Việt Nam"
             />
             <Button
-              label="Chạy SEO audit"
+              label="Kiểm tra SEO"
               icon="search"
               onPress={() => void runAudit()}
               disabled={loading}
@@ -120,7 +124,7 @@ export default function SeoScreen() {
             <>
               <Card dark style={styles.scoreCard}>
                 <View>
-                  <Text style={styles.scoreLabel}>SEO CHECKLIST SCORE</Text>
+                  <Text style={styles.scoreLabel}>MỨC HOÀN THIỆN SEO</Text>
                   <Text style={styles.score}>
                     {result.score}
                     <Text style={styles.scoreOut}>/100</Text>
@@ -131,12 +135,12 @@ export default function SeoScreen() {
                     {result.title || "Chưa có title"}
                   </Text>
                   <Text style={styles.pageMeta}>
-                    {result.wordCount} từ trong HTML · {result.url}
+                    {result.wordCount} từ trên trang · {result.url}
                   </Text>
                 </View>
               </Card>
               <Card style={{ gap: 13 }}>
-                <Text style={styles.sectionTitle}>Nhận định AI có nguồn</Text>
+                <Text style={styles.sectionTitle}>Tóm tắt và việc ưu tiên</Text>
                 <Text style={styles.summary}>{result.ai.executiveSummary}</Text>
                 {result.ai.priorities.map((item, index) => (
                   <Line
@@ -148,7 +152,7 @@ export default function SeoScreen() {
                 ))}
               </Card>
               <Card style={{ gap: 10 }}>
-                <Text style={styles.sectionTitle}>Checklist kỹ thuật</Text>
+                <Text style={styles.sectionTitle}>Những mục đã kiểm tra</Text>
                 {result.findings.map((item) => (
                   <View key={item.id} style={styles.finding}>
                     <View
@@ -166,7 +170,7 @@ export default function SeoScreen() {
                     />
                     <View style={{ flex: 1 }}>
                       <Text style={styles.findingTitle}>
-                        {item.label} · {item.impact}
+                        {item.label} · {impactLabel[item.impact]}
                       </Text>
                       <Text style={styles.findingDetail}>{item.detail}</Text>
                     </View>
@@ -175,12 +179,12 @@ export default function SeoScreen() {
               </Card>
               <Card style={{ gap: 11 }}>
                 <View style={styles.sectionHeading}>
-                  <Text style={styles.sectionTitle}>SEO Mission Board</Text>
-                  <Pill tone="mint">AUTO PLAN</Pill>
+                  <Text style={styles.sectionTitle}>Kế hoạch cải thiện</Text>
+                  <Pill tone="mint">ĐÃ XẾP ƯU TIÊN</Pill>
                 </View>
                 <Text style={styles.summary}>
-                  App tự xếp ưu tiên từ bằng chứng quét được. Bản nháp không tự
-                  sửa website và phải được duyệt trước khi áp dụng.
+                  HOSTORA sắp xếp theo mức ảnh hưởng. Mọi thay đổi vẫn cần bạn
+                  hoặc người quản lý website xác nhận trước khi áp dụng.
                 </Text>
                 {result.automationPlan.length ? (
                   result.automationPlan.slice(0, 8).map((task) => (
@@ -190,27 +194,22 @@ export default function SeoScreen() {
                         <Text style={styles.taskMode}>
                           {task.mode === "draft"
                             ? task.draft
-                              ? "CÓ BẢN NHÁP"
-                              : "HƯỚNG DẪN TỰ ĐỘNG"
-                            : "CẦN XÁC MINH"}
+                              ? "CÓ GỢI Ý"
+                              : "CÓ HƯỚNG DẪN"
+                            : "CẦN KIỂM TRA"}
                         </Text>
                       </View>
                       <Text style={styles.findingTitle}>{task.title}</Text>
                       <Text style={styles.findingDetail}>{task.action}</Text>
-                      {task.draft ? (
-                        <Text selectable style={styles.draft}>
-                          {task.draft}
-                        </Text>
-                      ) : null}
                       <Text style={styles.acceptance}>
-                        Đạt khi: {task.acceptance}
+                        Hoàn thành khi: {task.acceptance}
                       </Text>
                     </View>
                   ))
                 ) : (
                   <Text style={styles.summary}>
-                    Chưa có task từ checklist hiện tại; vẫn cần theo dõi dữ liệu
-                    thực tế sau khi website hoạt động.
+                    Chưa có việc ưu tiên từ lần kiểm tra này; hãy tiếp tục theo
+                    dõi phản hồi của khách sau khi website hoạt động.
                   </Text>
                 )}
               </Card>
@@ -226,15 +225,15 @@ export default function SeoScreen() {
                 ))}
               </Card>
               <Card style={{ gap: 9 }}>
-                <Text style={styles.sectionTitle}>Nguồn RAG</Text>
-                {result.sources.map((item) => (
+                <Text style={styles.sectionTitle}>Nguồn tham khảo</Text>
+                {result.sources.map((item, sourceIndex) => (
                   <Pressable
                     accessibilityRole="link"
                     key={item.citation}
                     onPress={() => void Linking.openURL(item.sourceUrl)}
                   >
                     <Text style={styles.source}>
-                      [{item.citation}] {item.title} ↗
+                      Mở nguồn tham khảo {sourceIndex + 1} ↗
                     </Text>
                   </Pressable>
                 ))}

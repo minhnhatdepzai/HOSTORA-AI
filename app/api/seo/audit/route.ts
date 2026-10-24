@@ -97,7 +97,7 @@ export async function POST(request: Request) {
       5,
     );
     let ai = {
-      executiveSummary: `Trang đạt ${audit.score}/100 theo checklist HTML công khai; có ${failed.length} mục cần xem xét.`,
+      executiveSummary: `Trang đạt ${audit.score}/100 theo các mục công khai đã kiểm tra; có ${failed.length} mục cần xem xét.`,
       priorities: automationPlan.slice(0, 6).map((task) => task.action),
       contentIdeas: keyword
         ? [
@@ -111,7 +111,7 @@ export async function POST(request: Request) {
     };
     try {
       const generated = await structuredChat(
-        "Bạn là SEO strategist. Chỉ dùng audit và nguồn được cung cấp. Không hứa hạng 1, không bịa traffic hay dữ liệu Search Console. Không nêu thương hiệu/công cụ chưa có trong nguồn. Mỗi priority có dữ kiện phải gắn [K1]...[K5]. Ý tưởng nội dung là bản nháp cần biên tập, không phải dữ kiện.",
+        "Bạn là cố vấn giúp chủ kinh doanh cải thiện khả năng được tìm thấy trên Google. Chỉ dùng kết quả kiểm tra và nguồn được cung cấp. Viết tiếng Việt đơn giản, hướng vào lợi ích và hành động; không nhắc tên cơ chế nội bộ, mã lập trình hay thuật ngữ chuyên môn khi có thể nói bằng lời phổ thông. Không hứa hạng 1, không bịa lượng truy cập hay dữ liệu không được cung cấp. Không nêu thương hiệu hoặc công cụ chưa có trong nguồn. Mỗi ưu tiên có dữ kiện phải gắn [K1]...[K5]. Ý tưởng nội dung là bản nháp cần biên tập, không phải dữ kiện.",
         `URL: ${page.url}\nTừ khóa mục tiêu: ${keyword || "chưa nhập"}\nAudit: ${JSON.stringify({ score: audit.score, findings: audit.findings })}\nNguồn:\n${sources.map((source, index) => `[K${index + 1}] ${source.title}: ${source.content}`).join("\n")}`,
         aiOutput,
         aiFormat,
@@ -125,7 +125,7 @@ export async function POST(request: Request) {
       ai = {
         // Nhận định về trạng thái hiện tại chỉ phản ánh kết quả audit code;
         // model được dùng cho ý tưởng sáng tạo, không được viết lại sự thật quét được.
-        executiveSummary: `Trang đạt ${audit.score}/100 theo checklist HTML công khai; có ${failed.length} mục cần xem xét.`,
+        executiveSummary: `Trang đạt ${audit.score}/100 theo các mục công khai đã kiểm tra; có ${failed.length} mục cần xem xét.`,
         // Thứ tự sửa lỗi do audit code quyết định, không giao cho model.
         priorities: automationPlan.slice(0, 6).map((task) => task.action),
         contentIdeas: generated.contentIdeas.map(clean),
@@ -145,8 +145,8 @@ export async function POST(request: Request) {
         verifiedAt,
       })),
       limits: [
-        "Không đo thứ hạng, backlink, Search Console hoặc Core Web Vitals field data.",
-        "Score là checklist kỹ thuật tại thời điểm quét, không phải dự báo traffic.",
+        "Kết quả này không đo vị trí thực tế trên Google, liên kết từ website khác hoặc trải nghiệm của khách thật.",
+        "Điểm số chỉ phản ánh các mục nhìn thấy tại thời điểm kiểm tra, không dự báo lượng khách truy cập.",
       ],
     });
   } catch (error) {

@@ -7,11 +7,11 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const releases = {
-  android: "HOSTORA-AI-1.4.0.apk",
-  "android-universal": "HOSTORA-AI-1.4.0-universal.apk",
+  android: "HOSTORA-AI-1.5.0.apk",
+  "android-universal": "HOSTORA-AI-1.5.0-universal.apk",
 } as const;
 const defaultReleaseBaseUrl =
-  "https://github.com/minhnhatdepzai/HOSTORA-AI/releases/download/v1.4.0";
+  "https://github.com/minhnhatdepzai/HOSTORA-AI/releases/download/v1.5.0";
 
 function remoteReleaseUrl(filename: string) {
   const base = process.env.HOSTORA_RELEASE_BASE_URL ?? defaultReleaseBaseUrl;

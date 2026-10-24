@@ -105,7 +105,7 @@ export function explicitChatRecommendation(question: string) {
       plan.billingMonths +
       " tháng (tiền hosting kỳ đầu " +
       (plan.promoMonthlyVnd * plan.billingMonths).toLocaleString("vi-VN") +
-      "đ, chưa VAT/add-on); " +
+      "đ, chưa gồm thuế và dịch vụ mua thêm); " +
       renewal +
       "; " +
       domain +
@@ -120,7 +120,7 @@ export function explicitChatRecommendation(question: string) {
     answer:
       "Dựa trên nhu cầu bạn nêu và bảng gói đã xác minh, thứ tự gợi ý của app là:\n" +
       lines.join("\n") +
-      "\nĐây là xếp hạng theo nhu cầu, không phải cam kết chịu tải. Lượt truy cập tháng không đủ để kết luận flash sale; hãy thử tải checkout và theo dõi tài nguyên/lỗi trước khi mua. [K1] Giá, VAT, điều kiện tên miền và tình trạng đăng ký cần kiểm tra lại tại checkout.",
+      "\nĐây là xếp hạng theo nhu cầu, không phải cam kết chịu tải. Lượt truy cập tháng chưa đủ để khẳng định website sẽ hoạt động tốt trong đợt bán cao điểm; hãy chạy thử quy trình mua hàng với nhiều người dùng trước khi mua. [K1] Giá, thuế, điều kiện tên miền và tình trạng đăng ký cần kiểm tra lại trên trang thanh toán.",
     sources,
   };
 }

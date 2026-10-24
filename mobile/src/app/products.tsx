@@ -51,13 +51,38 @@ const categoryLabel: Record<string, string> = {
   all: "Tất cả",
   hosting: "Hosting",
   wordpress: "WordPress",
-  vps: "VPS",
-  cloud: "Cloud",
+  vps: "Máy chủ riêng",
+  cloud: "Hosting linh hoạt",
   domain: "Tên miền",
   email: "Email",
-  ssl: "SSL",
-  automation: "AI & tự động",
-  workspace: "Workspace",
+  ssl: "Bảo mật website",
+  automation: "Tự động hóa",
+  workspace: "Công cụ văn phòng",
+};
+
+const categorySummary: Record<string, string> = {
+  hosting: "Gói lưu trữ phù hợp cho website mới, blog và cửa hàng nhỏ.",
+  wordpress: "Gói được chuẩn bị sẵn cho website dùng WordPress.",
+  vps: "Máy chủ riêng dành cho website cần cách vận hành riêng và có người có kinh nghiệm phụ trách.",
+  cloud:
+    "Hosting linh hoạt cho website đang tăng trưởng hoặc có lượng khách thay đổi nhiều.",
+  domain: "Địa chỉ giúp khách dễ tìm và ghi nhớ website của bạn.",
+  email: "Email mang tên thương hiệu dành cho doanh nghiệp.",
+  ssl: "Dịch vụ giúp bảo vệ kết nối giữa khách và website.",
+  automation: "Công cụ giúp giảm các thao tác lặp lại trong công việc.",
+  workspace: "Bộ công cụ làm việc và cộng tác cho doanh nghiệp.",
+};
+
+const categoryUses: Record<string, string[]> = {
+  hosting: ["website mới", "blog", "shop nhỏ"],
+  wordpress: ["website WordPress", "bán hàng", "nội dung"],
+  vps: ["ứng dụng riêng", "đội ngũ có kinh nghiệm"],
+  cloud: ["shop tăng trưởng", "nhiều website", "khách truy cập thay đổi"],
+  domain: ["thương hiệu", "website mới"],
+  email: ["email thương hiệu", "đội nhóm"],
+  ssl: ["bảo vệ website", "doanh nghiệp"],
+  automation: ["tiết kiệm thời gian", "công việc lặp lại"],
+  workspace: ["làm việc nhóm", "doanh nghiệp"],
 };
 
 export default function ProductsScreen() {
@@ -70,9 +95,9 @@ export default function ProductsScreen() {
   useEffect(() => {
     getJson<ProductResponse>("/api/products")
       .then(setData)
-      .catch((reason) =>
+      .catch(() =>
         setError(
-          reason instanceof Error ? reason.message : "Không tải được catalog.",
+          "Chưa tải được danh sách sản phẩm. Vui lòng kiểm tra kết nối.",
         ),
       )
       .finally(() => setLoading(false));
@@ -94,15 +119,15 @@ export default function ProductsScreen() {
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <DetailHeader
         title="Kho sản phẩm"
-        action={<Pill tone="mint">LIVE CATALOG</Pill>}
+        action={<Pill tone="mint">ĐÃ ĐỐI CHIẾU</Pill>}
       />
       <Screen>
         <View style={styles.intro}>
-          <Eyebrow>Product intelligence</Eyebrow>
+          <Eyebrow>Danh sách sản phẩm</Eyebrow>
           <Title style={{ marginTop: 8 }}>So sánh rộng, chọn có căn cứ.</Title>
           <Body style={{ marginTop: 10 }}>
-            Hosting, VPS, domain, email, SSL và công cụ doanh nghiệp từ nguồn
-            chính thức.
+            Hosting, tên miền, email, bảo mật website và công cụ doanh nghiệp từ
+            nguồn chính thức.
           </Body>
         </View>
         <View style={styles.content}>
@@ -116,7 +141,7 @@ export default function ProductsScreen() {
             <TextInput
               value={query}
               onChangeText={setQuery}
-              placeholder="Tìm VPS, WordPress, email..."
+              placeholder="Tìm hosting, WordPress, email..."
               placeholderTextColor={colors.faint}
               style={styles.input}
             />
@@ -155,14 +180,16 @@ export default function ProductsScreen() {
                 </View>
                 <Pill>{categoryLabel[item.category] ?? item.category}</Pill>
               </View>
-              <Text style={styles.summary}>{item.summary}</Text>
+              <Text style={styles.summary}>
+                {categorySummary[item.category] ?? item.summary}
+              </Text>
               <Text style={styles.price}>
                 {item.priceFromVnd == null
                   ? "Liên hệ báo giá"
                   : `Từ ${formatVnd(item.priceFromVnd)}/${item.billingUnit === "year" ? "năm" : "tháng"}`}
               </Text>
               <View style={styles.tags}>
-                {item.bestFor.map((tag) => (
+                {(categoryUses[item.category] ?? item.bestFor).map((tag) => (
                   <Text key={tag} style={styles.tag}>
                     {tag}
                   </Text>
@@ -175,7 +202,10 @@ export default function ProductsScreen() {
                 </Text>
               </View>
               {item.priceNote ? (
-                <Text style={styles.note}>{item.priceNote}</Text>
+                <Text style={styles.note}>
+                  Giá có thể phụ thuộc thời hạn thanh toán. Hãy kiểm tra trang
+                  chính thức trước khi mua.
+                </Text>
               ) : null}
             </Card>
           ))}

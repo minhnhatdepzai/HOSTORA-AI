@@ -64,7 +64,7 @@ export async function POST(request: Request) {
       score,
       checks,
       disclaimer:
-        "Phân tích HTML công khai phía client; không suy ra CPU, RAM, traffic thật hoặc năng lực máy chủ.",
+        "Kết quả chỉ dựa trên những thông tin công khai nhìn thấy tại thời điểm kiểm tra; không khẳng định tốc độ hoặc khả năng phục vụ lượng khách thực tế.",
     });
   } catch (error) {
     return Response.json(

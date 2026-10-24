@@ -68,7 +68,7 @@ describe("launch readiness", () => {
     const report = assessReadiness({ ...ready, analyticsReady: false });
     expect(report.score).toBeGreaterThanOrEqual(80);
     expect(report.band.id).toBe("needs-work");
-    expect(report.actionPlan.join(" ")).toContain("sự kiện");
+    expect(report.actionPlan.join(" ")).toContain("kết quả cần theo dõi");
   });
 
   it("is monotonic when any readiness checkbox is removed", () => {

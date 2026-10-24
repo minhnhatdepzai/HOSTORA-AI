@@ -39,9 +39,9 @@ export default function DomainScreen() {
         domains?: Suggestion[];
       }>("/api/ai/domain", { brand });
       setItems(output.suggestions ?? output.domains ?? []);
-    } catch (cause) {
+    } catch {
       setError(
-        cause instanceof Error ? cause.message : "Local AI chưa sẵn sàng.",
+        "Chưa thể tạo tên lúc này. Vui lòng kiểm tra kết nối rồi thử lại.",
       );
     } finally {
       setLoading(false);
@@ -69,17 +69,17 @@ export default function DomainScreen() {
     >
       <DetailHeader
         title="Cố vấn tên miền"
-        action={<Pill tone="blue">AI</Pill>}
+        action={<Pill tone="blue">GỢI Ý NHANH</Pill>}
       />
       <Screen>
         <View style={styles.intro}>
-          <Eyebrow>Domain & brand advisor</Eyebrow>
+          <Eyebrow>Tên miền cho thương hiệu</Eyebrow>
           <Title style={{ marginTop: 8 }}>
             Một cái tên dễ nhớ. Không lời hứa giả.
           </Title>
           <Body style={{ marginTop: 10 }}>
-            AI đề xuất tên; trạng thái còn trống chỉ được xác nhận khi có nguồn
-            kiểm tra hợp lệ.
+            HOSTORA gợi ý tên dễ nhớ. Bạn cần kiểm tra lại trước khi đăng ký vì
+            tên miền có thể đã được người khác mua.
           </Body>
         </View>
         <View style={styles.content}>
@@ -96,7 +96,7 @@ export default function DomainScreen() {
               <ActivityIndicator color={colors.mint} />
             ) : (
               <Button
-                label="Tạo gợi ý bằng AI local"
+                label="Tạo tên gợi ý"
                 icon="zap"
                 variant="mint"
                 disabled={brand.trim().length < 2}
@@ -113,7 +113,7 @@ export default function DomainScreen() {
           </View>
           <View style={styles.listHeader}>
             <Text style={styles.listTitle}>Tên miền đề xuất</Text>
-            <Pill tone="warning">CHƯA CHECK AVAILABILITY</Pill>
+            <Pill tone="warning">CHƯA KIỂM TRA CÒN TRỐNG</Pill>
           </View>
           {display.map((item, index) => (
             <Pressable
@@ -145,8 +145,8 @@ export default function DomainScreen() {
           <Card style={styles.note}>
             <Feather name="info" color={colors.primary} size={17} />
             <Text style={styles.noteText}>
-              “Chưa kiểm tra” không đồng nghĩa tên miền còn trống. HOSTORA không
-              giả trạng thái availability.
+              “Chưa kiểm tra” không có nghĩa là tên miền còn mua được. Hãy mở
+              trang của nhà cung cấp tên miền để xác nhận trước khi chọn.
             </Text>
           </Card>
         </View>

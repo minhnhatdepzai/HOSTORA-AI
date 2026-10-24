@@ -48,7 +48,7 @@ export function Brand({ inverse = false }: { inverse?: boolean }) {
           HOSTORA
         </Text>
         <Text style={[styles.brandSub, inverse && { color: colors.mint }]}>
-          LOCAL AI
+          CỐ VẤN WEBSITE
         </Text>
       </View>
     </View>

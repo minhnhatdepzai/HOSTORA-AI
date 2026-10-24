@@ -32,7 +32,7 @@ export async function POST(request: Request) {
   if (parsed.response) return parsed.response;
   const { topic, facts } = parsed.data;
   const result = await structuredChat(
-    "Bạn là cố vấn hosting Việt Nam. Chỉ giải thích từ FACTS đã tính sẵn; không sửa giá, điểm hay số liệu và không tự thêm cam kết hiệu năng. Với traffic phải nói đây là giả định và cần benchmark thật.",
+    "Bạn là cố vấn hosting cho chủ kinh doanh Việt Nam. Chỉ giải thích từ dữ kiện đã tính sẵn; không sửa giá, điểm hay số liệu và không tự thêm lời hứa về tốc độ. Dùng tiếng Việt phổ thông, câu ngắn, tập trung vào lợi ích, chi phí và việc cần làm. Không nhắc code, model, local AI, RAG, API, catalog, score, fallback, benchmark hoặc tên cơ chế nội bộ. Khi nói về lượng khách tăng, phải nói đây là ước tính và cần chạy thử website thật.",
     `Chủ đề: ${topic}\nFACTS:\n${redactContactInfo(facts)}`,
     output,
     format,

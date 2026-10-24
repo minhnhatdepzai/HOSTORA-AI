@@ -66,14 +66,14 @@ export default function LeadsScreen() {
       <View style={styles.header}>
         <Brand />
         <Pill tone="mint" icon="lock">
-          PRIVATE
+          RIÊNG TƯ
         </Pill>
       </View>
       <View style={styles.intro}>
-        <Eyebrow>Private lead desk</Eyebrow>
-        <Title style={{ marginTop: 8 }}>Lead ở lại trên thiết bị.</Title>
+        <Eyebrow>Danh sách đăng ký</Eyebrow>
+        <Title style={{ marginTop: 8 }}>Thông tin chỉ ở trên điện thoại.</Title>
         <Body style={{ marginTop: 10 }}>
-          Không cloud database. Số điện thoại không được gửi vào model AI.
+          Họ tên và số điện thoại không được dùng trong phần tư vấn tự động.
         </Body>
       </View>
       <View style={styles.content}>
@@ -85,7 +85,7 @@ export default function LeadsScreen() {
               <Text style={styles.formCopy}>
                 Gói đang quan tâm: {topPlanLabel}
                 {status !== "verified"
-                  ? " · snapshot 23/10/2026, kiểm tra giá lại"
+                  ? " · dữ liệu ngày 23/10/2026, cần kiểm tra lại giá"
                   : ""}
               </Text>
             </View>
@@ -129,7 +129,7 @@ export default function LeadsScreen() {
         <View style={styles.summary}>
           <View>
             <Text style={styles.summaryValue}>{leads.length}</Text>
-            <Text style={styles.summaryLabel}>TỔNG LEAD</Text>
+            <Text style={styles.summaryLabel}>TỔNG ĐĂNG KÝ</Text>
           </View>
           <View style={styles.divider} />
           <View>
@@ -156,10 +156,10 @@ export default function LeadsScreen() {
         {leads.length === 0 ? (
           <Card style={styles.empty}>
             <IconBox name="users" />
-            <Text style={styles.emptyTitle}>Chưa có lead nào</Text>
+            <Text style={styles.emptyTitle}>Chưa có khách đăng ký</Text>
             <Text style={styles.emptyCopy}>
               Khi khách đăng ký, thông tin sẽ xuất hiện ở đây và chỉ nằm trong
-              bộ nhớ app.
+              ứng dụng trên điện thoại này.
             </Text>
           </Card>
         ) : (

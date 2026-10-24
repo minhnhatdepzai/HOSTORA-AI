@@ -4,11 +4,20 @@ HOSTORA AI là ứng dụng React Native tư vấn hosting/domain cho chủ shop
 
 ## Tải app Android
 
-- [Tải HOSTORA AI 1.4.0 — arm64, khuyến nghị](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/download/v1.4.0/HOSTORA-AI-1.4.0.apk)
-- [Tải bản universal 1.4.0 dự phòng](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/download/v1.4.0/HOSTORA-AI-1.4.0-universal.apk)
+- [Tải HOSTORA AI 1.5.0 — arm64, khuyến nghị](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/download/v1.5.0/HOSTORA-AI-1.5.0.apk)
+- [Tải bản universal 1.5.0 dự phòng](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/download/v1.5.0/HOSTORA-AI-1.5.0-universal.apk)
 - [Kiểm tra SHA-256](mobile/releases/SHA256SUMS.txt)
 
-Bản 1.4.0 là APK cài trực tiếp, không cần Expo Go; bổ sung Launch Score hard-gate và SEO Mission Board có bản nháp/tiêu chí nghiệm thu. Bản 1.3.0 đã được thử lại trên Redmi Note 8 Pro: đi hết wizard, so sánh 3 gói, chọn gói thay thế, lưu/xóa lead đúng gói; phần chat từ 1.3.1 tách lịch sử cũ để giá/gói lỗi thời không quay lại ngữ cảnh AI. Lịch sử cũ vẫn ở local storage của thiết bị, không được tự đưa sang hội thoại mới. Xem [hướng dẫn mobile](mobile/README.md), [audit giao diện](docs/MOBILE_UI_AUDIT.md) và [hồ sơ đối chiếu tiêu chí](docs/JUDGING_READINESS.md).
+Bản 1.5.0 là APK cài trực tiếp, không cần Expo Go. Toàn bộ màn hình khách hàng đã được viết lại bằng tiếng Việt phổ thông; tên model, cơ chế tìm kiếm, hạ tầng và thuật ngữ lập trình chỉ còn trong tài liệu dành cho đội phát triển. Lịch sử chat từ bản cũ được tách khỏi trải nghiệm mới để câu trả lời kỹ thuật cũ không xuất hiện lại. Xem [hướng dẫn mobile](mobile/README.md), [audit giao diện](docs/MOBILE_UI_AUDIT.md) và [hồ sơ đối chiếu tiêu chí](docs/JUDGING_READINESS.md).
+
+## Các khả năng thông minh dành cho khách hàng
+
+- Hiểu phần mô tả nhu cầu bằng lời và tự điền biểu mẫu để khách sửa lại trước khi gửi.
+- Gợi ý một gói phù hợp nhất và hai lựa chọn thay thế; giá và thứ tự gói vẫn do công thức kiểm soát, trợ lý chỉ giải thích.
+- Trả lời câu hỏi về hosting, tên miền, chi phí và rủi ro bằng tài liệu có nguồn.
+- Gợi ý tên miền nhưng luôn nói rõ tình trạng còn trống cần được kiểm tra trước khi mua.
+- Chấm mức sẵn sàng trước ngày mở website và đưa ra việc cần làm tiếp theo.
+- Kiểm tra khả năng xuất hiện trên Google, sắp xếp việc cần cải thiện và tạo nội dung nháp để người dùng duyệt.
 
 Khi chạy `pnpm dev:lan`, trang chủ web có nút tải APK. Điện thoại cùng Wi-Fi có thể mở `http://<IP-máy-HOSTORA>:3000/downloads/android` (bản universal: `/downloads/android-universal`). Trong QA, URL LAN đã trả HTTP 200 và file tải về khớp SHA-256; IP cụ thể có thể thay đổi theo mạng.
 

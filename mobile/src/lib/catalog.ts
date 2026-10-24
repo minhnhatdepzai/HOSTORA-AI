@@ -124,7 +124,7 @@ export function rankPlans(requirements: Requirements): RankedPlan[] {
       }
       if (plan.backup.includes("Hàng ngày")) {
         score += 6;
-        reasons.push("Backup hàng ngày giảm rủi ro vận hành");
+        reasons.push("Sao lưu hàng ngày giúp giảm rủi ro mất dữ liệu");
       }
       return {
         ...plan,

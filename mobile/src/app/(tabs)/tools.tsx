@@ -35,26 +35,26 @@ export default function ToolsScreen() {
       : null;
   const costNote =
     status !== "verified"
-      ? "Cần kết nối catalog để tính từ dữ liệu đã xác minh."
+      ? "Cần kết nối để dùng bảng giá mới nhất đã kiểm tra."
       : months < selectedPlan.billingMonths
         ? `Giá ưu đãi công bố cho kỳ ${selectedPlan.billingMonths} tháng; chưa có giá chắc chắn cho kỳ ${months} tháng.`
         : selectedPlan.renewal == null && months > selectedPlan.billingMonths
           ? "Chưa có giá gia hạn đã xác minh cho kỳ này."
-          : "Chỉ tính hosting; chưa gồm tên miền/add-on. Xác nhận tổng tiền ở bước thanh toán.";
+          : "Chỉ tính tiền hosting; chưa gồm tên miền và dịch vụ mua thêm. Hãy xác nhận tổng tiền trước khi thanh toán.";
 
   return (
     <Screen>
       <View style={styles.header}>
         <Brand />
         <Pill tone="blue" icon="activity">
-          DECISION LAB
+          GÓC TÍNH TOÁN
         </Pill>
       </View>
       <View style={styles.intro}>
-        <Eyebrow>Business intelligence</Eyebrow>
+        <Eyebrow>Hiểu rõ trước khi mua</Eyebrow>
         <Title style={{ marginTop: 8 }}>Nhìn xa hơn giá tháng đầu.</Title>
         <Body style={{ marginTop: 10 }}>
-          Mọi phép tính do code thực hiện; AI chỉ giải thích trade-off.
+          So sánh chi phí dài hạn và tình huống nhiều khách truy cập cùng lúc.
         </Body>
       </View>
 
@@ -62,7 +62,7 @@ export default function ToolsScreen() {
         <Card dark style={styles.costCard}>
           <View style={styles.cardTop}>
             <IconBox name="credit-card" tone="dark" />
-            <Pill tone="dark">TRUE COST</Pill>
+            <Pill tone="dark">CHI PHÍ THỰC</Pill>
           </View>
           <Text style={styles.darkTitle}>Tổng chi phí sở hữu</Text>
           <Text style={styles.disclaimer}>
@@ -126,12 +126,12 @@ export default function ToolsScreen() {
         <Card style={{ gap: 16 }}>
           <View style={styles.cardTop}>
             <IconBox name="zap" />
-            <Pill tone="warning">FLASH SALE</Pill>
+            <Pill tone="warning">ĐỢT BÁN CAO ĐIỂM</Pill>
           </View>
-          <Text style={styles.cardTitle}>Mô phỏng traffic spike</Text>
+          <Text style={styles.cardTitle}>Ước tính khi khách tăng đột biến</Text>
           <Text style={styles.cardCopy}>
-            Giả định lưu lượng giờ cao điểm tăng theo hệ số, không phải
-            benchmark máy chủ.
+            Xem nhanh mức rủi ro khi lượng khách cùng lúc tăng cao hơn bình
+            thường.
           </Text>
           <View style={styles.periodsLight}>
             {multipliers.map((value) => (
@@ -171,18 +171,21 @@ export default function ToolsScreen() {
             <Feather name="alert-triangle" color={colors.warning} size={17} />
             <Text style={styles.warningText}>
               {traffic >= 5
-                ? "Cân nhắc cache, CDN và kiểm thử tải trước chiến dịch."
-                : "Rủi ro vừa; tiếp tục theo dõi tài nguyên thực tế."}
+                ? "Nên tối ưu tốc độ và chạy thử trước chiến dịch lớn."
+                : "Rủi ro vừa; hãy tiếp tục theo dõi khi website hoạt động."}
             </Text>
           </View>
         </Card>
 
-        <SectionHeader eyebrow="Bộ công cụ AI" title="Phân tích sâu hơn" />
+        <SectionHeader
+          eyebrow="Dành cho chủ website"
+          title="Phân tích sâu hơn"
+        />
         <View style={styles.toolList}>
           <ToolRow
             icon="award"
-            title="Launch Score AI"
-            copy="Chấm hồ sơ website như chấm CV"
+            title="Kiểm tra mức sẵn sàng"
+            copy="Biết điểm mạnh và việc cần hoàn thiện"
             onPress={() => router.push("/readiness")}
           />
           <ToolRow
@@ -193,26 +196,26 @@ export default function ToolsScreen() {
           />
           <ToolRow
             icon="search"
-            title="SEO Intelligence"
-            copy="Audit kỹ thuật và chiến lược có nguồn"
+            title="Cải thiện tìm kiếm Google"
+            copy="Kiểm tra website và nhận danh sách việc cần làm"
             onPress={() => router.push("/seo")}
           />
           <ToolRow
             icon="at-sign"
-            title="Domain advisor"
+            title="Gợi ý tên miền"
             copy="Tên ngắn, dễ nhớ cho thị trường Việt"
             onPress={() => router.push("/domain")}
           />
           <ToolRow
             icon="globe"
-            title="Website analyzer"
-            copy="Metadata công khai và gợi ý hạ tầng"
+            title="Kiểm tra website"
+            copy="Xem các mục cơ bản đang đạt hay cần sửa"
             onPress={() => router.push("/analyzer")}
           />
           <ToolRow
             icon="book-open"
-            title="Knowledge center"
-            copy="Giải thích hosting theo ba cấp độ"
+            title="Kiến thức dễ hiểu"
+            copy="Giải thích hosting bằng ví dụ đời thường"
             onPress={() => router.push("/knowledge")}
           />
         </View>

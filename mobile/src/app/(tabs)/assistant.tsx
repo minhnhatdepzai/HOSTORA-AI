@@ -20,6 +20,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Brand, Pill } from "@/components/ui";
 import { colors, radii } from "@/constants/theme";
 import { getApiBase } from "@/lib/api";
+import { toCustomerLanguage } from "@/lib/customer-language";
 import {
   citedSources,
   readChatSources,
@@ -32,20 +33,30 @@ type Message = {
   sources?: ChatSource[];
   ragMode?: string;
 };
-// Keep older conversations on device but never reuse answers grounded in an old catalog.
-const KEY = "hostora:mobile:chat:v2";
+// A new key keeps customer-facing copy separate from conversations created by older builds.
+const KEY = "hostora:mobile:chat:v3";
 const starters = [
   "Shop mới nên chọn gói nào?",
-  "CDN giúp gì khi flash sale?",
+  "Làm sao để website nhanh khi đông khách?",
   "Giá gia hạn khác gì giá đầu?",
 ];
+
+function customerAnswer(content: string, sources: ChatSource[] = []) {
+  return toCustomerLanguage(
+    sources.reduce(
+      (answer, source, index) =>
+        answer.split(`[${source.citation}]`).join(`[Nguồn ${index + 1}]`),
+      content,
+    ),
+  );
+}
 
 export default function AssistantScreen() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
       content:
-        "Chào bạn, mình là HOSTORA — trợ lý hosting chạy hoàn toàn bằng AI local. Bạn đang chuẩn bị website gì?",
+        "Chào bạn, mình là HOSTORA — trợ lý chọn hosting và tên miền. Bạn đang chuẩn bị website gì?",
     },
   ]);
   const [input, setInput] = useState("");
@@ -69,7 +80,7 @@ export default function AssistantScreen() {
     setLoading(true);
     try {
       const apiBase = await getApiBase();
-      if (!apiBase) throw new Error("Chưa cấu hình địa chỉ máy chạy Ollama.");
+      if (!apiBase) throw new Error("Chưa có kết nối tư vấn.");
       const response = await fetch(`${apiBase}/api/ai/chat`, {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -81,7 +92,7 @@ export default function AssistantScreen() {
       });
       const answer = await response.text();
       if (!response.ok || !answer)
-        throw new Error(answer || "Local AI chưa phản hồi.");
+        throw new Error(answer || "Trợ lý chưa phản hồi.");
       const completed: Message[] = [
         ...next,
         {
@@ -93,12 +104,13 @@ export default function AssistantScreen() {
       ];
       setMessages(completed);
       await AsyncStorage.setItem(KEY, JSON.stringify(completed));
-    } catch (error) {
+    } catch {
       const failed: Message[] = [
         ...next,
         {
           role: "assistant",
-          content: `Mình chưa kết nối được local AI. ${error instanceof Error ? error.message : ""}`,
+          content:
+            "Mình chưa thể trả lời lúc này. Vui lòng mở phần Kết nối, kiểm tra lại rồi thử lần nữa.",
         },
       ];
       setMessages(failed);
@@ -143,8 +155,8 @@ export default function AssistantScreen() {
         <View style={styles.header}>
           <Brand />
           <View style={styles.headerRight}>
-            <Pill tone="mint" icon="circle">
-              LOCAL AI
+            <Pill tone="mint" icon="shield">
+              RIÊNG TƯ
             </Pill>
             <Pressable
               onPress={clear}
@@ -157,10 +169,10 @@ export default function AssistantScreen() {
           </View>
         </View>
         <View style={styles.heading}>
-          <Text style={styles.kicker}>LOCAL RAG ASSISTANT</Text>
+          <Text style={styles.kicker}>TRỢ LÝ HOSTORA</Text>
           <Text style={styles.title}>Hỏi sâu. Thấy rõ nguồn.</Text>
           <Text style={styles.copy}>
-            Qwen trả lời từ catalog và kho kiến thức trên máy.
+            Câu trả lời dựa trên bảng giá và tài liệu đã được kiểm tra.
           </Text>
         </View>
 
@@ -194,7 +206,7 @@ export default function AssistantScreen() {
                 {message.role === "assistant" ? (
                   <>
                     <Markdown style={markdownStyles}>
-                      {message.content}
+                      {customerAnswer(message.content, message.sources)}
                     </Markdown>
                     {message.sources &&
                     citedSources(message.content, message.sources).length >
@@ -204,7 +216,7 @@ export default function AssistantScreen() {
                           NGUỒN ĐƯỢC TRÍCH DẪN
                         </Text>
                         {citedSources(message.content, message.sources).map(
-                          (source) => (
+                          (source, sourceIndex) => (
                             <Text
                               key={source.citation}
                               accessibilityRole="link"
@@ -213,7 +225,7 @@ export default function AssistantScreen() {
                               }
                               style={styles.sourceLink}
                             >
-                              [{source.citation}] {source.title} ·{" "}
+                              Nguồn tham khảo {sourceIndex + 1} · kiểm tra ngày{" "}
                               {source.verifiedAt}
                             </Text>
                           ),
@@ -231,8 +243,8 @@ export default function AssistantScreen() {
                     ) : null}
                     {message.ragMode === "lexical-fallback" ? (
                       <Text style={styles.sourceWarning}>
-                        Embedding chưa sẵn sàng; đang truy xuất bằng từ khóa dự
-                        phòng.
+                        Đang dùng chế độ tìm kiếm cơ bản; hãy kiểm tra nguồn
+                        trước khi quyết định mua.
                       </Text>
                     ) : null}
                   </>
@@ -248,7 +260,7 @@ export default function AssistantScreen() {
             <View style={styles.thinking}>
               <ActivityIndicator color={colors.primary} size="small" />
               <Text style={styles.thinkingText}>
-                Qwen đang đọc nguồn local…
+                HOSTORA đang kiểm tra thông tin…
               </Text>
             </View>
           ) : null}
@@ -296,7 +308,7 @@ export default function AssistantScreen() {
           </Pressable>
         </View>
         <Text style={styles.privacy}>
-          Không gửi nội dung tới AI cloud · Nguồn được gắn trong câu trả lời
+          Nội dung tư vấn được xử lý riêng tư · Có nguồn để bạn kiểm tra
         </Text>
       </KeyboardAvoidingView>
     </SafeAreaView>

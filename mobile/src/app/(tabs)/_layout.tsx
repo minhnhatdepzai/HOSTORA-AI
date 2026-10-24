@@ -35,7 +35,7 @@ export default function TabsLayout() {
       <Tabs.Screen name="consult" options={{ title: "Tư vấn" }} />
       <Tabs.Screen name="assistant" options={{ title: "Trợ lý" }} />
       <Tabs.Screen name="tools" options={{ title: "Công cụ" }} />
-      <Tabs.Screen name="leads" options={{ title: "Leads" }} />
+      <Tabs.Screen name="leads" options={{ title: "Đăng ký" }} />
     </Tabs>
   );
 }

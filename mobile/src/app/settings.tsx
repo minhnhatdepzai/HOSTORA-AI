@@ -40,15 +40,12 @@ export default function SettingsScreen() {
       const target = await saveApiBase(url);
       const response = await fetch(`${target}/api/health`);
       const result = await response.json();
-      if (!response.ok || !result.ok)
-        throw new Error("Health check không đạt.");
+      if (!response.ok || !result.ok) throw new Error("Kết nối chưa sẵn sàng.");
       setConnected(true);
-      setMessage(`Đã kết nối ${result.chatModel} + ${result.embedModel}`);
-    } catch (error) {
+      setMessage("Đã kết nối. Các tính năng tư vấn đã sẵn sàng.");
+    } catch {
       setMessage(
-        error instanceof Error
-          ? error.message
-          : "Không kết nối được server local.",
+        "Chưa kết nối được. Hãy kiểm tra hai thiết bị đang cùng Wi‑Fi và thử lại.",
       );
     } finally {
       setChecking(false);
@@ -61,20 +58,20 @@ export default function SettingsScreen() {
       edges={["top"]}
     >
       <DetailHeader
-        title="Kết nối local AI"
+        title="Kết nối dịch vụ"
         action={
           <Pill tone={connected ? "mint" : "warning"}>
-            {connected ? "READY" : "LOCAL"}
+            {connected ? "SẴN SÀNG" : "CHƯA KẾT NỐI"}
           </Pill>
         }
       />
       <Screen>
         <View style={styles.intro}>
-          <Eyebrow>Runtime connection</Eyebrow>
-          <Title style={{ marginTop: 8 }}>Nối app với máy chạy Ollama.</Title>
+          <Eyebrow>Thiết lập một lần</Eyebrow>
+          <Title style={{ marginTop: 8 }}>Kết nối với HOSTORA.</Title>
           <Body style={{ marginTop: 10 }}>
-            APK chạy độc lập. Các chức năng AI kết nối tới HOSTORA server trong
-            mạng LAN hoặc qua ADB reverse.
+            Nhập địa chỉ do người cài đặt cung cấp để dùng tư vấn, kiểm tra SEO
+            và các gợi ý thông minh.
           </Body>
         </View>
         <View style={styles.content}>
@@ -82,7 +79,7 @@ export default function SettingsScreen() {
             <View style={styles.serverIcon}>
               <Feather name="server" color={colors.mint} size={22} />
             </View>
-            <Text style={styles.label}>ĐỊA CHỈ HOSTORA SERVER</Text>
+            <Text style={styles.label}>ĐỊA CHỈ KẾT NỐI</Text>
             <TextInput
               value={url}
               onChangeText={setUrl}
@@ -95,11 +92,11 @@ export default function SettingsScreen() {
             />
             <View style={styles.presets}>
               <Preset
-                label="LAN mặc định"
+                label="Địa chỉ đã cài sẵn"
                 onPress={() => setUrl(DEFAULT_API_BASE)}
               />
               <Preset
-                label="USB localhost"
+                label="Dùng trên máy này"
                 onPress={() => setUrl("http://127.0.0.1:3000")}
               />
             </View>
@@ -137,23 +134,22 @@ export default function SettingsScreen() {
             ) : null}
           </Card>
           <Card style={{ gap: 13 }}>
-            <Text style={styles.helpTitle}>Hai cách kết nối</Text>
+            <Text style={styles.helpTitle}>Cách kết nối</Text>
             <Help
               number="1"
-              title="Cùng Wi‑Fi"
-              copy="Nhập IP LAN của máy, ví dụ http://192.168.1.10:3000. Server phải chạy với pnpm dev:lan và firewall cho phép port 3000."
+              title="Điện thoại và máy HOSTORA cùng Wi‑Fi"
+              copy="Nhập địa chỉ do người cài đặt cung cấp, sau đó bấm Lưu và kiểm tra kết nối."
             />
             <Help
               number="2"
-              title="USB để kiểm thử"
-              copy="Chạy adb reverse tcp:3000 tcp:3000 rồi nhập http://127.0.0.1:3000. Cách này không cần mở firewall."
+              title="Nếu chưa kết nối được"
+              copy="Kiểm tra máy HOSTORA đang bật, hai thiết bị đang cùng mạng rồi thử lại."
             />
           </Card>
           <View style={styles.privacy}>
             <Feather name="lock" color={colors.primary} size={17} />
             <Text style={styles.privacyText}>
-              Không API cloud. URL này chỉ được lưu trong bộ nhớ cục bộ của ứng
-              dụng.
+              Địa chỉ kết nối chỉ được lưu trên điện thoại này.
             </Text>
           </View>
         </View>

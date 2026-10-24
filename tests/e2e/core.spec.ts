@@ -50,7 +50,7 @@ test("landing exposes a directly downloadable Android APK", async ({
   request,
 }) => {
   await page.goto("/");
-  const link = page.getByRole("link", { name: "Tải app Android 1.4.0" });
+  const link = page.getByRole("link", { name: "Tải app Android 1.5.0" });
   await expect(link).toHaveAttribute("href", "/downloads/android");
   const response = await request.head("/downloads/android");
   expect(response.status()).toBe(200);
@@ -58,7 +58,7 @@ test("landing exposes a directly downloadable Android APK", async ({
     "android.package-archive",
   );
   expect(response.headers()["content-disposition"]).toContain(
-    "HOSTORA-AI-1.4.0.apk",
+    "HOSTORA-AI-1.5.0.apk",
   );
   expect(Number(response.headers()["content-length"])).toBeGreaterThan(
     30_000_000,

@@ -84,7 +84,7 @@ export function assessReadiness(input: ReadinessInput) {
     },
     {
       id: "contentSeo",
-      label: "Nội dung & SEO",
+      label: "Nội dung & tìm kiếm",
       score: contentSeoScore,
       max: 25,
       note: `${[input.contentReady, input.seoKeywordReady, input.analyticsReady].filter(Boolean).length}/3 nền tảng nội dung đã sẵn sàng.`,
@@ -96,12 +96,12 @@ export function assessReadiness(input: ReadinessInput) {
       max: 25,
       note:
         input.websiteType === "store"
-          ? "Shop cần người chịu trách nhiệm backup, vận hành và thanh toán."
-          : "Cần người chịu trách nhiệm backup và vận hành sau khi bàn giao.",
+          ? "Shop cần người chịu trách nhiệm sao lưu, vận hành và thanh toán."
+          : "Cần người chịu trách nhiệm sao lưu và vận hành sau khi bàn giao.",
     },
     {
       id: "infrastructure",
-      label: "Hạ tầng",
+      label: "Gói dịch vụ",
       score: infrastructureScore,
       max: 30,
       note: `${recommendation.plan.provider} ${recommendation.plan.name} đang khớp ${recommendation.total}/100 theo nhu cầu đã nhập.`,
@@ -117,11 +117,11 @@ export function assessReadiness(input: ReadinessInput) {
   if (!input.seoKeywordReady)
     blockers.push("Chưa xác định nhóm từ khóa và ý định tìm kiếm chính.");
   if (!input.analyticsReady)
-    blockers.push("Chưa có kế hoạch đo chuyển đổi và lỗi sau khi launch.");
-  if (!input.backupOwner)
     blockers.push(
-      "Chưa giao người chịu trách nhiệm backup và kiểm tra restore.",
+      "Chưa có kế hoạch theo dõi đơn hàng, liên hệ và lỗi sau khi ra mắt.",
     );
+  if (!input.backupOwner)
+    blockers.push("Chưa giao người chịu trách nhiệm sao lưu và thử khôi phục.");
   if (!input.teamCanOperate)
     blockers.push("Chưa có người vận hành cập nhật, bảo mật và xử lý sự cố.");
   if (input.websiteType === "store" && !input.paymentReady)
@@ -132,7 +132,7 @@ export function assessReadiness(input: ReadinessInput) {
     blockers.push("Tên miền chưa được sở hữu hoặc kết nối.");
   if (input.deadlineWeeks < 2 && input.stage !== "live")
     blockers.push(
-      "Thời hạn dưới 2 tuần tạo rủi ro bỏ qua kiểm thử và bàn giao.",
+      "Thời hạn dưới 2 tuần có thể khiến đội bỏ qua việc chạy thử và bàn giao.",
     );
   if (renewal === null)
     blockers.push("Giá gia hạn của gói đầu chưa được xác minh.");
@@ -145,18 +145,18 @@ export function assessReadiness(input: ReadinessInput) {
     score >= 80 && blockers.length === 0
       ? {
           id: "ready" as const,
-          label: "Sẵn sàng triển khai",
-          copy: "Có thể lập kế hoạch launch và kiểm tra tải theo kịch bản thật.",
+          label: "Sẵn sàng ra mắt",
+          copy: "Có thể lên lịch ra mắt và chạy thử với tình huống sử dụng thật.",
         }
       : score >= 60
         ? {
             id: "needs-work" as const,
             label: "Gần sẵn sàng",
-            copy: "Cần xử lý các điểm nghẽn ưu tiên trước ngày mở website.",
+            copy: "Cần hoàn thành những việc ưu tiên trước ngày mở website.",
           }
         : {
             id: "at-risk" as const,
-            label: "Rủi ro khi launch",
+            label: "Rủi ro nếu ra mắt",
             copy: "Nên hoàn thiện nền tảng nội dung và vận hành trước khi mua dài hạn.",
           };
 
@@ -171,27 +171,27 @@ export function assessReadiness(input: ReadinessInput) {
     );
   if (!input.analyticsReady)
     actionPlan.push(
-      "Trong 7 ngày: lập bảng sự kiện cần đo, người kiểm tra và ngưỡng cảnh báo sau launch.",
+      "Trong 7 ngày: chọn những kết quả cần theo dõi, người kiểm tra và dấu hiệu cần xử lý sau khi ra mắt.",
     );
   if (!input.backupOwner)
     actionPlan.push(
-      "Trong 7 ngày: giao một người chịu trách nhiệm backup và diễn tập restore.",
+      "Trong 7 ngày: giao một người chịu trách nhiệm sao lưu và thử khôi phục.",
     );
   if (!input.teamCanOperate)
     actionPlan.push(
-      "Trước launch: phân công người cập nhật nội dung, bảo mật và tiếp nhận sự cố.",
+      "Trước ngày ra mắt: phân công người cập nhật nội dung, bảo vệ website và tiếp nhận sự cố.",
     );
   if (input.websiteType === "store" && !input.paymentReady)
     actionPlan.push(
-      "Trước launch: thử trọn luồng đặt hàng, thanh toán thất bại và xác nhận đơn trên mobile.",
+      "Trước ngày ra mắt: thử toàn bộ quy trình đặt hàng, trường hợp thanh toán thất bại và xác nhận đơn trên điện thoại.",
     );
   if (input.domainStatus === "need")
     actionPlan.push(
-      "Hôm nay: chọn và đăng ký tên miền; chỉ chốt sau khi kiểm tra availability thực tế.",
+      "Hôm nay: chọn và đăng ký tên miền; chỉ chốt sau khi xác nhận tên vẫn còn mua được.",
     );
   if (input.deadlineWeeks < 2 && input.stage !== "live")
     actionPlan.push(
-      "Hôm nay: thu hẹp phạm vi launch để vẫn còn thời gian kiểm thử và bàn giao.",
+      "Hôm nay: giảm bớt phạm vi ra mắt để vẫn còn thời gian chạy thử và bàn giao.",
     );
   if (renewal === null)
     actionPlan.push(
@@ -203,11 +203,11 @@ export function assessReadiness(input: ReadinessInput) {
     );
   if (actionPlan.length < 3)
     actionPlan.push(
-      "Trước launch: chạy smoke test trên mobile cho luồng chính và lưu bằng chứng lỗi đã xử lý.",
+      "Trước ngày ra mắt: chạy thử các thao tác chính trên điện thoại và ghi lại những lỗi đã xử lý.",
     );
   if (actionPlan.length < 3)
     actionPlan.push(
-      "Sau launch: theo dõi lỗi, chuyển đổi và mức sử dụng thực tế trước khi nâng cấp hạ tầng.",
+      "Sau khi ra mắt: theo dõi lỗi, kết quả kinh doanh và lượng sử dụng thực tế trước khi nâng cấp gói.",
     );
 
   const strengths = [...dimensions]
@@ -217,14 +217,14 @@ export function assessReadiness(input: ReadinessInput) {
 
   const judgeQuestions = [
     !input.analyticsReady
-      ? "Bạn sẽ dùng sự kiện nào để phát hiện luồng chính bị lỗi sau khi launch?"
-      : "Bạn đã kiểm chứng sự kiện đo chuyển đổi bằng một giao dịch thử như thế nào?",
+      ? "Bạn sẽ theo dõi dấu hiệu nào để biết quy trình chính gặp lỗi sau khi ra mắt?"
+      : "Bạn đã thử một đơn hàng hoặc lượt liên hệ để chắc chắn việc theo dõi hoạt động chưa?",
     !input.backupOwner
-      ? "Ai sẽ chịu trách nhiệm backup, restore và thời hạn xử lý khi có sự cố?"
-      : "Bằng chứng nào cho thấy bản backup gần nhất thực sự restore được?",
+      ? "Ai chịu trách nhiệm sao lưu, khôi phục và xử lý khi có sự cố?"
+      : "Lần gần nhất bạn thử khôi phục từ bản sao lưu là khi nào?",
     renewal === null
       ? "Dữ liệu giá nào còn chưa xác minh tại nguồn chính thức trước khi ra quyết định?"
-      : "Khi traffic tăng, tín hiệu đo được nào sẽ kích hoạt quyết định nâng cấp gói?",
+      : "Khi lượng khách tăng, dấu hiệu nào sẽ khiến bạn quyết định nâng cấp gói?",
   ];
 
   return {

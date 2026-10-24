@@ -33,8 +33,8 @@ const shortcuts = [
     route: "/analyzer" as const,
   },
   {
-    label: "Launch Score",
-    copy: "Chấm hồ sơ như CV",
+    label: "Mức sẵn sàng",
+    copy: "Biết việc cần làm tiếp",
     icon: "award" as const,
     route: "/readiness" as const,
   },
@@ -60,15 +60,15 @@ export default function HomeScreen() {
             <Text style={styles.avatarText}>NL</Text>
           </Pressable>
         </View>
-        <Pill tone="dark" icon="cpu">
-          QWEN 3.5 · LOCAL GPU
+        <Pill tone="dark" icon="shield">
+          TƯ VẤN RIÊNG TƯ
         </Pill>
         <Title light style={styles.heroTitle}>
-          Hạ tầng đúng cho{`\n`}tham vọng thật.
+          Gói phù hợp cho{`\n`}mục tiêu lớn.
         </Title>
         <Body light style={styles.heroCopy}>
-          Chọn hosting bằng dữ liệu đã xác minh, điểm số rõ ràng và AI chạy ngay
-          trên máy của bạn.
+          Chọn gói vận hành website bằng thông tin đã kiểm tra, so sánh rõ ràng
+          và lời khuyên phù hợp với nhu cầu của bạn.
         </Body>
         <View style={styles.heroActions}>
           <View style={{ flex: 1 }}>
@@ -81,7 +81,7 @@ export default function HomeScreen() {
           <Pressable
             onPress={() => router.push("/(tabs)/assistant")}
             style={styles.chatButton}
-            accessibilityLabel="Mở trợ lý AI"
+            accessibilityLabel="Mở trợ lý HOSTORA"
           >
             <Feather name="message-circle" color="white" size={20} />
           </Pressable>
@@ -89,9 +89,11 @@ export default function HomeScreen() {
 
         <View style={styles.signalCard}>
           <View style={styles.signalTop}>
-            <View>
-              <Text style={styles.signalLabel}>ĐỀ XUẤT ĐANG KHỚP</Text>
-              <Text style={styles.signalName}>{top.name}</Text>
+            <View style={styles.signalPlan}>
+              <Text style={styles.signalLabel}>GỢI Ý PHÙ HỢP</Text>
+              <Text style={styles.signalName} numberOfLines={2}>
+                {top.provider} {top.name}
+              </Text>
             </View>
             <View style={styles.score}>
               <Text style={styles.scoreValue}>{top.score}</Text>
@@ -104,17 +106,17 @@ export default function HomeScreen() {
               value={formatVnd(requirements.monthlyBudget)}
             />
             <Metric
-              label="Lưu lượng"
+              label="Khách dự kiến"
               value={`${requirements.monthlyVisits.toLocaleString("vi-VN")}/th`}
             />
             <Metric
-              label="Dữ liệu"
+              label="Cập nhật"
               value={
                 status === "verified"
-                  ? "Catalog online"
+                  ? "Đã cập nhật"
                   : status === "loading"
-                    ? "Đang tải"
-                    : "Snapshot 23/10"
+                    ? "Đang kiểm tra"
+                    : "Ngày 23/10"
               }
             />
           </View>
@@ -148,8 +150,8 @@ export default function HomeScreen() {
             <View>
               <Eyebrow>
                 {status === "verified"
-                  ? "Phù hợp nhất từ catalog"
-                  : "3 gói snapshot 23/10 · chưa là xếp hạng đủ catalog"}
+                  ? "Phù hợp nhất với nhu cầu"
+                  : "Gợi ý tạm thời từ dữ liệu ngày 23/10"}
               </Eyebrow>
               <Text style={styles.recName}>{top.name}</Text>
               <Text style={styles.provider}>{top.provider}</Text>
@@ -175,9 +177,9 @@ export default function HomeScreen() {
         <View style={styles.privacy}>
           <IconBox name="shield" tone="dark" />
           <View style={{ flex: 1 }}>
-            <Text style={styles.privacyTitle}>Riêng tư theo thiết kế</Text>
+            <Text style={styles.privacyTitle}>Thông tin được bảo vệ</Text>
             <Text style={styles.privacyCopy}>
-              AI local · Không cloud API · Lead chỉ nằm trên thiết bị
+              Thông tin đăng ký chỉ được lưu trên điện thoại này
             </Text>
           </View>
         </View>
@@ -268,6 +270,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
+  signalPlan: { flex: 1, paddingRight: 12 },
   signalLabel: {
     color: colors.mint,
     fontFamily: "BeVietnamPro_800ExtraBold",
@@ -277,10 +280,11 @@ const styles = StyleSheet.create({
   signalName: {
     color: "white",
     fontFamily: "BeVietnamPro_800ExtraBold",
-    fontSize: 20,
+    fontSize: 17,
+    lineHeight: 23,
     marginTop: 3,
   },
-  score: { flexDirection: "row", alignItems: "baseline" },
+  score: { flexDirection: "row", alignItems: "baseline", flexShrink: 0 },
   scoreValue: {
     color: "white",
     fontFamily: "BeVietnamPro_900Black",

@@ -79,7 +79,7 @@ export function scorePlan(
     cautions.unshift("Giá gia hạn vượt ngân sách tháng đã nhập");
   if (requirements.monthlyVisits > 50000 && plan.hostingType === "shared")
     cautions.unshift(
-      "Traffic cao trên shared hosting cần đo tải trước khi chốt",
+      "Lượng khách cao cần được chạy thử trên website thật trước khi chốt",
     );
   if (requirements.needsDomain && !plan.domainIncluded)
     cautions.unshift("Chưa bao gồm tên miền trong gói này");
@@ -88,13 +88,13 @@ export function scorePlan(
     total,
     breakdown,
     reasons: [
-      `${plan.storageGb} GB ${plan.storageType}${plan.cpuCores ? ` · ${plan.cpuCores} CPU` : ""}${plan.ramGb ? ` · ${plan.ramGb} GB RAM` : ""}`,
+      `Có ${plan.storageGb} GB dung lượng lưu trữ theo công bố`,
       plan.ecommerce
         ? "Có hỗ trợ thương mại điện tử theo nguồn chính thức"
         : "Phù hợp website nội dung cơ bản",
       plan.managed
-        ? "Dịch vụ được quản lý, giảm việc vận hành kỹ thuật"
-        : "Cho phép tự quản trị sâu hơn",
+        ? "Nhà cung cấp hỗ trợ vận hành, phù hợp người mới"
+        : "Phù hợp khi đã có người có kinh nghiệm phụ trách",
     ],
     cautions,
   };

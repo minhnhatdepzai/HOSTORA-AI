@@ -4,6 +4,17 @@ Ngày cập nhật: **2026-10-24**.
 
 Các bảng cũ bên dưới ghi lại kiểm tra theo phiên bản tại thời điểm đó. Kết quả mới nhất nằm ở mục kế tiếp; không suy diễn kiểm tra của 1.2.0 sang 1.3.0.
 
+## Đợt kiểm tra 24/10/2026 — bản 1.5.0
+
+- Viết lại nội dung trên toàn bộ màn hình mobile theo ngôn ngữ khách hàng; tên model, hạ tầng, cơ chế truy xuất và thuật ngữ lập trình không còn xuất hiện trong điều hướng, nhãn, trạng thái hay thông báo lỗi.
+- Câu trả lời động có lớp chuyển các từ nội bộ thường gặp sang tiếng Việt phổ thông. Lịch sử chat dùng khóa mới để nội dung kỹ thuật đã lưu từ bản cũ không quay lại sau khi nâng cấp.
+- Trang chủ hiển thị đầy đủ nhà cung cấp + tên gói và tách rõ ngày dữ liệu. Các phép tính giá, thứ tự gợi ý và cảnh báo dữ liệu cũ không thay đổi.
+- APK arm64 1.5.0 đã cài đè và mở thành công trên Redmi Note 8 Pro; `com.hostora.ai`, versionCode 7, min SDK 24, target SDK 36. Kiểm tra nội dung đang hiển thị không tìm thấy Ollama, Qwen, RAG, embedding, token, API, backend, benchmark, workload, peak, checkout, CDN hay SSL.
+- Kiểm tra câu trả lời thật đã bắt được từ nội bộ do mô hình sinh ra, sau đó thêm lớp chuyển bắt buộc ở cả dịch vụ và app. Chạy lại cùng câu hỏi về website chậm cho kết quả không còn từ nội bộ trong danh sách kiểm tra; trích dẫn nguồn vẫn được giữ.
+- APK arm64 và universal build thành công, ký APK v2; universal chứa `arm64-v8a`, `armeabi-v7a`, `x86`, `x86_64`. SHA-256: arm64 `7e3a03a11fea560f2383dcaa54e486e9fa2330f013a58dd66fe4015a7c260d15`; universal `582bf2653ba500402e9f2233119c29036eda218e60da09568bd502c279986e64`.
+- Cổng chất lượng cuối: web TypeScript/ESLint/build pass, Vitest 45/45, Playwright 20/20 trên Chromium desktop/mobile, format pass; mobile TypeScript/ESLint pass; `pnpm ai:check` pass 10 eval với chat 9B và embedding 4B.
+- Ảnh thiết bị thật: `mobile/test-results/hostora-1.5.0-home-final.png` và `hostora-1.5.0-assistant-final.png`.
+
 ## Đợt kiểm tra 24/10/2026 — bản 1.4.0
 
 - Launch Score mới dùng điểm số tất định và hard gate: hồ sơ còn blocker không thể mang nhãn “Sẵn sàng triển khai” dù tổng điểm trên 80. Test đơn vị có case 93/100 thiếu analytics vẫn là “Gần sẵn sàng” và kiểm tra đơn điệu khi tắt từng checklist.

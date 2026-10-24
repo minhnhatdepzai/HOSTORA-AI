@@ -33,19 +33,19 @@ const websiteTypes: {
   {
     value: "store",
     label: "Bán hàng",
-    copy: "Checkout, đơn hàng, chiến dịch",
+    copy: "Sản phẩm, đơn hàng, thanh toán",
     icon: "shopping-bag",
   },
   {
     value: "company",
     label: "Giới thiệu",
-    copy: "Thương hiệu, dịch vụ, lead",
+    copy: "Thương hiệu, dịch vụ, khách hàng",
     icon: "briefcase",
   },
   {
     value: "blog",
     label: "Blog",
-    copy: "Bài viết, độc giả, SEO",
+    copy: "Bài viết, độc giả, tìm kiếm Google",
     icon: "edit-3",
   },
 ];
@@ -85,11 +85,12 @@ export default function ConsultScreen() {
       setData(next);
       setRequirements(next);
       setMessage(
-        out.followUpQuestion || "AI đã điền các dữ kiện nhận diện được.",
+        out.followUpQuestion ||
+          "HOSTORA đã điền những thông tin nhận diện được.",
       );
-    } catch (error) {
+    } catch {
       setMessage(
-        error instanceof Error ? error.message : "Local AI chưa sẵn sàng.",
+        "Chưa thể đọc mô tả lúc này. Bạn vẫn có thể chọn từng bước bên dưới.",
       );
     } finally {
       setLoading(false);
@@ -105,8 +106,8 @@ export default function ConsultScreen() {
     <Screen>
       <View style={styles.header}>
         <Brand />
-        <Pill tone="mint" icon="cpu">
-          LOCAL AI
+        <Pill tone="mint" icon="heart">
+          DỄ SỬ DỤNG
         </Pill>
       </View>
       <View style={styles.intro}>
@@ -114,7 +115,7 @@ export default function ConsultScreen() {
         <Title style={{ marginTop: 8 }}>Bắt đầu từ điều bạn thật sự cần.</Title>
         <Body style={{ marginTop: 10 }}>
           Mô tả bằng lời hoặc đi từng bước. Bạn luôn có thể chỉnh lại trước khi
-          chấm điểm.
+          xem đề xuất.
         </Body>
       </View>
 
@@ -124,7 +125,7 @@ export default function ConsultScreen() {
             <Feather name="message-square" color={colors.mint} size={19} />
           </View>
           <View>
-            <Text style={styles.aiKicker}>NATURAL ONBOARDING</Text>
+            <Text style={styles.aiKicker}>MÔ TẢ BẰNG LỜI</Text>
             <Text style={styles.aiTitle}>Nói với HOSTORA</Text>
           </View>
         </View>
@@ -151,7 +152,7 @@ export default function ConsultScreen() {
           ) : (
             <Feather name="zap" color={colors.ink} size={16} />
           )}
-          <Text style={styles.aiButtonText}>AI tự điền thông tin</Text>
+          <Text style={styles.aiButtonText}>Tự điền giúp tôi</Text>
         </Pressable>
         {message ? <Text style={styles.message}>{message}</Text> : null}
       </Card>
@@ -170,7 +171,7 @@ export default function ConsultScreen() {
         {step === 0 && (
           <ChoiceStep
             title="Bạn đang xây loại website nào?"
-            copy="Điều này thay đổi trọng số e-commerce và tài nguyên."
+            copy="Mỗi loại website sẽ có nhu cầu vận hành khác nhau."
           >
             {websiteTypes.map((item) => (
               <Choice
@@ -192,7 +193,7 @@ export default function ConsultScreen() {
         {step === 1 && (
           <ChoiceStep
             title="Lượt truy cập mỗi tháng?"
-            copy="Một tín hiệu định hướng, không phải benchmark tải."
+            copy="Ước tính gần đúng để chọn gói khởi đầu phù hợp."
           >
             <Text style={styles.bigValue}>
               {data.monthlyVisits.toLocaleString("vi-VN")}
@@ -213,7 +214,7 @@ export default function ConsultScreen() {
         {step === 2 && (
           <ChoiceStep
             title="Ngân sách vận hành?"
-            copy="Chấm điểm dùng giá gia hạn khi đã có dữ liệu."
+            copy="HOSTORA ưu tiên cả chi phí ban đầu và chi phí lâu dài."
           >
             <Text style={styles.bigValue}>
               {data.monthlyBudget.toLocaleString("vi-VN")}đ

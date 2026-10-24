@@ -35,7 +35,7 @@ export function domainAvailabilityAnswer(question: string) {
   if (!domain || !pricing) return null;
   return {
     answer:
-      "Tôi không thể xác nhận tên miền còn trống hay giá đăng ký hôm nay từ trí nhớ model. Tình trạng tên miền phải kiểm tra tại nhà đăng ký hoặc WHOIS hợp lệ. [K1] Giá và kỳ hạn cần xác minh trực tiếp ở checkout; dữ liệu trong app chỉ là snapshot có ngày xác minh. [K2]",
+      "Tôi không thể xác nhận tên miền còn trống hay giá đăng ký hôm nay nếu chưa kiểm tra trực tiếp. Hãy mở trang của nhà cung cấp tên miền để xác nhận. [K1] Giá và thời hạn thanh toán cũng cần kiểm tra lại trên trang mua hàng; dữ liệu trong ứng dụng luôn có ngày kiểm tra rõ ràng. [K2]",
     sources: [domain, pricing],
   };
 }
@@ -66,8 +66,8 @@ export function dnsMigrationAnswer(question: string) {
   if (!source) return null;
   return {
     answer:
-      "Bạn thường có thể giữ tên miền cũ khi đổi hosting: tên miền, DNS và nơi lưu website là các lớp khác nhau. [K1]\n" +
-      "Các bước đề xuất: (1) sao lưu website và database; (2) cài, thử website ở hosting mới; (3) lấy bản ghi DNS chính xác từ nhà cung cấp mới; (4) cập nhật DNS trong tài khoản quản lý tên miền; (5) kiểm tra website, HTTPS và email sau khi chuyển. Hãy lưu cấu hình DNS cũ để có thể quay lại nếu cần. Tôi chưa có dữ liệu TTL hay nhà đăng ký của bạn nên không hứa thời điểm chuyển hoàn tất.",
+      "Bạn thường có thể giữ tên miền cũ khi đổi hosting vì địa chỉ website và nơi lưu website là hai phần riêng nhau. [K1]\n" +
+      "Các bước đề xuất: (1) sao lưu toàn bộ website; (2) cài và chạy thử ở gói mới; (3) lấy thông tin kết nối tên miền từ nhà cung cấp mới; (4) cập nhật trong tài khoản quản lý tên miền; (5) kiểm tra website, biểu tượng ổ khóa và email sau khi chuyển. Hãy lưu lại thiết lập cũ để có thể quay lại nếu cần. Thời gian hoàn tất phụ thuộc từng nhà cung cấp nên cần xác nhận trước.",
     sources: [source],
   };
 }
@@ -111,7 +111,7 @@ export function unknownRenewalCostAnswer(question: string) {
       plan.promoMonthlyVnd.toLocaleString("vi-VN") +
       "đ/tháng, nên riêng tiền hosting kỳ đầu là " +
       initial.toLocaleString("vi-VN") +
-      "đ. [P1] Phần còn lại chưa có giá; không được giả định bằng giá kỳ đầu. VAT, tên miền và dịch vụ cộng thêm cũng cần kiểm tra tại checkout.",
+      "đ. [P1] Phần còn lại chưa có giá; không được giả định bằng giá kỳ đầu. Thuế, tên miền và dịch vụ mua thêm cũng cần kiểm tra trên trang thanh toán.",
     sources: [
       {
         citation: "P1",

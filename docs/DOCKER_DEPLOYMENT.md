@@ -62,7 +62,7 @@ Không commit `.env.docker`. Khi đổi embedding model, xóa riêng RAG volume 
 ## Điện thoại Android cùng Wi-Fi
 
 1. Mở `http://<IP-máy-chạy-Docker>:3000` trên điện thoại để kiểm tra kết nối.
-2. Cài APK ở [GitHub Releases](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/tag/v1.4.0).
+2. Cài APK ở [GitHub Releases](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/tag/v1.5.0).
 3. Trong app mở **Công cụ → Kết nối local AI**, nhập `http://<IP-máy>:3000`, lưu và kiểm tra kết nối.
 
 Nếu firewall của máy chủ chặn cổng 3000, chỉ mở cổng cho mạng LAN tin cậy. Không công khai thẳng Next.js/Ollama ra Internet; production cần reverse proxy, TLS, authentication và rate limiting.

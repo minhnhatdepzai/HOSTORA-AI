@@ -53,7 +53,7 @@ export async function POST(request: Request) {
   if (parsed.response) return parsed.response;
   const { text } = parsed.data;
   const result = await structuredChat(
-    "Bạn trích xuất nhu cầu hosting bằng tiếng Việt. Chỉ dùng dữ kiện có trong câu; thiếu thì null/unknown. Ngân sách trả về VND mỗi tháng. Cụm 'bán ... online', 'shop', 'cửa hàng', 'đơn hàng' hoặc 'thanh toán' nghĩa là websiteType=store và ecommerce=true. Website giới thiệu doanh nghiệp là company; trang nội dung/bài viết là blog. Không hỏi về dung lượng, băng thông hay database vì wizard không thu các trường đó. Không tự bịa.",
+    "Bạn hiểu nhu cầu chọn hosting bằng tiếng Việt. Chỉ dùng dữ kiện có trong câu; thiếu thì để trống. Ngân sách trả về VND mỗi tháng. Cụm 'bán ... online', 'shop', 'cửa hàng', 'đơn hàng' hoặc 'thanh toán' nghĩa là website bán hàng. Website giới thiệu doanh nghiệp là company; trang nội dung/bài viết là blog. Câu hỏi tiếp theo phải ngắn, thân thiện và chỉ hỏi một trong bốn thông tin: loại website, lượt khách dự kiến, ngân sách hoặc nhu cầu tên miền. Không dùng thuật ngữ lập trình và không tự bịa.",
     redactContactInfo(text),
     resultSchema,
     jsonSchema,

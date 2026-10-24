@@ -54,7 +54,7 @@ export default function HomePage() {
                 download
               >
                 <Download size={18} />
-                Tải app Android 1.4.0
+                Tải app Android 1.5.0
               </a>
             </div>
             <p className="mt-3 text-xs text-slate-400">

@@ -42,7 +42,7 @@ export async function POST(request: Request) {
   if (parsed.response) return parsed.response;
   const { brand } = parsed.data;
   const result = await structuredChat(
-    "Bạn là cố vấn thương hiệu Việt Nam. Gợi ý domain dễ nhớ, không dấu, chỉ dùng .com, .vn, .com.vn, .shop. Tuyệt đối không khẳng định còn trống.",
+    "Bạn là cố vấn thương hiệu Việt Nam. Gợi ý tên miền dễ nhớ, không dấu, chỉ dùng .com, .vn, .com.vn, .shop. Lý do phải ngắn, dễ hiểu với chủ kinh doanh và không dùng thuật ngữ kỹ thuật. Tuyệt đối không khẳng định tên còn trống.",
     `Thương hiệu: ${brand}`,
     output,
     format,

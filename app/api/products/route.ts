@@ -21,6 +21,6 @@ export function GET(request: NextRequest) {
     catalogTotal: productCatalog.length,
     verifiedAt: "2026-10-23",
     disclaimer:
-      "Giá từ là snapshot có điều kiện kỳ hạn/VAT. Luôn kiểm tra checkout chính thức trước khi mua.",
+      "Giá hiển thị là mức tham khảo tại ngày kiểm tra và có thể phụ thuộc thời hạn thanh toán hoặc thuế. Hãy kiểm tra trang chính thức trước khi mua.",
   });
 }

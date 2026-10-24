@@ -18,50 +18,50 @@ const topics = [
   {
     icon: "server" as const,
     title: "Hosting là gì?",
-    short: "Nơi lưu mã nguồn, hình ảnh và dữ liệu để website hoạt động.",
+    short: "Nơi lưu nội dung để website luôn sẵn sàng cho khách truy cập.",
     detail:
-      "Hãy hình dung hosting như căn nhà của website. Chất lượng hosting ảnh hưởng tốc độ, độ ổn định, backup và khả năng phục vụ nhiều khách cùng lúc.",
+      "Hãy hình dung hosting như căn nhà của website. Một gói phù hợp giúp trang hoạt động ổn định, tải nhanh và có chỗ để lưu nội dung.",
   },
   {
     icon: "at-sign" as const,
-    title: "Domain là gì?",
+    title: "Tên miền là gì?",
     short: "Địa chỉ dễ nhớ giúp khách truy cập website của bạn.",
     detail:
-      "Tên miền giống địa chỉ cửa hàng. Nó trỏ khách tới hosting nhưng không thay thế hosting. .com phù hợp quốc tế; .vn nhấn mạnh thị trường Việt Nam.",
+      "Tên miền giống địa chỉ cửa hàng. Khách gõ địa chỉ này để tìm đến website. Đuôi .com phù hợp nhiều thị trường; .vn nhấn mạnh khách hàng Việt Nam.",
   },
   {
     icon: "shield" as const,
-    title: "SSL có tác dụng gì?",
-    short: "Mã hóa kết nối và hiển thị HTTPS cho khách truy cập.",
+    title: "Kết nối an toàn có tác dụng gì?",
+    short: "Giúp bảo vệ thông tin khi khách truy cập website.",
     detail:
-      "SSL bảo vệ dữ liệu trên đường truyền và là yêu cầu cơ bản cho đăng nhập, checkout. SSL không tự bảo vệ website khỏi mọi cuộc tấn công.",
+      "Biểu tượng ổ khóa trên trình duyệt cho biết kết nối đang được bảo vệ. Đây là yêu cầu cơ bản cho đăng nhập và thanh toán, nhưng vẫn cần cập nhật và bảo vệ website thường xuyên.",
   },
   {
     icon: "globe" as const,
-    title: "CDN giúp gì?",
-    short: "Đưa tài nguyên tĩnh đến điểm gần người truy cập hơn.",
+    title: "Tăng tốc cho khách ở xa",
+    short: "Giúp hình ảnh và nội dung đến khách nhanh hơn ở nhiều khu vực.",
     detail:
-      "CDN có thể giảm độ trễ và tải lên máy chủ gốc, đặc biệt khi khách ở nhiều vùng. CDN không thay thế tối ưu code hay database.",
+      "Dịch vụ tăng tốc có thể phân phối hình ảnh và nội dung từ nơi gần khách hơn. Website vẫn cần ảnh gọn và nội dung được sắp xếp hợp lý để tải nhanh.",
   },
   {
     icon: "archive" as const,
-    title: "Backup là gì?",
+    title: "Sao lưu là gì?",
     short: "Bản sao giúp khôi phục website sau lỗi hoặc mất dữ liệu.",
     detail:
-      "Cần biết tần suất, thời gian lưu và quy trình restore. Backup hàng ngày có ích cho shop phát sinh đơn thường xuyên hơn backup hàng tuần.",
+      "Hãy kiểm tra website được sao lưu bao lâu một lần, giữ bản sao trong bao lâu và ai có thể khôi phục. Shop có đơn hàng mỗi ngày thường cần sao lưu thường xuyên hơn.",
   },
   {
     icon: "trending-up" as const,
     title: "Khi nào cần nâng cấp?",
-    short: "Khi số liệu thật cho thấy CPU, RAM, database hoặc I/O chạm ngưỡng.",
+    short: "Khi website chậm, thường xuyên lỗi hoặc lượng khách tăng rõ rệt.",
     detail:
-      "Đừng nâng cấp chỉ theo cảm giác. Theo dõi Core Web Vitals, error rate, thời gian phản hồi và tài nguyên trong các khung giờ cao điểm.",
+      "Đừng nâng cấp chỉ theo cảm giác. Hãy ghi lại thời gian tải, số lần lỗi và lượng khách vào giờ cao điểm rồi mới quyết định.",
   },
 ];
 
 export default function KnowledgeScreen() {
   const [open, setOpen] = useState(0);
-  const [level, setLevel] = useState<"Dễ hiểu" | "Thực hành" | "Kỹ thuật">(
+  const [level, setLevel] = useState<"Dễ hiểu" | "Cách dùng" | "Kinh doanh">(
     "Dễ hiểu",
   );
   return (
@@ -71,22 +71,22 @@ export default function KnowledgeScreen() {
     >
       <DetailHeader
         title="Trung tâm kiến thức"
-        action={<Pill tone="blue">RAG</Pill>}
+        action={<Pill tone="blue">DỄ HIỂU</Pill>}
       />
       <Screen>
         <View style={styles.intro}>
-          <Eyebrow>AI knowledge center</Eyebrow>
+          <Eyebrow>Kiến thức cho chủ website</Eyebrow>
           <Title style={{ marginTop: 8 }}>
             Hiểu hạ tầng theo cách của bạn.
           </Title>
           <Body style={{ marginTop: 10 }}>
-            Kiến thức có nguồn, ba mức độ giải thích và không dùng thuật ngữ để
-            làm khó người mới.
+            Những khái niệm cần biết được giải thích bằng ví dụ gần gũi và việc
+            bạn nên làm tiếp theo.
           </Body>
         </View>
         <View style={styles.content}>
           <View style={styles.levels}>
-            {(["Dễ hiểu", "Thực hành", "Kỹ thuật"] as const).map((item) => (
+            {(["Dễ hiểu", "Cách dùng", "Kinh doanh"] as const).map((item) => (
               <Pressable
                 key={item}
                 onPress={() => setLevel(item)}
@@ -113,12 +113,12 @@ export default function KnowledgeScreen() {
             </Text>
             <Text style={styles.featuredCopy}>
               Chọn một chủ đề bên dưới. HOSTORA giải thích từ ví dụ đời thường
-              đến chi tiết vận hành.
+              đến cách áp dụng cho website của bạn.
             </Text>
             <View style={styles.source}>
               <Feather name="database" color={colors.mint} size={14} />
               <Text style={styles.sourceText}>
-                6 tài liệu local · có URL và ngày xác minh
+                6 tài liệu đã đối chiếu · có nguồn và ngày kiểm tra
               </Text>
             </View>
           </Card>
@@ -150,14 +150,14 @@ export default function KnowledgeScreen() {
                       <Text style={styles.answerText}>
                         {level === "Dễ hiểu"
                           ? topic.detail
-                          : level === "Thực hành"
+                          : level === "Cách dùng"
                             ? `${topic.detail} Hãy ghi lại số liệu trước và sau mỗi thay đổi để biết biện pháp nào thực sự hiệu quả.`
-                            : `${topic.detail} Ở mức kỹ thuật, cần quan sát latency p95, error rate, cache hit ratio và tài nguyên theo thời gian.`}
+                            : `${topic.detail} Hãy ưu tiên tác động tới khách hàng, doanh thu và chi phí lâu dài trước khi mua gói cao hơn.`}
                       </Text>
                       <View style={styles.aiExplain}>
                         <Feather name="zap" color={colors.primary} size={13} />
                         <Text style={styles.aiExplainText}>
-                          Grounded từ kho kiến thức local
+                          Đã đối chiếu với tài liệu tham khảo
                         </Text>
                       </View>
                     </View>

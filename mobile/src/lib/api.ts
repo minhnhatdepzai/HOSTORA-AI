@@ -19,9 +19,7 @@ export async function saveApiBase(value: string) {
 export async function postJson<T>(path: string, body: unknown): Promise<T> {
   const apiBase = await getApiBase();
   if (!apiBase) {
-    throw new Error(
-      "Hãy cấu hình EXPO_PUBLIC_API_BASE_URL bằng địa chỉ LAN của máy chạy Ollama.",
-    );
+    throw new Error("Vui lòng mở phần Kết nối và hoàn tất thiết lập.");
   }
   const response = await fetch(`${apiBase}${path}`, {
     method: "POST",
@@ -29,20 +27,17 @@ export async function postJson<T>(path: string, body: unknown): Promise<T> {
     body: JSON.stringify(body),
   });
   const output = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(output.error ?? "Local AI chưa phản hồi.");
+  if (!response.ok) throw new Error("HOSTORA chưa thể hoàn tất yêu cầu này.");
   return output as T;
 }
 
 export async function getJson<T>(path: string): Promise<T> {
   const apiBase = await getApiBase();
   if (!apiBase) {
-    throw new Error(
-      "Hãy cấu hình địa chỉ máy chạy HOSTORA AI trong phần Cài đặt.",
-    );
+    throw new Error("Vui lòng mở phần Kết nối và hoàn tất thiết lập.");
   }
   const response = await fetch(`${apiBase}${path}`);
   const output = await response.json().catch(() => ({}));
-  if (!response.ok)
-    throw new Error(output.error ?? "Máy chủ HOSTORA AI chưa phản hồi.");
+  if (!response.ok) throw new Error("HOSTORA chưa thể tải thông tin lúc này.");
   return output as T;
 }
