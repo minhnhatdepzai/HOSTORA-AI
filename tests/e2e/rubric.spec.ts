@@ -27,8 +27,14 @@ test("five required features complete one business flow", async ({ page }) => {
   await page.getByLabel("Số điện thoại").fill("0912345678");
   await page.getByRole("button", { name: "Lưu yêu cầu tư vấn" }).click();
   await page.goto("/dashboard");
-  await expect(page.getByText("Khách thử nghiệm")).toBeVisible();
-  await expect(page.getByText(`Quan tâm: Hostinger ${planName}`)).toBeVisible();
+  const leadSection = page.locator("#khach-hang");
+  await expect(leadSection.getByText("Khách thử nghiệm")).toBeVisible();
+  await expect(
+    leadSection.getByText("Gói quan tâm", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    leadSection.getByText(`Hostinger ${planName}`, { exact: true }),
+  ).toBeVisible();
 });
 
 test("invalid business and chat requests are clear 400 errors", async ({

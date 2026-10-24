@@ -32,7 +32,18 @@ Khi chạy `pnpm dev:lan`, trang chủ web có nút tải APK. Điện thoại c
 - SEO Intelligence audit title, description, indexability, canonical, robots, sitemap, structured data, ảnh và internal link; AI local chỉ diễn giải audit cùng nguồn.
 - Domain Advisor không giả tình trạng availability.
 - Website Analyzer chặn SSRF và chỉ kết luận từ HTML công khai.
-- Lead form và dashboard dùng `localStorage`, có xác nhận trước khi xóa.
+- Lead form và trung tâm quản trị dùng `localStorage`, có xác nhận trước khi xóa.
+
+## Trung tâm quản trị
+
+Mở <http://127.0.0.1:3000/admin> sau khi chạy web. Trang này cho phép người vận hành:
+
+- Xem tổng số đăng ký, tiến độ xử lý, gói được quan tâm và tình trạng các chức năng chính.
+- Tìm kiếm, lọc, đổi trạng thái hoặc xóa từng đăng ký; xuất CSV và sao lưu JSON.
+- Phân nhóm nhu cầu bằng trợ lý chạy trên máy mà không gửi tên hay số điện thoại vào mô hình.
+- Theo dõi độ phủ bảng giá, ngày đối chiếu dữ liệu và các gói còn thiếu giá gia hạn.
+
+Đây là bảng quản trị cục bộ: dữ liệu chỉ nằm trong trình duyệt đang mở. Trang `/admin` được chặn lập chỉ mục nhưng **chưa phải hệ thống đăng nhập/phân quyền**; đăng ký trong APK không tự đồng bộ lên web. Muốn dùng cho nhiều nhân viên hoặc đưa lên Internet cần bổ sung đăng nhập và kho dữ liệu chung có phân quyền.
 
 ## Stack
 

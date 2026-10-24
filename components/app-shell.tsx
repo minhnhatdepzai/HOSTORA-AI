@@ -9,7 +9,6 @@ import {
   Gauge,
   Globe2,
   Home,
-  LayoutDashboard,
   Menu,
   Server,
   X,
@@ -25,12 +24,12 @@ const links = [
   ["/ai-assistant", "Trợ lý", Bot],
   ["/intelligence", "Mô phỏng", ChartNoAxesCombined],
   ["/domain-advisor", "Tên miền", Globe2],
-  ["/dashboard", "Leads", LayoutDashboard],
 ] as const;
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  if (pathname.startsWith("/admin")) return <main>{children}</main>;
   return (
     <>
       <header className="sticky top-0 z-50 border-b border-white/60 bg-[#f5f7f6]/88 backdrop-blur-xl">

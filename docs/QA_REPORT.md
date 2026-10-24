@@ -4,6 +4,15 @@ Ngày cập nhật: **2026-10-24**.
 
 Các bảng cũ bên dưới ghi lại kiểm tra theo phiên bản tại thời điểm đó. Kết quả mới nhất nằm ở mục kế tiếp; không suy diễn kiểm tra của 1.2.0 sang 1.3.0.
 
+## Đợt kiểm tra 24/10/2026 — trung tâm quản trị web
+
+- Thêm trang `/admin` riêng cho người vận hành; `/dashboard` cũ chuyển hướng sang trang mới. Trang khách hàng không hiện lối vào quản trị.
+- Kiểm tra thực tế các luồng đọc đăng ký từ trình duyệt, tìm/lọc, đổi trạng thái, xóa có xác nhận, xuất CSV an toàn với công thức bảng tính, sao lưu JSON, kiểm tra dịch vụ và phân nhóm nhu cầu không gửi tên/số điện thoại vào mô hình.
+- Giao diện desktop và mobile đã được xem trực tiếp bằng Chromium; không có lỗi console và không có tràn ngang ở viewport điện thoại. Playwright kiểm tra việc đổi trạng thái và xác nhận dữ liệu được ghi lại vào `localStorage`.
+- Phạm vi được công bố ngay trên màn hình: dữ liệu chỉ thuộc trình duyệt hiện tại, chưa đồng bộ từ APK, chưa có đăng nhập hoặc phân quyền nhiều tài khoản. `noindex` chỉ ngăn máy tìm kiếm lập chỉ mục, không thay thế xác thực.
+- Playwright cuối: 24/24 luồng đạt trên Chromium desktop/mobile, gồm hai luồng riêng cho trung tâm quản trị.
+- Cổng chất lượng cuối: TypeScript/ESLint/production build pass, Vitest 48/48, Prettier pass, Docker Compose config hợp lệ; `pnpm ai:check` pass 10 eval với chat 9B và embedding 4B.
+
 ## Đợt kiểm tra 24/10/2026 — bản 1.5.0
 
 - Viết lại nội dung trên toàn bộ màn hình mobile theo ngôn ngữ khách hàng; tên model, hạ tầng, cơ chế truy xuất và thuật ngữ lập trình không còn xuất hiện trong điều hướng, nhãn, trạng thái hay thông báo lỗi.
