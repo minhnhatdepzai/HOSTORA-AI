@@ -1,0 +1,51 @@
+{
+  "expo": {
+    "name": "HOSTORA AI",
+    "slug": "hostora-ai",
+    "version": "1.4.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/hostora-icon-source.png",
+    "scheme": "hostora",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "icon": "./assets/expo.icon"
+    },
+    "android": {
+      "package": "com.hostora.ai",
+      "versionCode": 6,
+      "predictiveBackGestureEnabled": false,
+      "blockedPermissions": [
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ]
+    },
+    "web": {
+      "output": "server",
+      "favicon": "./assets/images/hostora-icon-source.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#07111F",
+          "image": "./assets/images/hostora-icon-source.png",
+          "imageWidth": 132
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}

@@ -1,0 +1,50 @@
+[
+  {
+    "query": "Tôi đổi hosting thì có phải mua lại tên miền hay chỉ đổi DNS?",
+    "expectedIds": ["domain-basics"]
+  },
+  {
+    "query": "CDN có thay thế máy chủ gốc và backup khi shop bị tấn công không?",
+    "expectedIds": ["ssl-cdn-backup"]
+  },
+  {
+    "query": "50 nghìn lượt một tháng có đảm bảo chịu được lúc 300 khách checkout cùng lúc?",
+    "expectedIds": ["performance-limits"]
+  },
+  {
+    "query": "Chặn URL nhạy cảm trong robots.txt đã đủ bảo vệ trang riêng tư chưa?",
+    "expectedIds": ["seo-crawling-indexing"]
+  },
+  {
+    "query": "Giá Product schema chưa xác minh mà ghi vào JSON-LD có ổn không?",
+    "expectedIds": ["seo-structured-data"]
+  },
+  {
+    "query": "Đổi gói hosting có tự tăng thứ hạng Google không?",
+    "expectedIds": ["seo-hosting-relationship", "seo-fundamentals"]
+  },
+  {
+    "query": "Trang chủ thiếu title và meta description cần sửa gì?",
+    "expectedIds": ["seo-title-description"]
+  },
+  {
+    "query": "Nội dung mobile bị ẩn khỏi DOM thì Google có hiểu không?",
+    "expectedIds": ["seo-semantic-mobile"]
+  },
+  {
+    "query": "Có hai URL trùng nội dung, canonical nên trỏ thế nào?",
+    "expectedIds": ["seo-canonical"]
+  },
+  {
+    "query": "AZDIGI Pro Platinum hợp workload nào?",
+    "expectedIds": ["azdigi-pro-platinum"]
+  },
+  {
+    "query": "Mắt Bão có email doanh nghiệp và Microsoft 365 không?",
+    "expectedIds": ["matbao-ecosystem"]
+  },
+  {
+    "query": "Đề thi yêu cầu FAQ và lưu khách tư vấn vào đâu?",
+    "expectedIds": ["competition-brief"]
+  }
+]

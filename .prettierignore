@@ -1,0 +1,17 @@
+.next/
+node_modules/
+coverage/
+playwright-report/
+test-results/
+data/rag-index.json
+mobile/.expo/
+mobile/android/
+mobile/releases/
+mobile/assets/expo.icon/
+mobile/pnpm-lock.yaml
+training/.venv/
+training/output-smoke/
+training/output-chatbot/
+training/output-chatbot-v2/
+training/chatbot_cases.json
+training/grounded_cases.json

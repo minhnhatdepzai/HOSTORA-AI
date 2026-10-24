@@ -1,0 +1,301 @@
+[
+  {
+    "id": "hosting-basics",
+    "title": "Hosting là gì và ba lớp dịch vụ phổ biến",
+    "sourceUrl": "https://www.hostinger.com/vn/web-hosting",
+    "sourceType": "official-provider",
+    "verifiedAt": "2026-10-23",
+    "category": "hosting",
+    "keywords": ["hosting", "shared", "cloud", "vps", "lưu trữ"],
+    "authority": 0.9,
+    "content": "Web hosting lưu mã nguồn, hình ảnh và dữ liệu để website truy cập qua Internet. Shared hosting dễ quản trị và phù hợp giai đoạn đầu nhưng chia sẻ tài nguyên. Cloud hosting có dư địa mở rộng tốt hơn và thường được quản lý. VPS cho quyền kiểm soát hệ điều hành và tài nguyên sâu hơn nhưng đòi hỏi kỹ năng vận hành, cập nhật bảo mật và backup."
+  },
+  {
+    "id": "hosting-decision",
+    "title": "Chọn shared hosting, cloud hay VPS",
+    "sourceUrl": "https://www.hostinger.com/vn/web-hosting",
+    "sourceType": "technical-guidance",
+    "verifiedAt": "2026-10-23",
+    "category": "hosting",
+    "keywords": ["chọn gói", "shared", "cloud", "vps", "quản trị"],
+    "authority": 0.86,
+    "content": "Chọn shared hosting khi website mới, ngân sách thấp và không có đội vận hành. Chọn managed cloud khi website tạo doanh thu, cần dư địa tăng trưởng nhưng vẫn muốn nhà cung cấp quản trị nền tảng. Chọn VPS khi cần runtime riêng, API, worker hoặc cấu hình hệ thống tùy biến và có người chịu trách nhiệm vá lỗi, firewall, monitoring, backup và phục hồi. Không chọn chỉ từ lượt truy cập tháng."
+  },
+  {
+    "id": "domain-basics",
+    "title": "Tên miền, DNS và hosting là các lớp khác nhau",
+    "sourceUrl": "https://azdigi.com/blog/huong-dan/ten-mien/hosting-va-domain-la-gi",
+    "sourceType": "official-provider",
+    "verifiedAt": "2026-10-23",
+    "category": "domain",
+    "keywords": ["domain", "tên miền", "dns", "hosting", "whois"],
+    "authority": 0.86,
+    "content": "Tên miền là địa chỉ dễ nhớ, DNS ánh xạ địa chỉ đó tới dịch vụ, còn hosting lưu và phục vụ dữ liệu website. Có thể mua domain và hosting cùng hoặc khác nhà cung cấp. Mua cùng nơi dễ quản lý; tách nhà cung cấp giúp giảm lock-in nhưng cấu hình phức tạp hơn. Không kết luận tên miền còn trống nếu chưa kiểm tra qua nhà đăng ký hoặc WHOIS hợp lệ."
+  },
+  {
+    "id": "ssl-cdn-backup",
+    "title": "SSL, CDN và backup giải quyết ba rủi ro khác nhau",
+    "sourceUrl": "https://www.cloudflare.com/plans/",
+    "sourceType": "official-provider",
+    "verifiedAt": "2026-10-23",
+    "category": "security",
+    "keywords": ["ssl", "tls", "cdn", "backup", "khôi phục", "ddos"],
+    "authority": 0.9,
+    "content": "SSL/TLS mã hóa kết nối giữa trình duyệt và website. CDN lưu bản sao nội dung tĩnh gần người truy cập, giảm độ trễ và hỗ trợ hấp thụ một phần lưu lượng tấn công. Backup là bản sao để phục hồi dữ liệu; phải kiểm tra tần suất, thời gian lưu, vị trí lưu và khả năng khôi phục. Có SSL hoặc CDN không thay thế backup, và backup chưa thử restore chưa phải bằng chứng phục hồi được."
+  },
+  {
+    "id": "pricing-snapshot",
+    "title": "Đọc đúng giá hosting và tổng chi phí sở hữu",
+    "sourceUrl": "https://www.hostinger.com/vn/web-hosting",
+    "sourceType": "official-pricing",
+    "verifiedAt": "2026-10-23",
+    "category": "pricing",
+    "keywords": [
+      "giá",
+      "gia hạn",
+      "khuyến mại",
+      "vat",
+      "kỳ hạn",
+      "tổng chi phí"
+    ],
+    "authority": 0.92,
+    "content": "Giá quảng cáo thường là mức quy đổi theo tháng nhưng yêu cầu trả trước dài hạn. Khi so sánh phải tách giá kỳ đầu, số tháng bắt buộc, tổng tiền thanh toán, VAT, giá gia hạn, tên miền, SSL, backup và add-on. Nếu trang nguồn không công bố giá gia hạn thì phải ghi chưa xác minh, không được dùng giá khuyến mại làm giá gia hạn. Giá là snapshot tại ngày xác minh và có thể thay đổi ở checkout."
+  },
+  {
+    "id": "performance-limits",
+    "title": "Traffic tháng không phải cam kết chịu tải",
+    "sourceUrl": "https://azdigi.com/hosting-gia-re",
+    "sourceType": "technical-guidance",
+    "verifiedAt": "2026-10-23",
+    "category": "performance",
+    "keywords": [
+      "traffic",
+      "chịu tải",
+      "concurrent",
+      "flash sale",
+      "benchmark",
+      "cache"
+    ],
+    "authority": 0.88,
+    "content": "Lượt truy cập tháng không đủ để khẳng định một gói sẽ chịu tải. Hiệu năng còn phụ thuộc số người đồng thời, mã nguồn, plugin, cache, truy vấn database, kích thước ảnh, bot và hành vi checkout. Website có doanh thu hoặc flash sale cần benchmark workload thật, theo dõi CPU, RAM, I/O, database latency và error rate trước khi cam kết năng lực."
+  },
+  {
+    "id": "azdigi-pro-hosting",
+    "title": "AZDIGI Pro Hosting snapshot",
+    "sourceUrl": "https://azdigi.com/hosting-gia-re",
+    "sourceType": "official-pricing",
+    "verifiedAt": "2026-10-23",
+    "category": "catalog",
+    "keywords": ["azdigi", "az pro", "ssd raid-10", "backup hàng ngày"],
+    "authority": 0.95,
+    "content": "Chu kỳ 12 tháng, chưa VAT: AZ Pro 1 giá 29.000đ/tháng, 2 vCPU, 1 GB RAM, 3 GB SSD RAID-10, 1 website; AZ Pro 2 giá 45.000đ/tháng, 2 vCPU, 2 GB RAM, 6 GB SSD RAID-10, 2 website; AZ Pro 3 giá 65.000đ/tháng, 2 vCPU, 3 GB RAM, 10 GB SSD RAID-10, 3 website. Các gói công bố băng thông không giới hạn và backup hàng ngày lưu 7 bản gần nhất. Giá gia hạn chưa được xác minh trong snapshot."
+  },
+  {
+    "id": "azdigi-pro-platinum",
+    "title": "AZDIGI Pro Platinum phù hợp workload nào",
+    "sourceUrl": "https://azdigi.com/hosting-gia-re",
+    "sourceType": "official-provider",
+    "verifiedAt": "2026-10-23",
+    "category": "catalog",
+    "keywords": ["azdigi", "pro platinum", "wordpress", "shop", "nvme"],
+    "authority": 0.91,
+    "content": "AZDIGI mô tả Pro Hosting cho blog, portfolio, landing page và website giới thiệu nhỏ. Pro Platinum dùng NVMe và tài nguyên cao hơn, hướng tới website doanh nghiệp, WordPress nhiều plugin và cửa hàng nhỏ. Khi workload tăng tiếp cần xem Business Hosting hoặc VPS; tên dòng sản phẩm không phải bằng chứng chịu tải nếu chưa benchmark website thật."
+  },
+  {
+    "id": "vietnix-wordpress-plans",
+    "title": "Vietnix WordPress Hosting snapshot",
+    "sourceUrl": "https://vietnix.vn/wordpress-hosting/",
+    "sourceType": "official-pricing",
+    "verifiedAt": "2026-10-23",
+    "category": "catalog",
+    "keywords": ["vietnix", "wordpress hosting", "nvme", "litespeed", "backup"],
+    "authority": 0.95,
+    "content": "Giá chu kỳ 1 năm, chưa VAT: WordPress 1 là 67.500đ/tháng với 2 CPU, 2 GB RAM, 2 GB NVMe; WordPress 2 là 114.300đ với 2 CPU, 4 GB RAM, 10 GB NVMe; WordPress 3 là 161.100đ với 4 CPU, 4 GB RAM, 16 GB NVMe; WordPress 4 là 225.900đ với 4 CPU, 6 GB RAM, 20 GB NVMe; WordPress 5 là 306.900đ với 6 CPU, 8 GB RAM, 30 GB NVMe; WordPress 6 là 432.900đ với 8 CPU, 12 GB RAM, 50 GB NVMe. Trang công bố SSL, băng thông không giới hạn và backup 2 lần/ngày; giá gia hạn chưa xác minh."
+  },
+  {
+    "id": "tino-ecosystem",
+    "title": "Hệ sinh thái sản phẩm Tino Group",
+    "sourceUrl": "https://tino.vn",
+    "sourceType": "official-provider",
+    "verifiedAt": "2026-10-23",
+    "category": "catalog",
+    "keywords": ["tino", "hosting", "vps", "email", "domain", "ssl"],
+    "authority": 0.9,
+    "content": "Trang chính thức Tino công bố NVMe Hosting từ 20.000đ/tháng, NVMe VPS từ 99.000đ/tháng, Business Hosting và WordPress Hosting từ 229.000đ/tháng, Email Server từ 19.000đ/tháng. Dịch vụ còn có domain, SSL, reseller hosting và máy chủ. Giá từ chưa đủ để so sánh một cấu hình cụ thể; phải mở bảng gói và checkout trước quyết định mua."
+  },
+  {
+    "id": "matbao-ecosystem",
+    "title": "Hệ sinh thái sản phẩm Mắt Bão",
+    "sourceUrl": "https://www.matbao.net/ten-mien/.vn",
+    "sourceType": "official-provider",
+    "verifiedAt": "2026-10-23",
+    "category": "catalog",
+    "keywords": ["mắt bão", "cloud hosting", "email", "workspace", "domain"],
+    "authority": 0.89,
+    "content": "Trang chính thức Mắt Bão công bố Cloud Hosting từ 49.000đ/tháng, Email Pro từ 19.000đ/tháng, Google Workspace từ 89.000đ/tháng và Microsoft 365 từ 95.000đ/tháng. Đây là giá từ của từng dòng sản phẩm, không tự động bao gồm add-on, VAT hoặc giá gia hạn."
+  },
+  {
+    "id": "seo-fundamentals",
+    "title": "SEO giúp công cụ tìm kiếm hiểu nội dung, không bảo đảm hạng 1",
+    "sourceUrl": "https://developers.google.com/search/docs/fundamentals/seo-starter-guide",
+    "sourceType": "official-google",
+    "verifiedAt": "2026-10-23",
+    "category": "seo",
+    "keywords": ["seo", "google", "xếp hạng", "nội dung", "search"],
+    "authority": 1,
+    "content": "SEO giúp công cụ tìm kiếm hiểu nội dung và giúp người dùng phù hợp tìm thấy website. Không có bí quyết nào bảo đảm tự động đứng hạng nhất. Nội dung hữu ích, độc đáo, dễ đọc, có cấu trúc rõ, được cập nhật và phục vụ đúng ý định người dùng là nền tảng. Liên kết nội bộ với anchor text mô tả giúp người dùng và crawler hiểu trang đích."
+  },
+  {
+    "id": "seo-title-description",
+    "title": "Title và meta description cho Search",
+    "sourceUrl": "https://developers.google.com/search/docs/fundamentals/seo-starter-guide",
+    "sourceType": "official-google",
+    "verifiedAt": "2026-10-23",
+    "category": "seo",
+    "keywords": ["title", "meta description", "snippet", "ctr", "seo"],
+    "authority": 1,
+    "content": "Mỗi trang nên có title rõ ràng, súc tích, độc nhất và mô tả chính xác nội dung. Google có thể dùng title element, heading và các tín hiệu khác để tạo title link. Snippet thường lấy từ nội dung trang và đôi khi từ meta description; description tốt nên ngắn, riêng cho từng trang và nêu các điểm quan trọng. Có thẻ meta không đồng nghĩa Google buộc phải hiển thị đúng nội dung đó."
+  },
+  {
+    "id": "seo-semantic-mobile",
+    "title": "Semantic HTML, mobile và nội dung trong DOM",
+    "sourceUrl": "https://developers.google.com/search/docs/fundamentals/get-started-developers",
+    "sourceType": "official-google",
+    "verifiedAt": "2026-10-23",
+    "category": "seo",
+    "keywords": [
+      "semantic html",
+      "mobile",
+      "dom",
+      "accessibility",
+      "javascript seo"
+    ],
+    "authority": 1,
+    "content": "Google khuyên website phải an toàn, nhanh, truy cập được và hoạt động trên mọi thiết bị. Dùng semantic HTML và bảo đảm nội dung văn bản quan trọng tồn tại trong DOM. Nội dung chỉ sinh qua CSS content không được Google Search coi là nội dung DOM. Mỗi trang cần title và meta description mô tả."
+  },
+  {
+    "id": "seo-crawling-indexing",
+    "title": "Crawling, indexing và robots.txt",
+    "sourceUrl": "https://developers.google.com/search/docs/crawling-indexing",
+    "sourceType": "official-google",
+    "verifiedAt": "2026-10-23",
+    "category": "seo",
+    "keywords": ["crawl", "index", "robots.txt", "noindex", "googlebot"],
+    "authority": 1,
+    "content": "robots.txt kiểm soát URL crawler được phép request, không phải cơ chế bảo mật dữ liệu. Meta robots noindex điều khiển việc lập chỉ mục khi crawler truy cập được trang. URL quan trọng phải có liên kết crawlable và trả HTTP status phù hợp. SEO audit HTML chỉ xác nhận tín hiệu công khai tại thời điểm quét, không chứng minh Google đã index trang."
+  },
+  {
+    "id": "seo-sitemap",
+    "title": "Sitemap là tín hiệu hỗ trợ khám phá URL",
+    "sourceUrl": "https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap",
+    "sourceType": "official-google",
+    "verifiedAt": "2026-10-23",
+    "category": "seo",
+    "keywords": ["sitemap", "xml", "search console", "canonical url", "crawl"],
+    "authority": 1,
+    "content": "Sitemap liệt kê các canonical URL mà chủ site muốn công cụ tìm kiếm biết tới. Có thể khai báo sitemap trong Search Console hoặc robots.txt. Gửi sitemap chỉ là gợi ý, không bảo đảm Google tải, crawl hoặc index URL. Website lớn, mới, ít backlink hoặc nhiều media thường hưởng lợi nhiều hơn từ sitemap."
+  },
+  {
+    "id": "seo-canonical",
+    "title": "Canonical giúp hợp nhất URL trùng lặp",
+    "sourceUrl": "https://developers.google.com/search/docs/crawling-indexing/canonicalization",
+    "sourceType": "official-google",
+    "verifiedAt": "2026-10-23",
+    "category": "seo",
+    "keywords": [
+      "canonical",
+      "duplicate content",
+      "trùng lặp",
+      "url",
+      "redirect"
+    ],
+    "authority": 1,
+    "content": "Canonicalization là chọn URL đại diện cho nhóm nội dung trùng hoặc rất giống nhau. HTTPS, redirect, URL trong sitemap và rel=canonical là các tín hiệu. rel=canonical là gợi ý chứ không phải mệnh lệnh; Google có thể chọn URL khác. Canonical sai hoặc tự mâu thuẫn với redirect/sitemap làm tín hiệu khó hiểu và phân tán theo dõi hiệu suất."
+  },
+  {
+    "id": "seo-structured-data",
+    "title": "Structured data và rich results",
+    "sourceUrl": "https://developers.google.com/search/docs/appearance/structured-data/intro-structured-data",
+    "sourceType": "official-google",
+    "verifiedAt": "2026-10-23",
+    "category": "seo",
+    "keywords": [
+      "structured data",
+      "schema",
+      "json-ld",
+      "rich results",
+      "product"
+    ],
+    "authority": 1,
+    "content": "Structured data cung cấp tín hiệu có cấu trúc để Google hiểu loại nội dung và có thể làm trang đủ điều kiện cho rich results. Google khuyến nghị JSON-LD khi phù hợp. Phải dùng loại schema được hỗ trợ, khai báo đủ thuộc tính bắt buộc và dữ liệu phải khớp nội dung người dùng nhìn thấy. Có schema hợp lệ không bảo đảm rich result sẽ xuất hiện; cần kiểm tra bằng Rich Results Test."
+  },
+  {
+    "id": "core-web-vitals",
+    "title": "Core Web Vitals: LCP, INP và CLS",
+    "sourceUrl": "https://web.dev/articles/vitals",
+    "sourceType": "official-google",
+    "verifiedAt": "2026-10-23",
+    "category": "seo",
+    "keywords": ["core web vitals", "lcp", "inp", "cls", "tốc độ", "hiệu năng"],
+    "authority": 1,
+    "content": "Core Web Vitals hiện gồm LCP cho tốc độ tải, INP cho khả năng tương tác và CLS cho độ ổn định bố cục. Ngưỡng trải nghiệm tốt là LCP không quá 2,5 giây, INP không quá 200 mili giây và CLS không quá 0,1, đánh giá ở percentile 75 và tách mobile/desktop. Quét HTML tĩnh không đo được dữ liệu người dùng thực tế; cần field data từ CrUX/Search Console hoặc RUM."
+  },
+  {
+    "id": "seo-hosting-relationship",
+    "title": "Hosting ảnh hưởng SEO qua trải nghiệm và độ tin cậy",
+    "sourceUrl": "https://developers.google.com/search/docs/fundamentals/get-started-developers",
+    "sourceType": "derived-guidance",
+    "verifiedAt": "2026-10-23",
+    "category": "seo",
+    "keywords": ["hosting seo", "uptime", "ttfb", "lcp", "cdn", "cache"],
+    "authority": 0.9,
+    "content": "Hosting không mua thứ hạng trực tiếp. Hạ tầng tác động gián tiếp qua uptime, latency, khả năng phục vụ bot và trải nghiệm tải trang. Cache, CDN, tối ưu ảnh, database và mã nguồn thường quan trọng ngang hoặc hơn việc nâng gói. Đổi hosting chỉ hợp lý khi bằng chứng monitoring cho thấy server response, lỗi 5xx, resource saturation hoặc giới hạn nền tảng là nút thắt."
+  },
+  {
+    "id": "seo-ecommerce-checklist",
+    "title": "Checklist SEO kỹ thuật cho shop",
+    "sourceUrl": "https://developers.google.com/search/docs/appearance/structured-data/product",
+    "sourceType": "official-google",
+    "verifiedAt": "2026-10-23",
+    "category": "seo",
+    "keywords": [
+      "shop",
+      "ecommerce",
+      "product schema",
+      "category",
+      "filter",
+      "seo"
+    ],
+    "authority": 0.98,
+    "content": "Shop cần title/description riêng cho trang sản phẩm và danh mục, URL ổn định, canonical nhất quán, internal link crawlable, sitemap cập nhật và Product structured data khớp giá/tình trạng hiển thị. Faceted navigation và filter có thể tạo nhiều URL gần trùng; cần chiến lược crawl/index có chủ đích. Không đưa giá hoặc availability giả vào schema."
+  },
+  {
+    "id": "rag-quality",
+    "title": "Đánh giá RAG bằng faithfulness, relevance và retrieval recall",
+    "sourceUrl": "https://langfuse.com/resources/engineering/rag-faithfulness-evaluation",
+    "sourceType": "official-langfuse",
+    "verifiedAt": "2026-10-23",
+    "category": "ai-quality",
+    "keywords": [
+      "rag",
+      "faithfulness",
+      "grounded",
+      "retrieval",
+      "citation",
+      "evaluation"
+    ],
+    "authority": 1,
+    "content": "Faithfulness đo tỷ lệ claim trong câu trả lời được context truy xuất hỗ trợ. Answer relevance đo câu trả lời có giải quyết đúng câu hỏi. Retrieval recall đo retriever có lấy được tài liệu cần thiết. Citation presence chỉ là pre-filter, không chứng minh claim được nguồn hỗ trợ. Để debug phải giữ lại câu hỏi, câu trả lời và chính xác các đoạn context đã dùng."
+  },
+  {
+    "id": "competition-brief",
+    "title": "Đề 01 VIBE-CODING 2026",
+    "sourceUrl": "https://vibecoding.info.vn/de-bai",
+    "sourceType": "competition-official",
+    "verifiedAt": "2026-10-23",
+    "category": "product",
+    "keywords": ["vibe coding", "đề 01", "wizard", "recommendation", "lead"],
+    "authority": 0.94,
+    "content": "Đề 01 yêu cầu form nhu cầu gồm loại website, lượt truy cập, ngân sách và tên miền; AI gợi ý một gói chính và hai thay thế; bảng so sánh ba gói; form tên và số điện thoại lưu localStorage; FAQ tối thiểu năm câu."
+  }
+]

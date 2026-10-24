@@ -1,0 +1,2 @@
+FROM ./output-chatbot-v2/gguf_gguf/Qwen3.5-4B.Q8_0.gguf
+PARAMETER num_ctx 16384

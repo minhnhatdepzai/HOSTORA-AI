@@ -1,0 +1,42 @@
+[
+  {
+    "query": "shared hosting cloud và VPS khác nhau thế nào",
+    "expectedIds": ["hosting-decision", "hosting-basics"]
+  },
+  {
+    "query": "giá khuyến mãi khác giá gia hạn và cần tính VAT ra sao",
+    "expectedIds": ["pricing-snapshot"]
+  },
+  {
+    "query": "AZDIGI Pro Hosting có CPU RAM backup gì",
+    "expectedIds": ["azdigi-pro-hosting"]
+  },
+  {
+    "query": "Vietnix WordPress có những gói nào và backup bao nhiêu lần",
+    "expectedIds": ["vietnix-wordpress-plans"]
+  },
+  {
+    "query": "Tino có VPS email domain và hosting không",
+    "expectedIds": ["tino-ecosystem"]
+  },
+  {
+    "query": "canonical xử lý URL trùng lặp như thế nào",
+    "expectedIds": ["seo-canonical"]
+  },
+  {
+    "query": "sitemap có giúp Google index chắc chắn không",
+    "expectedIds": ["seo-sitemap", "seo-crawling-indexing"]
+  },
+  {
+    "query": "LCP INP CLS bao nhiêu là tốt",
+    "expectedIds": ["core-web-vitals"]
+  },
+  {
+    "query": "SEO shop cần product structured data canonical và internal link",
+    "expectedIds": ["seo-ecommerce-checklist", "seo-structured-data"]
+  },
+  {
+    "query": "đánh giá RAG faithfulness relevance retrieval recall",
+    "expectedIds": ["rag-quality"]
+  }
+]
