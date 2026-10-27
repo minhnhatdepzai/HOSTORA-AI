@@ -1,0 +1,55 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Luồng sản phẩm và đơn hàng HOSTORA",
+    "output": ".archify/workflow-product-20261027-180546/hostora-product-flow.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/minhnhatdepzai/HOSTORA-AI.git",
+      "provider": "github",
+      "link_mode": "web",
+      "revision": "be65ecccf4d44fa15e4d1aac8247eb8aec1ac3cd"
+    }
+  },
+  "lanes": [
+    { "id": "customer", "label": "Khách hàng" },
+    { "id": "platform", "label": "HOSTORA web + app" },
+    { "id": "admin", "label": "Quản trị viên" },
+    { "id": "payment", "label": "Thanh toán & email", "variant": "exception" }
+  ],
+  "phases": [
+    { "id": "discover", "label": "Khám phá", "fromCol": 0, "toCol": 1 },
+    { "id": "order", "label": "Yêu cầu và báo giá", "fromCol": 2, "toCol": 3, "variant": "emphasis" },
+    { "id": "pay", "label": "Thanh toán và hậu mãi", "fromCol": 4, "toCol": 5, "variant": "dashed" }
+  ],
+  "mainPath": ["browse", "advice", "request", "queue", "quote", "invoice", "checkout", "confirm", "status"],
+  "nodes": [
+    { "id": "browse", "lane": "customer", "col": 0, "type": "external", "label": "Xem dịch vụ", "sublabel": "hosting · domain · email", "sources": [{ "path": "components/app-shell.tsx", "line": 19, "end_line": 33 }] },
+    { "id": "advice", "lane": "platform", "col": 1, "type": "backend", "label": "Hiểu nhu cầu", "sublabel": "AI hỏi + code xếp hạng", "sources": [{ "path": "app/api/recommend/route.ts", "line": 1, "end_line": 19 }, { "path": "lib/recommendation.ts", "line": 10, "end_line": 96 }] },
+    { "id": "request", "lane": "customer", "col": 2, "type": "frontend", "label": "Gửi hồ sơ mua", "sublabel": "doanh nghiệp · ngân sách · lịch", "sources": [{ "path": "app/api/payments/requests/route.ts", "line": 9, "end_line": 52 }] },
+    { "id": "queue", "lane": "platform", "col": 2, "type": "database", "label": "Lưu yêu cầu", "sublabel": "mã truy cập riêng", "sources": [{ "path": "app/api/payments/requests/route.ts", "line": 34, "end_line": 52 }, { "path": "lib/payments/email.ts", "line": 131, "end_line": 158 }] },
+    { "id": "quote", "lane": "admin", "col": 3, "type": "security", "label": "Kiểm tra và chốt giá", "sublabel": "đăng nhập · lọc · xác nhận", "sources": [{ "path": "app/api/admin/payments/orders/route.ts", "line": 21, "end_line": 49 }] },
+    { "id": "invoice", "lane": "platform", "col": 4, "type": "backend", "label": "Phát hành hóa đơn", "sublabel": "giá · voucher · điều kiện", "sources": [{ "path": "lib/payments/store.ts", "line": 391, "end_line": 427 }, { "path": "lib/payments/email.ts", "line": 171, "end_line": 185 }] },
+    { "id": "checkout", "lane": "customer", "col": 4, "type": "frontend", "label": "Chọn cách thanh toán", "sublabel": "Stripe hoặc VNPay", "sources": [{ "path": "app/api/payments/orders/[id]/checkout/route.ts", "line": 11, "end_line": 47 }] },
+    { "id": "confirm", "lane": "payment", "col": 5, "type": "cloud", "label": "Cổng xác nhận", "sublabel": "chữ ký + số tiền + mã giao dịch", "sources": [{ "path": "app/api/payments/stripe/webhook/route.ts", "line": 1, "end_line": 47 }, { "path": "app/api/payments/vnpay/ipn/route.ts", "line": 1, "end_line": 27 }] },
+    { "id": "status", "lane": "platform", "col": 5, "type": "database", "label": "Cập nhật đơn", "sublabel": "paid · refund · cancelled", "sources": [{ "path": "lib/payments/store.ts", "line": 561, "end_line": 585 }, { "path": "lib/payments/email.ts", "line": 188, "end_line": 210 }] },
+    { "id": "refund", "lane": "admin", "col": 5, "type": "security", "label": "Hủy / hoàn tiền", "sublabel": "duyệt và đối chiếu", "sources": [{ "path": "lib/payments/store.ts", "line": 623, "end_line": 706 }] }
+  ],
+  "edges": [
+    { "id": "browse-advice", "from": "browse", "to": "advice", "label": "mô tả nhu cầu", "variant": "emphasis" },
+    { "id": "advice-request", "from": "advice", "to": "request", "label": "gói phù hợp" },
+    { "id": "request-queue", "from": "request", "to": "queue", "label": "hồ sơ hợp lệ" },
+    { "id": "queue-quote", "from": "queue", "to": "quote", "label": "hàng chờ xử lý" },
+    { "id": "quote-invoice", "from": "quote", "to": "invoice", "label": "giá cuối cùng", "variant": "security" },
+    { "id": "invoice-checkout", "from": "invoice", "to": "checkout", "label": "email + mã truy cập" },
+    { "id": "checkout-confirm", "from": "checkout", "to": "confirm", "label": "tạo phiên", "variant": "emphasis" },
+    { "id": "confirm-status", "from": "confirm", "to": "status", "label": "bằng chứng giao dịch", "variant": "security" },
+    { "id": "status-refund", "from": "status", "to": "refund", "label": "khi khách yêu cầu", "variant": "dashed", "role": "branch" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "Một nguồn sự thật", "items": ["Website, app và trang quản trị cùng gọi một API", "Tổng đơn lấy từ SQLite, không lấy theo số dòng đang hiển thị"] },
+    { "dot": "amber", "title": "Chốt giá có người duyệt", "items": ["Khách gửi nhu cầu trước", "Quản trị viên xác nhận giá và điều kiện rồi mới phát hành hóa đơn"] },
+    { "dot": "rose", "title": "Trạng thái tiền", "items": ["Chỉ callback/IPN hợp lệ mới đánh dấu đã thanh toán", "Hoàn tiền có hàng chờ và lịch sử sự kiện"] }
+  ]
+}

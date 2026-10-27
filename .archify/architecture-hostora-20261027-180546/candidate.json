@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kiến trúc HOSTORA AI",
+    "output": ".archify/architecture-hostora-20261027-180546/hostora-system.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/minhnhatdepzai/HOSTORA-AI.git",
+      "provider": "github",
+      "link_mode": "web",
+      "revision": "be65ecccf4d44fa15e4d1aac8247eb8aec1ac3cd"
+    },
+    "views": [
+      { "id": "customer", "label": "Hành trình khách hàng", "focus": ["customer", "web", "mobile", "api"] },
+      { "id": "ai", "label": "Luồng AI local", "focus": ["api", "guards", "rag", "ollama"] },
+      { "id": "commerce", "label": "Dữ liệu vận hành", "focus": ["api", "domain", "stores"] }
+    ]
+  },
+  "components": [
+    {
+      "id": "customer", "type": "external", "label": "Khách hàng", "sublabel": "chủ shop / doanh nghiệp", "pos": [40, 245], "size": [140, 68],
+      "sources": [{ "path": "components/app-shell.tsx", "line": 19, "end_line": 33, "label": "Điều hướng chính" }]
+    },
+    {
+      "id": "web", "type": "frontend", "label": "Website", "sublabel": "Next.js · desktop / mobile", "pos": [245, 135], "size": [155, 68],
+      "sources": [{ "path": "components/app-shell.tsx", "line": 19, "end_line": 33, "label": "Các khu vực khách dùng" }]
+    },
+    {
+      "id": "mobile", "type": "frontend", "label": "Ứng dụng Android", "sublabel": "Expo Router · React Native", "pos": [245, 355], "size": [155, 68],
+      "sources": [{ "path": "mobile/src/lib/api.ts", "line": 4, "end_line": 48, "label": "Kết nối API dùng chung" }]
+    },
+    {
+      "id": "api", "type": "backend", "label": "Máy chủ HOSTORA", "sublabel": "Next.js routes dùng chung", "pos": [480, 245], "size": [165, 72], "tag": "một nguồn dữ liệu",
+      "sources": [{ "path": "app/api/ai/chat/route.ts", "line": 52, "end_line": 102, "label": "Điểm vào trợ lý" }, { "path": "app/api/payments/requests/route.ts", "line": 34, "end_line": 55, "label": "Điểm vào mua hàng" }]
+    },
+    {
+      "id": "guards", "type": "security", "label": "Kiểm tra & rào chắn", "sublabel": "Zod · che PII · quy tắc", "pos": [710, 70], "size": [170, 74], "tag": "không giao tool tự do",
+      "sources": [{ "path": "app/api/ai/chat/route.ts", "line": 52, "end_line": 98, "label": "PII và guard tất định" }, { "path": "lib/ollama.ts", "line": 50, "end_line": 109, "label": "JSON schema" }]
+    },
+    {
+      "id": "domain", "type": "backend", "label": "Quyết định tất định", "sublabel": "gói · giá · trạng thái", "pos": [710, 245], "size": [170, 74], "tag": "LLM không ghi đè",
+      "sources": [{ "path": "lib/recommendation.ts", "line": 10, "end_line": 96, "label": "Chấm điểm hosting" }, { "path": "lib/payments/store.ts", "line": 561, "end_line": 585, "label": "Xác nhận thanh toán" }]
+    },
+    {
+      "id": "rag", "type": "backend", "label": "RAG có nguồn", "sublabel": "BM25 + vector + RRF", "pos": [710, 420], "size": [170, 74], "tag": "có fallback",
+      "sources": [{ "path": "lib/rag.ts", "line": 198, "end_line": 292, "label": "Truy xuất hybrid" }, { "path": "app/api/ai/chat/route.ts", "line": 162, "end_line": 197, "label": "Context và citation" }]
+    },
+    {
+      "id": "ollama", "type": "backend", "label": "Ollama local", "sublabel": "chat · vision · embedding", "pos": [960, 185], "size": [170, 82], "tag": "loopback only",
+      "sources": [{ "path": "lib/ollama.ts", "line": 3, "end_line": 12, "label": "Model và địa chỉ" }, { "path": "lib/ollama.ts", "line": 50, "end_line": 224, "label": "Inference local" }]
+    },
+    {
+      "id": "stores", "type": "database", "label": "Kho dữ liệu local", "sublabel": "SQLite + JSON + catalog", "pos": [960, 390], "size": [170, 82], "tag": "không commit PII",
+      "sources": [{ "path": "lib/site-studio-store.ts", "line": 30, "end_line": 45, "label": "Project website" }, { "path": "lib/payments/store.ts", "line": 711, "end_line": 714, "label": "Kho đơn hàng" }, { "path": "data/hosting-catalog.ts", "line": 1, "label": "Catalog hosting" }]
+    }
+  ],
+  "connections": [
+    { "id": "customer-web", "from": "customer", "to": "web", "label": "mở website", "variant": "emphasis" },
+    { "id": "customer-mobile", "from": "customer", "to": "mobile", "label": "dùng app", "variant": "emphasis" },
+    { "id": "web-api", "from": "web", "to": "api", "label": "HTTPS / JSON" },
+    { "id": "mobile-api", "from": "mobile", "to": "api", "label": "LAN / HTTPS" },
+    { "id": "api-guards", "from": "api", "to": "guards", "label": "validate + redact", "variant": "security" },
+    { "id": "guards-domain", "from": "guards", "to": "domain", "label": "dữ liệu hợp lệ" },
+    { "id": "guards-rag", "from": "guards", "to": "rag", "label": "câu hỏi sạch" },
+    { "id": "domain-ollama", "from": "domain", "to": "ollama", "label": "giải thích có cấu trúc" },
+    { "id": "rag-ollama", "from": "rag", "to": "ollama", "label": "context có nguồn", "variant": "emphasis" },
+    { "id": "api-stores", "from": "api", "to": "stores", "label": "đọc / ghi", "variant": "dashed" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "Ranh giới quyết định", "items": ["Giá, thứ hạng gói và trạng thái đơn do code quyết định", "AI chỉ trích xuất, soạn nội dung và giải thích"] },
+    { "dot": "cyan", "title": "Local-first", "items": ["Ollama mặc định chỉ ở 127.0.0.1", "Website và app dùng chung máy chủ HOSTORA"] },
+    { "dot": "rose", "title": "Dữ liệu nhạy cảm", "items": ["Che thông tin liên hệ trước khi gọi model", "Project và đơn hàng lưu cục bộ, không đưa vào RAG"] }
+  ]
+}
