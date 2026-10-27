@@ -3,7 +3,7 @@
   "diagram_type": "architecture",
   "meta": {
     "title": "Kiến trúc HOSTORA AI",
-    "output": ".archify/architecture-hostora-20261027-180546/hostora-system.html",
+    "output": "docs/architecture/hostora-system.html",
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/minhnhatdepzai/HOSTORA-AI.git",

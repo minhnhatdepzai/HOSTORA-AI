@@ -3,7 +3,7 @@
   "diagram_type": "workflow",
   "meta": {
     "title": "Luồng AI tạo website của HOSTORA Studio",
-    "output": ".archify/workflow-studio-20261027-180546/hostora-site-studio-flow.html",
+    "output": "docs/architecture/hostora-site-studio-flow.html",
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/minhnhatdepzai/HOSTORA-AI.git",
@@ -34,7 +34,7 @@
     { "id": "recommend", "lane": "render", "col": 4, "type": "backend", "label": "Gợi ý hosting", "sublabel": "hàm tất định hiện có", "sources": [{ "path": "lib/site-studio-workflow.ts", "line": 165, "end_line": 185 }, { "path": "lib/site-studio.ts", "line": 59, "end_line": 78 }] },
     { "id": "save", "lane": "api", "col": 4, "type": "database", "label": "Lưu project", "sublabel": "JSON mode 0600 + link riêng", "sources": [{ "path": "lib/site-studio-store.ts", "line": 30, "end_line": 45 }, { "path": "lib/site-studio-store.ts", "line": 111, "end_line": 155 }] },
     { "id": "preview", "lane": "delivery", "col": 5, "type": "frontend", "label": "Preview tương tác", "sublabel": "Three.js + GSAP", "sources": [{ "path": "lib/site-studio.ts", "line": 185, "end_line": 290 }] },
-    { "id": "zip", "lane": "delivery", "col": 5, "type": "cloud", "label": "Tải ZIP", "sublabel": "HTML + vendor cục bộ", "sources": [{ "path": "app/api/ai/site-studio/[id]/download/route.ts", "line": 8, "end_line": 55 }] },
+    { "id": "zip", "lane": "render", "col": 5, "type": "cloud", "label": "Tải ZIP", "sublabel": "HTML + vendor cục bộ", "sources": [{ "path": "app/api/ai/site-studio/[id]/download/route.ts", "line": 8, "end_line": 55 }] },
     { "id": "revision", "lane": "customer", "col": 5, "type": "external", "label": "Chat để chỉnh", "sublabel": "nội dung · màu · giọng văn", "sources": [{ "path": "app/api/ai/site-studio/[id]/route.ts", "line": 30, "end_line": 69 }, { "path": "app/api/ai/site-studio/[id]/route.ts", "line": 110, "end_line": 201 }] },
     { "id": "github", "lane": "delivery", "col": 4, "type": "cloud", "label": "Repo GitHub riêng", "sublabel": "tùy chọn khi đã bật", "sources": [{ "path": "lib/site-studio-store.ts", "line": 129, "end_line": 175 }] }
   ],

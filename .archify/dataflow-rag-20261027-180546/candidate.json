@@ -3,7 +3,7 @@
   "diagram_type": "dataflow",
   "meta": {
     "title": "Luồng RAG local của HOSTORA",
-    "output": ".archify/dataflow-rag-20261027-180546/hostora-rag-flow.html",
+    "output": "docs/architecture/hostora-rag-flow.html",
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/minhnhatdepzai/HOSTORA-AI.git",

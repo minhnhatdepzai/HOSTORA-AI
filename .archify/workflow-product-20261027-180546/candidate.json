@@ -3,7 +3,7 @@
   "diagram_type": "workflow",
   "meta": {
     "title": "Luồng sản phẩm và đơn hàng HOSTORA",
-    "output": ".archify/workflow-product-20261027-180546/hostora-product-flow.html",
+    "output": "docs/architecture/hostora-product-flow.html",
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/minhnhatdepzai/HOSTORA-AI.git",
