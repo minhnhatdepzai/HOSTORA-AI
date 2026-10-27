@@ -1,0 +1,197 @@
+- generic [active] [ref=f1e1]:
+  - main [ref=f1e2]:
+    - generic [ref=f1e121]:
+      - complementary [ref=f1e122]:
+        - link [ref=f1e123] [cursor=pointer]:
+          - /url: /
+          - generic [ref=f1e124]:
+            - strong [ref=f1e125]: HOSTORA
+            - text: TRUNG TÂM QUẢN TRỊ
+        - navigation "Điều hướng quản trị" [ref=f1e126]:
+          - link "Tổng quan" [ref=f1e127] [cursor=pointer]:
+            - /url: "#tong-quan"
+          - link "Khách đăng ký" [ref=f1e133] [cursor=pointer]:
+            - /url: "#khach-hang"
+          - link "Dịch vụ" [ref=f1e139] [cursor=pointer]:
+            - /url: "#dich-vu"
+          - link "Dữ liệu" [ref=f1e142] [cursor=pointer]:
+            - /url: "#du-lieu"
+          - link "Đơn hàng & hoàn tiền" [ref=f1e147] [cursor=pointer]:
+            - /url: /admin/orders
+        - generic [ref=f1e153]:
+          - generic [ref=f1e154]: Dữ liệu cục bộ
+          - paragraph [ref=f1e159]: Đơn hàng dùng chung backend và tự đồng bộ từ website, ứng dụng. Hồ sơ tư vấn cũ vẫn lưu trong trình duyệt này.
+      - generic [ref=f1e160]:
+        - generic [ref=f1e162]:
+          - generic [ref=f1e164]:
+            - paragraph [ref=f1e165]: Bảng điều hành
+            - paragraph [ref=f1e166]: Theo dõi và xử lý công việc trong ngày
+          - generic [ref=f1e167]:
+            - generic [ref=f1e168]: Dịch vụ sẵn sàng
+            - link "Về trang khách hàng" [ref=f1e170] [cursor=pointer]:
+              - /url: /
+        - main [ref=f1e171]:
+          - generic [ref=f1e172]:
+            - generic [ref=f1e173]:
+              - generic [ref=f1e174]:
+                - paragraph [ref=f1e175]: TRUNG TÂM VẬN HÀNH · HOSTORA
+                - heading "Tình trạng tư vấn và dữ liệu." [level=1] [ref=f1e177]:
+                  - generic [ref=f1e178]:
+                    - generic [ref=f1e179]:
+                      - generic [aria-hidden] [ref=f1e180]: T
+                      - generic [aria-hidden] [ref=f1e181]: ì
+                      - generic [aria-hidden] [ref=f1e182]: "n"
+                      - generic [aria-hidden] [ref=f1e183]: h
+                    - generic [ref=f1e184]:
+                      - generic [aria-hidden] [ref=f1e185]: t
+                      - generic [aria-hidden] [ref=f1e186]: r
+                      - generic [aria-hidden] [ref=f1e187]: ạ
+                      - generic [aria-hidden] [ref=f1e188]: "n"
+                      - generic [aria-hidden] [ref=f1e189]: g
+                    - generic [ref=f1e190]:
+                      - generic [aria-hidden] [ref=f1e191]: t
+                      - generic [aria-hidden] [ref=f1e192]: ư
+                    - generic [ref=f1e193]:
+                      - generic [aria-hidden] [ref=f1e194]: v
+                      - generic [aria-hidden] [ref=f1e195]: ấ
+                      - generic [aria-hidden] [ref=f1e196]: "n"
+                    - generic [ref=f1e197]:
+                      - generic [aria-hidden] [ref=f1e198]: v
+                      - generic [aria-hidden] [ref=f1e199]: à
+                    - generic [ref=f1e200]:
+                      - generic [aria-hidden] [ref=f1e201]: d
+                      - generic [aria-hidden] [ref=f1e202]: ữ
+                    - generic [ref=f1e203]:
+                      - generic [aria-hidden] [ref=f1e204]: l
+                      - generic [aria-hidden] [ref=f1e205]: i
+                      - generic [aria-hidden] [ref=f1e206]: ệ
+                      - generic [aria-hidden] [ref=f1e207]: u
+                      - generic [aria-hidden] [ref=f1e208]: .
+                - paragraph [ref=f1e209]: Theo dõi yêu cầu mua và đơn hàng từ website, ứng dụng trên cùng backend; dữ liệu tư vấn cũ vẫn được giữ cục bộ.
+              - generic [ref=f1e210]:
+                - button "Kiểm tra lại" [ref=f1e211] [cursor=pointer]
+                - button "Sao lưu dữ liệu" [ref=f1e217] [cursor=pointer]
+            - generic [ref=f1e220]:
+              - generic [ref=f1e221]: Đơn hàng dùng backend chung
+              - generic [ref=f1e226]: Danh mục kiểm tra gần nhất · 2026-10-23
+            - generic [ref=f1e229]:
+              - article [ref=f1e230]:
+                - paragraph [ref=f1e237]: Tổng đăng ký
+                - paragraph [ref=f1e238]: "0"
+                - paragraph [ref=f1e239]: 0 khách chưa xử lý
+              - article [ref=f1e240]:
+                - paragraph [ref=f1e246]: Khách tiềm năng
+                - paragraph [ref=f1e247]: "0"
+                - paragraph [ref=f1e248]: Chưa có dữ liệu
+              - article [ref=f1e249]:
+                - paragraph [ref=f1e256]: Đơn & yêu cầu mới
+                - paragraph [ref=f1e257]: "2"
+                - paragraph [ref=f1e258]: 0 đơn đã thanh toán · 0 ₫
+              - article [ref=f1e259]:
+                - paragraph [ref=f1e263]: Tình trạng dịch vụ
+                - paragraph [ref=f1e264]: Sẵn sàng
+                - paragraph [ref=f1e265]: Kiểm tra lúc 23:23:54
+          - generic [ref=f1e266]:
+            - generic [ref=f1e267]:
+              - generic [ref=f1e268]:
+                - generic [ref=f1e269]:
+                  - paragraph [ref=f1e270]: Tiến độ xử lý
+                  - heading "Trạng thái khách đăng ký" [level=2] [ref=f1e271]
+                - generic [ref=f1e272]: 0 mục
+              - generic [ref=f1e273]:
+                - generic [ref=f1e275]:
+                  - generic [ref=f1e276]: Mới
+                  - strong [ref=f1e277]: "0"
+                - generic [ref=f1e280]:
+                  - generic [ref=f1e281]: Đã liên hệ
+                  - strong [ref=f1e282]: "0"
+                - generic [ref=f1e285]:
+                  - generic [ref=f1e286]: Tiềm năng
+                  - strong [ref=f1e287]: "0"
+                - generic [ref=f1e290]:
+                  - generic [ref=f1e291]: Đã hoàn tất
+                  - strong [ref=f1e292]: "0"
+            - generic [ref=f1e294]:
+              - generic [ref=f1e296]:
+                - paragraph [ref=f1e297]: Ưu tiên hôm nay
+                - heading "Việc cần làm tiếp" [level=2] [ref=f1e298]
+              - generic [ref=f1e302]:
+                - generic [ref=f1e303]: Xử lý 1 yêu cầu mua mới
+                - generic [ref=f1e308]: Không còn khách mới chờ xử lý
+                - generic [ref=f1e314]: Dịch vụ tư vấn đang sẵn sàng
+                - generic [ref=f1e320]: 9 gói chưa có giá gia hạn
+                - generic [ref=f1e325]: Chưa có hồ sơ nhu cầu trong trình duyệt
+          - generic [ref=f1e330]:
+            - generic [ref=f1e331]:
+              - generic [ref=f1e332]:
+                - generic [ref=f1e333]:
+                  - paragraph [ref=f1e334]: Quản lý khách hàng
+                  - heading "Danh sách đăng ký tư vấn" [level=2] [ref=f1e335]
+                - generic [ref=f1e336]:
+                  - button "Tải CSV" [disabled] [ref=f1e337]
+                  - button "Xóa tất cả" [disabled] [ref=f1e342]
+              - generic [ref=f1e346]:
+                - generic [ref=f1e347]:
+                  - generic [ref=f1e351]: Tìm khách hàng
+                  - textbox "Tìm khách hàng" [ref=f1e352]:
+                    - /placeholder: Tìm theo tên, số điện thoại hoặc gói...
+                - combobox "Lọc theo trạng thái" [ref=f1e353]:
+                  - option "Tất cả trạng thái" [selected]
+                  - option "Mới"
+                  - option "Đã liên hệ"
+                  - option "Tiềm năng"
+                  - option "Đã hoàn tất"
+            - generic [ref=f1e355]:
+              - paragraph [ref=f1e361]: Chưa có đăng ký tư vấn
+              - paragraph [ref=f1e362]: Đăng ký mới trên trình duyệt này sẽ xuất hiện tại đây.
+          - generic [ref=f1e363]:
+            - generic [ref=f1e364]:
+              - generic [ref=f1e365]:
+                - generic [ref=f1e366]:
+                  - paragraph [ref=f1e367]: Tình trạng vận hành
+                  - heading "Các chức năng chính" [level=2] [ref=f1e368]
+                - button "Làm mới tình trạng" [ref=f1e369]
+              - generic [ref=f1e375]:
+                - generic [ref=f1e380]:
+                  - paragraph [ref=f1e381]: Tư vấn và hỏi đáp
+                  - paragraph [ref=f1e382]: Sẵn sàng
+                - generic [ref=f1e388]:
+                  - paragraph [ref=f1e389]: Hiểu mô tả nhu cầu
+                  - paragraph [ref=f1e390]: Sẵn sàng
+                - generic [ref=f1e397]:
+                  - paragraph [ref=f1e398]: Tra cứu tài liệu
+                  - paragraph [ref=f1e399]: Sẵn sàng
+                - generic [ref=f1e407]:
+                  - paragraph [ref=f1e408]: Bảng giá và gợi ý gói
+                  - paragraph [ref=f1e409]: Sẵn sàng
+            - generic [ref=f1e410]:
+              - paragraph [ref=f1e411]: Nhu cầu gần nhất
+              - heading "Hồ sơ khách hàng" [level=2] [ref=f1e412]
+              - paragraph [ref=f1e413]: Chưa có hồ sơ nhu cầu trên trình duyệt này.
+          - generic [ref=f1e414]:
+            - generic [ref=f1e415]:
+              - generic [ref=f1e417]:
+                - paragraph [ref=f1e418]: Độ phủ dữ liệu
+                - heading "Nguồn đang sử dụng" [level=2] [ref=f1e419]
+              - generic [ref=f1e423]:
+                - generic [ref=f1e424]:
+                  - paragraph [ref=f1e425]: "13"
+                  - paragraph [ref=f1e426]: Gói hosting
+                - generic [ref=f1e427]:
+                  - paragraph [ref=f1e428]: "26"
+                  - paragraph [ref=f1e429]: Sản phẩm liên quan
+                - generic [ref=f1e430]:
+                  - paragraph [ref=f1e431]: "6"
+                  - paragraph [ref=f1e432]: Nhà cung cấp
+                - generic [ref=f1e433]:
+                  - paragraph [ref=f1e434]: "9"
+                  - paragraph [ref=f1e435]: Gói chưa rõ giá gia hạn
+              - paragraph [ref=f1e436]: Dữ liệu gần nhất được đối chiếu ngày 23/10/2026. Giá vẫn cần kiểm tra lại trước khi thanh toán.
+            - generic [ref=f1e437]:
+              - paragraph [ref=f1e438]: Mối quan tâm
+              - heading "Gói được chọn nhiều" [level=2] [ref=f1e439]
+              - paragraph [ref=f1e440]: Chưa đủ dữ liệu để xếp hạng.
+          - generic [ref=f1e445]:
+            - heading "Phạm vi quản trị hiện tại" [level=2] [ref=f1e446]
+            - paragraph [ref=f1e447]: Trang này không phải hệ thống nhiều tài khoản. Nó chỉ đọc và cập nhật dữ liệu trong trình duyệt hiện tại; dữ liệu đăng ký trong APK vẫn nằm trên điện thoại. Trước khi dùng công khai cho nhiều nhân viên, cần bổ sung đăng nhập và kho dữ liệu chung có phân quyền.
+  - alert [ref=f1e21]: Trung tâm quản trị · HOSTORA AI

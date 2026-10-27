@@ -47,6 +47,22 @@ const expansions = [
     /vps|server|api|ứng dụng riêng/u,
     ["tự quản trị", "CPU", "RAM", "monitoring", "backup"],
   ],
+  [
+    /dễ tiếp cận|accessibility|a11y|bàn phím|keyboard|focus/u,
+    ["WCAG", "focus visible", "accessible name", "form label", "target size"],
+  ],
+  [
+    /cinematic|chuyển động|animation|motion|three(?:\.js)?|gsap/u,
+    ["GSAP", "Three.js", "prefers-reduced-motion", "WebGL", "dispose"],
+  ],
+  [
+    /responsive|mobile|điện thoại|màn hình nhỏ/u,
+    ["responsive design", "viewport", "touch target", "responsive images"],
+  ],
+  [
+    /chuyển đổi|conversion|cta|kéo khách|lead/u,
+    ["call to action", "bằng chứng", "ma sát", "form", "giá trị"],
+  ],
 ];
 const tokenize = (value) =>
   value
@@ -73,20 +89,53 @@ const cosine = (a, b) => {
   }
   return dot / (Math.sqrt(aa) * Math.sqrt(bb) || 1);
 };
-const lexical = (query, doc) => {
-  const words = new Set(tokenize(query));
-  const title = doc.title.toLocaleLowerCase("vi");
-  const keywords = doc.keywords.join(" ").toLocaleLowerCase("vi");
-  const content = doc.content.toLocaleLowerCase("vi");
-  const points = [...words].reduce(
-    (sum, word) =>
-      sum +
-      (title.includes(word) ? 3 : 0) +
-      (keywords.includes(word) ? 2 : 0) +
-      (content.includes(word) ? 1 : 0),
-    0,
-  );
-  return Math.min(1, points / Math.max(words.size * 3, 1));
+const weightedTokens = (doc) => [
+  ...tokenize(doc.title),
+  ...tokenize(doc.title),
+  ...tokenize(doc.title),
+  ...tokenize(doc.keywords.join(" ")),
+  ...tokenize(doc.keywords.join(" ")),
+  ...tokenize(doc.content),
+];
+const bm25 = (query, docs) => {
+  const terms = [...new Set(tokenize(query))];
+  const tokenized = docs.map((doc) => ({ doc, tokens: weightedTokens(doc) }));
+  const averageLength =
+    tokenized.reduce((sum, item) => sum + item.tokens.length, 0) /
+      Math.max(tokenized.length, 1) || 1;
+  const scores = new Map();
+  for (const { doc, tokens } of tokenized) {
+    const frequencies = new Map();
+    for (const token of tokens)
+      frequencies.set(token, (frequencies.get(token) ?? 0) + 1);
+    let score = 0;
+    for (const term of terms) {
+      const tf = frequencies.get(term) ?? 0;
+      if (!tf) continue;
+      const df = tokenized.filter((item) => item.tokens.includes(term)).length;
+      const idf = Math.log(1 + (docs.length - df + 0.5) / (df + 0.5));
+      const k1 = 1.35;
+      const b = 0.72;
+      score +=
+        idf *
+        ((tf * (k1 + 1)) /
+          (tf + k1 * (1 - b + b * (tokens.length / averageLength))));
+    }
+    scores.set(doc.id, score);
+  }
+  return scores;
+};
+const rrf = (semanticIds, lexicalIds, k = 60) => {
+  const scores = new Map();
+  for (const [ids, weight] of [
+    [semanticIds, 0.65],
+    [lexicalIds, 0.35],
+  ]) {
+    ids.forEach((id, index) =>
+      scores.set(id, (scores.get(id) ?? 0) + weight / (k + index + 1)),
+    );
+  }
+  return scores;
 };
 
 const queries = cases.map((item) => expand(item.query));
@@ -109,13 +158,30 @@ const { embeddings } = await response.json();
 let recalled = 0;
 let reciprocalRanks = 0;
 const details = cases.map((item, caseIndex) => {
+  const semanticScores = new Map(
+    index.documents.map((doc) => [
+      doc.id,
+      cosine(embeddings[caseIndex], doc.embedding),
+    ]),
+  );
+  const lexicalScores = bm25(queries[caseIndex], index.documents);
+  const semanticRank = [...index.documents]
+    .sort(
+      (a, b) =>
+        (semanticScores.get(b.id) ?? 0) - (semanticScores.get(a.id) ?? 0),
+    )
+    .map((doc) => doc.id);
+  const lexicalRank = [...index.documents]
+    .sort(
+      (a, b) =>
+        (lexicalScores.get(b.id) ?? 0) - (lexicalScores.get(a.id) ?? 0),
+    )
+    .map((doc) => doc.id);
+  const fusedScores = rrf(semanticRank, lexicalRank);
   const ranked = index.documents
     .map((doc) => ({
       id: doc.id,
-      score:
-        cosine(embeddings[caseIndex], doc.embedding) * 0.68 +
-        lexical(queries[caseIndex], doc) * 0.24 +
-        doc.authority * 0.08,
+      score: (fusedScores.get(doc.id) ?? 0) + doc.authority * 0.0005,
     }))
     .sort((a, b) => b.score - a.score)
     .slice(0, topK);
@@ -140,6 +206,8 @@ const metrics = {
   topK,
   recallAtK: recalled / cases.length,
   mrrAtK: reciprocalRanks / cases.length,
+  hitAt1:
+    details.filter((item) => item.hitRank === 1).length / cases.length,
 };
 console.log(JSON.stringify({ metrics, details }, null, 2));
 if (metrics.recallAtK < 0.8) process.exitCode = 1;

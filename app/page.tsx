@@ -1,223 +1,357 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import {
   ArrowRight,
-  Bot,
-  Calculator,
   Check,
-  ChevronRight,
-  DatabaseZap,
   Download,
   Gauge,
-  LockKeyhole,
-  Radar,
-  ServerCog,
+  Globe2,
+  ReceiptText,
+  Server,
   Sparkles,
 } from "lucide-react";
-import { HeroVisual } from "@/components/hero-visual";
 import { FAQ } from "@/components/faq";
+import { HeroVisual } from "@/components/hero-visual";
+import { TextRevealHeading } from "@/components/text-reveal-heading";
+import { StructuredData } from "@/components/structured-data";
+import ClickSpark from "@/components/ui/click-spark";
+import { hostingCatalog } from "@/data/hosting-catalog";
+import { pageMetadata } from "@/lib/page-metadata";
+import { absoluteSiteUrl } from "@/lib/site-url";
+
+export const metadata: Metadata = pageMetadata({
+  title: "Hosting, tên miền và website AI cho doanh nghiệp Việt",
+  description:
+    "Tạo thử website, so sánh hosting và tên miền, gửi hồ sơ mua và theo dõi thanh toán ngay tại HOSTORA.",
+  path: "/",
+  keywords: [
+    "mua hosting Việt Nam",
+    "tạo website AI",
+    "tên miền doanh nghiệp",
+    "hosting cho website bán hàng",
+  ],
+});
+
+const featuredIds = [
+  "hostinger-single",
+  "azdigi-az-pro-1",
+  "vietnix-wordpress-1",
+] as const;
+const featuredPlans = featuredIds.map((id) => {
+  const plan = hostingCatalog.find((item) => item.id === id);
+  if (!plan) throw new Error(`Không tìm thấy gói nổi bật ${id}`);
+  return plan;
+});
+
+function money(value: number) {
+  return new Intl.NumberFormat("vi-VN").format(value) + "đ";
+}
 
 export default function HomePage() {
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": `${absoluteSiteUrl("/")}#organization`,
+        name: "HOSTORA",
+        url: absoluteSiteUrl("/"),
+        logo: absoluteSiteUrl("/hostora-icon.png"),
+        description:
+          "Nền tảng tư vấn, tạo website và đặt mua dịch vụ hạ tầng số cho doanh nghiệp Việt.",
+      },
+      {
+        "@type": "WebSite",
+        "@id": `${absoluteSiteUrl("/")}#website`,
+        name: "HOSTORA AI",
+        url: absoluteSiteUrl("/"),
+        inLanguage: "vi-VN",
+        publisher: { "@id": `${absoluteSiteUrl("/")}#organization` },
+      },
+      {
+        "@type": "SoftwareApplication",
+        name: "HOSTORA AI",
+        operatingSystem: "Android",
+        applicationCategory: "BusinessApplication",
+        inLanguage: "vi-VN",
+        description:
+          "Ứng dụng tạo ý tưởng website, so sánh dịch vụ và theo dõi đơn hàng HOSTORA.",
+        downloadUrl: absoluteSiteUrl("/downloads/android"),
+        offers: { "@type": "Offer", price: "0", priceCurrency: "VND" },
+      },
+    ],
+  };
   return (
     <>
-      <section className="mesh-dark grid-lines noise overflow-hidden text-white">
-        <div className="mx-auto grid min-h-[680px] max-w-7xl items-center gap-14 px-5 py-20 lg:grid-cols-[1.12fr_.88fr] lg:px-8">
-          <div>
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/8 px-3 py-1.5 text-xs font-bold text-mint">
-              <Sparkles size={14} />
-              Qwen 3.5 · chạy hoàn toàn trên máy
-            </div>
-            <h1 className="max-w-3xl text-5xl font-black leading-[.98] tracking-[-.055em] sm:text-6xl lg:text-7xl">
-              Hạ tầng đúng cho{" "}
-              <span className="gradient-text">tham vọng thật.</span>
-            </h1>
-            <p className="mt-7 max-w-xl text-lg leading-8 text-slate-300">
-              Biến nhu cầu kinh doanh thành lựa chọn hosting minh bạch — có điểm
-              số, tổng chi phí và nguồn dữ liệu được xác minh.
+      <StructuredData data={structuredData} />
+      <section className="commerce-hero compact-home-hero">
+        <div className="commerce-shell commerce-hero-grid">
+          <div className="commerce-hero-copy">
+            <p className="commerce-kicker">
+              ỨNG DỤNG CỐ VẤN TRANG WEB · ANDROID
             </p>
-            <div className="mt-9 flex flex-wrap gap-3">
-              <Link
-                className="inline-flex items-center gap-2 rounded-full bg-mint px-5 py-3.5 font-black text-ink transition hover:-translate-y-0.5"
-                href="/consultation"
-              >
-                Bắt đầu tư vấn <ArrowRight size={18} />
-              </Link>
-              <Link
-                className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/8 px-5 py-3.5 font-bold text-white"
-                href="/ai-assistant"
-              >
-                <Bot size={18} />
-                Hỏi HOSTORA
-              </Link>
-              <a
-                className="inline-flex items-center gap-2 rounded-full border border-mint/40 bg-mint/10 px-5 py-3.5 font-bold text-mint"
-                href="/downloads/android"
-                download
-              >
-                <Download size={18} />
-                Tải app Android 1.5.0
-              </a>
-            </div>
-            <p className="mt-3 text-xs text-slate-400">
-              APK cài trực tiếp, không cần Expo Go. AI local cần máy HOSTORA
-              đang chạy cùng mạng.
+            <TextRevealHeading
+              level="h1"
+              segments={[
+                { text: "Chọn dịch vụ cho trang web." },
+                { text: "Rõ giá trước khi mua.", emphasis: true },
+              ]}
+            />
+            <p className="commerce-lede">
+              Dùng HOSTORA để tạo ý tưởng trang web, xem trọn danh sách dịch vụ,
+              gửi yêu cầu mua và theo dõi hóa đơn.
             </p>
-            <div className="mt-10 flex flex-wrap gap-x-6 gap-y-3 text-xs font-bold text-slate-300">
-              {[
-                "Không API AI trả phí",
-                "Không bịa giá",
-                "Không gửi lead ra ngoài",
-              ].map((x) => (
-                <span className="flex items-center gap-2" key={x}>
-                  <Check size={15} className="text-mint" />
-                  {x}
-                </span>
-              ))}
+            <div className="commerce-hero-actions">
+              <ClickSpark
+                sparkColor={["#b7ead8", "#f0c29f"]}
+                sparkCount={7}
+                sparkRadius={22}
+                sparkSize={7}
+                sparkWidth={1.5}
+                style={{ width: "fit-content", height: "auto" }}
+              >
+                <a
+                  className="button-primary commerce-primary"
+                  href="/downloads/android"
+                  download
+                >
+                  <Download size={18} /> Tải ứng dụng Android
+                </a>
+              </ClickSpark>
+              <Link className="commerce-text-link" href="/website-studio">
+                Tạo trang web với trợ lý <Sparkles size={17} />
+              </Link>
             </div>
           </div>
           <HeroVisual />
         </div>
       </section>
-      <section className="mx-auto max-w-7xl px-5 py-24 lg:px-8">
-        <div className="grid gap-10 lg:grid-cols-[.7fr_1.3fr]">
+
+      <section className="home-quick-entry" aria-label="Lối tắt HOSTORA">
+        <div className="commerce-shell home-quick-grid">
+          <a href="/downloads/android" download>
+            <span>01</span>
+            <Download size={22} />
+            <div>
+              <strong>Tải ứng dụng</strong>
+              <small>Trải nghiệm đầy đủ trên Android</small>
+            </div>
+            <ArrowRight size={18} />
+          </a>
+          <Link href="/website-studio">
+            <span>02</span>
+            <Sparkles size={22} />
+            <div>
+              <strong>Tạo trang web với trợ lý</strong>
+              <small>Xem bản thử rồi chọn nơi lưu trữ</small>
+            </div>
+            <ArrowRight size={18} />
+          </Link>
+          <Link href="/orders">
+            <span>03</span>
+            <ReceiptText size={22} />
+            <div>
+              <strong>Thanh toán nhanh</strong>
+              <small>Tra mã hóa đơn HOSTORA</small>
+            </div>
+            <ArrowRight size={18} />
+          </Link>
+        </div>
+      </section>
+
+      <section className="app-editorial home-app-first">
+        <div className="commerce-shell app-editorial-grid">
+          <div className="app-editorial-copy">
+            <p className="commerce-kicker">ƯU TIÊN TRẢI NGHIỆM TRÊN ỨNG DỤNG</p>
+            <h2>Mang cố vấn trang web theo cùng bạn.</h2>
+            <p>
+              Tạo ý tưởng, xem dịch vụ, nhận hướng dẫn và tra cứu đơn hàng trên
+              điện thoại. Giao diện đã tối ưu vùng an toàn cho màn hình nhỏ.
+            </p>
+            <ClickSpark
+              sparkColor={["#b7ead8", "#f0c29f"]}
+              sparkCount={7}
+              sparkRadius={22}
+              sparkSize={7}
+              sparkWidth={1.5}
+              style={{ width: "fit-content", height: "auto" }}
+            >
+              <a
+                className="button-primary commerce-primary"
+                href="/downloads/android"
+                download
+              >
+                <Download size={18} /> Tải HOSTORA 2.0.5
+              </a>
+            </ClickSpark>
+          </div>
+          <div
+            className="app-specimen"
+            aria-label="Các tính năng của ứng dụng HOSTORA"
+          >
+            <div className="app-specimen-brand">
+              <Sparkles size={18} />
+              <strong>HOSTORA</strong>
+              <span>ANDROID</span>
+            </div>
+            <p>
+              Từ một ý tưởng
+              <br />
+              đến trang web đầu tiên.
+            </p>
+            <ul>
+              <li>
+                <Check size={15} />
+                Hướng dẫn hoàn toàn bằng tiếng Việt
+              </li>
+              <li>
+                <Check size={15} />
+                Giá và gia hạn tách rõ
+              </li>
+              <li>
+                <Check size={15} />
+                Tra cứu hóa đơn riêng tư
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section className="home-studio-teaser">
+        <div className="commerce-shell home-studio-grid">
           <div>
-            <p className="eyebrow">Một luồng, đủ bằng chứng</p>
-            <h2 className="mt-4 text-4xl font-black tracking-[-.045em]">
-              Không chỉ là một chatbot.
-            </h2>
-            <p className="mt-5 leading-7 text-slate-600">
-              HOSTORA tách AI khỏi phần phải chính xác: code chấm điểm và tính
-              tiền; model chỉ trích xuất, giải thích và đối thoại trên dữ liệu
-              đã khóa.
+            <p className="commerce-kicker dark">
+              CHƯA BIẾT NÊN LÀM WEBSITE GÌ?
+            </p>
+            <h2>Kể ý tưởng. HOSTORA dựng thử.</h2>
+            <p>
+              Trợ lý hỏi về khách hàng, mục tiêu và phong cách. Bạn nhận một
+              trang web xem trước có thể tải xuống, sau đó HOSTORA gợi ý nơi lưu
+              trữ theo nhu cầu đã chọn.
+            </p>
+            <ClickSpark
+              sparkColor={["#b7ead8", "#f0c29f"]}
+              sparkCount={7}
+              sparkRadius={22}
+              sparkSize={7}
+              sparkWidth={1.5}
+              style={{ width: "fit-content", height: "auto" }}
+            >
+              <Link className="button-primary" href="/website-studio">
+                Mở xưởng tạo trang web <ArrowRight size={17} />
+              </Link>
+            </ClickSpark>
+          </div>
+          <div className="home-studio-demo" aria-hidden="true">
+            <div>
+              <span>XƯỞNG WEBSITE HOSTORA</span>
+              <b>
+                Website của bạn
+                <br />
+                bắt đầu từ đây.
+              </b>
+              <i>TẠO BẢN XEM TRƯỚC</i>
+            </div>
+            <aside>
+              <small>01 · Ý TƯỞNG</small>
+              <small>02 · PHONG CÁCH</small>
+              <small>03 · NƠI LƯU TRỮ</small>
+            </aside>
+          </div>
+        </div>
+      </section>
+
+      <section className="commerce-section commerce-popular home-plans-compact">
+        <div className="commerce-shell">
+          <div className="commerce-section-heading">
+            <div>
+              <p className="commerce-kicker dark">
+                MỘT VÀI GÓI ĐỂ SO SÁNH NHANH
+              </p>
+              <h2>Không cần xem cả danh sách dài.</h2>
+            </div>
+            <p>
+              Ba gói khởi điểm được lấy trực tiếp từ danh mục đã ghi nguồn. Muốn
+              xem đầy đủ, mở danh sách dịch vụ hoặc dùng ứng dụng.
             </p>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {[
-              [
-                Radar,
-                "Hiểu nhu cầu",
-                "Nhập wizard hoặc mô tả tự nhiên bằng tiếng Việt.",
-              ],
-              [
-                ServerCog,
-                "Xếp hạng giải thích được",
-                "7 nhóm tiêu chí, top 1 và 2 lựa chọn thay thế.",
-              ],
-              [
-                Calculator,
-                "Nhìn rõ chi phí thật",
-                "Giá ưu đãi, gia hạn và tổng chi phí theo kỳ.",
-              ],
-              [
-                DatabaseZap,
-                "RAG có nguồn",
-                "Trả lời từ kho kiến thức local, kèm URL và ngày xác minh.",
-              ],
-              [
-                Gauge,
-                "Launch Score AI",
-                "Chấm hồ sơ website như CV, chỉ ra blocker và tạo câu hỏi phản biện.",
-              ],
-            ].map(([Icon, title, copy]) => (
-              <article key={String(title)} className="panel p-6">
-                <span className="grid size-11 place-items-center rounded-2xl bg-[#eaf0ff] text-blue">
-                  <Icon size={21} />
-                </span>
-                <h3 className="mt-5 text-lg font-black">{String(title)}</h3>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  {String(copy)}
-                </p>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-      <section className="bg-[#e9efec]">
-        <div className="mx-auto max-w-7xl px-5 py-24 lg:px-8">
-          <div className="mb-12 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="eyebrow">Decision intelligence</p>
-              <h2 className="mt-3 max-w-2xl text-4xl font-black tracking-[-.045em]">
-                Từ shop mới tới ngày flash sale.
-              </h2>
-            </div>
-            <Link className="button-secondary" href="/intelligence">
-              Mở bộ mô phỏng <ChevronRight size={17} />
-            </Link>
-          </div>
-          <div className="grid gap-5 lg:grid-cols-3">
-            {[
-              [
-                "01",
-                "Chi phí sở hữu",
-                "Tính 12/24/36/48 tháng bằng code, không suy diễn giá chưa xác minh.",
-              ],
-              [
-                "02",
-                "Rủi ro traffic",
-                "Mô phỏng spike theo giờ mà không biến ước lượng thành cam kết.",
-              ],
-              [
-                "03",
-                "Lộ trình tăng trưởng",
-                "Biết thời điểm cân nhắc CDN, cache, cloud hoặc VPS.",
-              ],
-            ].map(([n, t, c]) => (
-              <article key={n} className="rounded-[1.7rem] bg-white p-7">
-                <span className="font-mono text-xs font-bold text-blue">
-                  {n}
-                </span>
-                <h3 className="mt-8 text-xl font-black">{t}</h3>
-                <p className="mt-3 leading-7 text-slate-600">{c}</p>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-      <section className="mx-auto max-w-7xl px-5 py-24 lg:px-8">
-        <div className="grid gap-12 lg:grid-cols-2">
-          <div>
-            <p className="eyebrow">An toàn theo thiết kế</p>
-            <h2 className="mt-3 text-4xl font-black tracking-[-.045em]">
-              Riêng tư không phải checkbox.
-            </h2>
-            <div className="mt-8 space-y-5">
-              {[
-                [
-                  LockKeyhole,
-                  "Loopback only",
-                  "Ollama chỉ được gọi từ server local tại 127.0.0.1.",
-                ],
-                [
-                  DatabaseZap,
-                  "Dữ liệu có provenance",
-                  "Mỗi đoạn kiến thức có nguồn, loại nguồn và ngày xác minh.",
-                ],
-                [
-                  ServerCog,
-                  "AI không nắm máy tính",
-                  "Model không có shell, không thể tự chạy lệnh hay thay số liệu catalog.",
-                ],
-              ].map(([Icon, t, c]) => (
-                <div key={String(t)} className="flex gap-4">
-                  <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-ink text-mint">
-                    <Icon size={18} />
-                  </span>
-                  <div>
-                    <h3 className="font-extrabold">{String(t)}</h3>
-                    <p className="mt-1 text-sm leading-6 text-slate-600">
-                      {String(c)}
-                    </p>
-                  </div>
+          <div className="plan-rail">
+            {featuredPlans.map((plan, index) => (
+              <article className="plan-card" key={plan.id}>
+                <div className="plan-card-topline">
+                  <span>{String(index + 1).padStart(2, "0")}</span>
+                  <span>{plan.provider}</span>
                 </div>
-              ))}
-            </div>
+                <h3>{plan.productFamily ?? plan.name}</h3>
+                {plan.productFamily && (
+                  <p className="plan-name">Gói {plan.name}</p>
+                )}
+                <p className="plan-price">
+                  <strong>{money(plan.promoMonthlyVnd)}</strong>
+                  <span>/ tháng</span>
+                </p>
+                <p className="plan-cycle">
+                  Thanh toán theo kỳ {plan.billingMonths} tháng
+                </p>
+                <ul>
+                  <li>
+                    <Server size={15} />
+                    {plan.storageGb} GB {plan.storageType}
+                  </li>
+                  <li>
+                    <Globe2 size={15} />
+                    {plan.websites} website
+                  </li>
+                  <li>
+                    <Gauge size={15} />
+                    {plan.backup === "daily"
+                      ? "Sao lưu hằng ngày"
+                      : plan.backup === "weekly"
+                        ? "Sao lưu hằng tuần"
+                        : "Có chính sách sao lưu"}
+                  </li>
+                </ul>
+                {plan.renewalMonthlyVnd ? (
+                  <p className="plan-renewal">
+                    Gia hạn tham khảo:{" "}
+                    <strong>{money(plan.renewalMonthlyVnd)}/tháng</strong>
+                  </p>
+                ) : (
+                  <p className="plan-renewal">
+                    Giá gia hạn: <strong>Chưa có dữ liệu</strong>
+                  </p>
+                )}
+                <div className="plan-card-actions">
+                  <Link href="/services?category=hosting">
+                    Đặt mua qua HOSTORA <ArrowRight size={15} />
+                  </Link>
+                  <Link href="/website-studio">Tạo web thử</Link>
+                </div>
+              </article>
+            ))}
           </div>
-          <div className="panel p-7">
-            <p className="eyebrow">FAQ</p>
-            <FAQ />
-          </div>
+          <Link className="commerce-inline-action" href="/services">
+            Xem đầy đủ dịch vụ <ArrowRight size={17} />
+          </Link>
         </div>
       </section>
+
+      <section className="home-payment-fast">
+        <div className="commerce-shell">
+          <div>
+            <p className="commerce-kicker">ĐÃ CÓ MÃ HÓA ĐƠN?</p>
+            <h2>Tra cứu và thanh toán ngay.</h2>
+            <p>
+              Stripe và VNPay hiện chỉ dùng để thử quy trình, chưa thu tiền
+              thật.
+            </p>
+          </div>
+          <Link className="button-primary commerce-primary" href="/orders">
+            <ReceiptText size={18} /> Thanh toán nhanh
+          </Link>
+        </div>
+      </section>
+      <FAQ />
     </>
   );
 }

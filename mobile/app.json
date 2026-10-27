@@ -2,7 +2,7 @@
   "expo": {
     "name": "HOSTORA AI",
     "slug": "hostora-ai",
-    "version": "1.5.0",
+    "version": "2.0.5",
     "orientation": "portrait",
     "icon": "./assets/images/hostora-icon-source.png",
     "scheme": "hostora",
@@ -12,7 +12,7 @@
     },
     "android": {
       "package": "com.hostora.ai",
-      "versionCode": 7,
+      "versionCode": 17,
       "predictiveBackGestureEnabled": false,
       "blockedPermissions": [
         "android.permission.SYSTEM_ALERT_WINDOW",
@@ -27,9 +27,17 @@
     "plugins": [
       "expo-router",
       [
+        "expo-image-picker",
+        {
+          "photosPermission": "HOSTORA cần mở ảnh bạn chọn để hướng dẫn bước tiếp theo. Ảnh được xử lý trên máy chủ HOSTORA và không lưu vào lịch sử trò chuyện.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ],
+      [
         "expo-splash-screen",
         {
-          "backgroundColor": "#07111F",
+          "backgroundColor": "#071827",
           "image": "./assets/images/hostora-icon-source.png",
           "imageWidth": 132
         }

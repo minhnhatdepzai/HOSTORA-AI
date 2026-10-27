@@ -14,4 +14,16 @@ describe("customer-facing AI language", () => {
       /benchmark|workload|server response|5xx|I\/O|latency|monitoring|traffic|cache|CDN|database|query|code|tài nguyên|chịu tải/i,
     );
   });
+
+  it("translates internal delivery terms into plain Vietnamese", () => {
+    const output = toCustomerLanguage(
+      "Backend nhận webhook từ gateway sandbox, SMTP gửi mail, OCR và SEO được theo dõi trong RAG pipeline.",
+    );
+    expect(output).not.toMatch(
+      /backend|webhook|gateway|sandbox|smtp|ocr|seo|rag|pipeline/i,
+    );
+    expect(output).toContain("Phần xử lý");
+    expect(output).toContain("thông báo giao dịch tự động");
+    expect(output).toContain("khả năng được tìm thấy trên Google");
+  });
 });

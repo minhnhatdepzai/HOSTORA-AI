@@ -1,84 +1,56 @@
-"use client";
-
-import { motion } from "motion/react";
-import { Check, Cpu, Database, ShieldCheck, Sparkles } from "lucide-react";
+import Image from "next/image";
+import { Check, Radio, ShieldCheck } from "lucide-react";
+import { HostoraScene } from "@/components/hostora-scene";
 
 export function HeroVisual() {
   return (
-    <div className="relative min-h-[390px]">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.55 }}
-        className="absolute inset-x-0 top-4 rounded-[2rem] border border-white/12 bg-white/8 p-5 shadow-2xl backdrop-blur-xl"
-      >
-        <div className="mb-5 flex items-center justify-between">
-          <div>
-            <p className="text-xs font-bold text-slate-400">
-              PHÂN TÍCH NHU CẦU
-            </p>
-            <p className="mt-1 font-bold text-white">
-              Shop mỹ phẩm · 50K visits
-            </p>
-          </div>
-          <span className="rounded-full bg-mint/15 px-3 py-1 text-xs font-bold text-mint">
-            AI local
-          </span>
+    <div
+      className="commerce-hero-visual"
+      aria-label="HOSTORA đang so sánh dịch vụ lưu trữ và chi phí gia hạn"
+    >
+      <HostoraScene />
+      <div className="hero-radar" aria-hidden="true">
+        <span className="hero-orbit orbit-one" />
+        <span className="hero-orbit orbit-two" />
+        <span className="hero-signal signal-one" />
+        <span className="hero-signal signal-two" />
+        <span className="hero-signal signal-three" />
+        <div className="hero-logo-core">
+          <Image
+            src="/hostora-icon.png"
+            alt=""
+            width={92}
+            height={92}
+            priority
+          />
         </div>
-        <div className="grid grid-cols-3 gap-2">
-          {[
-            ["Ngân sách", "600K"],
-            ["Loại", "E-commerce"],
-            ["Độ tin cậy", "92%"],
-          ].map(([a, b]) => (
-            <div key={a} className="rounded-2xl bg-white/8 p-3">
-              <p className="text-[10px] text-slate-400">{a}</p>
-              <p className="mt-1 text-sm font-extrabold text-white">{b}</p>
-            </div>
-          ))}
-        </div>
-        <div className="mt-5 rounded-2xl bg-white p-4 text-ink">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-xs font-black text-blue">PHÙ HỢP NHẤT</p>
-              <h2 className="mt-1 text-xl font-black">Cloud Startup</h2>
-            </div>
-            <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-black text-emerald-800">
-              91 điểm
-            </span>
-          </div>
-          <div className="mt-4 grid grid-cols-2 gap-2 text-xs font-semibold text-slate-600">
-            <span className="flex gap-1">
-              <Check size={14} className="text-emerald-600" />
-              100 GB NVMe
-            </span>
-            <span className="flex gap-1">
-              <Check size={14} className="text-emerald-600" />
-              Daily backup
-            </span>
-          </div>
-        </div>
-      </motion.div>
-      {[
-        { icon: Cpu, label: "Qwen 9.7B", pos: "-left-7 top-10" },
-        { icon: Database, label: "RAG có nguồn", pos: "-right-5 bottom-16" },
-        {
-          icon: ShieldCheck,
-          label: "Dữ liệu tại máy",
-          pos: "left-8 -bottom-2",
-        },
-      ].map(({ icon: Icon, label, pos }, i) => (
-        <motion.div
-          key={label}
-          className={`absolute ${pos} flex items-center gap-2 rounded-full border border-white/15 bg-[#152440] px-3 py-2 text-xs font-bold text-white shadow-xl`}
-          animate={{ y: [0, -7, 0] }}
-          transition={{ repeat: Infinity, duration: 3 + i * 0.6 }}
-        >
-          <Icon size={15} className="text-mint" />
-          {label}
-        </motion.div>
-      ))}
-      <Sparkles className="absolute right-4 top-0 text-cyan" />
+      </div>
+      <div className="hero-status-card">
+        <span className="hero-live">
+          <Radio size={13} /> ĐANG KIỂM TRA
+        </span>
+        <strong>So sánh theo nhu cầu thật</strong>
+        <p className="hero-status-copy">
+          Giá mở đầu và giá gia hạn được tách rõ trước khi bạn chọn.
+        </p>
+        <small>
+          <Check size={13} />
+          Không tự điền số liệu chưa được xác nhận
+        </small>
+      </div>
+      <div className="hero-note-card">
+        <ShieldCheck size={18} />
+        <p>
+          <strong>Giá gia hạn tách riêng</strong>
+          <span>Không đánh đồng với giá mở đầu.</span>
+        </p>
+      </div>
+      <span className="hero-coordinate coordinate-top">
+        HOSTORA / RÕ TRƯỚC KHI MUA
+      </span>
+      <span className="hero-coordinate coordinate-bottom">
+        TƯ VẤN RIÊNG TƯ · TIẾNG VIỆT
+      </span>
     </div>
   );
 }

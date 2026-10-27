@@ -41,7 +41,7 @@ test("landing works on mobile without horizontal overflow", async ({
   }));
   expect(sizes.scroll).toBeLessThanOrEqual(sizes.client + 1);
   await expect(
-    page.getByRole("heading", { name: /Hạ tầng đúng/ }),
+    page.getByRole("heading", { name: /Chọn dịch vụ cho trang web/ }),
   ).toBeVisible();
 });
 
@@ -50,7 +50,7 @@ test("landing exposes a directly downloadable Android APK", async ({
   request,
 }) => {
   await page.goto("/");
-  const link = page.getByRole("link", { name: "Tải app Android 1.5.0" });
+  const link = page.getByRole("link", { name: "Tải ứng dụng Android" });
   await expect(link).toHaveAttribute("href", "/downloads/android");
   const response = await request.head("/downloads/android");
   expect(response.status()).toBe(200);
@@ -58,9 +58,26 @@ test("landing exposes a directly downloadable Android APK", async ({
     "android.package-archive",
   );
   expect(response.headers()["content-disposition"]).toContain(
-    "HOSTORA-AI-1.5.0.apk",
+    "HOSTORA-AI-2.0.5-arm64.apk",
   );
   expect(Number(response.headers()["content-length"])).toBeGreaterThan(
     30_000_000,
   );
+});
+
+test("AI gives customers without a website a direct path to the site studio", async ({
+  page,
+}) => {
+  await page.goto("/ai-assistant");
+  await page
+    .getByLabel("Tin nhắn")
+    .fill("Tôi chưa có website, mua hosting nào bây giờ?");
+  await page.getByRole("button", { name: "Gửi", exact: true }).click();
+  const action = page.getByRole("link", { name: "Tạo trang web ngay" });
+  await expect(action).toBeVisible();
+  await action.click();
+  await expect(page).toHaveURL(/\/website-studio$/);
+  await expect(
+    page.getByRole("heading", { name: "Mô tả ý tưởng. Nhìn thấy trang web." }),
+  ).toBeVisible();
 });

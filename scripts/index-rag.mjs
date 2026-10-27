@@ -51,7 +51,7 @@ const { embeddings } = await response.json();
 if (!Array.isArray(embeddings) || embeddings.length !== documents.length)
   throw new Error("Embedding count mismatch");
 const index = {
-  version: 1,
+  version: 2,
   model,
   createdAt: new Date().toISOString(),
   documents: documents.map((doc, index) => ({

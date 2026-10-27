@@ -55,14 +55,44 @@ const replacements: readonly (readonly [RegExp, string])[] = [
   [/\bchịu tải\b/gi, "phục vụ nhiều khách cùng lúc"],
   [/\btài nguyên\b/gi, "khả năng của gói"],
   [/kho dữ liệu thời gian chờ/gi, "thời gian chờ khi đọc dữ liệu"],
+  [/\bfine[- ]?tuning\b/gi, "cải thiện cách tư vấn"],
+  [/\btraining\b/gi, "quá trình học từ tình huống đã duyệt"],
+  [/\bsandbox\b/gi, "môi trường thử nghiệm"],
+  [/\bSMTP\b/g, "dịch vụ gửi thư"],
+  [/\bwebhook\b/gi, "thông báo giao dịch tự động"],
+  [/\bgateway\b/gi, "nơi thanh toán"],
+  [/\bprovider(?:s)?\b/gi, "nhà cung cấp"],
+  [/\bOCR\b/g, "đọc nội dung trong ảnh"],
+  [/\bSEO\b/g, "khả năng được tìm thấy trên Google"],
+  [/\bcatalog\b/gi, "danh sách dịch vụ"],
+  [/\bwebsite\b/gi, "trang web"],
+  [/\bhosting\b/gi, "lưu trữ trang web"],
+  [/\bemail\b/gi, "thư điện tử"],
+  [/\bchat\b/gi, "trò chuyện"],
+  [/\bapp\b/gi, "ứng dụng"],
+  [/\bshop\b/gi, "cửa hàng"],
+  [/\blanding page\b/gi, "trang giới thiệu"],
+  [/\bmanaged\b/gi, "được quản lý"],
+  [/\bcloud\b/gi, "đám mây"],
 ];
 
 /** Keeps internal implementation vocabulary out of customer-facing AI prose. */
 export function toCustomerLanguage(value: string) {
-  const output = replacements.reduce(
-    (result, [pattern, replacement]) => result.replace(pattern, replacement),
-    value,
-  );
+  // Preserve source links and literal code while translating customer prose.
+  const output = value
+    .split(/(\((?:https?:\/\/|\/)[^\s<>\)]+\)|https?:\/\/[^\s<>\)]+|`[^`]*`)/g)
+    .map((part) => {
+      if (
+        /^(?:https?:\/\/|\((?:https?:\/\/|\/))/.test(part) ||
+        part.startsWith("`")
+      )
+        return part;
+      return replacements.reduce(
+        (text, [pattern, replacement]) => text.replace(pattern, replacement),
+        part,
+      );
+    })
+    .join("");
   return value[0] === value[0]?.toLocaleUpperCase("vi-VN") && output[0]
     ? output[0].toLocaleUpperCase("vi-VN") + output.slice(1)
     : output;

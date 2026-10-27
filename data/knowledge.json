@@ -297,5 +297,148 @@
     "keywords": ["vibe coding", "đề 01", "wizard", "recommendation", "lead"],
     "authority": 0.94,
     "content": "Đề 01 yêu cầu form nhu cầu gồm loại website, lượt truy cập, ngân sách và tên miền; AI gợi ý một gói chính và hai thay thế; bảng so sánh ba gói; form tên và số điện thoại lưu localStorage; FAQ tối thiểu năm câu."
+  },
+  {
+    "id": "wcag-interaction",
+    "title": "Focus rõ và vùng tương tác đủ dùng",
+    "sourceUrl": "https://www.w3.org/TR/WCAG22/",
+    "sourceType": "official-standard",
+    "verifiedAt": "2026-10-26",
+    "category": "accessibility",
+    "keywords": ["wcag", "focus visible", "keyboard", "target size", "accessibility"],
+    "authority": 1,
+    "content": "Giao diện phải cho người dùng bàn phím nhận biết phần tử đang focus và không che mất focus. Vùng tương tác cần có kích thước hoặc khoảng cách đủ để giảm bấm nhầm; liên kết nằm trong câu có ngoại lệ riêng. Hiệu ứng hover không thay thế trạng thái focus, và màu sắc không nên là tín hiệu duy nhất để truyền đạt trạng thái."
+  },
+  {
+    "id": "accessible-form-labels",
+    "title": "Biểu mẫu cần label và hướng dẫn có quan hệ rõ",
+    "sourceUrl": "https://www.w3.org/WAI/tutorials/forms/labels/",
+    "sourceType": "official-standard-guidance",
+    "verifiedAt": "2026-10-26",
+    "category": "accessibility",
+    "keywords": ["form", "label", "input", "screen reader", "voice input", "error"],
+    "authority": 1,
+    "content": "Mỗi control trong form cần tên có thể nhận biết bằng chương trình; ưu tiên liên kết label với input bằng for và id. Placeholder không thay thế label vì có thể biến mất khi nhập. Hướng dẫn, trạng thái bắt buộc và lỗi phải gắn với trường tương ứng để người dùng bàn phím, đọc màn hình và nhập bằng giọng nói hiểu được."
+  },
+  {
+    "id": "responsive-layout",
+    "title": "Responsive là tái bố trí theo không gian, không chỉ thu nhỏ",
+    "sourceUrl": "https://web.dev/articles/responsive-web-design-basics",
+    "sourceType": "official-google",
+    "verifiedAt": "2026-10-26",
+    "category": "web-design",
+    "keywords": ["responsive", "viewport", "mobile", "media query", "layout", "overflow"],
+    "authority": 0.98,
+    "content": "Trang responsive cần viewport phù hợp, nội dung không gây cuộn ngang và bố cục thích ứng với không gian thực. Breakpoint nên xuất phát từ lúc nội dung bắt đầu vỡ thay vì tên thiết bị cố định. Cột, điều hướng, khoảng cách và thứ tự ưu tiên có thể cần thay đổi trên màn hình nhỏ, không chỉ giảm toàn bộ kích thước."
+  },
+  {
+    "id": "responsive-images",
+    "title": "Ảnh responsive cần đúng kích thước và giữ chỗ trước khi tải",
+    "sourceUrl": "https://web.dev/learn/design/responsive-images",
+    "sourceType": "official-google",
+    "verifiedAt": "2026-10-26",
+    "category": "performance",
+    "keywords": ["responsive images", "srcset", "sizes", "width", "height", "cls", "lazy loading"],
+    "authority": 0.98,
+    "content": "srcset và sizes cho trình duyệt chọn tài nguyên ảnh phù hợp với viewport và mật độ điểm ảnh. Khai báo width và height giúp trình duyệt giữ chỗ, giảm dịch chuyển bố cục. Không nên tải ảnh lớn chỉ để hiển thị nhỏ; lazy loading phù hợp với ảnh ngoài màn hình nhưng ảnh hero quan trọng cần được ưu tiên có chủ đích."
+  },
+  {
+    "id": "motion-accessibility",
+    "title": "Chuyển động phải có phương án reduced motion",
+    "sourceUrl": "https://gsap.com/docs/v3/GSAP/gsap.matchMedia%28%29/",
+    "sourceType": "official-library",
+    "verifiedAt": "2026-10-26",
+    "category": "web-design",
+    "keywords": ["gsap", "animation", "motion", "prefers-reduced-motion", "matchMedia", "scrolltrigger"],
+    "authority": 0.96,
+    "content": "GSAP matchMedia có thể nhóm animation theo điều kiện media và hoàn nguyên animation khi điều kiện thay đổi. Website có chuyển động mạnh cần kiểm tra prefers-reduced-motion, thay hiệu ứng dài hoặc parallax bằng trạng thái tức thời hay chuyển động tối thiểu. Chuyển động nên giải thích quan hệ hoặc dẫn chú ý, không được khóa nội dung và thao tác vào một timeline bắt buộc."
+  },
+  {
+    "id": "three-resource-lifecycle",
+    "title": "Three.js cần giải phóng geometry, material và texture không còn dùng",
+    "sourceUrl": "https://threejs.org/manual/pages/how-to-dispose-of-objects.html",
+    "sourceType": "official-library",
+    "verifiedAt": "2026-10-26",
+    "category": "web-design",
+    "keywords": ["three.js", "webgl", "dispose", "geometry", "material", "texture", "memory leak"],
+    "authority": 0.96,
+    "content": "Xóa object khỏi scene không tự giải phóng mọi tài nguyên WebGL. Geometry, material, texture và render target không còn dùng cần được dispose đúng vòng đời. Khi chuyển trang hoặc thay scene, phải hủy animation frame, listener và tài nguyên; nếu không, website cinematic có thể tăng bộ nhớ và giảm hiệu năng sau nhiều lần điều hướng."
+  },
+  {
+    "id": "three-render-budget",
+    "title": "Hiệu ứng 3D phải nằm trong ngân sách render của thiết bị",
+    "sourceUrl": "https://threejs.org/manual/pages/tips.html",
+    "sourceType": "official-library",
+    "verifiedAt": "2026-10-26",
+    "category": "performance",
+    "keywords": ["three.js", "render loop", "pixel ratio", "webgl", "mobile", "performance budget"],
+    "authority": 0.94,
+    "content": "Canvas WebGL cần resize theo kích thước hiển thị và không nên tăng độ phân giải vô hạn theo devicePixelRatio. Scene trang trí nên giới hạn số đối tượng, vật liệu và hiệu ứng hậu kỳ; tạm dừng render khi không nhìn thấy nếu trải nghiệm cho phép. Thiết bị yếu cần motif thay thế nhẹ hơn thay vì cố giữ toàn bộ hiệu ứng desktop."
+  },
+  {
+    "id": "content-hierarchy",
+    "title": "Cấu trúc nội dung bắt đầu từ câu hỏi và hành động của khách",
+    "sourceUrl": "https://www.w3.org/WAI/tips/developing/",
+    "sourceType": "official-standard-guidance",
+    "verifiedAt": "2026-10-26",
+    "category": "web-design",
+    "keywords": ["semantic html", "heading", "content hierarchy", "navigation", "landmark"],
+    "authority": 0.93,
+    "content": "Heading và landmark semantic giúp người dùng lẫn công nghệ hỗ trợ hiểu cấu trúc trang. Mỗi section cần một vai trò rõ trong hành trình: định hướng, giải thích, cung cấp bằng chứng hoặc dẫn tới hành động. Không nên biến mọi nội dung thành card ngang nhau vì như vậy làm mất phân cấp và khiến khách khó biết điều gì quan trọng trước."
+  },
+  {
+    "id": "cinematic-progressive-enhancement",
+    "title": "Cinematic là lớp tăng cường, nội dung chính vẫn phải hoạt động",
+    "sourceUrl": "https://developer.mozilla.org/en-US/docs/Glossary/Progressive_Enhancement",
+    "sourceType": "technical-reference",
+    "verifiedAt": "2026-10-26",
+    "category": "web-design",
+    "keywords": ["progressive enhancement", "cinematic", "javascript", "fallback", "content"],
+    "authority": 0.9,
+    "content": "Progressive enhancement giữ nội dung và hành động cốt lõi hoạt động trước, rồi bổ sung CSS và JavaScript cho trải nghiệm giàu hơn. Three.js hoặc GSAP không nên là con đường duy nhất để đọc nội dung, mở điều hướng hay gửi form. Nếu script lỗi, trang vẫn phải giữ cấu trúc, CTA và thông tin chính."
+  },
+  {
+    "id": "ethical-conversion",
+    "title": "Tăng chuyển đổi bằng rõ ràng và bằng chứng, không dùng dark pattern",
+    "sourceUrl": "https://www.w3.org/TR/WCAG22/",
+    "sourceType": "derived-guidance",
+    "verifiedAt": "2026-10-26",
+    "category": "conversion",
+    "keywords": ["conversion", "cta", "dark pattern", "clarity", "evidence", "form"],
+    "authority": 0.88,
+    "content": "Một hành động chính rõ, nội dung trả lời đúng lo ngại và bằng chứng thật giúp khách quyết định mà không cần ép. Form nên hỏi tối thiểu dữ liệu cần thiết, thông báo điều sẽ xảy ra sau khi gửi và cho phép sửa lỗi. Không dùng đếm ngược giả, lựa chọn được đánh dấu gây hiểu lầm hoặc làm nút từ chối khó thấy."
+  },
+  {
+    "id": "design-system-consistency",
+    "title": "Design system giữ vai trò nhất quán nhưng không khóa mọi trang vào một template",
+    "sourceUrl": "https://www.w3.org/WAI/standards-guidelines/wcag/",
+    "sourceType": "derived-guidance",
+    "verifiedAt": "2026-10-26",
+    "category": "web-design",
+    "keywords": ["design system", "tokens", "button", "consistency", "layout family", "component"],
+    "authority": 0.86,
+    "content": "Nút, form, focus, spacing và typography nên dùng token và trạng thái nhất quán để khách học cách sử dụng. Sự nhất quán không yêu cầu mọi website có cùng hero và card grid. Có thể giữ cùng chuẩn tương tác trong khi chọn layout family, mật độ, kiểu chữ, vai trò màu nhấn và motif hình ảnh theo nội dung của từng doanh nghiệp."
+  },
+  {
+    "id": "website-operations",
+    "title": "Website cần kế hoạch vận hành sau ngày ra mắt",
+    "sourceUrl": "https://www.w3.org/WAI/planning-and-managing/",
+    "sourceType": "official-standard-guidance",
+    "verifiedAt": "2026-10-26",
+    "category": "operations",
+    "keywords": ["website operations", "content owner", "monitoring", "maintenance", "accessibility", "review"],
+    "authority": 0.91,
+    "content": "Chất lượng website cần được duy trì qua vai trò chịu trách nhiệm, quy trình review và kiểm tra định kỳ. Sau khi ra mắt phải có người quản lý nội dung, cập nhật phụ thuộc, theo dõi lỗi, backup và kiểm tra hành trình chính. Thay đổi nội dung hoặc component mới có thể tạo regression dù bản đầu đã đạt yêu cầu."
+  },
+  {
+    "id": "rag-deep-evaluation",
+    "title": "RAG sâu cần đo retrieval và grounding theo từng lỗi",
+    "sourceUrl": "https://langfuse.com/docs/evaluation/overview",
+    "sourceType": "official-langfuse",
+    "verifiedAt": "2026-10-26",
+    "category": "ai-quality",
+    "keywords": ["rag", "retrieval", "bm25", "rrf", "grounding", "experiment", "holdout"],
+    "authority": 1,
+    "content": "Đánh giá RAG nên tách lỗi không tìm thấy nguồn, xếp sai đoạn, dùng context không liên quan và câu trả lời không trung thành với context. Dataset cần giữ input, expected output và metadata riêng, đồng thời xem từng regression thay vì chỉ nhìn điểm trung bình. Hybrid retrieval phải được so với baseline trên cùng bộ câu hỏi và cùng top-k."
   }
 ]

@@ -1,11 +1,12 @@
+import { Pressable } from "@/components/pressable";
 import { Feather } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
-import type { ComponentProps, PropsWithChildren, ReactNode } from "react";
+import { Image } from "expo-image";
+import type { ComponentProps, PropsWithChildren, ReactNode, Ref } from "react";
 import {
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  type ScrollViewInstance,
   type StyleProp,
   type TextStyle,
   View,
@@ -17,15 +18,23 @@ import { colors, radii, shadows } from "@/constants/theme";
 export function Screen({
   children,
   dark = false,
-}: PropsWithChildren<{ dark?: boolean }>) {
+  insetTop = true,
+  scrollRef,
+}: PropsWithChildren<{
+  dark?: boolean;
+  insetTop?: boolean;
+  scrollRef?: Ref<ScrollViewInstance>;
+}>) {
   return (
     <SafeAreaView
       style={[styles.safe, dark && styles.safeDark]}
-      edges={["top"]}
+      edges={insetTop ? ["top", "left", "right", "bottom"] : ["bottom"]}
     >
       <ScrollView
+        ref={scrollRef}
         contentContainerStyle={styles.scroll}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
         showsVerticalScrollIndicator={false}
       >
         {children}
@@ -37,18 +46,18 @@ export function Screen({
 export function Brand({ inverse = false }: { inverse?: boolean }) {
   return (
     <View style={styles.brandRow}>
-      <LinearGradient
-        colors={[colors.mint, "#76E3EF"]}
+      <Image
+        source={require("../../assets/images/hostora-icon-source.png")}
         style={styles.brandMark}
-      >
-        <Text style={styles.brandLetter}>H</Text>
-      </LinearGradient>
+        contentFit="cover"
+        accessibilityLabel="Biểu tượng HOSTORA"
+      />
       <View>
         <Text style={[styles.brandName, inverse && { color: "white" }]}>
           HOSTORA
         </Text>
         <Text style={[styles.brandSub, inverse && { color: colors.mint }]}>
-          CỐ VẤN WEBSITE
+          CỐ VẤN TRANG WEB
         </Text>
       </View>
     </View>
@@ -209,19 +218,19 @@ export function IconBox({
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.canvas },
   safeDark: { backgroundColor: colors.ink },
-  scroll: { paddingBottom: 128 },
+  scroll: {
+    paddingBottom: 32,
+    width: "100%",
+    maxWidth: 680,
+    alignSelf: "center",
+  },
   brandRow: { flexDirection: "row", alignItems: "center", gap: 10 },
   brandMark: {
     width: 38,
     height: 38,
-    borderRadius: 13,
+    borderRadius: 11,
     alignItems: "center",
     justifyContent: "center",
-  },
-  brandLetter: {
-    color: colors.ink,
-    fontFamily: "BeVietnamPro_900Black",
-    fontSize: 18,
   },
   brandName: {
     color: colors.text,
@@ -284,7 +293,7 @@ const styles = StyleSheet.create({
   button: {
     minHeight: 50,
     paddingHorizontal: 18,
-    borderRadius: radii.pill,
+    borderRadius: radii.sm,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -299,7 +308,7 @@ const styles = StyleSheet.create({
   buttonMint: { backgroundColor: colors.mint },
   buttonGhost: { backgroundColor: colors.surfaceAlt },
   buttonText: { fontFamily: "BeVietnamPro_800ExtraBold", fontSize: 13 },
-  pressed: { opacity: 0.76, transform: [{ scale: 0.985 }] },
+  pressed: { opacity: 0.9 },
   disabled: { opacity: 0.4 },
   sectionHeader: {
     flexDirection: "row",

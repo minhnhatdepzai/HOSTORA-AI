@@ -9,6 +9,7 @@ export default defineConfig([
     ".next/**",
     "coverage/**",
     "playwright-report/**",
+    "public/vendor/**",
     "test-results/**",
     "data/rag-index.json",
     "mobile/**",

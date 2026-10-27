@@ -1,0 +1,1 @@
+{"browser":{"browserName":"chromium","isolated":true,"launchOptions":{"executablePath":"/snap/bin/chromium","headless":true,"args":["--no-sandbox"]}}}

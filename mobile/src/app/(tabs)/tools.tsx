@@ -1,7 +1,8 @@
+import { Pressable } from "@/components/pressable";
 import { Feather } from "@expo/vector-icons";
-import { router } from "expo-router";
+import { router, type Href } from "expo-router";
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import {
   Body,
   Brand,
@@ -40,7 +41,7 @@ export default function ToolsScreen() {
         ? `Giá ưu đãi công bố cho kỳ ${selectedPlan.billingMonths} tháng; chưa có giá chắc chắn cho kỳ ${months} tháng.`
         : selectedPlan.renewal == null && months > selectedPlan.billingMonths
           ? "Chưa có giá gia hạn đã xác minh cho kỳ này."
-          : "Chỉ tính tiền hosting; chưa gồm tên miền và dịch vụ mua thêm. Hãy xác nhận tổng tiền trước khi thanh toán.";
+          : "Chỉ tính tiền lưu trữ; chưa gồm tên miền và dịch vụ mua thêm. Hãy xác nhận tổng tiền trước khi thanh toán.";
 
   return (
     <Screen>
@@ -51,10 +52,10 @@ export default function ToolsScreen() {
         </Pill>
       </View>
       <View style={styles.intro}>
-        <Eyebrow>Hiểu rõ trước khi mua</Eyebrow>
-        <Title style={{ marginTop: 8 }}>Nhìn xa hơn giá tháng đầu.</Title>
-        <Body style={{ marginTop: 10 }}>
-          So sánh chi phí dài hạn và tình huống nhiều khách truy cập cùng lúc.
+        <Eyebrow>Chi phí và tăng trưởng</Eyebrow>
+        <Title style={styles.introTitle}>Chi phí trước khi mua</Title>
+        <Body style={styles.introBody}>
+          Chọn gói và kỳ thanh toán để xem tổng tiền cần chuẩn bị.
         </Body>
       </View>
 
@@ -62,7 +63,7 @@ export default function ToolsScreen() {
         <Card dark style={styles.costCard}>
           <View style={styles.cardTop}>
             <IconBox name="credit-card" tone="dark" />
-            <Pill tone="dark">CHI PHÍ THỰC</Pill>
+            <Pill tone="dark">CHI PHÍ THỰC TẾ</Pill>
           </View>
           <Text style={styles.darkTitle}>Tổng chi phí sở hữu</Text>
           <Text style={styles.disclaimer}>
@@ -126,7 +127,7 @@ export default function ToolsScreen() {
         <Card style={{ gap: 16 }}>
           <View style={styles.cardTop}>
             <IconBox name="zap" />
-            <Pill tone="warning">ĐỢT BÁN CAO ĐIỂM</Pill>
+            <Pill tone="warning">LÚC ĐÔNG KHÁCH</Pill>
           </View>
           <Text style={styles.cardTitle}>Ước tính khi khách tăng đột biến</Text>
           <Text style={styles.cardCopy}>
@@ -172,16 +173,22 @@ export default function ToolsScreen() {
             <Text style={styles.warningText}>
               {traffic >= 5
                 ? "Nên tối ưu tốc độ và chạy thử trước chiến dịch lớn."
-                : "Rủi ro vừa; hãy tiếp tục theo dõi khi website hoạt động."}
+                : "Rủi ro vừa; hãy tiếp tục theo dõi khi trang web hoạt động."}
             </Text>
           </View>
         </Card>
 
         <SectionHeader
-          eyebrow="Dành cho chủ website"
+          eyebrow="Dành cho chủ trang web"
           title="Phân tích sâu hơn"
         />
         <View style={styles.toolList}>
+          <ToolRow
+            icon="edit-3"
+            title="Tạo trang web với trợ lý"
+            copy="Kể ý tưởng, xem bản thử rồi chọn nơi lưu trữ"
+            onPress={() => router.push("/studio" as Href)}
+          />
           <ToolRow
             icon="award"
             title="Kiểm tra mức sẵn sàng"
@@ -197,7 +204,7 @@ export default function ToolsScreen() {
           <ToolRow
             icon="search"
             title="Cải thiện tìm kiếm Google"
-            copy="Kiểm tra website và nhận danh sách việc cần làm"
+            copy="Kiểm tra trang web và nhận danh sách việc cần làm"
             onPress={() => router.push("/seo")}
           />
           <ToolRow
@@ -208,14 +215,14 @@ export default function ToolsScreen() {
           />
           <ToolRow
             icon="globe"
-            title="Kiểm tra website"
+            title="Kiểm tra trang web"
             copy="Xem các mục cơ bản đang đạt hay cần sửa"
             onPress={() => router.push("/analyzer")}
           />
           <ToolRow
             icon="book-open"
             title="Kiến thức dễ hiểu"
-            copy="Giải thích hosting bằng ví dụ đời thường"
+            copy="Giải thích lưu trữ bằng ví dụ đời thường"
             onPress={() => router.push("/knowledge")}
           />
         </View>
@@ -238,7 +245,14 @@ function ToolRow({
   copy,
   onPress,
 }: {
-  icon: "award" | "at-sign" | "globe" | "book-open" | "package" | "search";
+  icon:
+    | "award"
+    | "at-sign"
+    | "globe"
+    | "book-open"
+    | "package"
+    | "search"
+    | "edit-3";
   title: string;
   copy: string;
   onPress: () => void;
@@ -266,14 +280,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  intro: { paddingHorizontal: 18, paddingTop: 28 },
-  content: { paddingHorizontal: 18, paddingTop: 23, gap: 18 },
+  intro: { paddingHorizontal: 18, paddingTop: 18 },
+  introTitle: { marginTop: 6, fontSize: 28, lineHeight: 36 },
+  introBody: { marginTop: 5, fontSize: 12, lineHeight: 19 },
+  content: { paddingHorizontal: 18, paddingTop: 16, gap: 18 },
   cardTop: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
-  costCard: { gap: 17 },
+  costCard: { gap: 14 },
   planChoices: { gap: 7 },
   planChoice: {
     borderWidth: 1,
@@ -346,10 +362,10 @@ const styles = StyleSheet.create({
     fontSize: 11,
   },
   disclaimer: {
-    color: "#76879D",
+    color: "#C5D5DF",
     fontFamily: "BeVietnamPro_400Regular",
-    fontSize: 9,
-    lineHeight: 15,
+    fontSize: 10,
+    lineHeight: 17,
   },
   cardTitle: {
     color: colors.text,

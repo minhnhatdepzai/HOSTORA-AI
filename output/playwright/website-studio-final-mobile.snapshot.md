@@ -1,0 +1,16 @@
+- generic [active] [ref=e1] [box=0,0,390,3569]:
+  - banner [ref=e2] [box=0,0,390,69]:
+    - generic [ref=e3] [box=14,0,362,68]:
+      - link "HOSTORA CỐ VẤN TRANG WEB" [ref=e4] [cursor=pointer] [box=14,16,130,36]:
+        - /url: /
+      - button "Mở menu" [ref=e192] [box=332,12,44,44]
+  - main [ref=e17] [box=0,69,390,3089]:
+    - generic [ref=e18] [box=0,69,390,3089]:
+      - generic [ref=e20] [box=16,69,358,319]
+      - generic [ref=e66] [box=0,388,390,2682]
+  - contentinfo [ref=e178] [box=0,3158,390,411]:
+    - generic [ref=e179] [box=16,3159,358,334]:
+      - generic [ref=e180] [box=16,3205,358,56]
+      - navigation "Liên kết cuối trang" [ref=e183] [box=16,3293,358,84]
+      - generic [ref=e190] [box=16,3409,358,38]: Tư vấn AI chạy trên máy HOSTORA. Giá đối tác là tham khảo tại ngày kiểm tra.
+  - alert [ref=e191] [box=-1,3568,1,1]

@@ -46,5 +46,57 @@
   {
     "query": "Đề thi yêu cầu FAQ và lưu khách tư vấn vào đâu?",
     "expectedIds": ["competition-brief"]
+  },
+  {
+    "query": "Nút nhìn đẹp nhưng dùng bàn phím không thấy đang focus ở đâu thì sửa thế nào?",
+    "expectedIds": ["wcag-interaction"]
+  },
+  {
+    "query": "Placeholder có thay được label cho form đăng ký không?",
+    "expectedIds": ["accessible-form-labels"]
+  },
+  {
+    "query": "Bản desktop thu nhỏ xuống điện thoại bị tràn ngang và CTA quá bé",
+    "expectedIds": ["responsive-layout", "wcag-interaction"]
+  },
+  {
+    "query": "Ảnh hero tải bản quá lớn và lúc tải xong làm nội dung nhảy vị trí",
+    "expectedIds": ["responsive-images", "core-web-vitals"]
+  },
+  {
+    "query": "Hiệu ứng GSAP cinematic phải tắt hoặc giảm cho người nhạy chuyển động ra sao?",
+    "expectedIds": ["motion-accessibility"]
+  },
+  {
+    "query": "Chuyển trang nhiều lần thì scene Three.js ngày càng tốn bộ nhớ",
+    "expectedIds": ["three-resource-lifecycle"]
+  },
+  {
+    "query": "Three.js trên điện thoại nóng và tụt khung hình dù desktop chạy tốt",
+    "expectedIds": ["three-render-budget"]
+  },
+  {
+    "query": "Nếu JavaScript animation lỗi thì khách vẫn phải đọc và bấm CTA được",
+    "expectedIds": ["cinematic-progressive-enhancement"]
+  },
+  {
+    "query": "Mọi section đều là card giống nhau nên khách không biết đọc gì trước",
+    "expectedIds": ["content-hierarchy", "design-system-consistency"]
+  },
+  {
+    "query": "Tăng chuyển đổi nhưng không dùng đếm ngược giả hay giấu nút từ chối",
+    "expectedIds": ["ethical-conversion"]
+  },
+  {
+    "query": "Nút và form cần đồng đều nhưng mỗi website vẫn phải có bố cục riêng",
+    "expectedIds": ["design-system-consistency"]
+  },
+  {
+    "query": "Ai chịu trách nhiệm cập nhật nội dung backup và theo dõi lỗi sau bàn giao?",
+    "expectedIds": ["website-operations"]
+  },
+  {
+    "query": "Muốn biết RAG sai vì không tìm được đoạn hay vì model không bám context",
+    "expectedIds": ["rag-deep-evaluation", "rag-quality"]
   }
 ]

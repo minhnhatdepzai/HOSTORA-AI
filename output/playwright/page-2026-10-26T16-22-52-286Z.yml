@@ -1,0 +1,579 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - link "HOSTORA CỐ VẤN TRANG WEB" [ref=e4] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e5]:
+          - strong [ref=e6]: HOSTORA
+          - generic [ref=e7]: CỐ VẤN TRANG WEB
+      - navigation "Điều hướng chính" [ref=e8]:
+        - link "Trang chủ" [ref=e9] [cursor=pointer]:
+          - /url: /
+        - link "Tạo website" [ref=e10] [cursor=pointer]:
+          - /url: /website-studio
+        - link "Dịch vụ" [ref=e11] [cursor=pointer]:
+          - /url: /services
+        - link "Đơn hàng" [ref=e12] [cursor=pointer]:
+          - /url: /orders
+        - link "Hỏi AI" [ref=e13] [cursor=pointer]:
+          - /url: /ai-assistant
+        - link "Tải app" [ref=e14] [cursor=pointer]:
+          - /url: /downloads/android
+      - link "Tải ứng dụng" [ref=e16] [cursor=pointer]:
+        - /url: /downloads/android
+  - main [ref=e17]:
+    - generic [ref=e18]:
+      - generic [ref=e20]:
+        - generic [ref=e21]:
+          - paragraph [ref=e22]: CATALOG DỊCH VỤ WEBSITE
+          - heading [level=1] [ref=e23]:
+            - text: Chọn từ nhu cầu.
+            - emphasis [ref=e24]: Không chọn từ quảng cáo.
+        - generic [ref=e25]:
+          - paragraph [ref=e26]: 26 dịch vụ từ 6 nhà cung cấp, mỗi mục có nguồn và ngày kiểm tra.
+          - link "Chưa biết chọn gì? Kể nhu cầu" [ref=e27] [cursor=pointer]:
+            - /url: /consultation
+      - paragraph [ref=e35]: Xem dịch vụ, gửi yêu cầu mua và nhận hóa đơn ngay tại HOSTORA. Giá “từ” là tham khảo; HOSTORA xác nhận tổng tiền và điều kiện trước khi bạn thanh toán.
+      - region [ref=e36]:
+        - generic [ref=e37]:
+          - generic [ref=e38]:
+            - paragraph [ref=e39]: TÌM DỊCH VỤ
+            - heading "Catalog đã kiểm tra nguồn" [level=2] [ref=e40]
+          - generic [ref=e41]:
+            - generic [ref=e42]:
+              - generic [ref=e46]: Tìm dịch vụ
+              - textbox "Tìm dịch vụ" [ref=e47]:
+                - /placeholder: "Ví dụ: shop, WordPress, email…"
+            - generic [ref=e48]:
+              - generic [ref=e50]: Lọc nhà cung cấp
+              - combobox "Lọc nhà cung cấp" [ref=e51] [cursor=pointer]:
+                - option "Mọi nhà cung cấp" [selected]
+                - option "Hostinger"
+                - option "AZDIGI"
+                - option "Tino Group"
+                - option "Vietnix"
+                - option "Mắt Bão"
+                - option "P.A Việt Nam"
+        - generic "Lọc theo nhóm dịch vụ" [ref=e52]:
+          - button "Tất cả" [ref=e53] [cursor=pointer]
+          - button "Hosting" [ref=e54] [cursor=pointer]
+          - button "Cloud" [ref=e55] [cursor=pointer]
+          - button "Tự động hóa" [ref=e56] [cursor=pointer]
+          - button "VPS" [ref=e57] [cursor=pointer]
+          - button "WordPress" [ref=e58] [cursor=pointer]
+          - button "Email" [ref=e59] [cursor=pointer]
+          - button "Tên miền" [ref=e60] [cursor=pointer]
+          - button "SSL" [ref=e61] [cursor=pointer]
+          - button "Văn phòng" [ref=e62] [cursor=pointer]
+        - generic [ref=e63]:
+          - strong [ref=e64]: "26"
+          - text: dịch vụ phù hợp · Giá xếp theo catalog, không phải vị trí quảng cáo
+        - generic [ref=e65]:
+          - article [ref=e66]:
+            - generic [ref=e67]: "01"
+            - generic [ref=e68]:
+              - paragraph [ref=e69]: Hostinger
+              - heading "Web Hosting" [level=3] [ref=e70]
+              - text: Hosting
+            - generic [ref=e71]:
+              - paragraph [ref=e72]: Shared hosting quản trị sẵn cho website giai đoạn đầu.
+              - generic [ref=e73]:
+                - generic [ref=e74]: +blog
+                - generic [ref=e75]: +landing page
+                - generic [ref=e76]: +shop nhỏ
+            - generic [ref=e77]:
+              - generic [ref=e78]: Từ
+              - strong [ref=e79]: 19.900đ
+              - text: /tháng
+              - paragraph [ref=e80]: Giá khuyến mại có điều kiện kỳ hạn; xem giá gia hạn trong catalog gói.
+            - generic [ref=e81]:
+              - paragraph [ref=e82]: Kiểm tra 23/10/2026
+              - button "Đặt mua qua HOSTORA" [ref=e85] [cursor=pointer]
+          - article [ref=e86]:
+            - generic [ref=e87]: "02"
+            - generic [ref=e88]:
+              - paragraph [ref=e89]: Hostinger
+              - heading "Cloud Hosting" [level=3] [ref=e90]
+              - text: Cloud
+            - generic [ref=e91]:
+              - paragraph [ref=e92]: Tài nguyên cloud managed cho website cần dư địa tăng trưởng.
+              - generic [ref=e93]:
+                - generic [ref=e94]: +shop tăng trưởng
+                - generic [ref=e95]: +nhiều website
+                - generic [ref=e96]: +traffic biến động
+            - generic [ref=e97]:
+              - generic [ref=e98]: Từ
+              - strong [ref=e99]: 167.900đ
+              - text: /tháng
+            - generic [ref=e100]:
+              - paragraph [ref=e101]: Kiểm tra 23/10/2026
+              - button "Đặt mua qua HOSTORA" [ref=e104] [cursor=pointer]
+          - article [ref=e105]:
+            - generic [ref=e106]: "03"
+            - generic [ref=e107]:
+              - paragraph [ref=e108]: Hostinger
+              - heading "AI Website Builder" [level=3] [ref=e109]
+              - text: Tự động hóa
+            - generic [ref=e110]:
+              - paragraph [ref=e111]: Công cụ tạo website bằng AI trong hệ sinh thái Hostinger.
+              - generic [ref=e112]:
+                - generic [ref=e113]: +khởi tạo nhanh
+                - generic [ref=e114]: +không chuyên code
+            - generic [ref=e115]:
+              - generic [ref=e116]: Từ
+              - strong [ref=e117]: Liên hệ
+            - generic [ref=e118]:
+              - paragraph [ref=e119]: Kiểm tra 23/10/2026
+              - button "Đặt mua qua HOSTORA" [ref=e122] [cursor=pointer]
+          - article [ref=e123]:
+            - generic [ref=e124]: "04"
+            - generic [ref=e125]:
+              - paragraph [ref=e126]: Hostinger
+              - heading "n8n tự lưu trữ" [level=3] [ref=e127]
+              - text: Tự động hóa
+            - generic [ref=e128]:
+              - paragraph [ref=e129]: Môi trường tự host workflow automation và AI agent.
+              - generic [ref=e130]:
+                - generic [ref=e131]: +automation
+                - generic [ref=e132]: +AI workflow
+                - generic [ref=e133]: +developer
+            - generic [ref=e134]:
+              - generic [ref=e135]: Từ
+              - strong [ref=e136]: Liên hệ
+            - generic [ref=e137]:
+              - paragraph [ref=e138]: Kiểm tra 23/10/2026
+              - button "Đặt mua qua HOSTORA" [ref=e141] [cursor=pointer]
+          - article [ref=e142]:
+            - generic [ref=e143]: "05"
+            - generic [ref=e144]:
+              - paragraph [ref=e145]: AZDIGI
+              - heading "Pro Hosting" [level=3] [ref=e146]
+              - text: Hosting
+            - generic [ref=e147]:
+              - paragraph [ref=e148]: SSD RAID-10, backup hàng ngày cho website nhỏ.
+              - generic [ref=e149]:
+                - generic [ref=e150]: +blog
+                - generic [ref=e151]: +portfolio
+                - generic [ref=e152]: +landing page
+            - generic [ref=e153]:
+              - generic [ref=e154]: Từ
+              - strong [ref=e155]: 29.000đ
+              - text: /tháng
+              - paragraph [ref=e156]: Chu kỳ 12 tháng, chưa VAT.
+            - generic [ref=e157]:
+              - paragraph [ref=e158]: Kiểm tra 23/10/2026
+              - button "Đặt mua qua HOSTORA" [ref=e161] [cursor=pointer]
+          - article [ref=e162]:
+            - generic [ref=e163]: "06"
+            - generic [ref=e164]:
+              - paragraph [ref=e165]: AZDIGI
+              - heading "Pro Platinum Hosting" [level=3] [ref=e166]
+              - text: Hosting
+            - generic [ref=e167]:
+              - paragraph [ref=e168]: NVMe và tài nguyên cao hơn dòng Pro Hosting.
+              - generic [ref=e169]:
+                - generic [ref=e170]: +WordPress nhiều plugin
+                - generic [ref=e171]: +doanh nghiệp
+                - generic [ref=e172]: +shop nhỏ
+            - generic [ref=e173]:
+              - generic [ref=e174]: Từ
+              - strong [ref=e175]: 55.000đ
+              - text: /tháng
+              - paragraph [ref=e176]: Chu kỳ 12 tháng, chưa VAT.
+            - generic [ref=e177]:
+              - paragraph [ref=e178]: Kiểm tra 23/10/2026
+              - button "Đặt mua qua HOSTORA" [ref=e181] [cursor=pointer]
+          - article [ref=e182]:
+            - generic [ref=e183]: "07"
+            - generic [ref=e184]:
+              - paragraph [ref=e185]: AZDIGI
+              - heading "Business Hosting" [level=3] [ref=e186]
+              - text: Hosting
+            - generic [ref=e187]:
+              - paragraph [ref=e188]: Dòng hosting cho workload doanh nghiệp cần nhiều tài nguyên.
+              - generic [ref=e189]:
+                - generic [ref=e190]: +doanh nghiệp
+                - generic [ref=e191]: +WooCommerce
+                - generic [ref=e192]: +website doanh thu
+            - generic [ref=e193]:
+              - generic [ref=e194]: Từ
+              - strong [ref=e195]: Liên hệ
+            - generic [ref=e196]:
+              - paragraph [ref=e197]: Kiểm tra 23/10/2026
+              - button "Đặt mua qua HOSTORA" [ref=e200] [cursor=pointer]
+          - article [ref=e201]:
+            - generic [ref=e202]: "08"
+            - generic [ref=e203]:
+              - paragraph [ref=e204]: AZDIGI
+              - heading "Cloud VPS" [level=3] [ref=e205]
+              - text: VPS
+            - generic [ref=e206]:
+              - paragraph [ref=e207]: Máy chủ ảo cho workload cần quyền kiểm soát hệ điều hành.
+              - generic [ref=e208]:
+                - generic [ref=e209]: +API
+                - generic [ref=e210]: +ứng dụng riêng
+                - generic [ref=e211]: +DevOps
+            - generic [ref=e212]:
+              - generic [ref=e213]: Từ
+              - strong [ref=e214]: 79.000đ
+              - text: /tháng
+              - paragraph [ref=e215]: Giá từ theo kỳ hạn công bố; cần kiểm tra checkout.
+            - generic [ref=e216]:
+              - paragraph [ref=e217]: Kiểm tra 23/10/2026
+              - button "Đặt mua qua HOSTORA" [ref=e220] [cursor=pointer]
+          - article [ref=e221]:
+            - generic [ref=e222]: "09"
+            - generic [ref=e223]:
+              - paragraph [ref=e224]: Tino Group
+              - heading "NVMe Hosting" [level=3] [ref=e225]
+              - text: Hosting
+            - generic [ref=e226]:
+              - paragraph [ref=e227]: NVMe hosting cho cá nhân và doanh nghiệp.
+              - generic [ref=e228]:
+                - generic [ref=e229]: +website mới
+                - generic [ref=e230]: +SME
+                - generic [ref=e231]: +WordPress
+            - generic [ref=e232]:
+              - generic [ref=e233]: Từ
+              - strong [ref=e234]: 20.000đ
+              - text: /tháng
+            - generic [ref=e235]:
+              - paragraph [ref=e236]: Kiểm tra 23/10/2026
+              - button "Đặt mua qua HOSTORA" [ref=e239] [cursor=pointer]
+          - article [ref=e240]:
+            - generic [ref=e241]: "10"
+            - generic [ref=e242]:
+              - paragraph [ref=e243]: Tino Group
+              - heading "Business Hosting" [level=3] [ref=e244]
+              - text: Hosting
+            - generic [ref=e245]:
+              - paragraph [ref=e246]: Hosting tài nguyên cao cho website thương mại điện tử.
+              - generic [ref=e247]:
+                - generic [ref=e248]: +e-commerce
+                - generic [ref=e249]: +doanh nghiệp
+            - generic [ref=e250]:
+              - generic [ref=e251]: Từ
+              - strong [ref=e252]: 229.000đ
+              - text: /tháng
+            - generic [ref=e253]:
+              - paragraph [ref=e254]: Kiểm tra 23/10/2026
+              - button "Đặt mua qua HOSTORA" [ref=e257] [cursor=pointer]
+          - article [ref=e258]:
+            - generic [ref=e259]: "11"
+            - generic [ref=e260]:
+              - paragraph [ref=e261]: Tino Group
+              - heading "WordPress Hosting" [level=3] [ref=e262]
+              - text: WordPress
+            - generic [ref=e263]:
+              - paragraph [ref=e264]: Môi trường tối ưu WordPress, hiệu năng và bảo mật.
+              - generic [ref=e265]:
+                - generic [ref=e266]: +WordPress
+                - generic [ref=e267]: +WooCommerce
+            - generic [ref=e268]:
+              - generic [ref=e269]: Từ
+              - strong [ref=e270]: 229.000đ
+              - text: /tháng
+            - generic [ref=e271]:
+              - paragraph [ref=e272]: Kiểm tra 23/10/2026
+              - button "Đặt mua qua HOSTORA" [ref=e275] [cursor=pointer]
+          - article [ref=e276]:
+            - generic [ref=e277]: "12"
+            - generic [ref=e278]:
+              - paragraph [ref=e279]: Tino Group
+              - heading "NVMe VPS" [level=3] [ref=e280]
+              - text: VPS
+            - generic [ref=e281]:
+              - paragraph [ref=e282]: VPS NVMe cho website, API và ứng dụng tự quản trị.
+              - generic [ref=e283]:
+                - generic [ref=e284]: +developer
+                - generic [ref=e285]: +API
+                - generic [ref=e286]: +ứng dụng riêng
+            - generic [ref=e287]:
+              - generic [ref=e288]: Từ
+              - strong [ref=e289]: 99.000đ
+              - text: /tháng
+            - generic [ref=e290]:
+              - paragraph [ref=e291]: Kiểm tra 23/10/2026
+              - button "Đặt mua qua HOSTORA" [ref=e294] [cursor=pointer]
+          - article [ref=e295]:
+            - generic [ref=e296]: "13"
+            - generic [ref=e297]:
+              - paragraph [ref=e298]: Tino Group
+              - heading "Email Server" [level=3] [ref=e299]
+              - text: Email
+            - generic [ref=e300]:
+              - paragraph [ref=e301]: Email theo tên miền dành cho doanh nghiệp.
+              - generic [ref=e302]:
+                - generic [ref=e303]: +SME
+                - generic [ref=e304]: +email thương hiệu
+            - generic [ref=e305]:
+              - generic [ref=e306]: Từ
+              - strong [ref=e307]: 19.000đ
+              - text: /tháng
+            - generic [ref=e308]:
+              - paragraph [ref=e309]: Kiểm tra 23/10/2026
+              - button "Đặt mua qua HOSTORA" [ref=e312] [cursor=pointer]
+          - article [ref=e313]:
+            - generic [ref=e314]: "14"
+            - generic [ref=e315]:
+              - paragraph [ref=e316]: Tino Group
+              - heading "Tên miền .vn" [level=3] [ref=e317]
+              - text: Tên miền
+            - generic [ref=e318]:
+              - paragraph [ref=e319]: Tên miền quốc gia Việt Nam cho thương hiệu nội địa.
+              - generic [ref=e320]:
+                - generic [ref=e321]: +thương hiệu Việt
+                - generic [ref=e322]: +local SEO
+            - generic [ref=e323]:
+              - generic [ref=e324]: Từ
+              - strong [ref=e325]: 450.000đ
+              - text: /năm
+            - generic [ref=e326]:
+              - paragraph [ref=e327]: Kiểm tra 23/10/2026
+              - button "Đặt mua qua HOSTORA" [ref=e330] [cursor=pointer]
+          - article [ref=e331]:
+            - generic [ref=e332]: "15"
+            - generic [ref=e333]:
+              - paragraph [ref=e334]: Tino Group
+              - heading "Chứng chỉ SSL" [level=3] [ref=e335]
+              - text: SSL
+            - generic [ref=e336]:
+              - paragraph [ref=e337]: Chứng chỉ TLS thương mại cho website và tổ chức.
+              - generic [ref=e338]:
+                - generic [ref=e339]: +bảo mật
+                - generic [ref=e340]: +website doanh nghiệp
+            - generic [ref=e341]:
+              - generic [ref=e342]: Từ
+              - strong [ref=e343]: Liên hệ
+            - generic [ref=e344]:
+              - paragraph [ref=e345]: Kiểm tra 23/10/2026
+              - button "Đặt mua qua HOSTORA" [ref=e348] [cursor=pointer]
+          - article [ref=e349]:
+            - generic [ref=e350]: "16"
+            - generic [ref=e351]:
+              - paragraph [ref=e352]: Vietnix
+              - heading "WordPress Hosting" [level=3] [ref=e353]
+              - text: WordPress
+            - generic [ref=e354]:
+              - paragraph [ref=e355]: NVMe, LiteSpeed, SSL và backup nhiều lần mỗi ngày.
+              - generic [ref=e356]:
+                - generic [ref=e357]: +WordPress
+                - generic [ref=e358]: +SEO
+                - generic [ref=e359]: +WooCommerce
+            - generic [ref=e360]:
+              - generic [ref=e361]: Từ
+              - strong [ref=e362]: 67.500đ
+              - text: /tháng
+              - paragraph [ref=e363]: Gói 1, chu kỳ 1 năm, chưa VAT.
+            - generic [ref=e364]:
+              - paragraph [ref=e365]: Kiểm tra 23/10/2026
+              - button "Đặt mua qua HOSTORA" [ref=e368] [cursor=pointer]
+          - article [ref=e369]:
+            - generic [ref=e370]: "17"
+            - generic [ref=e371]:
+              - paragraph [ref=e372]: Vietnix
+              - heading "VPS NVMe" [level=3] [ref=e373]
+              - text: VPS
+            - generic [ref=e374]:
+              - paragraph [ref=e375]: VPS AMD EPYC/NVMe cho workload cần tài nguyên riêng.
+              - generic [ref=e376]:
+                - generic [ref=e377]: +API
+                - generic [ref=e378]: +web app
+                - generic [ref=e379]: +DevOps
+            - generic [ref=e380]:
+              - generic [ref=e381]: Từ
+              - strong [ref=e382]: 168.000đ
+              - text: /tháng
+            - generic [ref=e383]:
+              - paragraph [ref=e384]: Kiểm tra 23/10/2026
+              - button "Đặt mua qua HOSTORA" [ref=e387] [cursor=pointer]
+          - article [ref=e388]:
+            - generic [ref=e389]: "18"
+            - generic [ref=e390]:
+              - paragraph [ref=e391]: Vietnix
+              - heading "SEO Hosting" [level=3] [ref=e392]
+              - text: Hosting
+            - generic [ref=e393]:
+              - paragraph [ref=e394]: Dòng hosting phục vụ hệ thống website SEO.
+              - generic [ref=e395]:
+                - generic [ref=e396]: +site vệ tinh
+                - generic [ref=e397]: +agency SEO
+            - generic [ref=e398]:
+              - generic [ref=e399]: Từ
+              - strong [ref=e400]: Liên hệ
+            - generic [ref=e401]:
+              - paragraph [ref=e402]: Kiểm tra 23/10/2026
+              - button "Đặt mua qua HOSTORA" [ref=e405] [cursor=pointer]
+          - article [ref=e406]:
+            - generic [ref=e407]: "19"
+            - generic [ref=e408]:
+              - paragraph [ref=e409]: Vietnix
+              - heading "Business Hosting" [level=3] [ref=e410]
+              - text: Hosting
+            - generic [ref=e411]:
+              - paragraph [ref=e412]: Hosting AMD EPYC, backup tần suất cao cho doanh nghiệp.
+              - generic [ref=e413]:
+                - generic [ref=e414]: +doanh nghiệp
+                - generic [ref=e415]: +shop lớn
+            - generic [ref=e416]:
+              - generic [ref=e417]: Từ
+              - strong [ref=e418]: Liên hệ
+            - generic [ref=e419]:
+              - paragraph [ref=e420]: Kiểm tra 23/10/2026
+              - button "Đặt mua qua HOSTORA" [ref=e423] [cursor=pointer]
+          - article [ref=e424]:
+            - generic [ref=e425]: "20"
+            - generic [ref=e426]:
+              - paragraph [ref=e427]: Mắt Bão
+              - heading "Cloud Hosting" [level=3] [ref=e428]
+              - text: Cloud
+            - generic [ref=e429]:
+              - paragraph [ref=e430]: Cloud hosting cho website cần tài nguyên linh hoạt.
+              - generic [ref=e431]:
+                - generic [ref=e432]: +website doanh nghiệp
+                - generic [ref=e433]: +website lớn
+            - generic [ref=e434]:
+              - generic [ref=e435]: Từ
+              - strong [ref=e436]: 49.000đ
+              - text: /tháng
+            - generic [ref=e437]:
+              - paragraph [ref=e438]: Kiểm tra 23/10/2026
+              - button "Đặt mua qua HOSTORA" [ref=e441] [cursor=pointer]
+          - article [ref=e442]:
+            - generic [ref=e443]: "21"
+            - generic [ref=e444]:
+              - paragraph [ref=e445]: Mắt Bão
+              - heading "Email Pro" [level=3] [ref=e446]
+              - text: Email
+            - generic [ref=e447]:
+              - paragraph [ref=e448]: Email doanh nghiệp theo tên miền.
+              - generic [ref=e449]:
+                - generic [ref=e450]: +SME
+                - generic [ref=e451]: +email thương hiệu
+            - generic [ref=e452]:
+              - generic [ref=e453]: Từ
+              - strong [ref=e454]: 19.000đ
+              - text: /tháng
+            - generic [ref=e455]:
+              - paragraph [ref=e456]: Kiểm tra 23/10/2026
+              - button "Đặt mua qua HOSTORA" [ref=e459] [cursor=pointer]
+          - article [ref=e460]:
+            - generic [ref=e461]: "22"
+            - generic [ref=e462]:
+              - paragraph [ref=e463]: Mắt Bão
+              - heading "Google Workspace" [level=3] [ref=e464]
+              - text: Văn phòng
+            - generic [ref=e465]:
+              - paragraph [ref=e466]: Bộ công cụ cộng tác và email Google cho doanh nghiệp.
+              - generic [ref=e467]:
+                - generic [ref=e468]: +cộng tác
+                - generic [ref=e469]: +doanh nghiệp
+            - generic [ref=e470]:
+              - generic [ref=e471]: Từ
+              - strong [ref=e472]: 89.000đ
+              - text: /tháng
+            - generic [ref=e473]:
+              - paragraph [ref=e474]: Kiểm tra 23/10/2026
+              - button "Đặt mua qua HOSTORA" [ref=e477] [cursor=pointer]
+          - article [ref=e478]:
+            - generic [ref=e479]: "23"
+            - generic [ref=e480]:
+              - paragraph [ref=e481]: Mắt Bão
+              - heading "Microsoft 365" [level=3] [ref=e482]
+              - text: Văn phòng
+            - generic [ref=e483]:
+              - paragraph [ref=e484]: Microsoft Office, email và cộng tác cloud.
+              - generic [ref=e485]:
+                - generic [ref=e486]: +văn phòng
+                - generic [ref=e487]: +doanh nghiệp
+            - generic [ref=e488]:
+              - generic [ref=e489]: Từ
+              - strong [ref=e490]: 95.000đ
+              - text: /tháng
+            - generic [ref=e491]:
+              - paragraph [ref=e492]: Kiểm tra 23/10/2026
+              - button "Đặt mua qua HOSTORA" [ref=e495] [cursor=pointer]
+          - article [ref=e496]:
+            - generic [ref=e497]: "24"
+            - generic [ref=e498]:
+              - paragraph [ref=e499]: P.A Việt Nam
+              - heading "Reseller Hosting" [level=3] [ref=e500]
+              - text: Hosting
+            - generic [ref=e501]:
+              - paragraph [ref=e502]: Hosting dành cho đại lý và đơn vị quản lý nhiều khách hàng.
+              - generic [ref=e503]:
+                - generic [ref=e504]: +agency
+                - generic [ref=e505]: +reseller
+                - generic [ref=e506]: +nhiều website
+            - generic [ref=e507]:
+              - generic [ref=e508]: Từ
+              - strong [ref=e509]: 122.000đ
+              - text: /tháng
+              - paragraph [ref=e510]: Giá từ theo gói hằng năm.
+            - generic [ref=e511]:
+              - paragraph [ref=e512]: Kiểm tra 23/10/2026
+              - button "Đặt mua qua HOSTORA" [ref=e515] [cursor=pointer]
+          - article [ref=e516]:
+            - generic [ref=e517]: "25"
+            - generic [ref=e518]:
+              - paragraph [ref=e519]: P.A Việt Nam
+              - heading "WordPress Hosting" [level=3] [ref=e520]
+              - text: WordPress
+            - generic [ref=e521]:
+              - paragraph [ref=e522]: Dịch vụ hosting tối ưu WordPress với nhiều phân khúc.
+              - generic [ref=e523]:
+                - generic [ref=e524]: +WordPress
+                - generic [ref=e525]: +doanh nghiệp
+            - generic [ref=e526]:
+              - generic [ref=e527]: Từ
+              - strong [ref=e528]: Liên hệ
+            - generic [ref=e529]:
+              - paragraph [ref=e530]: Kiểm tra 23/10/2026
+              - button "Đặt mua qua HOSTORA" [ref=e533] [cursor=pointer]
+          - article [ref=e534]:
+            - generic [ref=e535]: "26"
+            - generic [ref=e536]:
+              - paragraph [ref=e537]: P.A Việt Nam
+              - heading "SEO Hosting" [level=3] [ref=e538]
+              - text: Hosting
+            - generic [ref=e539]:
+              - paragraph [ref=e540]: Hosting chuyên biệt cho nhu cầu quản lý hệ thống website SEO.
+              - generic [ref=e541]:
+                - generic [ref=e542]: +SEO
+                - generic [ref=e543]: +agency
+            - generic [ref=e544]:
+              - generic [ref=e545]: Từ
+              - strong [ref=e546]: Liên hệ
+            - generic [ref=e547]:
+              - paragraph [ref=e548]: Kiểm tra 23/10/2026
+              - button "Đặt mua qua HOSTORA" [ref=e551] [cursor=pointer]
+  - contentinfo [ref=e552]:
+    - generic [ref=e553]:
+      - generic [ref=e554]:
+        - strong [ref=e555]: HOSTORA
+        - paragraph [ref=e556]: Hiểu dịch vụ. Biết chi phí. Chọn đúng.
+      - navigation "Liên kết cuối trang" [ref=e557]:
+        - link "Tạo website AI" [ref=e558] [cursor=pointer]:
+          - /url: /website-studio
+        - link "Dịch vụ" [ref=e559] [cursor=pointer]:
+          - /url: /services
+        - link "Đơn hàng" [ref=e560] [cursor=pointer]:
+          - /url: /orders
+        - link "Kiến thức" [ref=e561] [cursor=pointer]:
+          - /url: /knowledge
+        - link "Phân tích website" [ref=e562] [cursor=pointer]:
+          - /url: /website-analyzer
+        - link "Hỏi HOSTORA" [ref=e563] [cursor=pointer]:
+          - /url: /ai-assistant
+      - generic [ref=e564]: Tư vấn AI chạy trên máy HOSTORA. Giá đối tác là tham khảo tại ngày kiểm tra.
+  - alert [ref=e565]
+  - dialog [ref=e566]:
+    - button "Đóng" [ref=e567] [cursor=pointer]: ×
+    - paragraph [ref=e568]: MUA HÀNG QUA HOSTORA
+    - heading "Web Hosting" [level=2] [ref=e569]
+    - paragraph [ref=e570]: Hostinger · Shared hosting quản trị sẵn cho website giai đoạn đầu.
+    - status [ref=e578]:
+      - generic [ref=e581]:
+        - strong [ref=e582]: Đã nhận yêu cầu mua
+        - generic [ref=e583]: "Mã yêu cầu: HSR-3B5AAA4AA7"
+        - generic [ref=e584]: HOSTORA sẽ phản hồi theo thông tin liên hệ, xác nhận giá rồi gửi hóa đơn. Chưa có khoản tiền nào bị thu.

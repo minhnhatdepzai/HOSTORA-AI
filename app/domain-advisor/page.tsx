@@ -1,14 +1,20 @@
 import type { Metadata } from "next";
 import { DomainAdvisor } from "@/components/domain-advisor";
 import { PageHeading } from "@/components/page-heading";
-export const metadata: Metadata = { title: "Cố vấn tên miền" };
+import { pageMetadata } from "@/lib/page-metadata";
+export const metadata: Metadata = pageMetadata({
+  title: "Gợi ý tên miền cho doanh nghiệp",
+  description: "Tạo ý tưởng tên miền dễ nhớ theo thương hiệu và mục tiêu website; HOSTORA xác minh trước khi phát hành hóa đơn.",
+  path: "/domain-advisor",
+  keywords: ["gợi ý tên miền", "tên miền doanh nghiệp", "chọn tên miền đẹp"],
+});
 export default function DomainAdvisorPage() {
   return (
-    <div className="mx-auto max-w-7xl px-5 py-16 lg:px-8">
+    <div className="mx-auto max-w-7xl px-5 py-8 sm:py-14 lg:px-8">
       <PageHeading
-        eyebrow="Domain & brand advisor"
-        title="Một cái tên dễ nhớ. Không lời hứa giả."
-        description="Qwen tạo biến thể và định hướng thương hiệu; HOSTORA không khẳng định tên miền còn trống nếu chưa có nguồn kiểm tra hợp lệ."
+        eyebrow="Ý tưởng tên miền"
+        title="Tìm một cái tên dễ nhớ."
+        description="Nhập tên thương hiệu để nhận gợi ý. HOSTORA sẽ xác minh tình trạng tên miền trước khi tạo hóa đơn đăng ký."
       />
       <DomainAdvisor />
     </div>

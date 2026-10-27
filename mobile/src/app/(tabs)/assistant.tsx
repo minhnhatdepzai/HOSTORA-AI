@@ -1,13 +1,14 @@
+import { Pressable } from "@/components/pressable";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Feather } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
+import { router } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
-  Linking,
   Platform,
-  Pressable,
   ScrollView,
   type ScrollViewInstance,
   StyleSheet,
@@ -32,12 +33,14 @@ type Message = {
   content: string;
   sources?: ChatSource[];
   ragMode?: string;
+  nextAction?: "create-site" | "upload-screen";
 };
 // A new key keeps customer-facing copy separate from conversations created by older builds.
 const KEY = "hostora:mobile:chat:v3";
 const starters = [
-  "Shop mới nên chọn gói nào?",
-  "Làm sao để website nhanh khi đông khách?",
+  "Tôi chưa có trang web, bắt đầu từ đâu?",
+  "Cửa hàng mới nên chọn gói nào?",
+  "Làm sao để trang web nhanh khi đông khách?",
   "Giá gia hạn khác gì giá đầu?",
 ];
 
@@ -45,7 +48,7 @@ function customerAnswer(content: string, sources: ChatSource[] = []) {
   return toCustomerLanguage(
     sources.reduce(
       (answer, source, index) =>
-        answer.split(`[${source.citation}]`).join(`[Nguồn ${index + 1}]`),
+        answer.split(`[${source.citation}]`).join(`[Dữ liệu ${index + 1}]`),
       content,
     ),
   );
@@ -56,11 +59,12 @@ export default function AssistantScreen() {
     {
       role: "assistant",
       content:
-        "Chào bạn, mình là HOSTORA — trợ lý chọn hosting và tên miền. Bạn đang chuẩn bị website gì?",
+        "Chào bạn, mình là HOSTORA — trợ lý chọn lưu trữ và tên miền. Bạn đang chuẩn bị trang web gì?",
     },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [imageLoading, setImageLoading] = useState(false);
   const list = useRef<ScrollViewInstance>(null);
 
   useEffect(() => {
@@ -100,6 +104,12 @@ export default function AssistantScreen() {
           content: answer,
           sources: readChatSources(response.headers.get("x-hostora-sources")),
           ragMode: response.headers.get("x-hostora-rag-mode") ?? undefined,
+          nextAction: ["create-site", "upload-screen"].includes(
+            response.headers.get("x-hostora-next-action") ?? "",
+          )
+            ? (response.headers.get("x-hostora-next-action") as
+                "create-site" | "upload-screen")
+            : undefined,
         },
       ];
       setMessages(completed);
@@ -121,9 +131,85 @@ export default function AssistantScreen() {
     }
   }
 
+  async function inspectScreenshot() {
+    if (loading || imageLoading) return;
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      base64: true,
+      quality: 0.7,
+      allowsEditing: false,
+    });
+    if (result.canceled) return;
+    const asset = result.assets[0];
+    if (!asset?.base64) {
+      Alert.alert("Chưa đọc được ảnh", "Hãy chọn lại một ảnh màn hình rõ hơn.");
+      return;
+    }
+    if ((asset.fileSize ?? 0) > 5 * 1024 * 1024) {
+      Alert.alert("Ảnh quá lớn", "HOSTORA chỉ nhận ảnh tối đa 5 MB.");
+      return;
+    }
+    const mimeType =
+      asset.mimeType === "image/png" ||
+      asset.mimeType === "image/webp" ||
+      asset.mimeType === "image/jpeg"
+        ? asset.mimeType
+        : "image/jpeg";
+    const userMessage: Message = {
+      role: "user",
+      content: "Đã gửi ảnh màn hình để xác định bước tiếp theo.",
+    };
+    const next = [...messages, userMessage];
+    setMessages(next);
+    setImageLoading(true);
+    try {
+      const apiBase = await getApiBase();
+      if (!apiBase) throw new Error("Chưa có kết nối tư vấn.");
+      const response = await fetch(`${apiBase}/api/ai/journey-ocr`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ mimeType, base64: asset.base64 }),
+      });
+      const payload = (await response.json()) as {
+        guidance?: { title: string; summary: string; actions: string[] };
+        error?: string;
+      };
+      if (!response.ok || !payload.guidance)
+        throw new Error(payload.error || "Chưa đọc được màn hình.");
+      const guidance = payload.guidance;
+      const completed: Message[] = [
+        ...next,
+        {
+          role: "assistant",
+          content: `**${guidance.title}**\n\n${guidance.summary}\n\n${guidance.actions
+            .map((action, index) => `${index + 1}. ${action}`)
+            .join("\n")}`,
+        },
+      ];
+      setMessages(completed);
+      await AsyncStorage.setItem(KEY, JSON.stringify(completed));
+    } catch (error) {
+      const failed: Message[] = [
+        ...next,
+        {
+          role: "assistant",
+          content:
+            error instanceof Error
+              ? error.message
+              : "Chưa đọc được ảnh. Hãy chụp lại rõ hơn.",
+        },
+      ];
+      setMessages(failed);
+      await AsyncStorage.setItem(KEY, JSON.stringify(failed));
+    } finally {
+      setImageLoading(false);
+      setTimeout(() => list.current?.scrollToEnd({ animated: true }), 80);
+    }
+  }
+
   function clear() {
     Alert.alert(
-      "Xóa lịch sử chat?",
+      "Xóa lịch sử trò chuyện?",
       "Thao tác này chỉ xóa dữ liệu trên thiết bị.",
       [
         { text: "Hủy", style: "cancel" },
@@ -135,7 +221,7 @@ export default function AssistantScreen() {
               {
                 role: "assistant",
                 content:
-                  "Lịch sử đã được xóa. Bạn muốn tìm hiểu gì về hosting?",
+                  "Lịch sử đã được xóa. Bạn muốn tìm hiểu gì về lưu trữ?",
               },
             ];
             setMessages(initial);
@@ -147,7 +233,7 @@ export default function AssistantScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safe} edges={["top"]}>
+    <SafeAreaView style={styles.safe} edges={["top", "left", "right"]}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -162,7 +248,7 @@ export default function AssistantScreen() {
               onPress={clear}
               style={styles.trash}
               accessibilityRole="button"
-              accessibilityLabel="Xóa lịch sử chat"
+              accessibilityLabel="Xóa lịch sử trò chuyện"
             >
               <Feather name="trash-2" color={colors.muted} size={17} />
             </Pressable>
@@ -170,7 +256,7 @@ export default function AssistantScreen() {
         </View>
         <View style={styles.heading}>
           <Text style={styles.kicker}>TRỢ LÝ HOSTORA</Text>
-          <Text style={styles.title}>Hỏi sâu. Thấy rõ nguồn.</Text>
+          <Text style={styles.title}>Hỏi về lưu trữ, xem rõ lựa chọn.</Text>
           <Text style={styles.copy}>
             Câu trả lời dựa trên bảng giá và tài liệu đã được kiểm tra.
           </Text>
@@ -208,24 +294,46 @@ export default function AssistantScreen() {
                     <Markdown style={markdownStyles}>
                       {customerAnswer(message.content, message.sources)}
                     </Markdown>
+                    {message.nextAction === "create-site" ? (
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel="Tạo trang web ngay"
+                        onPress={() => router.push("/studio")}
+                        style={styles.nextAction}
+                      >
+                        <Text style={styles.nextActionText}>
+                          Tạo trang web ngay
+                        </Text>
+                        <Feather name="arrow-right" color="white" size={17} />
+                      </Pressable>
+                    ) : null}
+                    {message.nextAction === "upload-screen" ? (
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel="Gửi ảnh màn hình"
+                        onPress={() => void inspectScreenshot()}
+                        style={styles.nextAction}
+                      >
+                        <Text style={styles.nextActionText}>
+                          Gửi ảnh màn hình
+                        </Text>
+                        <Feather name="image" color="white" size={17} />
+                      </Pressable>
+                    ) : null}
                     {message.sources &&
                     citedSources(message.content, message.sources).length >
                       0 ? (
                       <View style={styles.sourceList}>
                         <Text style={styles.sourceHeading}>
-                          NGUỒN ĐƯỢC TRÍCH DẪN
+                          DỮ LIỆU ĐÃ KIỂM TRA
                         </Text>
                         {citedSources(message.content, message.sources).map(
                           (source, sourceIndex) => (
                             <Text
                               key={source.citation}
-                              accessibilityRole="link"
-                              onPress={() =>
-                                void Linking.openURL(source.sourceUrl)
-                              }
                               style={styles.sourceLink}
                             >
-                              Nguồn tham khảo {sourceIndex + 1} · kiểm tra ngày{" "}
+                              Dữ liệu {sourceIndex + 1} · HOSTORA kiểm tra ngày{" "}
                               {source.verifiedAt}
                             </Text>
                           ),
@@ -237,14 +345,14 @@ export default function AssistantScreen() {
                     citedSources(message.content, message.sources).length ===
                       0 ? (
                       <Text style={styles.sourceWarning}>
-                        Chưa có trích dẫn cụ thể; kiểm tra nguồn trước khi quyết
-                        định mua.
+                        Chưa có đủ dữ liệu kiểm chứng; HOSTORA cần xác minh
+                        trước khi bạn quyết định mua.
                       </Text>
                     ) : null}
                     {message.ragMode === "lexical-fallback" ? (
                       <Text style={styles.sourceWarning}>
-                        Đang dùng chế độ tìm kiếm cơ bản; hãy kiểm tra nguồn
-                        trước khi quyết định mua.
+                        Đang dùng dữ liệu dự phòng; HOSTORA cần xác minh trước
+                        khi tạo hóa đơn.
                       </Text>
                     ) : null}
                   </>
@@ -285,30 +393,46 @@ export default function AssistantScreen() {
           </ScrollView>
         ) : null}
         <View style={styles.composer}>
+          <Pressable
+            disabled={loading || imageLoading}
+            onPress={() => void inspectScreenshot()}
+            accessibilityRole="button"
+            accessibilityLabel="Gửi ảnh màn hình để được hướng dẫn"
+            style={[
+              styles.imageButton,
+              (loading || imageLoading) && { opacity: 0.35 },
+            ]}
+          >
+            {imageLoading ? (
+              <ActivityIndicator color={colors.primary} size="small" />
+            ) : (
+              <Feather name="image" color={colors.primary} size={19} />
+            )}
+          </Pressable>
           <TextInput
             value={input}
             onChangeText={setInput}
-            placeholder="Hỏi HOSTORA về hosting..."
+            placeholder="Hỏi HOSTORA về lưu trữ..."
             placeholderTextColor={colors.faint}
             style={styles.input}
             multiline
             maxLength={2000}
           />
           <Pressable
-            disabled={!input.trim() || loading}
+            disabled={!input.trim() || loading || imageLoading}
             onPress={() => void send()}
             accessibilityRole="button"
             accessibilityLabel="Gửi câu hỏi cho HOSTORA"
             style={[
               styles.send,
-              (!input.trim() || loading) && { opacity: 0.35 },
+              (!input.trim() || loading || imageLoading) && { opacity: 0.35 },
             ]}
           >
             <Feather name="arrow-up" color="white" size={19} />
           </Pressable>
         </View>
         <Text style={styles.privacy}>
-          Nội dung tư vấn được xử lý riêng tư · Có nguồn để bạn kiểm tra
+          Nội dung tư vấn được xử lý riêng tư · Dữ liệu do HOSTORA kiểm tra
         </Text>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -387,6 +511,22 @@ const styles = StyleSheet.create({
     fontFamily: "BeVietnamPro_400Regular",
     fontSize: 12,
     lineHeight: 20,
+  },
+  nextAction: {
+    minHeight: 46,
+    marginTop: 8,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    backgroundColor: colors.primary,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  nextActionText: {
+    color: "white",
+    fontFamily: "BeVietnamPro_700Bold",
+    fontSize: 12,
   },
   sourceList: {
     borderTopWidth: 1,
@@ -469,6 +609,16 @@ const styles = StyleSheet.create({
     height: 42,
     borderRadius: 21,
     backgroundColor: colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  imageButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    borderWidth: 1,
+    borderColor: colors.line,
+    backgroundColor: colors.canvas,
     alignItems: "center",
     justifyContent: "center",
   },

@@ -1,0 +1,142 @@
+- generic [ref=f1e5]:
+  - generic [ref=f1e10]:
+    - generic [ref=f1e17]:
+      - generic [ref=f1e18]:
+        - generic [ref=f1e19]:
+          - generic [ref=f1e20]:
+            - generic [ref=f1e21]: H
+            - generic [ref=f1e23]:
+              - generic [ref=f1e24]: HOSTORA
+              - generic [ref=f1e25]: CỐ VẤN WEBSITE
+          - generic [ref=f1e26] [cursor=pointer]: NL
+        - generic [ref=f1e28]:
+          - generic [ref=f1e29]: 
+          - generic [ref=f1e30]: TƯ VẤN RIÊNG TƯ
+        - generic [ref=f1e31]: Gói phù hợp cho mục tiêu lớn.
+        - generic [ref=f1e32]: Chọn gói vận hành website bằng thông tin đã kiểm tra, so sánh rõ ràng và lời khuyên phù hợp với nhu cầu của bạn.
+        - generic [ref=f1e33]:
+          - button "Bắt đầu tư vấn " [ref=f1e35] [cursor=pointer]:
+            - generic [ref=f1e36]: Bắt đầu tư vấn
+            - generic [ref=f1e37]: 
+          - generic "Mở trợ lý HOSTORA" [ref=f1e38] [cursor=pointer]: 
+        - generic [ref=f1e40]:
+          - generic [ref=f1e41]:
+            - generic [ref=f1e42]:
+              - generic [ref=f1e43]: GỢI Ý PHÙ HỢP
+              - generic [ref=f1e44]: Hostinger Premium
+            - generic [ref=f1e45]:
+              - generic [ref=f1e46]: "98"
+              - generic [ref=f1e47]: /100
+          - generic [ref=f1e48]:
+            - generic [ref=f1e49]:
+              - generic [ref=f1e50]: Ngân sách
+              - generic [ref=f1e51]: 300.000đ
+            - generic [ref=f1e52]:
+              - generic [ref=f1e53]: Khách dự kiến
+              - generic [ref=f1e54]: 5.000/th
+            - generic [ref=f1e55]:
+              - generic [ref=f1e56]: Cập nhật
+              - generic [ref=f1e57]: Ngày 23/10
+      - generic [ref=f1e58]:
+        - generic [ref=f1e60]:
+          - generic [ref=f1e61]: Quyết định tiếp theo
+          - generic [ref=f1e62]: Bạn muốn làm gì?
+        - generic [ref=f1e63]:
+          - generic [ref=f1e64] [cursor=pointer]:
+            - generic [ref=f1e65]: 
+            - generic [ref=f1e67]: Tên miền
+            - generic [ref=f1e68]: Tạo tên dễ nhớ
+          - generic [ref=f1e69] [cursor=pointer]:
+            - generic [ref=f1e70]: 
+            - generic [ref=f1e72]: Website
+            - generic [ref=f1e73]: Kiểm tra công khai
+          - generic [ref=f1e74] [cursor=pointer]:
+            - generic [ref=f1e75]: 
+            - generic [ref=f1e77]: Mức sẵn sàng
+            - generic [ref=f1e78]: Biết việc cần làm tiếp
+        - generic [ref=f1e79]:
+          - generic [ref=f1e80]:
+            - generic [ref=f1e81]:
+              - generic [ref=f1e82]: Gợi ý tạm thời từ dữ liệu ngày 23/10
+              - generic [ref=f1e83]: Premium
+              - generic [ref=f1e84]: Hostinger
+            - generic [ref=f1e85]:
+              - generic [ref=f1e86]: 
+              - generic [ref=f1e87]: 98 ĐIỂM
+          - generic [ref=f1e88]:
+            - generic [ref=f1e89]: 38.900đ
+            - generic [ref=f1e90]: / tháng
+          - generic [ref=f1e91]:
+            - generic [ref=f1e92]:
+              - generic [ref=f1e93]: 
+              - generic [ref=f1e94]: 20 GB SSD
+            - generic [ref=f1e95]:
+              - generic [ref=f1e96]: 
+              - generic [ref=f1e97]: Hàng tuần
+          - button "Xem phân tích đầy đủ " [ref=f1e98] [cursor=pointer]:
+            - generic [ref=f1e99]: Xem phân tích đầy đủ
+            - generic [ref=f1e100]: 
+        - generic [ref=f1e101]:
+          - generic [ref=f1e102]: 
+          - generic [ref=f1e104]:
+            - generic [ref=f1e105]: Thông tin được bảo vệ
+            - generic [ref=f1e106]: Thông tin đăng ký chỉ được lưu trên điện thoại này
+    - tablist [ref=f1e108]:
+      - tab "  Trang chủ" [selected] [ref=f1e110] [cursor=pointer]:
+        - generic [ref=f1e111]:
+          - generic [ref=f1e112]: 
+          - generic [ref=f1e114]: 
+        - generic [ref=f1e116]: Trang chủ
+      - tab "  Tư vấn" [ref=f1e118] [cursor=pointer]:
+        - generic [ref=f1e119]:
+          - generic [ref=f1e120]: 
+          - generic [ref=f1e122]: 
+        - generic [ref=f1e124]: Tư vấn
+      - tab "  Trợ lý" [ref=f1e126] [cursor=pointer]:
+        - generic [ref=f1e127]:
+          - generic [ref=f1e128]: 
+          - generic [ref=f1e130]: 
+        - generic [ref=f1e132]: Trợ lý
+      - tab "  Công cụ" [ref=f1e134] [cursor=pointer]:
+        - generic [ref=f1e135]:
+          - generic [ref=f1e136]: 
+          - generic [ref=f1e138]: 
+        - generic [ref=f1e140]: Công cụ
+      - tab "  Đăng ký" [ref=f1e142] [cursor=pointer]:
+        - generic [ref=f1e143]:
+          - generic [ref=f1e144]: 
+          - generic [ref=f1e146]: 
+        - generic [ref=f1e148]: Đăng ký
+  - generic [ref=f1e151]:
+    - generic [ref=f1e152]:
+      - generic [ref=f1e153]:
+        - generic [ref=f1e154]: H
+        - generic [ref=f1e156]:
+          - generic [ref=f1e157]: HOSTORA
+          - generic [ref=f1e158]: CỐ VẤN WEBSITE
+      - button "Bỏ qua hướng dẫn" [ref=f1e159] [cursor=pointer]:
+        - generic [ref=f1e160]: Bỏ qua
+    - generic [ref=f1e161]:
+      - generic [ref=f1e162]: "03"
+      - generic [ref=f1e164]:
+        - generic [ref=f1e214]: 
+        - generic [ref=f1e216]:
+          - generic [ref=f1e217]: 
+          - generic [ref=f1e218]: Lưu trên máy
+        - generic [ref=f1e179]:
+          - generic [ref=f1e219]: 
+          - generic [ref=f1e220]: Không chia sẻ
+    - generic "Bước 3 trên 3. Hỏi điều bạn chưa rõ, theo cách của bạn." [ref=f1e221]:
+      - generic [ref=f1e187]:
+        - generic [ref=f1e188]: 
+        - generic [ref=f1e189]: HỖ TRỢ RIÊNG TƯ
+      - generic [ref=f1e190]: Hỏi điều bạn chưa rõ, theo cách của bạn.
+      - generic [ref=f1e191]: Trợ lý giải thích bằng tiếng Việt dễ hiểu. Tên và số điện thoại đăng ký tư vấn chỉ được lưu trên thiết bị này.
+      - generic [ref=f1e192]:
+        - generic [ref=f1e193]: 
+        - generic [ref=f1e194]: Bạn luôn là người quyết định
+    - generic [ref=f1e195]:
+      - generic "Bước 3 trên 3" [ref=f1e222]
+      - button "Bắt đầu " [active] [ref=f1e223] [cursor=pointer]:
+        - generic [ref=f1e201]: Bắt đầu
+        - generic [ref=f1e202]: 

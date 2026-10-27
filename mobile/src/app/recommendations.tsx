@@ -1,8 +1,8 @@
+import { Pressable } from "@/components/pressable";
 import { Feather } from "@expo/vector-icons";
 import { useState } from "react";
 import {
   ActivityIndicator,
-  Pressable,
   ScrollView,
   Share,
   StyleSheet,
@@ -10,6 +10,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { DetailHeader } from "@/components/detail-header";
 import {
@@ -37,24 +38,24 @@ type ExplainResult = {
 };
 const faqItems: [string, string][] = [
   [
-    "Hosting và tên miền khác nhau thế nào?",
-    "Tên miền là địa chỉ website; hosting là nơi lưu nội dung và vận hành website. Shop thường cần cả hai.",
+    "Lưu trữ và tên miền khác nhau thế nào?",
+    "Tên miền là địa chỉ trang web; lưu trữ là nơi lưu nội dung và vận hành trang web. Cửa hàng thường cần cả hai.",
   ],
   [
-    "Shop mới có cần VPS không?",
-    "Thường có thể bắt đầu bằng hosting được quản lý. VPS phù hợp khi website cần cách vận hành riêng và đã có người có kinh nghiệm phụ trách.",
+    "Cửa hàng mới có cần VPS không?",
+    "Thường có thể bắt đầu bằng lưu trữ được quản lý. VPS phù hợp khi trang web cần cách vận hành riêng và đã có người có kinh nghiệm phụ trách.",
   ],
   [
     "Giá ưu đãi có phải giá lâu dài?",
-    "Không. Giá ưu đãi gắn với kỳ thanh toán; hãy xem giá gia hạn và điều khoản tại trang chính thức trước khi mua.",
+    "Không. Giá ưu đãi gắn với kỳ thanh toán. HOSTORA sẽ xác nhận kỳ hạn, tổng tiền và điều kiện trước khi tạo hóa đơn.",
   ],
   [
     "Băng thông không giới hạn nghĩa là gì?",
-    "Vẫn có thể có chính sách sử dụng hợp lý. Nếu nguồn không công bố rõ, HOSTORA hiển thị Chưa xác minh.",
+    "Vẫn có thể có chính sách sử dụng hợp lý. Khi dữ liệu chưa rõ, HOSTORA hiển thị Chưa xác minh.",
   ],
   [
     "Gói được đề xuất có chịu được flash sale?",
-    "Mức phù hợp chỉ giúp chọn ban đầu. Hãy chạy thử website với lượng khách cao trước chiến dịch lớn.",
+    "Mức phù hợp chỉ giúp chọn ban đầu. Hãy chạy thử trang web với lượng khách cao trước chiến dịch lớn.",
   ],
 ];
 export default function RecommendationsScreen() {
@@ -77,7 +78,7 @@ export default function RecommendationsScreen() {
         (plan, index) =>
           `${index + 1}. ${plan.provider} ${plan.name}: ${formatVnd(plan.promo)}/tháng với kỳ ${plan.billingMonths} tháng; gia hạn ${plan.renewal == null ? "chưa xác minh" : `${formatVnd(plan.renewal)}/tháng`}; ${plan.storage}; băng thông ${plan.bandwidth ?? "chưa xác minh"}.`,
       ),
-      "Giá có thể thay đổi; hãy kiểm tra trang chính thức trước khi mua.",
+      "Giá có thể thay đổi; HOSTORA xác nhận tổng tiền và kỳ hạn trước khi tạo hóa đơn.",
     ];
     await Share.share({ message: lines.join("\n") });
   }
@@ -130,7 +131,7 @@ export default function RecommendationsScreen() {
   return (
     <SafeAreaView
       style={{ flex: 1, backgroundColor: colors.canvas }}
-      edges={["top"]}
+      edges={["top", "bottom", "left", "right"]}
     >
       <DetailHeader
         title="Gói đề xuất"
@@ -140,13 +141,13 @@ export default function RecommendationsScreen() {
           </Pill>
         }
       />
-      <Screen>
+      <Screen insetTop={false}>
         <View style={styles.intro}>
-          <Eyebrow>Kết quả tư vấn</Eyebrow>
-          <Title style={{ marginTop: 8 }}>Ba lựa chọn. Lý do rõ ràng.</Title>
-          <Body style={{ marginTop: 10 }}>
-            Thứ tự dựa trên nhu cầu và bảng giá đã kiểm tra, không dựa trên lời
-            quảng cáo.
+          <Eyebrow>Gợi ý đã kiểm tra</Eyebrow>
+          <Title style={styles.introTitle}>3 gói để bạn so sánh</Title>
+          <Body style={styles.introBody}>
+            So sánh giá ưu đãi, giá gia hạn và lý do phù hợp. Gửi yêu cầu mua
+            ngay trong HOSTORA.
           </Body>
           <Text style={styles.catalogStatus}>
             {status === "verified"
@@ -221,6 +222,16 @@ export default function RecommendationsScreen() {
                   setSelected(plan.id);
                   setSaved(false);
                 }}
+              />
+              <Text style={styles.purchaseHint}>
+                Xem danh sách dịch vụ và gửi yêu cầu mua trong HOSTORA. Giá cuối
+                được xác nhận trước khi tạo hóa đơn.
+              </Text>
+              <Button
+                label="Mua qua HOSTORA"
+                icon="arrow-right"
+                variant={selectedPlan?.id === plan.id ? "mint" : "secondary"}
+                onPress={() => router.push("/(tabs)/products?category=hosting")}
               />
             </Card>
           ))}
@@ -358,12 +369,12 @@ function Spec({ label, value }: { label: string; value: string }) {
 }
 function ComparisonTable({ plans }: { plans: RecommendedPlan[] }) {
   const rows: [string, (plan: RecommendedPlan) => string][] = [
-    ["Giá ưu đãi", (p) => `${formatVnd(p.promo)}/th`],
+    ["Giá ưu đãi", (p) => `${formatVnd(p.promo)}/tháng`],
     ["Kỳ ưu đãi", (p) => `${p.billingMonths} tháng`],
     [
       "Gia hạn",
       (p) =>
-        p.renewal == null ? "Chưa xác minh" : `${formatVnd(p.renewal)}/th`,
+        p.renewal == null ? "Chưa xác minh" : `${formatVnd(p.renewal)}/tháng`,
     ],
     ["Dung lượng", (p) => p.storage],
     ["Băng thông", (p) => p.bandwidth ?? "Chưa xác minh"],
@@ -396,7 +407,7 @@ function ComparisonTable({ plans }: { plans: RecommendedPlan[] }) {
           horizontal
           style={styles.tableScroll}
           showsHorizontalScrollIndicator
-          accessibilityLabel="Ba gói hosting, vuốt ngang để so sánh"
+          accessibilityLabel="Ba gói lưu trữ, vuốt ngang để so sánh"
         >
           <View style={styles.tablePlanGrid}>
             {plans.map((plan) => (
@@ -424,14 +435,28 @@ function ComparisonTable({ plans }: { plans: RecommendedPlan[] }) {
   );
 }
 const styles = StyleSheet.create({
-  intro: { paddingHorizontal: 18, paddingTop: 12 },
+  intro: { paddingHorizontal: 18, paddingTop: 9 },
+  introTitle: {
+    marginTop: 5,
+    fontSize: 27,
+    lineHeight: 34,
+    letterSpacing: -0.9,
+  },
+  introBody: { marginTop: 6, fontSize: 12, lineHeight: 20 },
   catalogStatus: {
     color: colors.success,
     fontFamily: "BeVietnamPro_700Bold",
     fontSize: 9,
     marginTop: 9,
   },
-  content: { paddingHorizontal: 18, paddingTop: 22, gap: 14 },
+  content: { paddingHorizontal: 18, paddingTop: 16, gap: 14 },
+  purchaseHint: {
+    color: colors.muted,
+    fontFamily: "BeVietnamPro_400Regular",
+    fontSize: 10,
+    lineHeight: 17,
+    marginTop: 5,
+  },
   formTitle: {
     color: colors.text,
     fontFamily: "BeVietnamPro_800ExtraBold",

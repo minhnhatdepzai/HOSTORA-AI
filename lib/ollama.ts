@@ -5,6 +5,8 @@ export const OLLAMA_BASE_URL =
 export const CHAT_MODEL = process.env.OLLAMA_CHAT_MODEL ?? "qwen3.5:9b-q8_0";
 // Only the in-app RAG chatbot uses this model; structured AI stays on CHAT_MODEL.
 export const CHATBOT_MODEL = process.env.OLLAMA_CHATBOT_MODEL ?? CHAT_MODEL;
+export const STUDIO_MODEL = process.env.OLLAMA_STUDIO_MODEL ?? CHAT_MODEL;
+export const VISION_MODEL = process.env.OLLAMA_VISION_MODEL ?? "qwen3-vl:8b";
 export const EMBED_MODEL =
   process.env.OLLAMA_EMBED_MODEL ?? "qwen3-embedding:4b";
 const TIMEOUT_MS = Number(process.env.OLLAMA_TIMEOUT_MS ?? 90000);
@@ -19,9 +21,13 @@ export class LocalAiError extends Error {
   }
 }
 
-async function ollamaFetch(path: string, init: RequestInit) {
+async function ollamaFetch(
+  path: string,
+  init: RequestInit,
+  timeoutMs = TIMEOUT_MS,
+) {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const response = await fetch(`${OLLAMA_BASE_URL}${path}`, {
       ...init,
@@ -47,30 +53,36 @@ export async function structuredChat<T>(
   schema: z.ZodType<T>,
   jsonSchema: object,
   feature = "structured_chat",
+  timeoutMs = TIMEOUT_MS,
+  model = CHAT_MODEL,
 ): Promise<T> {
   const startedAt = performance.now();
-  const response = await ollamaFetch("/api/chat", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({
-      model: CHAT_MODEL,
-      stream: false,
-      think: false,
-      format: jsonSchema,
-      messages: [
-        { role: "system", content: system },
-        { role: "user", content: prompt },
-      ],
-      options: {
-        temperature: 0.15,
-        num_ctx: Number(process.env.OLLAMA_CONTEXT_LENGTH ?? 16384),
-        num_predict: 512,
-      },
-      keep_alive: "10m",
-    }),
-  });
+  const response = await ollamaFetch(
+    "/api/chat",
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        model,
+        stream: false,
+        think: false,
+        format: jsonSchema,
+        messages: [
+          { role: "system", content: system },
+          { role: "user", content: prompt },
+        ],
+        options: {
+          temperature: 0.15,
+          num_ctx: Number(process.env.OLLAMA_CONTEXT_LENGTH ?? 16384),
+          num_predict: 512,
+        },
+        keep_alive: "10m",
+      }),
+    },
+    timeoutMs,
+  );
   const result = (await response.json()) as {
-    message?: { content?: string };
+    message?: { content?: string; thinking?: string };
     eval_count?: number;
     prompt_eval_count?: number;
   };
@@ -78,16 +90,82 @@ export async function structuredChat<T>(
     JSON.stringify({
       event: "local_ai",
       feature,
-      model: CHAT_MODEL,
+      model,
       latencyMs: Math.round(performance.now() - startedAt),
       promptTokens: result.prompt_eval_count ?? null,
       completionTokens: result.eval_count ?? null,
     }),
   );
   try {
-    return schema.parse(JSON.parse(result.message?.content ?? "{}"));
+    return schema.parse(
+      JSON.parse(
+        result.message?.content?.trim() ||
+          result.message?.thinking?.trim() ||
+          "{}",
+      ),
+    );
   } catch (error) {
     throw new LocalAiError("Local AI trả dữ liệu không đúng schema.", error);
+  }
+}
+
+export async function structuredVision<T>(
+  system: string,
+  prompt: string,
+  imageBase64: string,
+  schema: z.ZodType<T>,
+  jsonSchema: object,
+  feature = "structured_vision",
+  timeoutMs = TIMEOUT_MS,
+): Promise<T> {
+  const startedAt = performance.now();
+  const response = await ollamaFetch(
+    "/api/chat",
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        model: VISION_MODEL,
+        stream: false,
+        think: false,
+        format: jsonSchema,
+        messages: [
+          { role: "system", content: system },
+          { role: "user", content: prompt, images: [imageBase64] },
+        ],
+        options: {
+          temperature: 0,
+          num_ctx: Math.min(Number(process.env.OLLAMA_CONTEXT_LENGTH ?? 16384), 16384),
+          num_predict: 320,
+        },
+        keep_alive: "10m",
+      }),
+    },
+    timeoutMs,
+  );
+  const result = (await response.json()) as {
+    message?: { content?: string; thinking?: string };
+    eval_count?: number;
+    prompt_eval_count?: number;
+  };
+  console.info(JSON.stringify({
+    event: "local_ai",
+    feature,
+    model: VISION_MODEL,
+    latencyMs: Math.round(performance.now() - startedAt),
+    promptTokens: result.prompt_eval_count ?? null,
+    completionTokens: result.eval_count ?? null,
+  }));
+  try {
+    return schema.parse(
+      JSON.parse(
+        result.message?.content?.trim() ||
+          result.message?.thinking?.trim() ||
+          "{}",
+      ),
+    );
+  } catch (error) {
+    throw new LocalAiError("Local AI không xác định được bước từ ảnh.", error);
   }
 }
 

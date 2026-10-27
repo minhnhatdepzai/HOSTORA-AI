@@ -33,7 +33,7 @@ const labels: Record<string, string> = {
   title: "Tên trang",
   description: "Mô tả trên Google",
   viewport: "Hiển thị trên điện thoại",
-  favicon: "Biểu tượng website",
+  favicon: "Biểu tượng trang web",
   language: "Ngôn ngữ trang",
   https: "HTTPS",
   headings: "Một tiêu đề chính",
@@ -52,7 +52,7 @@ export default function AnalyzerScreen() {
     try {
       setResult(await postJson<Result>("/api/website-analyzer", { url }));
     } catch {
-      setError("Chưa thể kiểm tra website. Hãy kiểm tra địa chỉ và thử lại.");
+      setError("Chưa thể kiểm tra trang web. Hãy kiểm tra địa chỉ và thử lại.");
     } finally {
       setLoading(false);
     }
@@ -61,17 +61,17 @@ export default function AnalyzerScreen() {
   return (
     <SafeAreaView
       style={{ flex: 1, backgroundColor: colors.canvas }}
-      edges={["top"]}
+      edges={["top", "bottom", "left", "right"]}
     >
       <DetailHeader
-        title="Phân tích website"
+        title="Phân tích trang web"
         action={<Pill tone="mint">KIỂM TRA AN TOÀN</Pill>}
       />
-      <Screen>
+      <Screen insetTop={false}>
         <View style={styles.intro}>
-          <Eyebrow>Kiểm tra website công khai</Eyebrow>
+          <Eyebrow>Kiểm tra trang web</Eyebrow>
           <Title style={{ marginTop: 8 }}>
-            Kiểm tra đúng thứ nhìn thấy được.
+            Xem trang web cần sửa gì.
           </Title>
           <Body style={{ marginTop: 10 }}>
             Kiểm tra những gì khách truy cập và Google có thể nhìn thấy; không
@@ -80,7 +80,7 @@ export default function AnalyzerScreen() {
         </View>
         <View style={styles.content}>
           <Card dark style={{ gap: 12 }}>
-            <Text style={styles.label}>ĐỊA CHỈ WEBSITE</Text>
+            <Text style={styles.label}>ĐỊA CHỈ TRANG WEB</Text>
             <View style={styles.inputWrap}>
               <Feather name="globe" color={colors.mint} size={17} />
               <TextInput
@@ -180,7 +180,7 @@ export default function AnalyzerScreen() {
               </View>
               <Text style={styles.emptyTitle}>Sẵn sàng kiểm tra</Text>
               <Text style={styles.emptyCopy}>
-                Nhập địa chỉ website để xem những mục đang đạt và những mục cần
+                Nhập địa chỉ trang web để xem những mục đang đạt và những mục cần
                 cải thiện.
               </Text>
             </Card>

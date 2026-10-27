@@ -1,9 +1,12 @@
 node_modules/
+data/runtime/
 .next/
 coverage/
 test-results/
 playwright-report/
 .playwright-mcp/
+.playwright/
+.playwright-cli/
 .env
 .env.*
 !.env.example
@@ -14,6 +17,14 @@ training/.venv/
 training/output-smoke/
 training/output-chatbot/
 training/output-chatbot-v2/
+training/output-chatbot-v3/
+training/output-studio-v1/
+training/output-chatbot-v4/
+training/output-studio-v2/
+training/output-chatbot-v5/
+training/runs/
+training/**/__pycache__/
+training/**/*.pyc
 unsloth_compiled_cache/
 *.tsbuildinfo
 mobile/android/

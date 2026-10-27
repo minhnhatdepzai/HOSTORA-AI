@@ -1,14 +1,14 @@
+import { Pressable } from "@/components/pressable";
 import { Feather } from "@expo/vector-icons";
 import { useState } from "react";
 import {
   ActivityIndicator,
-  Linking,
-  Pressable,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from "react-native";
+import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { DetailHeader } from "@/components/detail-header";
 import {
@@ -96,7 +96,7 @@ const checks = [
 function customerText(text: string, sources: Report["sources"]) {
   return sources.reduce(
     (copy, source, index) =>
-      copy.split(`[${source.citation}]`).join(`[Nguồn ${index + 1}]`),
+      copy.split(`[${source.citation}]`).join(`[Dữ liệu ${index + 1}]`),
     text,
   );
 }
@@ -137,16 +137,16 @@ export default function ReadinessScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safe} edges={["top"]}>
+    <SafeAreaView style={styles.safe} edges={["top", "bottom", "left", "right"]}>
       <DetailHeader
         title="Mức sẵn sàng"
         action={<Pill tone="mint">KIỂM TRA NHANH</Pill>}
       />
-      <Screen>
+      <Screen insetTop={false}>
         <View style={styles.intro}>
-          <Eyebrow>Chuẩn bị mở website</Eyebrow>
+          <Eyebrow>Chuẩn bị ra mắt</Eyebrow>
           <Title style={{ marginTop: 8 }}>
-            Kiểm tra website trước ngày ra mắt.
+            Trang web đã sẵn sàng chưa?
           </Title>
           <Body style={{ marginTop: 10 }}>
             HOSTORA chỉ ra điểm mạnh, việc còn thiếu và kế hoạch ưu tiên; không
@@ -155,12 +155,12 @@ export default function ReadinessScreen() {
         </View>
         <View style={styles.content}>
           <Card style={styles.form}>
-            <Label text="LOẠI WEBSITE" />
+            <Label text="LOẠI TRANG WEB" />
             <ChoiceRow
               values={[
                 ["store", "Bán hàng"],
                 ["company", "Giới thiệu"],
-                ["blog", "Blog"],
+                ["blog", "Bài viết"],
               ]}
               selected={form.websiteType}
               onSelect={(websiteType) => setForm({ ...form, websiteType })}
@@ -332,14 +332,13 @@ function ReportView({ result }: { result: Report }) {
           {result.recommendation.billingMonths} tháng ·{" "}
           {result.recommendation.promoMonthlyVnd.toLocaleString("vi-VN")}đ/tháng
         </Text>
-        <Pressable
-          accessibilityRole="link"
-          onPress={() => void Linking.openURL(result.recommendation.sourceUrl)}
-        >
-          <Text style={styles.source}>
-            Mở nguồn · {result.recommendation.verifiedAt}
-          </Text>
-        </Pressable>
+        <Button
+          label="Đặt mua qua HOSTORA"
+          onPress={() => router.push("/(tabs)/products?category=hosting")}
+        />
+        <Text style={styles.source}>
+          HOSTORA kiểm tra dữ liệu ngày {result.recommendation.verifiedAt}
+        </Text>
       </Card>
 
       <Card style={[styles.resultCard, styles.questionsCard]}>
@@ -376,11 +375,9 @@ function ReportView({ result }: { result: Report }) {
         {result.sources.map((source, sourceIndex) => (
           <Text
             key={source.citation}
-            accessibilityRole="link"
-            onPress={() => void Linking.openURL(source.sourceUrl)}
             style={styles.source}
           >
-            Nguồn tham khảo {sourceIndex + 1} · kiểm tra ngày{" "}
+            Dữ liệu {sourceIndex + 1} · HOSTORA kiểm tra ngày{" "}
             {source.verifiedAt}
           </Text>
         ))}

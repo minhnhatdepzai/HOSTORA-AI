@@ -1,0 +1,22 @@
+{
+  "name": "chatbot-v5",
+  "base_model": "unsloth/Qwen3.5-4B",
+  "train_file": "data/chatbot_v5_train.jsonl",
+  "holdout_file": "data/chatbot_v5_holdout.jsonl",
+  "output_dir": "output-chatbot-v5",
+  "ollama_model": "hostora-chatbot:4b-q8-v5",
+  "max_length": 2048,
+  "lora_rank": 24,
+  "lora_alpha": 24,
+  "epochs": 6,
+  "learning_rate": 0.00004,
+  "per_device_train_batch_size": 3,
+  "gradient_accumulation_steps": 1,
+  "dataset_num_proc": 4,
+  "dataloader_num_workers": 2,
+  "seed": 5273,
+  "comparison_models": [
+    "qwen3.5:9b-q8_0",
+    "hostora-chatbot:4b-q8-v4"
+  ]
+}

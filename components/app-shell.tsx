@@ -1,16 +1,16 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   Bot,
-  BrainCircuit,
-  ChartNoAxesCombined,
-  Gauge,
-  Globe2,
+  Download,
   Home,
   Menu,
+  ReceiptText,
   Server,
+  Sparkles,
   X,
 } from "lucide-react";
 import { useState } from "react";
@@ -18,12 +18,18 @@ import { cn } from "@/lib/utils";
 
 const links = [
   ["/", "Trang chủ", Home],
-  ["/consultation", "Tư vấn AI", BrainCircuit],
-  ["/recommendations", "Gói đề xuất", Server],
-  ["/readiness", "Launch Score", Gauge],
-  ["/ai-assistant", "Trợ lý", Bot],
-  ["/intelligence", "Mô phỏng", ChartNoAxesCombined],
-  ["/domain-advisor", "Tên miền", Globe2],
+  ["/website-studio", "Tạo trang web", Sparkles],
+  ["/services", "Dịch vụ", Server],
+  ["/orders", "Đơn hàng", ReceiptText],
+  ["/ai-assistant", "Hỏi trợ lý", Bot],
+  ["/downloads/android", "Tải app", Download],
+] as const;
+
+const mobileLinks = [
+  ["/", "Trang chủ", Home],
+  ["/services", "Dịch vụ", Server],
+  ["/website-studio", "Tạo trang", Sparkles],
+  ["/orders", "Đơn hàng", ReceiptText],
 ] as const;
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -32,45 +38,43 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   if (pathname.startsWith("/admin")) return <main>{children}</main>;
   return (
     <>
-      <header className="sticky top-0 z-50 border-b border-white/60 bg-[#f5f7f6]/88 backdrop-blur-xl">
-        <div className="mx-auto flex h-18 max-w-7xl items-center justify-between px-5 lg:px-8">
-          <Link
-            href="/"
-            className="flex items-center gap-2.5"
-            onClick={() => setOpen(false)}
-          >
-            <span className="grid size-9 place-items-center rounded-xl bg-[#0b1728] text-sm font-black text-mint">
-              H
-            </span>
-            <span className="text-lg font-black tracking-[-.04em]">
-              HOSTORA <span className="text-blue">AI</span>
+      <header className="site-header">
+        <div className="site-header-inner">
+          <Link href="/" className="site-brand" onClick={() => setOpen(false)}>
+            <Image
+              src="/hostora-icon.png"
+              alt=""
+              width={40}
+              height={40}
+              className="size-10 rounded-xl"
+            />
+            <span className="site-brand-wordmark">
+              <strong>HOSTORA</strong>
+              <small>CỐ VẤN TRANG WEB</small>
             </span>
           </Link>
-          <nav
-            className="hidden items-center gap-1 lg:flex"
-            aria-label="Điều hướng chính"
-          >
+          <nav className="site-desktop-nav" aria-label="Điều hướng chính">
             {links.map(([href, label]) => (
               <Link
                 key={href}
                 href={href}
                 className={cn(
-                  "rounded-full px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-white hover:text-ink",
-                  pathname === href && "bg-white text-ink shadow-sm",
+                  "site-nav-link",
+                  pathname === href && "is-active",
                 )}
               >
                 {label}
               </Link>
             ))}
           </nav>
-          <div className="flex items-center gap-3">
-            <span className="hidden items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-800 sm:flex">
-              <i className="size-2 animate-pulse rounded-full bg-emerald-500" />
-              Local AI
-            </span>
+          <div className="site-header-actions">
+            <Link href="/downloads/android" className="site-header-cta">
+              Tải ứng dụng
+            </Link>
             <button
-              className="grid size-10 place-items-center rounded-xl bg-white lg:hidden"
-              aria-label="Mở menu"
+              className="site-menu-button"
+              aria-label={open ? "Đóng menu" : "Mở menu"}
+              aria-expanded={open}
               onClick={() => setOpen(!open)}
             >
               {open ? <X size={19} /> : <Menu size={19} />}
@@ -78,15 +82,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
         {open && (
-          <nav className="grid gap-1 border-t border-slate-200 bg-white p-4 lg:hidden">
+          <nav className="site-mobile-nav" aria-label="Điều hướng di động">
             {links.map(([href, label, Icon]) => (
               <Link
                 key={href}
                 href={href}
                 onClick={() => setOpen(false)}
                 className={cn(
-                  "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold",
-                  pathname === href ? "bg-blue text-white" : "text-slate-700",
+                  "site-mobile-link",
+                  pathname === href && "is-active",
                 )}
               >
                 <Icon size={18} />
@@ -96,16 +100,51 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </nav>
         )}
       </header>
-      <main>{children}</main>
-      <footer className="border-t border-slate-200 bg-white/70">
-        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-5 py-8 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between lg:px-8">
-          <p>HOSTORA AI · Local-first · Không gửi dữ liệu tới AI trả phí</p>
-          <div className="flex gap-5">
-            <Link href="/knowledge">Kiến thức</Link>
-            <Link href="/website-analyzer">Phân tích website</Link>
+      <main key={pathname} className="page-enter">
+        {children}
+      </main>
+      <footer className="site-footer">
+        <div className="site-footer-inner">
+          <div>
+            <strong>HOSTORA</strong>
+            <p>Hiểu dịch vụ. Biết chi phí. Chọn đúng.</p>
           </div>
+          <nav aria-label="Liên kết cuối trang">
+            <Link href="/website-studio">Tạo trang web với trợ lý</Link>
+            <Link href="/services">Dịch vụ</Link>
+            <Link href="/orders">Đơn hàng</Link>
+            <Link href="/knowledge">Kiến thức</Link>
+            <Link href="/website-analyzer">Kiểm tra trang web</Link>
+            <Link href="/ai-assistant">Hỏi HOSTORA</Link>
+          </nav>
+          <small>
+            Trợ lý chạy trên máy HOSTORA. Giá đối tác là tham khảo tại ngày kiểm
+            tra.
+          </small>
         </div>
       </footer>
+      <nav
+        className="site-mobile-dock"
+        aria-label="Điều hướng nhanh trên điện thoại"
+      >
+        {mobileLinks.map(([href, label, Icon]) => {
+          const active =
+            href === "/"
+              ? pathname === href
+              : pathname === href || pathname.startsWith(`${href}/`);
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={cn("site-mobile-dock-link", active && "is-active")}
+              aria-current={active ? "page" : undefined}
+            >
+              <Icon size={19} strokeWidth={active ? 2.3 : 1.8} />
+              <span>{label}</span>
+            </Link>
+          );
+        })}
+      </nav>
     </>
   );
 }

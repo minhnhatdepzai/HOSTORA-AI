@@ -12,6 +12,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import type {
   DomainStatus,
   ProjectStage,
@@ -150,13 +151,13 @@ export function ReadinessLab() {
             <Gauge size={23} />
           </span>
           <span className="rounded-full bg-violet-50 px-3 py-1.5 text-xs font-black text-violet-700">
-            CV CHECKER CHO WEBSITE
+            KIỂM TRA MỨC SẴN SÀNG
           </span>
         </div>
         <h2 className="mt-5 text-2xl font-black">Hồ sơ dự án</h2>
         <p className="mt-2 text-sm leading-6 text-slate-600">
-          Không cần tên, email hay số điện thoại. Điểm do code tính; AI local
-          chỉ phản biện kế hoạch.
+          Không cần tên, email hay số điện thoại. Điểm được tính theo tiêu chí
+          cố định; AI trên máy giúp xem lại kế hoạch.
         </p>
 
         <FieldLabel>Loại website</FieldLabel>
@@ -218,7 +219,7 @@ export function ReadinessLab() {
           </label>
         </div>
 
-        <FieldLabel>Thời gian tới launch</FieldLabel>
+        <FieldLabel>Thời gian tới khi ra mắt</FieldLabel>
         <div className="grid grid-cols-4 gap-2">
           {[1, 2, 4, 8].map((weeks) => (
             <Choice
@@ -242,7 +243,7 @@ export function ReadinessLab() {
           ))}
         </div>
 
-        <FieldLabel>Checklist sẵn sàng</FieldLabel>
+        <FieldLabel>Việc đã chuẩn bị</FieldLabel>
         <div className="space-y-2">
           {checks
             .filter(
@@ -283,8 +284,8 @@ export function ReadinessLab() {
             <BrainCircuit size={18} />
           )}
           {loading
-            ? "AI đang phản biện hồ sơ…"
-            : "Chấm Launch Score bằng AI local"}
+            ? "Đang đánh giá dự án…"
+            : "Xem mức sẵn sàng"}
         </button>
         {error && (
           <p
@@ -308,7 +309,7 @@ export function ReadinessLab() {
               </h2>
               <p className="mt-3 text-sm leading-6 text-slate-500">
                 Kết quả chỉ ra điểm mạnh, điểm nghẽn, gói đang khớp và ba câu
-                phản biện giống vòng phỏng vấn một bản CV.
+                câu hỏi giúp bạn rà lại kế hoạch trước khi ra mắt.
               </p>
             </div>
           </div>
@@ -334,8 +335,8 @@ function ReportView({ report }: { report: Report }) {
           <div>
             <p className="text-xs font-black uppercase tracking-[.16em] text-mint">
               {report.aiMode === "local-ai"
-                ? "OLLAMA ĐÃ PHẢN BIỆN"
-                : "ĐIỂM CODE · AI ĐANG OFFLINE"}
+                ? "ĐÃ CÓ NHẬN XÉT TỪ AI TRÊN MÁY"
+                : "ĐIỂM VẪN ĐƯỢC TÍNH KHI AI CHƯA SẴN SÀNG"}
             </p>
             <h2 className="mt-2 text-3xl font-black">{report.band.label}</h2>
             <p className="mt-2 leading-7 text-slate-300">{report.band.copy}</p>
@@ -347,7 +348,7 @@ function ReportView({ report }: { report: Report }) {
         <div className="flex items-center justify-between gap-3">
           <h3 className="text-xl font-black">Bản đồ sẵn sàng</h3>
           <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">
-            code chấm điểm
+            Tính theo tiêu chí cố định
           </span>
         </div>
         <div className="mt-5 space-y-5">
@@ -381,7 +382,7 @@ function ReportView({ report }: { report: Report }) {
             <BrainCircuit size={19} />
           </span>
           <div>
-            <p className="eyebrow">AI launch coach</p>
+            <p className="eyebrow">Gợi ý cho dự án</p>
             <h3 className="font-black">{report.ai.headline}</h3>
           </div>
         </div>
@@ -425,22 +426,23 @@ function ReportView({ report }: { report: Report }) {
             {report.recommendation.provider} {report.recommendation.name}
           </p>
           <p className="mt-1 text-sm text-slate-500">
-            Fit {report.recommendation.fitScore}/100 · kỳ{" "}
+            Độ phù hợp {report.recommendation.fitScore}/100 · kỳ{" "}
             {report.recommendation.billingMonths} tháng
           </p>
           <p className="mt-3 text-sm font-bold">
             {report.recommendation.promoMonthlyVnd.toLocaleString("vi-VN")}
             đ/tháng
           </p>
-          <a
+          <Link
             className="mt-4 inline-flex items-center gap-2 text-xs font-black text-blue underline"
-            href={report.recommendation.sourceUrl}
-            target="_blank"
-            rel="noreferrer"
+            href="/services?category=hosting"
           >
-            Mở nguồn ngày {report.recommendation.verifiedAt}
+            Đặt mua qua HOSTORA
             <ArrowRight size={13} />
-          </a>
+          </Link>
+          <p className="mt-2 text-xs text-slate-500">
+            HOSTORA kiểm tra dữ liệu ngày {report.recommendation.verifiedAt}
+          </p>
         </div>
       </div>
 
@@ -466,15 +468,12 @@ function ReportView({ report }: { report: Report }) {
         <p>{report.disclaimer}</p>
         <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2">
           {report.sources.map((source) => (
-            <a
+            <span
               key={source.citation}
-              href={source.sourceUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="font-bold text-blue underline"
+              className="font-bold text-slate-600"
             >
               [{source.citation}] {source.title}
-            </a>
+            </span>
           ))}
         </div>
       </div>

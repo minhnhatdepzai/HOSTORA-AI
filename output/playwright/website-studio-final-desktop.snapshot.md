@@ -1,0 +1,18 @@
+- generic [active] [ref=e1] [box=0,0,1440,2428]:
+  - banner [ref=e2] [box=0,0,1440,77]:
+    - generic [ref=e3] [box=80,0,1280,76]:
+      - link "HOSTORA CỐ VẤN TRANG WEB" [ref=e4] [cursor=pointer] [box=80,18,144,40]:
+        - /url: /
+      - navigation "Điều hướng chính" [ref=e8] [box=714,0,494,76]
+      - link "Tải ứng dụng" [ref=e16] [cursor=pointer] [box=1246,16,114,44]:
+        - /url: /downloads/android
+  - main [ref=e17] [box=0,77,1440,2105]:
+    - generic [ref=e18] [box=0,77,1440,2105]:
+      - generic [ref=e20] [box=100,77,1240,430]
+      - generic [ref=e66] [box=100,507,1240,1675]
+  - contentinfo [ref=e178] [box=0,2182,1440,246]:
+    - generic [ref=e179] [box=100,2183,1240,245]:
+      - generic [ref=e180] [box=100,2245,299,56]
+      - navigation "Liên kết cuối trang" [ref=e183] [box=459,2245,504,51]
+      - generic [ref=e190] [box=1023,2245,317,38]: Tư vấn AI chạy trên máy HOSTORA. Giá đối tác là tham khảo tại ngày kiểm tra.
+  - alert [ref=e191] [box=-1,2427,1,1]

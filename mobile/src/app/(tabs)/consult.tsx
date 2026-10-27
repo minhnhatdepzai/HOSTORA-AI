@@ -1,9 +1,9 @@
+import { Pressable } from "@/components/pressable";
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { type PropsWithChildren, useState } from "react";
 import {
   ActivityIndicator,
-  Pressable,
   StyleSheet,
   Text,
   TextInput,
@@ -44,7 +44,7 @@ const websiteTypes: {
   },
   {
     value: "blog",
-    label: "Blog",
+    label: "Bài viết",
     copy: "Bài viết, độc giả, tìm kiếm Google",
     icon: "edit-3",
   },
@@ -61,6 +61,7 @@ export default function ConsultScreen() {
   const [natural, setNatural] = useState(requirements.notes ?? "");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [showDescription, setShowDescription] = useState(false);
 
   function update(next: Partial<Requirements>) {
     setData((current) => ({ ...current, ...next }));
@@ -111,56 +112,15 @@ export default function ConsultScreen() {
         </Pill>
       </View>
       <View style={styles.intro}>
-        <Eyebrow>Tư vấn thông minh</Eyebrow>
-        <Title style={{ marginTop: 8 }}>Bắt đầu từ điều bạn thật sự cần.</Title>
-        <Body style={{ marginTop: 10 }}>
-          Mô tả bằng lời hoặc đi từng bước. Bạn luôn có thể chỉnh lại trước khi
-          xem đề xuất.
-        </Body>
+        <Eyebrow>Chọn dịch vụ cho trang web</Eyebrow>
+        <Title style={styles.introTitle}>Chọn gói phù hợp</Title>
+        <Body style={styles.introBody}>Trả lời 4 câu ngắn để so sánh các gói trước khi mua.</Body>
       </View>
-
-      <Card style={styles.aiCard} dark>
-        <View style={styles.aiHeading}>
-          <View style={styles.bot}>
-            <Feather name="message-square" color={colors.mint} size={19} />
-          </View>
-          <View>
-            <Text style={styles.aiKicker}>MÔ TẢ BẰNG LỜI</Text>
-            <Text style={styles.aiTitle}>Nói với HOSTORA</Text>
-          </View>
-        </View>
-        <TextInput
-          value={natural}
-          onChangeText={setNatural}
-          multiline
-          placeholder="Tôi bán mỹ phẩm online, khoảng 5.000 lượt truy cập, ngân sách 300 nghìn..."
-          placeholderTextColor="#78889D"
-          style={styles.textarea}
-          textAlignVertical="top"
-        />
-        <Pressable
-          disabled={natural.trim().length < 10 || loading}
-          onPress={analyze}
-          style={({ pressed }) => [
-            styles.aiButton,
-            pressed && { opacity: 0.8 },
-            (natural.trim().length < 10 || loading) && { opacity: 0.45 },
-          ]}
-        >
-          {loading ? (
-            <ActivityIndicator color={colors.ink} size="small" />
-          ) : (
-            <Feather name="zap" color={colors.ink} size={16} />
-          )}
-          <Text style={styles.aiButtonText}>Tự điền giúp tôi</Text>
-        </Pressable>
-        {message ? <Text style={styles.message}>{message}</Text> : null}
-      </Card>
 
       <View style={styles.progressTop}>
         <Text style={styles.stepLabel}>BƯỚC {step + 1}/4</Text>
         <Text style={styles.stepName}>
-          {["Loại website", "Lưu lượng", "Ngân sách", "Tên miền"][step]}
+          {["Loại trang web", "Lưu lượng", "Ngân sách", "Tên miền"][step]}
         </Text>
       </View>
       <View style={styles.progress}>
@@ -170,8 +130,8 @@ export default function ConsultScreen() {
       <Card style={styles.wizard}>
         {step === 0 && (
           <ChoiceStep
-            title="Bạn đang xây loại website nào?"
-            copy="Mỗi loại website sẽ có nhu cầu vận hành khác nhau."
+            title="Bạn đang xây loại trang web nào?"
+            copy="Mỗi loại trang web sẽ có nhu cầu vận hành khác nhau."
           >
             {websiteTypes.map((item) => (
               <Choice
@@ -193,8 +153,9 @@ export default function ConsultScreen() {
         {step === 1 && (
           <ChoiceStep
             title="Lượt truy cập mỗi tháng?"
-            copy="Ước tính gần đúng để chọn gói khởi đầu phù hợp."
+            copy="Các mức bên dưới để tham khảo. Bạn có thể nhập con số riêng."
           >
+            <Text style={styles.optionLabel}>MỨC THAM KHẢO</Text>
             <Text style={styles.bigValue}>
               {data.monthlyVisits.toLocaleString("vi-VN")}
             </Text>
@@ -209,13 +170,29 @@ export default function ConsultScreen() {
                 />
               ))}
             </View>
+            <Text style={styles.inputLabel}>Lượt truy cập riêng của bạn</Text>
+            <TextInput
+              accessibilityLabel="Lượt truy cập mỗi tháng, tự nhập"
+              keyboardType="number-pad"
+              maxLength={9}
+              value={data.monthlyVisits > 0 ? String(data.monthlyVisits) : ""}
+              onChangeText={(value) => {
+                const digits = value.replace(/\D/g, "").slice(0, 9);
+                update({ monthlyVisits: digits ? Number(digits) : 0 });
+              }}
+              placeholder="Ví dụ: 25000"
+              placeholderTextColor={colors.faint}
+              style={styles.customInput}
+            />
+            <Text style={styles.inputHint}>Từ 1 đến 100.000.000 lượt/tháng.</Text>
           </ChoiceStep>
         )}
         {step === 2 && (
           <ChoiceStep
             title="Ngân sách vận hành?"
-            copy="HOSTORA ưu tiên cả chi phí ban đầu và chi phí lâu dài."
+            copy="Mức gợi ý có thể chọn nhanh; ngân sách của bạn không bị giới hạn ở các mức này."
           >
+            <Text style={styles.optionLabel}>MỨC THAM KHẢO</Text>
             <Text style={styles.bigValue}>
               {data.monthlyBudget.toLocaleString("vi-VN")}đ
             </Text>
@@ -230,12 +207,27 @@ export default function ConsultScreen() {
                 />
               ))}
             </View>
+            <Text style={styles.inputLabel}>Ngân sách riêng mỗi tháng (VND)</Text>
+            <TextInput
+              accessibilityLabel="Ngân sách mỗi tháng, tự nhập bằng đồng"
+              keyboardType="number-pad"
+              maxLength={9}
+              value={data.monthlyBudget > 0 ? String(data.monthlyBudget) : ""}
+              onChangeText={(value) => {
+                const digits = value.replace(/\D/g, "").slice(0, 9);
+                update({ monthlyBudget: digits ? Number(digits) : 0 });
+              }}
+              placeholder="Ví dụ: 450000"
+              placeholderTextColor={colors.faint}
+              style={styles.customInput}
+            />
+            <Text style={styles.inputHint}>Từ 10.000đ đến 100.000.000đ/tháng.</Text>
           </ChoiceStep>
         )}
         {step === 3 && (
           <ChoiceStep
             title="Bạn có cần tên miền?"
-            copy="Chỉ tính ưu đãi khi nguồn chính thức xác nhận."
+            copy="Chỉ tính ưu đãi sau khi HOSTORA xác minh điều kiện."
           >
             <Choice
               selected={data.needsDomain}
@@ -248,7 +240,7 @@ export default function ConsultScreen() {
               selected={!data.needsDomain}
               icon="link"
               label="Không, tôi đã có"
-              copy="Tập trung hosting và chi phí gia hạn"
+              copy="Tập trung lưu trữ và chi phí gia hạn"
               onPress={() => update({ needsDomain: false })}
             />
           </ChoiceStep>
@@ -268,13 +260,61 @@ export default function ConsultScreen() {
           )}
           <View style={{ flex: 1 }}>
             {step < 3 ? (
-              <Button label="Tiếp tục" onPress={() => setStep(step + 1)} />
+              <Button
+                label="Tiếp tục"
+                disabled={
+                  (step === 1 && (!Number.isInteger(data.monthlyVisits) || data.monthlyVisits < 1 || data.monthlyVisits > 100000000)) ||
+                  (step === 2 && (!Number.isInteger(data.monthlyBudget) || data.monthlyBudget < 10000 || data.monthlyBudget > 100000000))
+                }
+                onPress={() => setStep(step + 1)}
+              />
             ) : (
               <Button label="Xem đề xuất" icon="award" onPress={finish} />
             )}
           </View>
         </View>
       </Card>
+
+      <View style={styles.assistSection}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ expanded: showDescription }}
+          onPress={() => setShowDescription((current) => !current)}
+          style={styles.assistToggle}
+        >
+          <View style={styles.assistIcon}><Feather name="message-square" color={colors.primary} size={18} /></View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.assistTitle}>Muốn mô tả bằng lời?</Text>
+            <Text style={styles.assistCopy}>HOSTORA có thể điền giúp 4 câu trên.</Text>
+          </View>
+          <Feather name={showDescription ? "chevron-up" : "chevron-down"} color={colors.primary} size={19} />
+        </Pressable>
+        {showDescription ? (
+          <Card style={styles.aiCard} dark>
+            <Text style={styles.aiTitle}>Nói với HOSTORA</Text>
+            <TextInput
+              value={natural}
+              onChangeText={setNatural}
+              multiline
+              accessibilityLabel="Mô tả nhu cầu trang web"
+              placeholder="Ví dụ: Tôi bán mỹ phẩm online, khoảng 5.000 lượt truy cập, ngân sách 300 nghìn..."
+              placeholderTextColor="#A7B4C2"
+              style={styles.textarea}
+              textAlignVertical="top"
+            />
+            <Pressable
+              accessibilityRole="button"
+              disabled={natural.trim().length < 10 || loading}
+              onPress={analyze}
+              style={styles.aiButton}
+            >
+              {loading ? <ActivityIndicator color={colors.ink} size="small" /> : <Feather name="zap" color={colors.ink} size={16} />}
+              <Text style={styles.aiButtonText}>Tự điền giúp tôi</Text>
+            </Pressable>
+            {message ? <Text style={styles.message}>{message}</Text> : null}
+          </Card>
+        ) : null}
+      </View>
     </Screen>
   );
 }
@@ -361,23 +401,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  intro: { paddingHorizontal: 18, paddingTop: 28 },
-  aiCard: { marginHorizontal: 18, marginTop: 24 },
-  aiHeading: { flexDirection: "row", alignItems: "center", gap: 11 },
-  bot: {
-    width: 42,
-    height: 42,
-    borderRadius: 14,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(184,243,214,.1)",
-  },
-  aiKicker: {
-    color: colors.mint,
-    fontFamily: "BeVietnamPro_800ExtraBold",
-    fontSize: 8,
-    letterSpacing: 1.2,
-  },
+  intro: { paddingHorizontal: 18, paddingTop: 19 },
+  introTitle: { marginTop: 6, fontSize: 28, lineHeight: 37 },
+  introBody: { marginTop: 5, fontSize: 12, lineHeight: 19 },
+  assistSection: { marginTop: 17, marginHorizontal: 18 },
+  assistToggle: { minHeight: 70, paddingHorizontal: 15, borderWidth: 1, borderColor: colors.line, borderRadius: 17, backgroundColor: "white", flexDirection: "row", alignItems: "center", gap: 12 },
+  assistIcon: { width: 39, height: 39, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: colors.primarySoft },
+  assistTitle: { color: colors.text, fontFamily: "BeVietnamPro_800ExtraBold", fontSize: 12 },
+  assistCopy: { color: colors.muted, fontFamily: "BeVietnamPro_400Regular", fontSize: 10, marginTop: 3 },
+  aiCard: { marginTop: 10 },
   aiTitle: {
     color: "white",
     fontFamily: "BeVietnamPro_800ExtraBold",
@@ -385,8 +417,8 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   textarea: {
-    minHeight: 116,
-    marginTop: 16,
+    minHeight: 96,
+    marginTop: 12,
     borderRadius: radii.md,
     padding: 14,
     color: "white",
@@ -423,7 +455,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     marginHorizontal: 20,
-    marginTop: 28,
+    marginTop: 17,
   },
   stepLabel: {
     color: colors.primary,
@@ -449,7 +481,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     borderRadius: 4,
   },
-  wizard: { marginHorizontal: 18, marginTop: 14 },
+  wizard: { marginHorizontal: 18, marginTop: 12 },
   question: {
     color: colors.text,
     fontFamily: "BeVietnamPro_800ExtraBold",
@@ -504,6 +536,38 @@ const styles = StyleSheet.create({
     letterSpacing: -1.5,
     textAlign: "center",
     marginTop: 18,
+  },
+  optionLabel: {
+    color: colors.faint,
+    fontFamily: "BeVietnamPro_800ExtraBold",
+    fontSize: 8,
+    letterSpacing: 0.8,
+    marginTop: 5,
+    textAlign: "center",
+  },
+  inputLabel: {
+    color: colors.text,
+    fontFamily: "BeVietnamPro_700Bold",
+    fontSize: 10,
+    marginTop: 18,
+  },
+  customInput: {
+    minHeight: 48,
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: radii.md,
+    backgroundColor: colors.surface,
+    color: colors.text,
+    fontFamily: "BeVietnamPro_700Bold",
+    fontSize: 15,
+    paddingHorizontal: 13,
+    marginTop: 7,
+  },
+  inputHint: {
+    color: colors.faint,
+    fontFamily: "BeVietnamPro_400Regular",
+    fontSize: 9,
+    marginTop: 5,
   },
   unit: {
     color: colors.faint,

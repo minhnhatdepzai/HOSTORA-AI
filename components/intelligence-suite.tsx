@@ -75,7 +75,7 @@ export function IntelligenceSuite() {
               <Calculator size={19} />
             </span>
             <div>
-              <p className="eyebrow">True cost</p>
+              <p className="eyebrow">Chi phí thực tế</p>
               <h2 className="text-xl font-black">Tổng chi phí sở hữu</h2>
             </div>
           </div>
@@ -111,7 +111,7 @@ export function IntelligenceSuite() {
               </select>
             </label>
             <label>
-              <span className="label">Tên miền / năm</span>
+              <span className="label">Tên miền mỗi năm</span>
               <input
                 className="input"
                 type="number"
@@ -120,7 +120,7 @@ export function IntelligenceSuite() {
               />
             </label>
             <label>
-              <span className="label">Add-on / tháng</span>
+              <span className="label">Dịch vụ bổ sung mỗi tháng</span>
               <input
                 className="input"
                 type="number"
@@ -129,7 +129,7 @@ export function IntelligenceSuite() {
               />
             </label>
           </div>
-          <div className="mt-6 rounded-2xl bg-ink p-5 text-white">
+          <div className="mt-6 rounded-2xl bg-ink p-4 text-white sm:p-5">
             <p className="text-xs font-bold text-mint">TỔNG {months} THÁNG</p>
             <p className="mt-1 text-3xl font-black">
               {cost.total === null ? "Chưa đủ dữ liệu" : formatVnd(cost.total)}
@@ -137,7 +137,7 @@ export function IntelligenceSuite() {
             {cost.reason ? (
               <p className="mt-2 text-sm text-amber-200">{cost.reason}</p>
             ) : null}
-            <div className="mt-4 grid grid-cols-3 gap-2 text-xs text-slate-300">
+            <div className="mt-4 grid grid-cols-2 gap-3 text-xs text-slate-300 sm:grid-cols-3">
               <span>
                 Hosting
                 <br />
@@ -148,12 +148,12 @@ export function IntelligenceSuite() {
                 </b>
               </span>
               <span>
-                Domain
+                Tên miền
                 <br />
                 <b className="text-white">{formatVnd(cost.domain)}</b>
               </span>
               <span>
-                TB/tháng
+                Bình quân/tháng
                 <br />
                 <b className="text-white">
                   {cost.effectiveMonthly === null
@@ -163,7 +163,7 @@ export function IntelligenceSuite() {
               </span>
             </div>
             <p className="mt-3 text-xs text-slate-300">
-              Giá domain/add-on là giả định bạn nhập; xác nhận hóa đơn và điều
+              Giá tên miền và dịch vụ bổ sung là giả định bạn nhập; xác nhận hóa đơn và điều
               kiện gói trước khi mua.
             </p>
           </div>
@@ -174,13 +174,13 @@ export function IntelligenceSuite() {
               <Gauge size={19} />
             </span>
             <div>
-              <p className="eyebrow">Flash sale</p>
-              <h2 className="text-xl font-black">Mô phỏng traffic spike</h2>
+              <p className="eyebrow">Lúc đông khách</p>
+              <h2 className="text-xl font-black">Mô phỏng lượt truy cập tăng</h2>
             </div>
           </div>
-          <div className="mt-6 grid grid-cols-3 gap-3">
+          <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
             <label>
-              <span className="label">Visit/tháng</span>
+              <span className="label">Lượt xem/tháng</span>
               <input
                 className="input"
                 type="number"
@@ -190,7 +190,7 @@ export function IntelligenceSuite() {
               />
             </label>
             <label>
-              <span className="label">Tăng gấp</span>
+              <span className="label">Tăng gấp số lần</span>
               <input
                 className="input"
                 type="number"
@@ -200,7 +200,7 @@ export function IntelligenceSuite() {
                 onChange={(e) => setMultiplier(Number(e.target.value))}
               />
             </label>
-            <label>
+            <label className="col-span-2 sm:col-span-1">
               <span className="label">Số giờ</span>
               <input
                 className="input"
@@ -217,8 +217,8 @@ export function IntelligenceSuite() {
               <AreaChart data={traffic}>
                 <defs>
                   <linearGradient id="sale" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#315efb" stopOpacity={0.35} />
-                    <stop offset="95%" stopColor="#315efb" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#11695e" stopOpacity={0.35} />
+                    <stop offset="95%" stopColor="#11695e" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -228,7 +228,7 @@ export function IntelligenceSuite() {
                 <Area
                   type="monotone"
                   dataKey="sale"
-                  stroke="#315efb"
+                  stroke="#11695e"
                   fill="url(#sale)"
                   strokeWidth={3}
                 />
@@ -252,7 +252,7 @@ export function IntelligenceSuite() {
         <div className="flex items-center gap-3">
           <TrendingUp className="text-blue" />
           <div>
-            <p className="eyebrow">Growth planner</p>
+            <p className="eyebrow">Kế hoạch phát triển</p>
             <h2 className="text-2xl font-black">Giai đoạn: {growth.stage}</h2>
           </div>
         </div>

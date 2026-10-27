@@ -1,0 +1,15 @@
+{
+  "name": "studio-v2",
+  "base_model": "unsloth/Qwen3.5-4B",
+  "train_file": "data/studio_v2_train.jsonl",
+  "holdout_file": "data/studio_v2_holdout.jsonl",
+  "output_dir": "output-studio-v2",
+  "ollama_model": "hostora-studio:4b-q8-v2",
+  "max_length": 4096,
+  "lora_rank": 24,
+  "lora_alpha": 24,
+  "epochs": 5,
+  "learning_rate": 0.00006,
+  "gradient_accumulation_steps": 4,
+  "seed": 4129
+}

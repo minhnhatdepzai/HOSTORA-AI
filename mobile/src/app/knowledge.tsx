@@ -1,6 +1,7 @@
+import { Pressable } from "@/components/pressable";
 import { Feather } from "@expo/vector-icons";
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { DetailHeader } from "@/components/detail-header";
 import {
@@ -17,43 +18,43 @@ import { colors, radii } from "@/constants/theme";
 const topics = [
   {
     icon: "server" as const,
-    title: "Hosting là gì?",
-    short: "Nơi lưu nội dung để website luôn sẵn sàng cho khách truy cập.",
+    title: "Lưu trữ là gì?",
+    short: "Nơi lưu nội dung để trang web luôn sẵn sàng cho khách truy cập.",
     detail:
-      "Hãy hình dung hosting như căn nhà của website. Một gói phù hợp giúp trang hoạt động ổn định, tải nhanh và có chỗ để lưu nội dung.",
+      "Hãy hình dung lưu trữ như căn nhà của trang web. Một gói phù hợp giúp trang hoạt động ổn định, tải nhanh và có chỗ để lưu nội dung.",
   },
   {
     icon: "at-sign" as const,
     title: "Tên miền là gì?",
-    short: "Địa chỉ dễ nhớ giúp khách truy cập website của bạn.",
+    short: "Địa chỉ dễ nhớ giúp khách truy cập trang web của bạn.",
     detail:
-      "Tên miền giống địa chỉ cửa hàng. Khách gõ địa chỉ này để tìm đến website. Đuôi .com phù hợp nhiều thị trường; .vn nhấn mạnh khách hàng Việt Nam.",
+      "Tên miền giống địa chỉ cửa hàng. Khách gõ địa chỉ này để tìm đến trang web. Đuôi .com phù hợp nhiều thị trường; .vn nhấn mạnh khách hàng Việt Nam.",
   },
   {
     icon: "shield" as const,
     title: "Kết nối an toàn có tác dụng gì?",
-    short: "Giúp bảo vệ thông tin khi khách truy cập website.",
+    short: "Giúp bảo vệ thông tin khi khách truy cập trang web.",
     detail:
-      "Biểu tượng ổ khóa trên trình duyệt cho biết kết nối đang được bảo vệ. Đây là yêu cầu cơ bản cho đăng nhập và thanh toán, nhưng vẫn cần cập nhật và bảo vệ website thường xuyên.",
+      "Biểu tượng ổ khóa trên trình duyệt cho biết kết nối đang được bảo vệ. Đây là yêu cầu cơ bản cho đăng nhập và thanh toán, nhưng vẫn cần cập nhật và bảo vệ trang web thường xuyên.",
   },
   {
     icon: "globe" as const,
     title: "Tăng tốc cho khách ở xa",
     short: "Giúp hình ảnh và nội dung đến khách nhanh hơn ở nhiều khu vực.",
     detail:
-      "Dịch vụ tăng tốc có thể phân phối hình ảnh và nội dung từ nơi gần khách hơn. Website vẫn cần ảnh gọn và nội dung được sắp xếp hợp lý để tải nhanh.",
+      "Dịch vụ tăng tốc có thể phân phối hình ảnh và nội dung từ nơi gần khách hơn. Trang web vẫn cần ảnh gọn và nội dung được sắp xếp hợp lý để tải nhanh.",
   },
   {
     icon: "archive" as const,
     title: "Sao lưu là gì?",
-    short: "Bản sao giúp khôi phục website sau lỗi hoặc mất dữ liệu.",
+    short: "Bản sao giúp khôi phục trang web sau lỗi hoặc mất dữ liệu.",
     detail:
-      "Hãy kiểm tra website được sao lưu bao lâu một lần, giữ bản sao trong bao lâu và ai có thể khôi phục. Shop có đơn hàng mỗi ngày thường cần sao lưu thường xuyên hơn.",
+      "Hãy kiểm tra trang web được sao lưu bao lâu một lần, giữ bản sao trong bao lâu và ai có thể khôi phục. Cửa hàng có đơn hàng mỗi ngày thường cần sao lưu thường xuyên hơn.",
   },
   {
     icon: "trending-up" as const,
     title: "Khi nào cần nâng cấp?",
-    short: "Khi website chậm, thường xuyên lỗi hoặc lượng khách tăng rõ rệt.",
+    short: "Khi trang web chậm, thường xuyên lỗi hoặc lượng khách tăng rõ rệt.",
     detail:
       "Đừng nâng cấp chỉ theo cảm giác. Hãy ghi lại thời gian tải, số lần lỗi và lượng khách vào giờ cao điểm rồi mới quyết định.",
   },
@@ -67,17 +68,17 @@ export default function KnowledgeScreen() {
   return (
     <SafeAreaView
       style={{ flex: 1, backgroundColor: colors.canvas }}
-      edges={["top"]}
+      edges={["top", "bottom", "left", "right"]}
     >
       <DetailHeader
         title="Trung tâm kiến thức"
         action={<Pill tone="blue">DỄ HIỂU</Pill>}
       />
-      <Screen>
+      <Screen insetTop={false}>
         <View style={styles.intro}>
-          <Eyebrow>Kiến thức cho chủ website</Eyebrow>
+          <Eyebrow>Giải thích dễ hiểu</Eyebrow>
           <Title style={{ marginTop: 8 }}>
-            Hiểu hạ tầng theo cách của bạn.
+            Hiểu trước khi chọn dịch vụ.
           </Title>
           <Body style={{ marginTop: 10 }}>
             Những khái niệm cần biết được giải thích bằng ví dụ gần gũi và việc
@@ -109,16 +110,16 @@ export default function KnowledgeScreen() {
               <Pill tone="dark">{level.toUpperCase()}</Pill>
             </View>
             <Text style={styles.featuredTitle}>
-              Hosting không cần khó hiểu.
+              Lưu trữ không cần khó hiểu.
             </Text>
             <Text style={styles.featuredCopy}>
               Chọn một chủ đề bên dưới. HOSTORA giải thích từ ví dụ đời thường
-              đến cách áp dụng cho website của bạn.
+              đến cách áp dụng cho trang web của bạn.
             </Text>
             <View style={styles.source}>
               <Feather name="database" color={colors.mint} size={14} />
               <Text style={styles.sourceText}>
-                6 tài liệu đã đối chiếu · có nguồn và ngày kiểm tra
+                6 tài liệu đã đối chiếu · có ngày kiểm tra rõ ràng
               </Text>
             </View>
           </Card>

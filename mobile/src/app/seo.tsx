@@ -2,8 +2,6 @@ import { Feather } from "@expo/vector-icons";
 import { useState } from "react";
 import {
   ActivityIndicator,
-  Linking,
-  Pressable,
   StyleSheet,
   Text,
   TextInput,
@@ -75,22 +73,25 @@ export default function SeoScreen() {
     try {
       setResult(await postJson<Audit>("/api/seo/audit", { url, keyword }));
     } catch {
-      setError("Chưa thể kiểm tra website. Hãy kiểm tra địa chỉ và thử lại.");
+      setError("Chưa thể kiểm tra trang web. Hãy kiểm tra địa chỉ và thử lại.");
     } finally {
       setLoading(false);
     }
   }
   return (
-    <SafeAreaView style={styles.safe} edges={["top"]}>
+    <SafeAreaView
+      style={styles.safe}
+      edges={["top", "bottom", "left", "right"]}
+    >
       <DetailHeader
         title="Kiểm tra tìm kiếm Google"
         action={<Pill tone="blue">GỢI Ý CÓ NGUỒN</Pill>}
       />
-      <Screen>
+      <Screen insetTop={false}>
         <View style={styles.intro}>
           <Eyebrow>Khả năng được tìm thấy</Eyebrow>
           <Title style={{ marginTop: 8 }}>
-            Tìm những điểm đang cản khách thấy website.
+            Tìm những điểm đang cản khách thấy trang web.
           </Title>
           <Body style={{ marginTop: 10 }}>
             Kiểm tra các thông tin công khai và tự sắp xếp việc cần làm theo mức
@@ -100,7 +101,7 @@ export default function SeoScreen() {
         <View style={styles.content}>
           <Card style={styles.form}>
             <Field
-              label="Địa chỉ website"
+              label="Địa chỉ trang web"
               value={url}
               onChangeText={setUrl}
               placeholder="https://tenmien.vn"
@@ -109,10 +110,10 @@ export default function SeoScreen() {
               label="Từ khóa mục tiêu"
               value={keyword}
               onChangeText={setKeyword}
-              placeholder="hosting WordPress Việt Nam"
+              placeholder="lưu trữ WordPress Việt Nam"
             />
             <Button
-              label="Kiểm tra SEO"
+              label="Kiểm tra khả năng tìm thấy"
               icon="search"
               onPress={() => void runAudit()}
               disabled={loading}
@@ -124,7 +125,9 @@ export default function SeoScreen() {
             <>
               <Card dark style={styles.scoreCard}>
                 <View>
-                  <Text style={styles.scoreLabel}>MỨC HOÀN THIỆN SEO</Text>
+                  <Text style={styles.scoreLabel}>
+                    MỨC DỄ TÌM THẤY TRÊN GOOGLE
+                  </Text>
                   <Text style={styles.score}>
                     {result.score}
                     <Text style={styles.scoreOut}>/100</Text>
@@ -184,7 +187,7 @@ export default function SeoScreen() {
                 </View>
                 <Text style={styles.summary}>
                   HOSTORA sắp xếp theo mức ảnh hưởng. Mọi thay đổi vẫn cần bạn
-                  hoặc người quản lý website xác nhận trước khi áp dụng.
+                  hoặc người quản lý trang web xác nhận trước khi áp dụng.
                 </Text>
                 {result.automationPlan.length ? (
                   result.automationPlan.slice(0, 8).map((task) => (
@@ -209,7 +212,7 @@ export default function SeoScreen() {
                 ) : (
                   <Text style={styles.summary}>
                     Chưa có việc ưu tiên từ lần kiểm tra này; hãy tiếp tục theo
-                    dõi phản hồi của khách sau khi website hoạt động.
+                    dõi phản hồi của khách sau khi trang web hoạt động.
                   </Text>
                 )}
               </Card>
@@ -225,17 +228,11 @@ export default function SeoScreen() {
                 ))}
               </Card>
               <Card style={{ gap: 9 }}>
-                <Text style={styles.sectionTitle}>Nguồn tham khảo</Text>
+                <Text style={styles.sectionTitle}>Dữ liệu đã kiểm tra</Text>
                 {result.sources.map((item, sourceIndex) => (
-                  <Pressable
-                    accessibilityRole="link"
-                    key={item.citation}
-                    onPress={() => void Linking.openURL(item.sourceUrl)}
-                  >
-                    <Text style={styles.source}>
-                      Mở nguồn tham khảo {sourceIndex + 1} ↗
-                    </Text>
-                  </Pressable>
+                  <Text key={item.citation} style={styles.source}>
+                    Dữ liệu {sourceIndex + 1} · HOSTORA đã kiểm tra
+                  </Text>
                 ))}
                 {result.limits.map((item) => (
                   <Text key={item} style={styles.limit}>

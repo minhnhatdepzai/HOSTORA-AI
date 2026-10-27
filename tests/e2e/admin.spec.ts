@@ -40,7 +40,7 @@ test("admin controls local leads and shows service data", async ({ page }) => {
   });
   await page.goto("/admin");
   await expect(
-    page.getByRole("heading", { name: "Mọi việc quan trọng ở một nơi." }),
+    page.getByRole("heading", { name: "Tình trạng tư vấn và dữ liệu." }),
   ).toBeVisible();
   await expect(page.getByText("Khách kiểm thử")).toBeVisible();
   await expect(page.getByText("13", { exact: true }).first()).toBeVisible();

@@ -5,6 +5,8 @@ import {
   robotsPrivacyAnswer,
   structuredDataPenaltyAnswer,
   unknownRenewalCostAnswer,
+  websiteIdeaDiscoveryAnswer,
+  customerJourneyAnswer,
 } from "@/lib/chat-guardrails";
 
 const sources = [
@@ -65,4 +67,55 @@ test("DNS migration does not invent a propagation time", () => {
   );
   expect(result?.answer).toContain("giữ tên miền cũ");
   expect(result?.answer).not.toMatch(/\d+\s*(giờ|ngày)/);
+});
+
+test("an undecided customer is routed into website discovery before hosting", () => {
+  const result = websiteIdeaDiscoveryAnswer(
+    "Tôi chưa biết nên làm website gì để bán hàng, bắt đầu thế nào?",
+  );
+  expect(result?.answer).toContain("Xưởng tạo website");
+  expect(result?.answer).toContain("không ép chọn gói đắt nhất");
+  expect(result?.sources).toEqual([]);
+});
+
+test("a customer without any website is sent to the site studio", () => {
+  const result = websiteIdeaDiscoveryAnswer(
+    "Tôi chưa có website, giờ mua hosting nào thì phù hợp?",
+  );
+  expect(result?.answer).toContain("[Mở Xưởng tạo website](/website-studio)");
+  expect(result?.answer).toContain("gửi lại liên kết");
+  expect(result?.sources).toEqual([]);
+});
+
+test("website discovery also handles Vietnamese typed without accents", () => {
+  const result = websiteIdeaDiscoveryAnswer(
+    "Toi chua co website, mua hosting nao bay gio?",
+  );
+  expect(result?.answer).toContain("Xưởng tạo website");
+});
+
+test("a charged customer with a stale order is told not to pay twice", () => {
+  const result = customerJourneyAnswer(
+    "Ngân hàng đã trừ tiền nhưng đơn vẫn chờ thanh toán, tôi làm gì tiếp?",
+  );
+  expect(result?.answer).toContain("không thanh toán lại");
+  expect(result?.answer).toContain("mã giao dịch");
+  expect(result?.answer).toContain("Đơn hàng");
+});
+
+test("a customer who is lost can upload a screen without exposing secrets", () => {
+  const result = customerJourneyAnswer(
+    "Tôi đang ở màn hình này mà không biết bấm gì tiếp theo",
+  );
+  expect(result?.nextAction).toBe("upload-screen");
+  expect(result?.answer).toContain("che số thẻ");
+  expect(result?.answer).toContain("OTP");
+});
+
+test("refund guidance does not invent a completion time", () => {
+  const result = customerJourneyAnswer(
+    "Tôi đã yêu cầu hoàn tiền, bao lâu thì nhận được?",
+  );
+  expect(result?.answer).toContain("không thể hứa chính xác");
+  expect(result?.answer).not.toMatch(/\b\d+\s*(giờ|ngày)\b/i);
 });

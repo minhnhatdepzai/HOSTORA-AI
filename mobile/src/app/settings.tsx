@@ -1,8 +1,9 @@
+import { Pressable } from "@/components/pressable";
 import { Feather } from "@expo/vector-icons";
+import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Pressable,
   StyleSheet,
   Text,
   TextInput,
@@ -55,7 +56,7 @@ export default function SettingsScreen() {
   return (
     <SafeAreaView
       style={{ flex: 1, backgroundColor: colors.canvas }}
-      edges={["top"]}
+      edges={["top", "bottom", "left", "right"]}
     >
       <DetailHeader
         title="Kết nối dịch vụ"
@@ -65,16 +66,22 @@ export default function SettingsScreen() {
           </Pill>
         }
       />
-      <Screen>
+      <Screen insetTop={false}>
         <View style={styles.intro}>
           <Eyebrow>Thiết lập một lần</Eyebrow>
           <Title style={{ marginTop: 8 }}>Kết nối với HOSTORA.</Title>
           <Body style={{ marginTop: 10 }}>
-            Nhập địa chỉ do người cài đặt cung cấp để dùng tư vấn, kiểm tra SEO
-            và các gợi ý thông minh.
+            Nhập địa chỉ do người cài đặt cung cấp để dùng tư vấn, kiểm tra khả
+            năng được tìm thấy trên Google và các gợi ý thông minh.
           </Body>
         </View>
         <View style={styles.content}>
+          <Button
+            label="Xem yêu cầu tư vấn đã lưu"
+            icon="users"
+            variant="secondary"
+            onPress={() => router.push("/(tabs)/leads")}
+          />
           <Card dark style={{ gap: 13 }}>
             <View style={styles.serverIcon}>
               <Feather name="server" color={colors.mint} size={22} />
@@ -96,7 +103,7 @@ export default function SettingsScreen() {
                 onPress={() => setUrl(DEFAULT_API_BASE)}
               />
               <Preset
-                label="Dùng trên máy này"
+                label="Kết nối qua USB"
                 onPress={() => setUrl("http://127.0.0.1:3000")}
               />
             </View>
@@ -221,7 +228,7 @@ const styles = StyleSheet.create({
   presets: { flexDirection: "row", gap: 8 },
   preset: {
     flex: 1,
-    minHeight: 38,
+    minHeight: 46,
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 12,

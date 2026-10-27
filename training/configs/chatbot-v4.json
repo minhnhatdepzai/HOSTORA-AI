@@ -1,0 +1,15 @@
+{
+  "name": "chatbot-v4",
+  "base_model": "unsloth/Qwen3.5-4B",
+  "train_file": "data/chatbot_v4_train.jsonl",
+  "holdout_file": "data/chatbot_v4_holdout.jsonl",
+  "output_dir": "output-chatbot-v4",
+  "ollama_model": "hostora-chatbot:4b-q8-v4",
+  "max_length": 1792,
+  "lora_rank": 16,
+  "lora_alpha": 16,
+  "epochs": 5,
+  "learning_rate": 0.00006,
+  "gradient_accumulation_steps": 4,
+  "seed": 4129
+}

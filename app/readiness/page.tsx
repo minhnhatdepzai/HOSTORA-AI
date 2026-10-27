@@ -1,16 +1,22 @@
 import type { Metadata } from "next";
 import { ReadinessLab } from "@/components/readiness-lab";
 import { PageHeading } from "@/components/page-heading";
+import { pageMetadata } from "@/lib/page-metadata";
 
-export const metadata: Metadata = { title: "Launch Score AI" };
+export const metadata: Metadata = pageMetadata({
+  title: "Kiểm tra website trước khi ra mắt",
+  description: "Kiểm tra tên miền, nội dung, vận hành và những việc cần hoàn thiện trước khi đưa website đến khách hàng.",
+  path: "/readiness",
+  keywords: ["checklist ra mắt website", "kiểm tra website", "website sẵn sàng"],
+});
 
 export default function ReadinessPage() {
   return (
-    <div className="mx-auto max-w-7xl px-5 py-16 lg:px-8">
+    <div className="mx-auto max-w-7xl px-5 py-8 sm:py-14 lg:px-8">
       <PageHeading
-        eyebrow="AI launch readiness"
-        title="Chấm hồ sơ website như chấm một bản CV."
-        description="HOSTORA kết hợp checklist tất định, catalog có nguồn và Ollama local để chỉ ra dự án đã sẵn sàng tới đâu."
+        eyebrow="Chuẩn bị ra mắt"
+        title="Website đã sẵn sàng chưa?"
+        description="Kiểm tra tên miền, nội dung và việc vận hành. Điểm được tính theo tiêu chí cố định; trợ lý giúp bạn hiểu việc cần làm tiếp."
       />
       <ReadinessLab />
     </div>

@@ -9,14 +9,18 @@ import {
 import {
   dnsMigrationAnswer,
   domainAvailabilityAnswer,
+  customerJourneyAnswer,
   robotsPrivacyAnswer,
   structuredDataPenaltyAnswer,
   unknownRenewalCostAnswer,
+  websiteIdeaDiscoveryAnswer,
 } from "@/lib/chat-guardrails";
 import { CHATBOT_MODEL, streamChat } from "@/lib/ollama";
 import { toCustomerLanguage } from "@/lib/customer-language";
 import { asksToPutContactInfoInModel, redactContactInfo } from "@/lib/privacy";
 import { retrieveDetailed } from "@/lib/rag";
+import { buildStudioProjectAdvice, studioProjectIdFromMessage } from "@/lib/chat-studio";
+import { getStudioProject } from "@/lib/site-studio-store";
 import { z } from "zod";
 
 const schema = z.object({
@@ -31,14 +35,18 @@ const schema = z.object({
     .max(20),
 });
 
-function textAnswer(answer: string, sources: unknown[] = []) {
-  return new Response(toCustomerLanguage(answer), {
-    headers: {
-      "content-type": "text/plain; charset=utf-8",
-      "x-hostora-sources": encodeURIComponent(JSON.stringify(sources)),
-      "x-content-type-options": "nosniff",
-    },
+function textAnswer(
+  answer: string,
+  sources: unknown[] = [],
+  nextAction?: "create-site" | "upload-screen",
+) {
+  const headers = new Headers({
+    "content-type": "text/plain; charset=utf-8",
+    "x-hostora-sources": encodeURIComponent(JSON.stringify(sources)),
+    "x-content-type-options": "nosniff",
   });
+  if (nextAction) headers.set("x-hostora-next-action", nextAction);
+  return new Response(toCustomerLanguage(answer), { headers });
 }
 
 export async function POST(request: Request) {
@@ -53,6 +61,24 @@ export async function POST(request: Request) {
     return textAnswer(
       "Để tư vấn hosting, bạn không cần gửi số điện thoại hoặc email. Chỉ cần cho biết loại website, lượng khách dự kiến, ngân sách và có cần tên miền không.",
     );
+  const studioProjectId = studioProjectIdFromMessage(latest);
+  if (studioProjectId) {
+    const project = await getStudioProject(studioProjectId);
+    if (!project)
+      return textAnswer(
+        "Mình chưa mở được website từ liên kết này. Hãy kiểm tra lại liên kết chia sẻ trong Xưởng tạo website, hoặc tạo một bản mới rồi gửi lại cho mình.",
+        [],
+        "create-site",
+      );
+    const advice = buildStudioProjectAdvice(project);
+    return textAnswer(advice.answer, advice.sources);
+  }
+  const ideaDiscovery = websiteIdeaDiscoveryAnswer(latest);
+  if (ideaDiscovery)
+    return textAnswer(ideaDiscovery.answer, ideaDiscovery.sources, "create-site");
+  const journey = customerJourneyAnswer(latest);
+  if (journey)
+    return textAnswer(journey.answer, journey.sources, journey.nextAction);
   const costGuard = unknownRenewalCostAnswer(latest);
   if (costGuard) return textAnswer(costGuard.answer, costGuard.sources);
   const recommendationGuard = explicitChatRecommendation(latest);

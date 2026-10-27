@@ -12,7 +12,7 @@ type Result = {
   disclaimer: string;
 };
 export function DomainAdvisor() {
-  const [brand, setBrand] = useState("Minh Nhat Fashion");
+  const [brand, setBrand] = useState("");
   const [result, setResult] = useState<Result | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -42,8 +42,8 @@ export function DomainAdvisor() {
         </span>
         <h2 className="mt-5 text-2xl font-black">Tên thương hiệu của bạn</h2>
         <p className="mt-2 text-sm leading-6 text-slate-600">
-          AI đánh giá khả năng đọc, nhớ và gõ — không giả lập tình trạng tên
-          miền.
+          Nhập tên cửa hàng hoặc thương hiệu. HOSTORA gợi ý tên miền dễ đọc và
+          dễ nhớ. Tình trạng còn hay hết tên miền cần được kiểm tra riêng.
         </p>
         <label className="mt-6 block">
           <span className="label">Tên thương hiệu</span>
@@ -52,6 +52,7 @@ export function DomainAdvisor() {
             value={brand}
             onChange={(e) => setBrand(e.target.value)}
             maxLength={80}
+            placeholder="Ví dụ: Tiệm Mây"
           />
         </label>
         <button
@@ -64,7 +65,7 @@ export function DomainAdvisor() {
           ) : (
             <Sparkles size={17} />
           )}
-          Tạo bộ gợi ý local
+          Xem gợi ý tên miền
         </button>
         {error && (
           <p className="mt-4 rounded-xl bg-red-50 p-3 text-sm text-red-700">
@@ -72,23 +73,23 @@ export function DomainAdvisor() {
           </p>
         )}
       </section>
-      <section className="panel min-h-96 p-6">
+      <section className="panel min-h-72 p-5 sm:min-h-96 sm:p-6">
         {!result ? (
-          <div className="grid min-h-80 place-items-center text-center text-slate-400">
+          <div className="grid min-h-64 place-items-center text-center text-slate-400 sm:min-h-80">
             <div>
               <Globe2 className="mx-auto" size={34} />
-              <p className="mt-3 font-bold">Kết quả AI sẽ xuất hiện tại đây</p>
+              <p className="mt-3 font-bold">Gợi ý tên miền sẽ hiện ở đây</p>
             </div>
           </div>
         ) : (
           <div>
-            <div className="flex items-start justify-between gap-4">
+            <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <p className="eyebrow">Brand signal</p>
+                <p className="eyebrow">Gợi ý thương hiệu</p>
                 <h2 className="mt-2 text-2xl font-black">{result.summary}</h2>
               </div>
               <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-800">
-                Chưa check availability
+                Chưa kiểm tra tên miền còn trống
               </span>
             </div>
             <div className="mt-6 space-y-3">
@@ -112,7 +113,7 @@ export function DomainAdvisor() {
               ))}
             </div>
             <div className="mt-6 rounded-2xl bg-ink p-5 text-white">
-              <p className="text-xs font-black text-mint">TAGLINE</p>
+              <p className="text-xs font-black text-mint">CÂU GIỚI THIỆU</p>
               <p className="mt-2 text-xl font-black">“{result.tagline}”</p>
               <div className="mt-4 flex flex-wrap gap-2">
                 {result.slogans.map((x) => (

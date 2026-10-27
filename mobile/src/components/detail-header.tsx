@@ -1,7 +1,8 @@
+import { Pressable } from "@/components/pressable";
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import type { ReactNode } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { colors } from "@/constants/theme";
 
 export function DetailHeader({
@@ -15,8 +16,9 @@ export function DetailHeader({
     <View style={styles.header}>
       <View style={styles.slot}>
         <Pressable
+          accessibilityRole="button"
           accessibilityLabel="Quay lại"
-          onPress={() => router.back()}
+          onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)")}
           style={styles.back}
         >
           <Feather name="arrow-left" color={colors.text} size={20} />
@@ -37,16 +39,16 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   back: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 46,
+    height: 46,
+    borderRadius: 14,
     backgroundColor: "white",
     borderWidth: 1,
     borderColor: colors.line,
     alignItems: "center",
     justifyContent: "center",
   },
-  slot: { width: 82 },
+  slot: { width: 102 },
   title: {
     flex: 1,
     color: colors.text,
@@ -54,5 +56,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: "center",
   },
-  action: { width: 82, alignItems: "flex-end" },
+  action: { width: 102, alignItems: "flex-end" },
 });

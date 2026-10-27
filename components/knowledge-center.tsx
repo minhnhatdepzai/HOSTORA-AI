@@ -21,16 +21,24 @@ export function KnowledgeCenter() {
   const [level, setLevel] = useState("beginner");
   const [result, setResult] = useState<Result | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   async function explain(q = question) {
     setQuestion(q);
     setLoading(true);
+    setError("");
     try {
       const r = await fetch("/api/ai/knowledge", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ question: q, level }),
       });
-      setResult(await r.json());
+      const output = await r.json();
+      if (!r.ok) throw new Error(output.error ?? "Chưa thể tải giải thích.");
+      setResult(output);
+    } catch (reason) {
+      setError(
+        reason instanceof Error ? reason.message : "Chưa thể tải giải thích.",
+      );
     } finally {
       setLoading(false);
     }
@@ -58,12 +66,13 @@ export function KnowledgeCenter() {
               <BookOpen size={20} />
             </span>
             <div>
-              <p className="eyebrow">AI explain</p>
+              <p className="eyebrow">Tìm hiểu hosting</p>
               <h2 className="font-black">{question}</h2>
             </div>
           </div>
           <select
-            className="input w-auto"
+            aria-label="Mức độ giải thích"
+            className="input w-full sm:w-auto"
             value={level}
             onChange={(e) => setLevel(e.target.value)}
           >
@@ -72,6 +81,11 @@ export function KnowledgeCenter() {
             <option value="technical">Kỹ thuật</option>
           </select>
         </div>
+        {error && (
+          <p role="alert" className="mt-6 rounded-xl bg-red-50 p-4 text-sm text-red-700">
+            {error}
+          </p>
+        )}
         {loading ? (
           <div className="grid min-h-72 place-items-center">
             <LoaderCircle className="animate-spin text-blue" />
@@ -93,18 +107,15 @@ export function KnowledgeCenter() {
             </div>
             <div className="mt-8 border-t border-slate-200 pt-5">
               <p className="text-xs font-black uppercase text-slate-400">
-                Nguồn truy xuất
+                Dữ liệu đã kiểm tra
               </p>
               {result.sources?.map((x) => (
-                <a
-                  className="mt-2 block text-xs font-bold text-blue"
-                  target="_blank"
-                  rel="noreferrer"
-                  href={x.sourceUrl}
+                <p
+                  className="mt-2 text-xs font-bold text-slate-600"
                   key={x.sourceUrl}
                 >
                   {x.title} · {x.verifiedAt}
-                </a>
+                </p>
               ))}
             </div>
           </div>
@@ -112,7 +123,7 @@ export function KnowledgeCenter() {
           <div className="grid min-h-72 place-items-center text-center">
             <button className="button-primary" onClick={() => explain()}>
               <Sparkles size={17} />
-              Giải thích bằng AI local
+              Xem giải thích
             </button>
           </div>
         )}

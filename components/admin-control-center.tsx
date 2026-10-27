@@ -26,6 +26,7 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   leadsToCsv,
@@ -36,6 +37,8 @@ import {
 } from "@/lib/local-admin";
 import type { Requirements } from "@/lib/types";
 import { formatVnd } from "@/lib/utils";
+import { TextRevealHeading } from "@/components/text-reveal-heading";
+import type { InvoicePage, SaleRequestPage } from "@/lib/payments/types";
 
 type CatalogSummary = {
   plans: number;
@@ -46,6 +49,13 @@ type CatalogSummary = {
 };
 
 type HealthState = "checking" | "ready" | "offline";
+type CommerceSummary = {
+  orders: number;
+  requests: number;
+  paid: number;
+  newRequests: number;
+  revenueVnd: number;
+};
 
 const statusLabels: Record<LeadStatus, string> = {
   new: "Mới",
@@ -113,6 +123,7 @@ export function AdminControlCenter({ catalog }: { catalog: CatalogSummary }) {
   const [classifying, setClassifying] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const [mobileMenu, setMobileMenu] = useState(false);
+  const [commerce, setCommerce] = useState<CommerceSummary | null>(null);
 
   const loadLocalData = useCallback(() => {
     setLeads(readStoredLeads(localStorage.getItem("hostora:leads")));
@@ -132,10 +143,37 @@ export function AdminControlCenter({ catalog }: { catalog: CatalogSummary }) {
     }
   }, []);
 
+  const refreshCommerce = useCallback(async () => {
+    try {
+      const [ordersResponse, requestsResponse] = await Promise.all([
+        fetch("/api/admin/payments/orders", { cache: "no-store" }),
+        fetch("/api/admin/payments/requests", { cache: "no-store" }),
+      ]);
+      if (!ordersResponse.ok || !requestsResponse.ok) {
+        setCommerce(null);
+        return;
+      }
+      const [{ page }, { page: requestPage }] = await Promise.all([
+        ordersResponse.json() as Promise<{ page: InvoicePage }>,
+        requestsResponse.json() as Promise<{ page: SaleRequestPage }>,
+      ]);
+      setCommerce({
+        orders: page.counts.all,
+        requests: requestPage.counts.all,
+        paid: page.financials.recognizedPaidOrders,
+        newRequests: requestPage.counts.new,
+        revenueVnd: page.financials.recognizedRevenueVnd,
+      });
+    } catch {
+      setCommerce(null);
+    }
+  }, []);
+
   useEffect(() => {
     const timer = window.setTimeout(() => {
       loadLocalData();
       void refreshHealth();
+      void refreshCommerce();
     }, 0);
     const onStorage = () => loadLocalData();
     window.addEventListener("storage", onStorage);
@@ -143,7 +181,19 @@ export function AdminControlCenter({ catalog }: { catalog: CatalogSummary }) {
       window.clearTimeout(timer);
       window.removeEventListener("storage", onStorage);
     };
-  }, [loadLocalData, refreshHealth]);
+  }, [loadLocalData, refreshCommerce, refreshHealth]);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => void refreshCommerce(), 5_000);
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") void refreshCommerce();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [refreshCommerce]);
 
   const statusCounts = useMemo(
     () =>
@@ -266,12 +316,16 @@ export function AdminControlCenter({ catalog }: { catalog: CatalogSummary }) {
   ] as const;
 
   return (
-    <div className="min-h-screen bg-[#eef3f1] text-[#101b2c]">
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-72 flex-col bg-[#081421] px-5 py-6 text-white lg:flex">
+    <div className="min-h-screen bg-[#f6f7f4] text-[#132b38]">
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-72 flex-col bg-ink px-5 py-6 text-white lg:flex">
         <Link href="/" className="flex items-center gap-3 px-2">
-          <span className="grid size-11 place-items-center rounded-2xl bg-mint text-lg font-black text-ink">
-            H
-          </span>
+          <Image
+            src="/hostora-icon.png"
+            alt=""
+            width={44}
+            height={44}
+            className="size-11 rounded-xl"
+          />
           <span>
             <strong className="block text-lg tracking-[-.04em]">HOSTORA</strong>
             <small className="text-[10px] font-black tracking-[.2em] text-mint">
@@ -284,30 +338,36 @@ export function AdminControlCenter({ catalog }: { catalog: CatalogSummary }) {
             <a
               key={href}
               href={href}
-              className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold transition ${index === 0 ? "bg-white text-ink" : "text-slate-300 hover:bg-white/8 hover:text-white"}`}
+              className={`flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-bold ${index === 0 ? "bg-[#e2f2ec] text-blue" : "text-slate-300 hover:bg-white/10 hover:text-white"}`}
             >
               <Icon size={18} />
               {label}
             </a>
           ))}
+          <Link
+            href="/admin/orders"
+            className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-bold text-slate-300 hover:bg-white/10 hover:text-white"
+          >
+            <PackageCheck size={18} /> Đơn hàng & hoàn tiền
+          </Link>
         </nav>
         <div className="mt-auto rounded-3xl border border-white/10 bg-white/5 p-4">
           <div className="flex items-center gap-2 text-sm font-bold text-mint">
             <LockKeyhole size={16} /> Dữ liệu cục bộ
           </div>
           <p className="mt-2 text-xs leading-5 text-slate-400">
-            Chỉ quản lý dữ liệu trong trình duyệt này. Không tự đồng bộ từ điện
-            thoại.
+            Đơn hàng từ trang web và ứng dụng được gom vào cùng một nơi. Hồ sơ
+            tư vấn cũ vẫn lưu trong trình duyệt này.
           </p>
         </div>
       </aside>
 
       <div className="lg:pl-72">
-        <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-[#eef3f1]/90 backdrop-blur-xl">
+        <header className="sticky top-0 z-30 border-b border-[#d7e2de] bg-[#f6f7f4]/95 backdrop-blur-xl">
           <div className="flex min-h-20 items-center justify-between gap-4 px-5 lg:px-8">
             <div className="flex items-center gap-3">
               <button
-                className="grid size-10 place-items-center rounded-xl bg-white shadow-sm lg:hidden"
+                className="grid size-11 shrink-0 place-items-center rounded-xl bg-white shadow-sm lg:hidden"
                 onClick={() => setMobileMenu(true)}
                 aria-label="Mở menu quản trị"
               >
@@ -369,6 +429,13 @@ export function AdminControlCenter({ catalog }: { catalog: CatalogSummary }) {
                     <Icon size={18} /> {label}
                   </a>
                 ))}
+                <Link
+                  href="/admin/orders"
+                  onClick={() => setMobileMenu(false)}
+                  className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-slate-200 hover:bg-white/10"
+                >
+                  <PackageCheck size={18} /> Đơn hàng & hoàn tiền
+                </Link>
               </nav>
             </div>
           </div>
@@ -392,35 +459,45 @@ export function AdminControlCenter({ catalog }: { catalog: CatalogSummary }) {
             </div>
           ) : null}
 
-          <section id="tong-quan" className="scroll-mt-28">
-            <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
+          <section id="tong-quan" className="scroll-mt-28 admin-overview">
+            <div className="admin-overview-decoration" aria-hidden="true" />
+            <div className="admin-overview-heading">
               <div>
-                <p className="eyebrow">Tổng quan hôm nay</p>
-                <h1 className="mt-2 text-3xl font-black tracking-[-.04em] sm:text-5xl">
-                  Mọi việc quan trọng ở một nơi.
-                </h1>
-                <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-                  Theo dõi khách đăng ký, tình trạng tư vấn và độ mới của dữ
-                  liệu mà không đưa thông tin cá nhân lên dịch vụ bên ngoài.
+                <p className="admin-overview-kicker">
+                  <span /> TRUNG TÂM VẬN HÀNH · HOSTORA
+                </p>
+                <TextRevealHeading
+                  level="h1"
+                  segments={[{ text: "Tình trạng tư vấn và dữ liệu." }]}
+                />
+                <p className="admin-overview-description">
+                  Theo dõi yêu cầu mua và đơn hàng từ trang web, ứng dụng trong
+                  cùng một kho; dữ liệu tư vấn cũ vẫn nằm trên thiết bị đã tạo.
                 </p>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="admin-overview-actions">
                 <button
-                  className="button-secondary !rounded-xl"
+                  className="button-secondary"
                   onClick={() => void refreshHealth()}
                 >
                   <RefreshCw size={16} /> Kiểm tra lại
                 </button>
-                <button
-                  className="button-primary !rounded-xl"
-                  onClick={exportBackup}
-                >
+                <button className="button-primary" onClick={exportBackup}>
                   <ArrowDownToLine size={16} /> Sao lưu dữ liệu
                 </button>
               </div>
             </div>
+            <div className="admin-overview-footer">
+              <span>
+                <LockKeyhole size={14} /> Đơn hàng dùng chung một kho
+              </span>
+              <span>
+                <Activity size={14} /> Danh mục kiểm tra gần nhất ·{" "}
+                {catalog.verifiedAt}
+              </span>
+            </div>
 
-            <div className="mt-7 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="mt-7 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
               <MetricCard
                 icon={Users}
                 label="Tổng đăng ký"
@@ -434,16 +511,22 @@ export function AdminControlCenter({ catalog }: { catalog: CatalogSummary }) {
                 value={String(statusCounts.qualified)}
                 note={
                   leads.length
-                    ? `${Math.round((statusCounts.qualified / leads.length) * 100)}% tổng đăng ký`
+                    ? "Dữ liệu trên trình duyệt này"
                     : "Chưa có dữ liệu"
                 }
                 tone="mint"
               />
               <MetricCard
                 icon={PackageCheck}
-                label="Gói đang theo dõi"
-                value={String(catalog.plans)}
-                note={`${catalog.providers} nhà cung cấp`}
+                label="Tổng đơn và yêu cầu"
+                value={
+                  commerce ? String(commerce.orders + commerce.requests) : "—"
+                }
+                note={
+                  commerce
+                    ? `${commerce.newRequests} hồ sơ mới · ${commerce.paid} đơn đã thanh toán · ${formatVnd(commerce.revenueVnd)}`
+                    : "Mở Đơn hàng & hoàn tiền để đăng nhập an toàn"
+                }
                 tone="violet"
               />
               <MetricCard
@@ -518,6 +601,16 @@ export function AdminControlCenter({ catalog }: { catalog: CatalogSummary }) {
                 <Gauge className="text-mint" />
               </div>
               <div className="mt-6 space-y-3">
+                <TaskRow
+                  done={commerce?.newRequests === 0}
+                  text={
+                    commerce
+                      ? commerce.newRequests
+                        ? `Xử lý ${commerce.newRequests} yêu cầu mua mới`
+                        : "Không còn yêu cầu mua mới"
+                      : "Đăng nhập quản trị đơn hàng để xem dữ liệu chung"
+                  }
+                />
                 <TaskRow
                   done={statusCounts.new === 0}
                   text={
@@ -741,7 +834,7 @@ export function AdminControlCenter({ catalog }: { catalog: CatalogSummary }) {
                 <button
                   aria-label="Làm mới tình trạng"
                   onClick={() => void refreshHealth()}
-                  className="grid size-10 place-items-center rounded-xl bg-slate-100 text-slate-600"
+                  className="grid size-11 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-600"
                 >
                   <RefreshCw
                     className={health === "checking" ? "animate-spin" : ""}
@@ -821,7 +914,7 @@ export function AdminControlCenter({ catalog }: { catalog: CatalogSummary }) {
                 <ShieldCheck className="text-emerald-600" />
               </div>
               <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                <DataCard value={catalog.plans} label="Gói hosting" />
+                <DataCard value={catalog.plans} label="Gói lưu trữ" />
                 <DataCard value={catalog.products} label="Sản phẩm liên quan" />
                 <DataCard value={catalog.providers} label="Nhà cung cấp" />
                 <DataCard
@@ -875,11 +968,11 @@ export function AdminControlCenter({ catalog }: { catalog: CatalogSummary }) {
                   Phạm vi quản trị hiện tại
                 </h2>
                 <p className="mt-2 text-sm leading-6 text-amber-900">
-                  Trang này không phải hệ thống nhiều tài khoản. Nó chỉ đọc và
-                  cập nhật dữ liệu trong trình duyệt hiện tại; dữ liệu đăng ký
-                  trong APK vẫn nằm trên điện thoại. Trước khi dùng công khai
-                  cho nhiều nhân viên, cần bổ sung đăng nhập và kho dữ liệu
-                  chung có phân quyền.
+                  Yêu cầu mua, hóa đơn và trạng thái thanh toán từ trang web lẫn
+                  ứng dụng đã được gom vào cùng một kho. Hồ sơ tư vấn cũ vẫn nằm
+                  trong trình duyệt hoặc điện thoại đã tạo hồ sơ. Trước khi cho
+                  nhiều nhân viên cùng vận hành, cần bổ sung tài khoản riêng và
+                  phân quyền theo vai trò.
                 </p>
               </div>
             </div>
@@ -911,13 +1004,13 @@ function MetricCard({
     red: "bg-red-100 text-red-700",
   };
   return (
-    <article className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm">
+    <article className="min-w-0 rounded-xl border border-[#d7e2de] bg-white p-4 sm:p-5">
       <div
-        className={`grid size-11 place-items-center rounded-2xl ${tones[tone]}`}
+        className={`grid size-10 place-items-center rounded-lg ${tones[tone]}`}
       >
         <Icon size={20} />
       </div>
-      <p className="mt-5 text-xs font-bold text-slate-500">{label}</p>
+      <p className="mt-4 text-xs font-bold text-slate-500">{label}</p>
       <p className="mt-1 text-2xl font-black tracking-[-.03em]">{value}</p>
       <p className="mt-2 text-xs text-slate-400">{note}</p>
     </article>

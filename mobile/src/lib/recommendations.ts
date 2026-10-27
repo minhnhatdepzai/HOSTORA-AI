@@ -56,7 +56,7 @@ function fallbackPlans(requirements: Requirements): RecommendedPlan[] {
     sourceUrl: "https://www.hostinger.com/vn/web-hosting",
     verifiedAt: "2026-10-23",
     caution:
-      "Dữ liệu được lưu ngày 23/10/2026 và có thể chưa phải giá hiện tại. Hãy kiểm tra trang chính thức trước khi mua.",
+      "Dữ liệu được lưu ngày 23/10/2026 và có thể chưa phải giá hiện tại. HOSTORA sẽ xác nhận tổng tiền và kỳ hạn trước khi tạo hóa đơn.",
   }));
 }
 

@@ -3,12 +3,12 @@
 import {
   AlertTriangle,
   Check,
-  ExternalLink,
   LoaderCircle,
   ShieldCheck,
   Sparkles,
   UserRoundPlus,
 } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { RecommendationScore, Requirements } from "@/lib/types";
 import { formatVnd } from "@/lib/utils";
@@ -173,7 +173,7 @@ export function RecommendationsView() {
         {items.map((item, i) => (
           <article
             key={item.plan.id}
-            className={`relative overflow-hidden rounded-[1.75rem] border bg-white p-6 ${i === 0 ? "border-blue shadow-[0_24px_70px_rgba(49,94,251,.15)]" : "border-slate-200"}`}
+            className={`relative overflow-hidden rounded-2xl border bg-white p-5 sm:p-6 ${i === 0 ? "border-blue shadow-[0_16px_40px_rgba(17,105,94,.12)]" : "border-slate-200"}`}
           >
             {i === 0 && (
               <div className="absolute inset-x-0 top-0 bg-blue py-2 text-center text-[10px] font-black tracking-[.18em] text-white">
@@ -194,15 +194,15 @@ export function RecommendationsView() {
               </div>
               <p className="mt-6 text-3xl font-black">
                 {formatVnd(item.plan.promoMonthlyVnd)}
-                <span className="text-sm text-slate-600">/th</span>
+                <span className="text-sm text-slate-600">/tháng</span>
               </p>
               <p className="mt-1 text-xs text-slate-600">
                 Kỳ ưu đãi {item.plan.billingMonths} tháng · trả trước{" "}
                 {formatVnd(item.plan.promoMonthlyVnd * item.plan.billingMonths)}{" "}
-                tiền hosting, chưa gồm VAT/add-on.
+                tiền hosting, chưa gồm thuế và dịch vụ bổ sung.
               </p>
               <p className="mt-1 text-xs text-slate-500">
-                Gia hạn: {formatVnd(item.plan.renewalMonthlyVnd)}/th
+                Gia hạn: {formatVnd(item.plan.renewalMonthlyVnd)}/tháng
               </p>
               <div className="mt-6 space-y-3">
                 {item.reasons.map((x) => (
@@ -224,15 +224,9 @@ export function RecommendationsView() {
                   {item.cautions[0]}
                 </div>
               )}
-              <a
-                href={item.plan.sourceUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="mt-5 inline-flex items-center gap-1 text-xs font-bold text-blue"
-              >
-                Nguồn · {item.plan.verifiedAt}
-                <ExternalLink size={13} />
-              </a>
+              <p className="mt-5 text-xs font-bold text-slate-500">
+                HOSTORA kiểm tra ngày {item.plan.verifiedAt}
+              </p>
               <button
                 type="button"
                 aria-pressed={selectedItem?.plan.id === item.plan.id}
@@ -246,6 +240,12 @@ export function RecommendationsView() {
                   ? "Đang chọn gói này"
                   : `Chọn ${item.plan.name} để tư vấn`}
               </button>
+              <Link
+                href="/services?category=hosting"
+                className="mt-3 block w-full rounded-xl bg-ink px-4 py-3 text-center text-sm font-black text-white"
+              >
+                Đặt mua qua HOSTORA
+              </Link>
             </div>
           </article>
         ))}

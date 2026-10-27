@@ -2,7 +2,9 @@ import { expect, test } from "@playwright/test";
 
 test("five required features complete one business flow", async ({ page }) => {
   await page.goto("/");
-  const faq = page.getByRole("button", { name: "Shop mới có cần VPS không?" });
+  const faq = page.getByRole("button", {
+    name: "Cửa hàng mới có cần thuê máy riêng không?",
+  });
   await faq.click();
   await expect(faq).toHaveAttribute("aria-expanded", "true");
 
@@ -50,19 +52,22 @@ test("invalid business and chat requests are clear 400 errors", async ({
   expect((await invalidChat.json()).error).toMatch(/Dữ liệu nhập/);
 });
 
-test("chat resolves cited source to a real link", async ({ page }) => {
+test("chat shows verified citations without sending customers away", async ({
+  page,
+}) => {
   await page.goto("/ai-assistant");
   await page
     .getByLabel("Tin nhắn")
     .fill("Tên miền abc-hostora-demo.com còn trống hôm nay không?");
-  await page.getByRole("button", { name: "Gửi" }).click();
-  await expect(page.getByText("Nguồn được trích dẫn")).toBeVisible();
+  await page.getByRole("button", { name: "Gửi", exact: true }).click();
+  await expect(page.getByText("Dữ liệu đã kiểm tra")).toBeVisible();
   await expect(
     page.getByText(/không thể xác nhận tên miền còn trống/i),
   ).toBeVisible();
+  await expect(page.getByText(/\[K1\].*Tên miền/)).toBeVisible();
   await expect(
-    page.getByRole("link", { name: /\[K1\].*Tên miền/ }),
-  ).toHaveAttribute("href", /^https:\/\//);
+    page.locator('a[href^="http"]').filter({ hasText: /\[K1\]/ }),
+  ).toHaveCount(0);
 });
 
 test("catalog outage never substitutes unverified prices", async ({ page }) => {
@@ -100,8 +105,8 @@ test("old chat claims stay archived and out of new AI context", async ({
   await page
     .getByLabel("Tin nhắn")
     .fill("Tên miền abc-hostora-demo.com còn trống hôm nay không?");
-  await page.getByRole("button", { name: "Gửi" }).click();
-  await expect(page.getByText("Nguồn được trích dẫn")).toBeVisible();
+  await page.getByRole("button", { name: "Gửi", exact: true }).click();
+  await expect(page.getByText("Dữ liệu đã kiểm tra")).toBeVisible();
   expect(
     sentMessages.some((message) => message.content.includes("Giá cũ")),
   ).toBe(false);
@@ -183,9 +188,7 @@ test("launch score explains a deterministic result and AI critique", async ({
     });
   });
   await page.goto("/readiness");
-  await page
-    .getByRole("button", { name: "Chấm Launch Score bằng AI local" })
-    .click();
+  await page.getByRole("button", { name: "Xem mức sẵn sàng" }).click();
   await expect(page.getByText("68")).toBeVisible();
   await expect(page.getByText("AI phản biện như giám khảo")).toBeVisible();
   await expect(page.getByText("Ai chịu trách nhiệm backup?")).toBeVisible();

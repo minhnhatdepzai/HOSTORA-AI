@@ -10,6 +10,72 @@ type KnowledgeSource = {
   verifiedAt: string;
 };
 
+export function customerJourneyAnswer(question: string) {
+  const folded = question
+    .toLocaleLowerCase("vi")
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "");
+  if (
+    /(tru tien|da thanh toan|da tra tien)/i.test(folded) &&
+    /(cho thanh toan|chua cap nhat|chua doi|chua thanh cong)/i.test(folded)
+  )
+    return {
+      answer:
+        "Bạn **không thanh toán lại**. Hãy mở mục **Đơn hàng**, tải lại trạng thái và giữ mã giao dịch của ngân hàng/cổng thanh toán. Nếu đơn vẫn là “Chờ thanh toán”, gửi mã đơn cùng mã giao dịch cho HOSTORA để quản trị viên bấm đối soát trực tiếp với Stripe hoặc VNPay; không gửi số thẻ, CVC hay OTP.",
+      sources: [],
+    };
+  if (
+    /(hoan tien|hoan lai tien)/i.test(folded) &&
+    /(bao lau|khi nao|may ngay|may gio)/i.test(folded)
+  )
+    return {
+      answer:
+        "Mình không thể hứa chính xác thời điểm tiền về khi cổng thanh toán chưa xác nhận. Bạn mở **Đơn hàng** để xem trạng thái: “Cần duyệt hoàn” nghĩa là HOSTORA đang kiểm tra, “Đang hoàn tiền” nghĩa là yêu cầu đã gửi tới cổng, còn “Đã hoàn tiền” chỉ xuất hiện sau khi có xác nhận đối soát. Hãy giữ mã đơn và mã giao dịch; không gửi lại yêu cầu nhiều lần.",
+      sources: [],
+    };
+  if (
+    /(khong nhan duoc|chua thay|khong thay)/i.test(folded) &&
+    /(email|mail|thu xac nhan|hoa don)/i.test(folded)
+  )
+    return {
+      answer:
+        "Hãy kiểm tra **Thư rác/Spam** và tìm theo từ khóa HOSTORA hoặc mã đơn. Nếu vẫn chưa có, kiểm tra email đã nhập trong hồ sơ mua; quản trị viên có thể xem đơn trên cùng backend và gửi lại thông tin tra cứu. Không tạo thêm đơn chỉ vì email đến chậm.",
+      sources: [],
+    };
+  if (
+    /(man hinh nay|dang o buoc nao|lam gi tiep|bam gi|khong biet.*tiep theo)/i.test(
+      folded,
+    )
+  )
+    return {
+      answer:
+        "Bạn có thể gửi ảnh màn hình bằng nút hình ảnh cạnh ô chat. Trước khi gửi, hãy che số thẻ, CVC, OTP, email, số điện thoại và mã truy cập. HOSTORA sẽ đọc ảnh trên hệ thống cục bộ, xác định bạn đang ở bước nào và hướng dẫn thao tác tiếp theo; ảnh không được lưu vào lịch sử trò chuyện.",
+      sources: [],
+      nextAction: "upload-screen" as const,
+    };
+  return null;
+}
+
+export function websiteIdeaDiscoveryAnswer(question: string) {
+  const normalized = question.toLocaleLowerCase("vi");
+  const folded = normalized.normalize("NFD").replace(/\p{M}/gu, "");
+  const hasNoWebsite =
+    /(?:chua|khong)\s+(?:co|lam|tao)\s+(?:website|trang web|web)\b/i.test(folded) ||
+    /(?:website|trang web|web)\s+(?:thi\s+)?(?:chua|khong)\s+co\b/i.test(folded);
+  if (
+    !hasNoWebsite &&
+    !/(chua biet|khong biet|nen lam|tao).{0,30}(website|trang web|web).{0,20}(gi|nao|the nao|de ban)|website.{0,20}(gi|nao).{0,20}(phu hop|nen lam)/i.test(
+      folded,
+    )
+  )
+    return null;
+  return {
+    answer:
+      "Bạn chưa cần chọn hosting ngay. Hãy [Mở Xưởng tạo website](/website-studio), cho HOSTORA biết bạn bán gì, khách chính là ai, muốn khách mua hàng, đặt lịch hay liên hệ, rồi chọn phong cách và màu sắc. Sau khi có bản xem trước, hãy gửi lại liên kết website trong cuộc trò chuyện này; mình sẽ dựa trên mục tiêu, chức năng, lượng khách dự kiến và ngân sách đã chọn để tư vấn gói hosting phù hợp, không ép chọn gói đắt nhất.",
+    sources: [],
+  };
+}
+
 function knowledgeSource(id: string, citation: string) {
   const doc = knowledge.find((item) => item.id === id);
   if (!doc) return null;
@@ -35,7 +101,7 @@ export function domainAvailabilityAnswer(question: string) {
   if (!domain || !pricing) return null;
   return {
     answer:
-      "Tôi không thể xác nhận tên miền còn trống hay giá đăng ký hôm nay nếu chưa kiểm tra trực tiếp. Hãy mở trang của nhà cung cấp tên miền để xác nhận. [K1] Giá và thời hạn thanh toán cũng cần kiểm tra lại trên trang mua hàng; dữ liệu trong ứng dụng luôn có ngày kiểm tra rõ ràng. [K2]",
+      "Tôi không thể xác nhận tên miền còn trống hay giá đăng ký hôm nay nếu chưa kiểm tra trực tiếp. HOSTORA sẽ xác minh tình trạng tên miền, giá và thời hạn trước khi tạo hóa đơn; dữ liệu trong ứng dụng luôn có ngày kiểm tra rõ ràng. [K1] [K2]",
     sources: [domain, pricing],
   };
 }
@@ -137,7 +203,7 @@ export function robotsPrivacyAnswer(
   if (!source)
     return {
       answer:
-        "Chưa có nguồn phù hợp để xác minh. Đừng xem robots.txt là biện pháp bảo vệ dữ liệu riêng tư; hãy kiểm tra quyền truy cập thực tế của trang.",
+        "Chưa có dữ liệu phù hợp để xác minh. Đừng xem robots.txt là biện pháp bảo vệ dữ liệu riêng tư; hãy kiểm tra quyền truy cập thực tế của trang.",
       sources: [],
     };
   return {

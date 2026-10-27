@@ -1,0 +1,76 @@
+- generic [active] [ref=f1e1]:
+  - main [ref=f1e2]:
+    - generic [ref=f1e3]:
+      - generic [ref=f1e5]:
+        - link "Trung tâm quản trị" [ref=f1e6] [cursor=pointer]:
+          - /url: /admin
+        - generic [ref=f1e10]:
+          - paragraph [ref=f1e11]: VẬN HÀNH / THANH TOÁN SANDBOX
+          - heading "Đơn hàng & hoàn tiền" [level=1] [ref=f1e12]
+          - paragraph [ref=f1e13]: Xác nhận giá yêu cầu mua, tạo hóa đơn trên HOSTORA và đối soát giao dịch.
+      - generic [ref=f1e17]:
+        - status [ref=f1e100]: Đã tạo hóa đơn cho Cloud Hosting. Hãy gửi mã đơn và mã truy cập tới second.customer@example.com.
+        - generic [ref=f1e29]:
+          - status [ref=f1e30]:
+            - generic [ref=f1e31]: Tự đồng bộ backend mỗi 5 giây · lần cuối 23:23:46
+            - generic [ref=f1e37]: Chưa cấu hình SMTP — đơn vẫn được lưu
+          - generic [ref=f1e41]:
+            - text: 01 / TẠO HÓA ĐƠN
+            - heading "Khoản cần thu" [level=2] [ref=f1e42]
+            - paragraph [ref=f1e43]: Chỉ nhập tổng tiền mà HOSTORA đã thống nhất với khách. Không lấy giá tham khảo từ danh mục.
+            - generic [ref=f1e44]:
+              - generic [ref=f1e45]: Loại dịch vụ
+              - combobox "Loại dịch vụ" [ref=f1e46]:
+                - option "Dịch vụ HOSTORA" [selected]
+                - option "Dịch vụ đối tác"
+              - generic [ref=f1e47]: Tên dịch vụ
+              - textbox "Tên dịch vụ" [ref=f1e48]
+              - generic [ref=f1e49]: Mô tả trên hóa đơn
+              - textbox "Mô tả trên hóa đơn" [ref=f1e50]
+              - generic [ref=f1e51]: Email nhận hóa đơn
+              - textbox "Email nhận hóa đơn" [ref=f1e52]
+              - generic [ref=f1e53]: Tổng tiền (VND)
+              - spinbutton "Tổng tiền (VND)" [ref=f1e54]
+              - button "Tạo hóa đơn" [ref=f1e55] [cursor=pointer]
+          - generic [ref=f1e58]:
+            - generic [ref=f1e59]:
+              - generic [ref=f1e60]:
+                - text: 02 / YÊU CẦU KHÁCH
+                - heading "Đặt mua qua HOSTORA" [level=2] [ref=f1e61]
+              - button "Tải lại" [ref=f1e62] [cursor=pointer]
+            - article [ref=f1e69]:
+              - generic [ref=f1e70]:
+                - generic [ref=f1e71]:
+                  - strong [ref=f1e72]: Web Hosting
+                  - generic [ref=f1e73]: HSR-3B5AAA4AA7 · Hostinger · e2e.customer@example.com
+                - generic [ref=f1e74]: 26/10/2026
+              - paragraph [ref=f1e75]: "Nhu cầu: Kiểm thử đồng bộ đơn từ website sang quản trị"
+              - generic [ref=f1e76]:
+                - generic [ref=f1e77]: Tổng tiền đã xác nhận (VND)
+                - spinbutton "Tổng tiền đã xác nhận (VND)" [ref=f1e78]
+                - generic [ref=f1e79]: Kỳ hạn và điều kiện bán
+                - textbox "Kỳ hạn và điều kiện bán" [ref=f1e80]:
+                  - /placeholder: Kỳ hạn, VAT và điều kiện đã chốt
+                - button "Xác nhận giá & tạo hóa đơn" [disabled] [ref=f1e81]
+          - status [ref=f1e101]:
+            - strong [ref=f1e102]: "Mã hóa đơn: HST-26947F6C8D5A"
+            - generic [ref=f1e103]:
+              - text: "Mã truy cập riêng:"
+              - code [ref=f1e104]: vhiGM3OdoeB35DFyxUm61AAJ4Y0939Lj
+            - generic [ref=f1e105]:
+              - text: "Khách thanh toán và xem hóa đơn tại HOSTORA:"
+              - code [ref=f1e106]: http://127.0.0.1:3101/orders
+            - text: SMTP chưa cấu hình nên hãy sao chép thông tin gửi khách thủ công.
+            - button "Sao chép thông tin gửi khách" [ref=f1e107] [cursor=pointer]
+          - generic [ref=f1e82]:
+            - generic [ref=f1e84]:
+              - text: 03 / THEO DÕI
+              - heading "Hóa đơn gần đây" [level=2] [ref=f1e85]
+            - article [ref=f1e114]:
+              - generic [ref=f1e115]:
+                - generic [ref=f1e116]:
+                  - strong [ref=f1e117]: Cloud Hosting
+                  - generic [ref=f1e118]: HST-26947F6C8D5A · Hostinger
+                - generic [ref=f1e119]: 250.000 ₫
+              - generic [ref=f1e120]: Chờ thanh toán
+  - alert [ref=f1e21]

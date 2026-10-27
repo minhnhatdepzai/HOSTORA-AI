@@ -7,8 +7,16 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const releases = {
-  android: "HOSTORA-AI-1.5.0.apk",
-  "android-universal": "HOSTORA-AI-1.5.0-universal.apk",
+  android: {
+    local: "HOSTORA-AI-2.0.5-arm64.apk",
+    published: "HOSTORA-AI-1.5.0.apk",
+    version: "2.0.5",
+  },
+  "android-universal": {
+    local: "HOSTORA-AI-2.0.3-universal.apk",
+    published: "HOSTORA-AI-1.5.0-universal.apk",
+    version: "2.0.3",
+  },
 } as const;
 const defaultReleaseBaseUrl =
   "https://github.com/minhnhatdepzai/HOSTORA-AI/releases/download/v1.5.0";
@@ -28,8 +36,13 @@ function remoteReleaseUrl(filename: string) {
 async function releaseResponse(variant: string, body: boolean) {
   if (!(variant in releases))
     return new Response("Không có bản APK này.", { status: 404 });
-  const filename = releases[variant as keyof typeof releases];
-  const filePath = path.join(process.cwd(), "mobile", "releases", filename);
+  const release = releases[variant as keyof typeof releases];
+  const filePath = path.join(
+    process.cwd(),
+    "mobile",
+    "releases",
+    release.local,
+  );
   try {
     const file = await stat(filePath);
     if (!file.isFile()) throw new Error("APK không phải tệp hợp lệ.");
@@ -40,14 +53,15 @@ async function releaseResponse(variant: string, body: boolean) {
       {
         headers: {
           "content-type": "application/vnd.android.package-archive",
-          "content-disposition": `attachment; filename="${filename}"`,
+          "content-disposition": `attachment; filename="${release.local}"`,
           "content-length": String(file.size),
           "cache-control": "private, max-age=0",
+          "x-hostora-release-version": release.version,
         },
       },
     );
   } catch {
-    return Response.redirect(remoteReleaseUrl(filename), 307);
+    return Response.redirect(remoteReleaseUrl(release.published), 307);
   }
 }
 

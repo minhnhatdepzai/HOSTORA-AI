@@ -1,8 +1,8 @@
+import { Pressable } from "@/components/pressable";
 import { Feather } from "@expo/vector-icons";
 import { useState } from "react";
 import {
   ActivityIndicator,
-  Pressable,
   StyleSheet,
   Text,
   TextInput,
@@ -65,17 +65,17 @@ export default function DomainScreen() {
   return (
     <SafeAreaView
       style={{ flex: 1, backgroundColor: colors.canvas }}
-      edges={["top"]}
+      edges={["top", "bottom", "left", "right"]}
     >
       <DetailHeader
         title="Cố vấn tên miền"
         action={<Pill tone="blue">GỢI Ý NHANH</Pill>}
       />
-      <Screen>
+      <Screen insetTop={false}>
         <View style={styles.intro}>
-          <Eyebrow>Tên miền cho thương hiệu</Eyebrow>
+          <Eyebrow>Ý tưởng tên miền</Eyebrow>
           <Title style={{ marginTop: 8 }}>
-            Một cái tên dễ nhớ. Không lời hứa giả.
+            Tìm một cái tên dễ nhớ.
           </Title>
           <Body style={{ marginTop: 10 }}>
             HOSTORA gợi ý tên dễ nhớ. Bạn cần kiểm tra lại trước khi đăng ký vì
@@ -88,7 +88,7 @@ export default function DomainScreen() {
             <TextInput
               value={brand}
               onChangeText={setBrand}
-              placeholder="Ví dụ: Minh Nhật Fashion"
+              placeholder="Ví dụ: Tiệm Mây"
               placeholderTextColor="#718196"
               style={styles.input}
             />
@@ -96,7 +96,7 @@ export default function DomainScreen() {
               <ActivityIndicator color={colors.mint} />
             ) : (
               <Button
-                label="Tạo tên gợi ý"
+                label="Xem gợi ý tên miền"
                 icon="zap"
                 variant="mint"
                 disabled={brand.trim().length < 2}
@@ -145,8 +145,8 @@ export default function DomainScreen() {
           <Card style={styles.note}>
             <Feather name="info" color={colors.primary} size={17} />
             <Text style={styles.noteText}>
-              “Chưa kiểm tra” không có nghĩa là tên miền còn mua được. Hãy mở
-              trang của nhà cung cấp tên miền để xác nhận trước khi chọn.
+              “Chưa kiểm tra” không có nghĩa là tên miền còn mua được. Hãy gửi
+              yêu cầu trên HOSTORA để được xác minh trước khi tạo hóa đơn.
             </Text>
           </Card>
         </View>

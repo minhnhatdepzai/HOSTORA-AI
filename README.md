@@ -2,16 +2,19 @@
 
 HOSTORA AI là ứng dụng React Native tư vấn hosting/domain cho chủ shop Việt Nam, xây theo hướng **local AI first**. App Android được cài trực tiếp bằng APK, không cần Expo Go; Qwen và RAG chạy bằng Ollama trên máy HOSTORA.
 
+Website Studio dùng LangGraph điều phối Ollama local để soạn nội dung và bộ gợi ý hosting tất định. Langfuse là tùy chọn, tắt cho tới khi cấu hình đủ ba biến `LANGFUSE_*`; nếu bật, chỉ gửi metadata tính năng/chế độ/độ trễ và mã phiên ngẫu nhiên, không gửi prompt, nội dung demo, thông tin liên hệ hay mã đơn. Xem [rubric đánh giá AI và phễu chuyển đổi](docs/AI_EVALUATION.md) để biết bốn chỉ số và giới hạn đo lường hiện tại.
+
 ## Tải app Android
 
-- [Tải HOSTORA AI 1.5.0 — arm64, khuyến nghị](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/download/v1.5.0/HOSTORA-AI-1.5.0.apk)
-- [Tải bản universal 1.5.0 dự phòng](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/download/v1.5.0/HOSTORA-AI-1.5.0-universal.apk)
-- [Kiểm tra SHA-256](mobile/releases/SHA256SUMS.txt)
+- Bản 2.0.4 arm64 đã build và cài trên Redmi: `mobile/releases/HOSTORA-AI-2.0.4-arm64.apk`. Bản universal hiện vẫn là 2.0.3. Chạy web trên máy HOSTORA rồi mở `/downloads/android` hoặc `/downloads/android-universal` để tải APK cục bộ.
+- [Bản công khai 1.5.0 trên GitHub](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/tag/v1.5.0) vẫn là bản đã phát hành trước đó.
+- Checksum của các APK cục bộ: `mobile/releases/SHA256SUMS.txt`.
 
-Bản 1.5.0 là APK cài trực tiếp, không cần Expo Go. Toàn bộ màn hình khách hàng đã được viết lại bằng tiếng Việt phổ thông; tên model, cơ chế tìm kiếm, hạ tầng và thuật ngữ lập trình chỉ còn trong tài liệu dành cho đội phát triển. Lịch sử chat từ bản cũ được tách khỏi trải nghiệm mới để câu trả lời kỹ thuật cũ không xuất hiện lại. Xem [hướng dẫn mobile](mobile/README.md), [audit giao diện](docs/MOBILE_UI_AUDIT.md) và [hồ sơ đối chiếu tiêu chí](docs/JUDGING_READINESS.md).
+Bản 2.0.4 thêm khung xem nhanh website có thể bấm Trang đầu/Giới thiệu/Liên hệ trong app. Bản 2.0.3 gom thao tác chọn màu vào một ô mở bảng màu đầy đủ, đồng thời bổ sung chuyển động quỹ đạo. Bản 2.0.2 cho phép nhập lượng khách/ngân sách tùy ý; merchant vẫn để sandbox. Xem [hướng dẫn mobile](mobile/README.md), [audit giao diện](docs/MOBILE_UI_AUDIT.md), [thiết lập thanh toán](docs/PAYMENTS_SETUP.md) và [hồ sơ đối chiếu tiêu chí](docs/JUDGING_READINESS.md).
 
 ## Các khả năng thông minh dành cho khách hàng
 
+- Hỏi khách muốn phục vụ ai và website cần làm gì, tạo bản demo tải được rồi mới gợi ý hosting phù hợp.
 - Hiểu phần mô tả nhu cầu bằng lời và tự điền biểu mẫu để khách sửa lại trước khi gửi.
 - Gợi ý một gói phù hợp nhất và hai lựa chọn thay thế; giá và thứ tự gói vẫn do công thức kiểm soát, trợ lý chỉ giải thích.
 - Trả lời câu hỏi về hosting, tên miền, chi phí và rủi ro bằng tài liệu có nguồn.
@@ -19,7 +22,7 @@ Bản 1.5.0 là APK cài trực tiếp, không cần Expo Go. Toàn bộ màn h�
 - Chấm mức sẵn sàng trước ngày mở website và đưa ra việc cần làm tiếp theo.
 - Kiểm tra khả năng xuất hiện trên Google, sắp xếp việc cần cải thiện và tạo nội dung nháp để người dùng duyệt.
 
-Khi chạy `pnpm dev:lan`, trang chủ web có nút tải APK. Điện thoại cùng Wi-Fi có thể mở `http://<IP-máy-HOSTORA>:3000/downloads/android` (bản universal: `/downloads/android-universal`). Trong QA, URL LAN đã trả HTTP 200 và file tải về khớp SHA-256; IP cụ thể có thể thay đổi theo mạng.
+Website và app cùng hiển thị danh mục dịch vụ HOSTORA. Khách gửi yêu cầu mua trong nền tảng; HOSTORA xác nhận giá cuối và điều kiện trước khi phát hành hóa đơn. Khách xem hóa đơn và bắt đầu thanh toán tại web/app HOSTORA. Khi chạy `pnpm dev:lan`, điện thoại cùng Wi-Fi có thể mở `http://<IP-máy-HOSTORA>:3000/downloads/android` (bản universal: `/downloads/android-universal`).
 
 ## Điểm nổi bật
 
@@ -33,6 +36,7 @@ Khi chạy `pnpm dev:lan`, trang chủ web có nút tải APK. Điện thoại c
 - Domain Advisor không giả tình trạng availability.
 - Website Analyzer chặn SSRF và chỉ kết luận từ HTML công khai.
 - Lead form và trung tâm quản trị dùng `localStorage`, có xác nhận trước khi xóa.
+- Hóa đơn dịch vụ HOSTORA/đối tác, thanh toán Stripe/VNPay sandbox, hủy và yêu cầu hoàn tiền qua sổ SQLite riêng; cổng tắt khi thiếu tài khoản merchant HOSTORA.
 
 ## Trung tâm quản trị
 
@@ -43,7 +47,9 @@ Mở <http://127.0.0.1:3000/admin> sau khi chạy web. Trang này cho phép ngư
 - Phân nhóm nhu cầu bằng trợ lý chạy trên máy mà không gửi tên hay số điện thoại vào mô hình.
 - Theo dõi độ phủ bảng giá, ngày đối chiếu dữ liệu và các gói còn thiếu giá gia hạn.
 
-Đây là bảng quản trị cục bộ: dữ liệu chỉ nằm trong trình duyệt đang mở. Trang `/admin` được chặn lập chỉ mục nhưng **chưa phải hệ thống đăng nhập/phân quyền**; đăng ký trong APK không tự đồng bộ lên web. Muốn dùng cho nhiều nhân viên hoặc đưa lên Internet cần bổ sung đăng nhập và kho dữ liệu chung có phân quyền.
+Đây là bảng quản trị đăng ký cục bộ: dữ liệu đăng ký chỉ nằm trong trình duyệt đang mở. Trang `/admin` được chặn lập chỉ mục nhưng **chưa phải hệ thống đăng nhập/phân quyền**; đăng ký trong APK không tự đồng bộ lên web. Muốn dùng cho nhiều nhân viên hoặc đưa lên Internet cần bổ sung đăng nhập và kho dữ liệu chung có phân quyền.
+
+Quản lý yêu cầu mua, hóa đơn và hoàn tiền nằm tại `/admin/orders`, có phiên quản trị bảo vệ API. Admin xác nhận báo giá, kỳ hạn/thuế/điều kiện rồi tạo hóa đơn; khách xem đơn tại `/orders` hoặc trong app bằng mã đơn và mã truy cập riêng. Xem [thiết lập thanh toán sandbox](docs/PAYMENTS_SETUP.md); chưa có merchant HOSTORA nên các cổng hiện tắt và chưa thể thử giao dịch thật. Stripe Checkout/VNPay có thể mở giao diện xử lý của gateway sau khi khách bắt đầu trả tiền từ hóa đơn HOSTORA.
 
 ## Stack
 
@@ -94,6 +100,8 @@ pnpm test:e2e
 
 - [Nghiên cứu](docs/RESEARCH.md)
 - [Kiến trúc AI](docs/AI_ARCHITECTURE.md)
+- [Rubric đánh giá AI và phễu](docs/AI_EVALUATION.md)
+- [Báo cáo kiểm tra bảo mật](docs/SECURITY_REVIEW.md)
 - [Nguồn dữ liệu](docs/DATA_SOURCES.md)
 - [Báo cáo QA](docs/QA_REPORT.md)
 - [Kịch bản demo](docs/DEMO_SCRIPT.md)

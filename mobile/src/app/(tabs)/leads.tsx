@@ -1,8 +1,8 @@
+import { Pressable } from "@/components/pressable";
 import { Feather } from "@expo/vector-icons";
 import { useState } from "react";
 import {
   Alert,
-  Pressable,
   StyleSheet,
   Text,
   TextInput,

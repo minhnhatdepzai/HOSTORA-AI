@@ -1,0 +1,16 @@
+{
+  "version": "dual-v1",
+  "created_at": "2026-10-26T14:25:12.785969+00:00",
+  "files": {
+    "chatbot_v3_train": "41747d964ea2d6126889771b5abb99218bfec75af46107576174b4baaf4dbd45",
+    "chatbot_v3_holdout": "039c29339449a0067f7cc0c9878c1448e0a2d1afcceac1119c4f88059a727ef1",
+    "studio_v1_train": "d5f6d1253cc50e653bb427e41f7f4b98c82b2458469caa88e51778177198b85a",
+    "studio_v1_holdout": "053540dc630ccd0670cb3f140b50c011bc6f8d83dc9bf4c54b8c50b0524311fc"
+  },
+  "counts": {
+    "chatbot_v3_train": 184,
+    "chatbot_v3_holdout": 40,
+    "studio_v1_train": 160,
+    "studio_v1_holdout": 40
+  }
+}

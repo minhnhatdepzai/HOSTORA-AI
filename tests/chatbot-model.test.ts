@@ -31,3 +31,28 @@ test("in-app chat model is isolated from structured AI model", async () => {
   expect(chatRequest.options.repeat_penalty).toBe(1.18);
   expect(structuredRequest.model).toBe("general-test:9b");
 });
+
+test("vision output accepts local Qwen JSON from the thinking field", async () => {
+  vi.stubEnv("OLLAMA_VISION_MODEL", "vision-test:8b");
+  const fetchMock = vi.fn().mockResolvedValue(
+    Response.json({
+      message: {
+        content: "",
+        thinking: '{"step":"otp","confidence":0.9}',
+      },
+    }),
+  );
+  vi.stubGlobal("fetch", fetchMock);
+  const { structuredVision } = await import("@/lib/ollama");
+  const result = await structuredVision(
+    "system",
+    "prompt",
+    "aGVsbG8=",
+    z.object({ step: z.string(), confidence: z.number() }),
+    { type: "object" },
+  );
+  expect(result).toEqual({ step: "otp", confidence: 0.9 });
+  const request = JSON.parse(fetchMock.mock.calls[0][1].body as string);
+  expect(request.model).toBe("vision-test:8b");
+  expect(request.messages[1].images).toEqual(["aGVsbG8="]);
+});

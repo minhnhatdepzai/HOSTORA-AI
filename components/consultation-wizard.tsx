@@ -89,11 +89,12 @@ export function ConsultationWizard() {
             <Bot size={19} />
           </span>
           <div>
-            <p className="text-xs font-black text-blue">NATURAL ONBOARDING</p>
+            <p className="text-xs font-black text-blue">NÓI NHU CẦU CỦA BẠN</p>
             <p className="font-extrabold">Mô tả bằng lời</p>
           </div>
         </div>
         <textarea
+          aria-label="Mô tả nhu cầu website"
           className="input mt-5 min-h-36 resize-none"
           placeholder="Ví dụ: Tôi bán mỹ phẩm online, khoảng 5.000 lượt truy cập/tháng, ngân sách 300 nghìn và cần tên miền..."
           value={natural}
@@ -109,7 +110,7 @@ export function ConsultationWizard() {
           ) : (
             <Sparkles size={17} />
           )}
-          AI tự điền wizard
+          Điền thông tin giúp tôi
         </button>
         {message && (
           <p className="mt-3 rounded-xl bg-blue/5 p-3 text-sm leading-6 text-slate-700">
@@ -117,8 +118,7 @@ export function ConsultationWizard() {
           </p>
         )}
         <p className="mt-4 text-xs leading-5 text-slate-500">
-          Qwen chạy local. AI chỉ trích xuất dữ kiện; bạn luôn có thể sửa trước
-          khi chấm điểm.
+          Trợ lý chỉ điền thông tin bạn đã mô tả. Hãy kiểm tra và sửa trước khi xem gợi ý.
         </p>
       </aside>
       <section className="panel overflow-hidden">
@@ -143,7 +143,7 @@ export function ConsultationWizard() {
                 Bạn đang xây loại website nào?
               </h2>
               <p className="mt-2 text-slate-600">
-                Điều này thay đổi trọng số e-commerce và tài nguyên.
+                Mỗi loại website cần tài nguyên khác nhau.
               </p>
               <div className="mt-7 grid gap-3">
                 {types.map(([value, label, copy]) => (
@@ -178,9 +178,9 @@ export function ConsultationWizard() {
                 Lượt truy cập ước tính mỗi tháng?
               </h2>
               <p className="mt-2 text-slate-600">
-                Đây là tín hiệu định hướng, không phải benchmark tải.
+                Ước lượng này giúp chọn gói ban đầu; tốc độ thực tế cần được kiểm tra riêng.
               </p>
-              <div className="mt-12 text-center">
+              <div className="mt-8 text-center">
                 <strong className="text-5xl font-black tracking-tight">
                   {data.monthlyVisits.toLocaleString("vi-VN")}
                 </strong>
@@ -188,21 +188,34 @@ export function ConsultationWizard() {
                   lượt / tháng
                 </p>
               </div>
-              <input
-                aria-label="Lượt truy cập mỗi tháng"
-                className="mt-10 w-full accent-blue"
-                type="range"
-                min="500"
-                max="200000"
-                step="500"
-                value={data.monthlyVisits}
-                onChange={(e) =>
-                  save({ ...data, monthlyVisits: Number(e.target.value) })
-                }
-              />
-              <div className="mt-2 flex justify-between text-xs text-slate-400">
-                <span>500</span>
-                <span>200.000</span>
+              <label className="mx-auto mt-7 block max-w-sm">
+                <span className="label">Hoặc nhập lượng khách dự kiến</span>
+                <input
+                  aria-label="Lượt truy cập mỗi tháng"
+                  className="input text-xl font-black"
+                  type="number"
+                  min="1"
+                  max="100000000"
+                  step="1"
+                  value={data.monthlyVisits}
+                  onChange={(e) =>
+                    save({ ...data, monthlyVisits: Number(e.target.value) })
+                  }
+                />
+              </label>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <span className="w-full text-xs text-slate-500">Mức tham khảo</span>
+                {[1000, 5000, 10000, 50000, 100000].map((value) => (
+                  <button
+                    className="button-secondary text-sm"
+                    type="button"
+                    aria-pressed={data.monthlyVisits === value}
+                    onClick={() => save({ ...data, monthlyVisits: value })}
+                    key={value}
+                  >
+                    {value.toLocaleString("vi-VN")}
+                  </button>
+                ))}
               </div>
             </div>
           )}
@@ -220,6 +233,7 @@ export function ConsultationWizard() {
                   className="input text-xl font-black"
                   type="number"
                   min="10000"
+                  max="100000000"
                   step="10000"
                   value={data.monthlyBudget}
                   onChange={(e) =>
@@ -246,7 +260,7 @@ export function ConsultationWizard() {
                 Bạn có cần mua kèm tên miền?
               </h2>
               <p className="mt-2 text-slate-600">
-                Catalog chỉ tính là đã bao gồm khi nguồn chính thức xác nhận.
+                HOSTORA chỉ ghi đã bao gồm khi nhà cung cấp xác nhận.
               </p>
               <div className="mt-8 grid gap-3 sm:grid-cols-2">
                 {[
@@ -279,7 +293,7 @@ export function ConsultationWizard() {
                 <p className="text-xs font-black text-mint">TÓM TẮT</p>
                 <p className="mt-2 font-bold">
                   {types.find((t) => t[0] === data.websiteType)?.[1]} ·{" "}
-                  {data.monthlyVisits.toLocaleString("vi-VN")} visits ·{" "}
+                  {data.monthlyVisits.toLocaleString("vi-VN")} lượt/tháng ·{" "}
                   {data.monthlyBudget.toLocaleString("vi-VN")}đ/tháng
                 </p>
               </div>
@@ -298,6 +312,10 @@ export function ConsultationWizard() {
           {step < 3 ? (
             <button
               className="button-primary"
+              disabled={
+                (step === 1 && (!Number.isInteger(data.monthlyVisits) || data.monthlyVisits < 1 || data.monthlyVisits > 100000000)) ||
+                (step === 2 && (!Number.isInteger(data.monthlyBudget) || data.monthlyBudget < 10000 || data.monthlyBudget > 100000000))
+              }
               onClick={() => setStep(step + 1)}
             >
               Tiếp tục

@@ -6,52 +6,64 @@ import { useState } from "react";
 const questions = [
   [
     "Hosting và tên miền khác nhau thế nào?",
-    "Tên miền là địa chỉ; hosting là nơi lưu mã nguồn và dữ liệu website. Bạn thường cần cả hai để website hoạt động.",
+    "Tên miền là địa chỉ khách gõ để tìm bạn; dịch vụ lưu trữ là nơi giữ nội dung trang web. Bạn thường cần cả hai để trang web hoạt động.",
   ],
   [
-    "Shop mới có cần VPS không?",
-    "Thông thường chưa cần. Shared hosting được quản lý dễ vận hành hơn; chỉ cân nhắc VPS khi cần quyền kiểm soát, tài nguyên hoặc cấu hình riêng.",
+    "Cửa hàng mới có cần thuê máy riêng không?",
+    "Thông thường chưa cần. Gói lưu trữ được nhà cung cấp quản lý sẽ dễ bắt đầu hơn; chỉ cân nhắc máy riêng khi có người phụ trách và nhu cầu đặc biệt.",
   ],
   [
     "Giá khuyến mại có phải chi phí lâu dài?",
-    "Không nhất thiết. HOSTORA tách giá ưu đãi và giá gia hạn, đồng thời tính tổng chi phí theo kỳ để bạn thấy trade-off.",
+    "Không nhất thiết. HOSTORA tách giá ưu đãi và giá gia hạn, đồng thời tính tổng chi phí theo kỳ để bạn cân nhắc.",
   ],
   [
-    "CDN có giúp website bán hàng nhanh hơn?",
-    "CDN có thể giảm độ trễ cho nội dung tĩnh và giảm tải origin, nhưng hiệu quả còn phụ thuộc cache, ảnh, mã nguồn và vị trí khách hàng.",
+    "Dịch vụ tăng tốc có giúp trang bán hàng nhanh hơn?",
+    "Có thể, nhất là khi khách ở nhiều nơi. Hiệu quả thực tế còn phụ thuộc hình ảnh, cách trang web được xây dựng và vị trí khách hàng.",
   ],
   [
-    "HOSTORA có gửi dữ liệu lên AI đám mây?",
-    "Không. Các chức năng AI cốt lõi gọi Ollama trên 127.0.0.1 với Qwen; thông tin lead chỉ nằm trong localStorage của trình duyệt.",
+    "HOSTORA có gửi hồ sơ của tôi ra ngoài không?",
+    "Không. Trợ lý chạy trên máy HOSTORA. Hồ sơ mua hàng chỉ được lưu trong kho đơn hàng để báo giá và gửi thư, không được dùng làm nội dung trò chuyện với trợ lý.",
   ],
   [
-    "AI có đảm bảo gói hosting chịu được flash sale?",
-    "Không. Mô phỏng chỉ là ước lượng theo giả định. Cần load test ứng dụng thật trước một chiến dịch quan trọng.",
+    "Trợ lý có đảm bảo gói lưu trữ phục vụ được đợt bán đông khách?",
+    "Không thể đảm bảo chỉ bằng ước lượng. Bạn cần thử với trang web thật trước một chiến dịch quan trọng.",
   ],
 ];
 
 export function FAQ() {
   const [active, setActive] = useState(0);
   return (
-    <div className="divide-y divide-slate-200">
-      {questions.map(([q, a], i) => (
-        <div key={q}>
-          <button
-            className="flex w-full items-center justify-between gap-4 py-5 text-left font-extrabold"
-            onClick={() => setActive(active === i ? -1 : i)}
-            aria-expanded={active === i}
-          >
-            {q}
-            <ChevronDown
-              className={`shrink-0 transition ${active === i ? "rotate-180" : ""}`}
-              size={18}
-            />
-          </button>
-          {active === i && (
-            <p className="max-w-3xl pb-5 leading-7 text-slate-600">{a}</p>
-          )}
-        </div>
-      ))}
-    </div>
+    <section
+      className="mx-auto max-w-7xl px-5 py-16 lg:px-8"
+      aria-labelledby="faq-title"
+    >
+      <p className="eyebrow">Câu hỏi thường gặp</p>
+      <h2
+        id="faq-title"
+        className="mt-3 mb-8 text-3xl font-extrabold tracking-[-.04em] sm:text-4xl"
+      >
+        Cần rõ thêm điều gì?
+      </h2>
+      <div className="divide-y divide-[#d7e2de] border-t border-b border-[#d7e2de]">
+        {questions.map(([q, a], i) => (
+          <div key={q}>
+            <button
+              className="flex w-full items-center justify-between gap-4 py-5 text-left font-extrabold"
+              onClick={() => setActive(active === i ? -1 : i)}
+              aria-expanded={active === i}
+            >
+              {q}
+              <ChevronDown
+                className={`shrink-0 transition ${active === i ? "rotate-180" : ""}`}
+                size={18}
+              />
+            </button>
+            {active === i && (
+              <p className="max-w-3xl pb-5 leading-7 text-slate-600">{a}</p>
+            )}
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }

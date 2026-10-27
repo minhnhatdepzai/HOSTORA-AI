@@ -55,6 +55,16 @@ const replacements: readonly (readonly [RegExp, string])[] = [
   [/\bchịu tải\b/gi, "phục vụ nhiều khách cùng lúc"],
   [/\btài nguyên\b/gi, "khả năng của gói"],
   [/kho dữ liệu thời gian chờ/gi, "thời gian chờ khi đọc dữ liệu"],
+  [/\bfine[- ]?tuning\b/gi, "cải thiện cách tư vấn"],
+  [/\btraining\b/gi, "quá trình học từ tình huống đã duyệt"],
+  [/\bsandbox\b/gi, "môi trường thử nghiệm"],
+  [/\bSMTP\b/g, "dịch vụ gửi thư"],
+  [/\bwebhook\b/gi, "thông báo giao dịch tự động"],
+  [/\bgateway\b/gi, "nơi thanh toán"],
+  [/\bprovider(?:s)?\b/gi, "nhà cung cấp"],
+  [/\bOCR\b/g, "đọc nội dung trong ảnh"],
+  [/\bSEO\b/g, "khả năng được tìm thấy trên Google"],
+  [/\bcatalog\b/gi, "danh sách dịch vụ"],
 ];
 
 export function toCustomerLanguage(value: string) {

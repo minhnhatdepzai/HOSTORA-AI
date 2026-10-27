@@ -1,0 +1,410 @@
+[
+  {
+    "id": "hostinger-web-hosting",
+    "provider": "Hostinger",
+    "name": "Web Hosting",
+    "category": "hosting",
+    "priceFromVnd": 19900,
+    "billingUnit": "month",
+    "summary": "Shared hosting quản trị sẵn cho website giai đoạn đầu.",
+    "bestFor": [
+      "blog",
+      "landing page",
+      "shop nhỏ"
+    ],
+    "sourceUrl": "https://www.hostinger.com/vn/web-hosting",
+    "verifiedAt": "2026-10-23",
+    "priceNote": "Giá khuyến mại có điều kiện kỳ hạn; xem giá gia hạn trong catalog gói."
+  },
+  {
+    "id": "hostinger-cloud",
+    "provider": "Hostinger",
+    "name": "Cloud Hosting",
+    "category": "cloud",
+    "priceFromVnd": 167900,
+    "billingUnit": "month",
+    "summary": "Tài nguyên cloud managed cho website cần dư địa tăng trưởng.",
+    "bestFor": [
+      "shop tăng trưởng",
+      "nhiều website",
+      "traffic biến động"
+    ],
+    "sourceUrl": "https://www.hostinger.com/vn/cloud-hosting",
+    "verifiedAt": "2026-10-23"
+  },
+  {
+    "id": "hostinger-ai-builder",
+    "provider": "Hostinger",
+    "name": "AI Website Builder",
+    "category": "automation",
+    "priceFromVnd": null,
+    "billingUnit": "contact",
+    "summary": "Công cụ tạo website bằng AI trong hệ sinh thái Hostinger.",
+    "bestFor": [
+      "khởi tạo nhanh",
+      "không chuyên code"
+    ],
+    "sourceUrl": "https://www.hostinger.com/vn/ai-website-builder",
+    "verifiedAt": "2026-10-23"
+  },
+  {
+    "id": "hostinger-n8n",
+    "provider": "Hostinger",
+    "name": "n8n tự lưu trữ",
+    "category": "automation",
+    "priceFromVnd": null,
+    "billingUnit": "contact",
+    "summary": "Môi trường tự host workflow automation và AI agent.",
+    "bestFor": [
+      "automation",
+      "AI workflow",
+      "developer"
+    ],
+    "sourceUrl": "https://www.hostinger.com/vn/n8n-hosting",
+    "verifiedAt": "2026-10-23"
+  },
+  {
+    "id": "azdigi-pro",
+    "provider": "AZDIGI",
+    "name": "Pro Hosting",
+    "category": "hosting",
+    "priceFromVnd": 29000,
+    "billingUnit": "month",
+    "summary": "SSD RAID-10, backup hàng ngày cho website nhỏ.",
+    "bestFor": [
+      "blog",
+      "portfolio",
+      "landing page"
+    ],
+    "sourceUrl": "https://azdigi.com/hosting-gia-re",
+    "verifiedAt": "2026-10-23",
+    "priceNote": "Chu kỳ 12 tháng, chưa VAT."
+  },
+  {
+    "id": "azdigi-pro-platinum",
+    "provider": "AZDIGI",
+    "name": "Pro Platinum Hosting",
+    "category": "hosting",
+    "priceFromVnd": 55000,
+    "billingUnit": "month",
+    "summary": "NVMe và tài nguyên cao hơn dòng Pro Hosting.",
+    "bestFor": [
+      "WordPress nhiều plugin",
+      "doanh nghiệp",
+      "shop nhỏ"
+    ],
+    "sourceUrl": "https://azdigi.com/hosting-gia-re",
+    "verifiedAt": "2026-10-23",
+    "priceNote": "Chu kỳ 12 tháng, chưa VAT."
+  },
+  {
+    "id": "azdigi-business",
+    "provider": "AZDIGI",
+    "name": "Business Hosting",
+    "category": "hosting",
+    "priceFromVnd": null,
+    "billingUnit": "contact",
+    "summary": "Dòng hosting cho workload doanh nghiệp cần nhiều tài nguyên.",
+    "bestFor": [
+      "doanh nghiệp",
+      "WooCommerce",
+      "website doanh thu"
+    ],
+    "sourceUrl": "https://azdigi.com/business-hosting",
+    "verifiedAt": "2026-10-23"
+  },
+  {
+    "id": "azdigi-vps",
+    "provider": "AZDIGI",
+    "name": "Cloud VPS",
+    "category": "vps",
+    "priceFromVnd": 79000,
+    "billingUnit": "month",
+    "summary": "Máy chủ ảo cho workload cần quyền kiểm soát hệ điều hành.",
+    "bestFor": [
+      "API",
+      "ứng dụng riêng",
+      "DevOps"
+    ],
+    "sourceUrl": "https://azdigi.com/pro-vps",
+    "verifiedAt": "2026-10-23",
+    "priceNote": "Giá từ theo kỳ hạn công bố; cần kiểm tra checkout."
+  },
+  {
+    "id": "tino-nvme-hosting",
+    "provider": "Tino Group",
+    "name": "NVMe Hosting",
+    "category": "hosting",
+    "priceFromVnd": 20000,
+    "billingUnit": "month",
+    "summary": "NVMe hosting cho cá nhân và doanh nghiệp.",
+    "bestFor": [
+      "website mới",
+      "SME",
+      "WordPress"
+    ],
+    "sourceUrl": "https://tino.vn/hosting-gia-re",
+    "verifiedAt": "2026-10-23"
+  },
+  {
+    "id": "tino-business-hosting",
+    "provider": "Tino Group",
+    "name": "Business Hosting",
+    "category": "hosting",
+    "priceFromVnd": 229000,
+    "billingUnit": "month",
+    "summary": "Hosting tài nguyên cao cho website thương mại điện tử.",
+    "bestFor": [
+      "e-commerce",
+      "doanh nghiệp"
+    ],
+    "sourceUrl": "https://tino.vn/business-hosting",
+    "verifiedAt": "2026-10-23"
+  },
+  {
+    "id": "tino-wordpress-hosting",
+    "provider": "Tino Group",
+    "name": "WordPress Hosting",
+    "category": "wordpress",
+    "priceFromVnd": 229000,
+    "billingUnit": "month",
+    "summary": "Môi trường tối ưu WordPress, hiệu năng và bảo mật.",
+    "bestFor": [
+      "WordPress",
+      "WooCommerce"
+    ],
+    "sourceUrl": "https://tino.vn/wordpress-hosting",
+    "verifiedAt": "2026-10-23"
+  },
+  {
+    "id": "tino-nvme-vps",
+    "provider": "Tino Group",
+    "name": "NVMe VPS",
+    "category": "vps",
+    "priceFromVnd": 99000,
+    "billingUnit": "month",
+    "summary": "VPS NVMe cho website, API và ứng dụng tự quản trị.",
+    "bestFor": [
+      "developer",
+      "API",
+      "ứng dụng riêng"
+    ],
+    "sourceUrl": "https://tino.vn/vps-hosting",
+    "verifiedAt": "2026-10-23"
+  },
+  {
+    "id": "tino-email-server",
+    "provider": "Tino Group",
+    "name": "Email Server",
+    "category": "email",
+    "priceFromVnd": 19000,
+    "billingUnit": "month",
+    "summary": "Email theo tên miền dành cho doanh nghiệp.",
+    "bestFor": [
+      "SME",
+      "email thương hiệu"
+    ],
+    "sourceUrl": "https://tino.vn/email-server",
+    "verifiedAt": "2026-10-23"
+  },
+  {
+    "id": "tino-domain-vn",
+    "provider": "Tino Group",
+    "name": "Tên miền .vn",
+    "category": "domain",
+    "priceFromVnd": 450000,
+    "billingUnit": "year",
+    "summary": "Tên miền quốc gia Việt Nam cho thương hiệu nội địa.",
+    "bestFor": [
+      "thương hiệu Việt",
+      "local SEO"
+    ],
+    "sourceUrl": "https://tino.vn/ten-mien",
+    "verifiedAt": "2026-10-23"
+  },
+  {
+    "id": "tino-ssl",
+    "provider": "Tino Group",
+    "name": "Chứng chỉ SSL",
+    "category": "ssl",
+    "priceFromVnd": null,
+    "billingUnit": "contact",
+    "summary": "Chứng chỉ TLS thương mại cho website và tổ chức.",
+    "bestFor": [
+      "bảo mật",
+      "website doanh nghiệp"
+    ],
+    "sourceUrl": "https://tino.vn/chung-chi-bao-mat-ssl",
+    "verifiedAt": "2026-10-23"
+  },
+  {
+    "id": "vietnix-wordpress",
+    "provider": "Vietnix",
+    "name": "WordPress Hosting",
+    "category": "wordpress",
+    "priceFromVnd": 67500,
+    "billingUnit": "month",
+    "summary": "NVMe, LiteSpeed, SSL và backup nhiều lần mỗi ngày.",
+    "bestFor": [
+      "WordPress",
+      "SEO",
+      "WooCommerce"
+    ],
+    "sourceUrl": "https://vietnix.vn/wordpress-hosting/",
+    "verifiedAt": "2026-10-23",
+    "priceNote": "Gói 1, chu kỳ 1 năm, chưa VAT."
+  },
+  {
+    "id": "vietnix-vps",
+    "provider": "Vietnix",
+    "name": "VPS NVMe",
+    "category": "vps",
+    "priceFromVnd": 168000,
+    "billingUnit": "month",
+    "summary": "VPS AMD EPYC/NVMe cho workload cần tài nguyên riêng.",
+    "bestFor": [
+      "API",
+      "web app",
+      "DevOps"
+    ],
+    "sourceUrl": "https://vietnix.vn/vps/",
+    "verifiedAt": "2026-10-23"
+  },
+  {
+    "id": "vietnix-seo-hosting",
+    "provider": "Vietnix",
+    "name": "SEO Hosting",
+    "category": "hosting",
+    "priceFromVnd": null,
+    "billingUnit": "contact",
+    "summary": "Dòng hosting phục vụ hệ thống website SEO.",
+    "bestFor": [
+      "site vệ tinh",
+      "agency SEO"
+    ],
+    "sourceUrl": "https://vietnix.vn/seo-hosting/",
+    "verifiedAt": "2026-10-23"
+  },
+  {
+    "id": "vietnix-business",
+    "provider": "Vietnix",
+    "name": "Business Hosting",
+    "category": "hosting",
+    "priceFromVnd": null,
+    "billingUnit": "contact",
+    "summary": "Hosting AMD EPYC, backup tần suất cao cho doanh nghiệp.",
+    "bestFor": [
+      "doanh nghiệp",
+      "shop lớn"
+    ],
+    "sourceUrl": "https://vietnix.vn/business-hosting/",
+    "verifiedAt": "2026-10-23"
+  },
+  {
+    "id": "matbao-cloud-hosting",
+    "provider": "Mắt Bão",
+    "name": "Cloud Hosting",
+    "category": "cloud",
+    "priceFromVnd": 49000,
+    "billingUnit": "month",
+    "summary": "Cloud hosting cho website cần tài nguyên linh hoạt.",
+    "bestFor": [
+      "website doanh nghiệp",
+      "website lớn"
+    ],
+    "sourceUrl": "https://www.matbao.net/hosting/cloud-hosting",
+    "verifiedAt": "2026-10-23"
+  },
+  {
+    "id": "matbao-email-pro",
+    "provider": "Mắt Bão",
+    "name": "Email Pro",
+    "category": "email",
+    "priceFromVnd": 19000,
+    "billingUnit": "month",
+    "summary": "Email doanh nghiệp theo tên miền.",
+    "bestFor": [
+      "SME",
+      "email thương hiệu"
+    ],
+    "sourceUrl": "https://www.matbao.net/email/email-pro",
+    "verifiedAt": "2026-10-23"
+  },
+  {
+    "id": "matbao-google-workspace",
+    "provider": "Mắt Bão",
+    "name": "Google Workspace",
+    "category": "workspace",
+    "priceFromVnd": 89000,
+    "billingUnit": "month",
+    "summary": "Bộ công cụ cộng tác và email Google cho doanh nghiệp.",
+    "bestFor": [
+      "cộng tác",
+      "doanh nghiệp"
+    ],
+    "sourceUrl": "https://www.matbao.net/google-workspace",
+    "verifiedAt": "2026-10-23"
+  },
+  {
+    "id": "matbao-microsoft-365",
+    "provider": "Mắt Bão",
+    "name": "Microsoft 365",
+    "category": "workspace",
+    "priceFromVnd": 95000,
+    "billingUnit": "month",
+    "summary": "Microsoft Office, email và cộng tác cloud.",
+    "bestFor": [
+      "văn phòng",
+      "doanh nghiệp"
+    ],
+    "sourceUrl": "https://www.matbao.net/microsoft-365",
+    "verifiedAt": "2026-10-23"
+  },
+  {
+    "id": "pavietnam-reseller",
+    "provider": "P.A Việt Nam",
+    "name": "Reseller Hosting",
+    "category": "hosting",
+    "priceFromVnd": 122000,
+    "billingUnit": "month",
+    "summary": "Hosting dành cho đại lý và đơn vị quản lý nhiều khách hàng.",
+    "bestFor": [
+      "agency",
+      "reseller",
+      "nhiều website"
+    ],
+    "sourceUrl": "https://www.pavietnam.vn/hosting/",
+    "verifiedAt": "2026-10-23",
+    "priceNote": "Giá từ theo gói hằng năm."
+  },
+  {
+    "id": "pavietnam-wordpress",
+    "provider": "P.A Việt Nam",
+    "name": "WordPress Hosting",
+    "category": "wordpress",
+    "priceFromVnd": null,
+    "billingUnit": "contact",
+    "summary": "Dịch vụ hosting tối ưu WordPress với nhiều phân khúc.",
+    "bestFor": [
+      "WordPress",
+      "doanh nghiệp"
+    ],
+    "sourceUrl": "https://www.pavietnam.vn/vn/hosting/wordpress",
+    "verifiedAt": "2026-10-23"
+  },
+  {
+    "id": "pavietnam-seo",
+    "provider": "P.A Việt Nam",
+    "name": "SEO Hosting",
+    "category": "hosting",
+    "priceFromVnd": null,
+    "billingUnit": "contact",
+    "summary": "Hosting chuyên biệt cho nhu cầu quản lý hệ thống website SEO.",
+    "bestFor": [
+      "SEO",
+      "agency"
+    ],
+    "sourceUrl": "https://www.pavietnam.vn/vn/hosting/chuyen-muc",
+    "verifiedAt": "2026-10-23"
+  }
+]

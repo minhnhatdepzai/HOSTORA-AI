@@ -1,6 +1,15 @@
 "use client";
 
-import { Bot, LoaderCircle, Send, Sparkles, Trash2, User } from "lucide-react";
+import {
+  Bot,
+  ImageUp,
+  LoaderCircle,
+  Send,
+  Sparkles,
+  Trash2,
+  User,
+} from "lucide-react";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -15,11 +24,12 @@ type Message = {
   content: string;
   sources?: ChatSource[];
   ragMode?: string;
+  nextAction?: "create-site" | "upload-screen";
 };
 const starters = [
+  "Tôi chưa biết nên làm trang web gì để bắt đầu kinh doanh.",
   "Shared hosting và VPS khác nhau thế nào?",
   "Vì sao phải xem giá gia hạn?",
-  "Shop 50.000 lượt/tháng nên chú ý gì?",
 ];
 // Older local history may contain obsolete catalog claims; preserve it separately.
 const CHAT_KEY = "hostora:chat:v2";
@@ -29,13 +39,16 @@ export function AiAssistant() {
     {
       role: "assistant",
       content:
-        "Chào bạn, mình là **HOSTORA**. Mình trả lời từ catalog và kho kiến thức local có nguồn. Bạn đang chuẩn bị website loại nào?",
+        "Chào bạn, mình là **HOSTORA**. Mình trả lời từ danh sách dịch vụ và phần hướng dẫn đã được kiểm tra. Bạn đang chuẩn bị loại trang web nào?",
     },
   ]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  const [ocrBusy, setOcrBusy] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const bottom = useRef<HTMLDivElement>(null);
+  const imageInput = useRef<HTMLInputElement>(null);
+  const hasSent = useRef(false);
   useEffect(() => {
     const timer = window.setTimeout(() => {
       try {
@@ -48,11 +61,18 @@ export function AiAssistant() {
   }, []);
   useEffect(() => {
     if (hydrated) localStorage.setItem(CHAT_KEY, JSON.stringify(messages));
-    bottom.current?.scrollIntoView({ behavior: "smooth" });
+    if (hasSent.current) {
+      bottom.current?.scrollIntoView({
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "instant"
+          : "smooth",
+      });
+    }
   }, [messages, hydrated]);
   async function send(text = input) {
     const value = text.trim();
     if (!value || busy) return;
+    hasSent.current = true;
     const next = [...messages, { role: "user" as const, content: value }];
     setMessages([...next, { role: "assistant", content: "" }]);
     setInput("");
@@ -66,6 +86,12 @@ export function AiAssistant() {
       if (!res.ok || !res.body) throw new Error("Local AI chưa sẵn sàng");
       const sources = readChatSources(res.headers.get("x-hostora-sources"));
       const ragMode = res.headers.get("x-hostora-rag-mode") ?? undefined;
+      const nextActionHeader = res.headers.get("x-hostora-next-action");
+      const nextAction =
+        nextActionHeader === "create-site" ||
+        nextActionHeader === "upload-screen"
+          ? nextActionHeader
+          : undefined;
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let answer = "";
@@ -75,7 +101,7 @@ export function AiAssistant() {
         answer += decoder.decode(chunk, { stream: true });
         setMessages([
           ...next,
-          { role: "assistant", content: answer, sources, ragMode },
+          { role: "assistant", content: answer, sources, ragMode, nextAction },
         ]);
       }
     } catch (e) {
@@ -88,6 +114,90 @@ export function AiAssistant() {
       ]);
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function inspectScreenshot(file: File) {
+    if (ocrBusy || busy) return;
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      setMessages((old) => [
+        ...old,
+        {
+          role: "assistant",
+          content: "Mình chỉ đọc ảnh PNG, JPEG hoặc WebP.",
+        },
+      ]);
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setMessages((old) => [
+        ...old,
+        {
+          role: "assistant",
+          content: "Ảnh vượt quá 5 MB. Hãy chụp lại hoặc giảm kích thước ảnh.",
+        },
+      ]);
+      return;
+    }
+    hasSent.current = true;
+    setOcrBusy(true);
+    const userMessage: Message = {
+      role: "user",
+      content: "Đã gửi ảnh màn hình để xác định bước tiếp theo.",
+    };
+    const next = [...messages, userMessage];
+    setMessages([
+      ...next,
+      { role: "assistant", content: "Đang đọc màn hình trên máy…" },
+    ]);
+    try {
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () =>
+          typeof reader.result === "string"
+            ? resolve(reader.result)
+            : reject(new Error("Không đọc được ảnh."));
+        reader.onerror = () => reject(new Error("Không đọc được ảnh."));
+        reader.readAsDataURL(file);
+      });
+      const response = await fetch("/api/ai/journey-ocr", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          mimeType: file.type,
+          base64: dataUrl.slice(dataUrl.indexOf(",") + 1),
+        }),
+      });
+      const result = (await response.json()) as {
+        guidance?: { title: string; summary: string; actions: string[] };
+        error?: string;
+      };
+      if (!response.ok || !result.guidance)
+        throw new Error(result.error || "Chưa đọc được màn hình.");
+      const guidance = result.guidance;
+      setMessages([
+        ...next,
+        {
+          role: "assistant",
+          content: `**${guidance.title}**\n\n${guidance.summary}\n\n${guidance.actions
+            .map((action, index) => `${index + 1}. ${action}`)
+            .join("\n")}`,
+        },
+      ]);
+    } catch (error) {
+      setMessages([
+        ...next,
+        {
+          role: "assistant",
+          content:
+            error instanceof Error
+              ? error.message
+              : "Chưa đọc được ảnh. Hãy chụp lại rõ hơn.",
+        },
+      ]);
+    } finally {
+      setOcrBusy(false);
+      if (imageInput.current) imageInput.current.value = "";
     }
   }
   function clear() {
@@ -109,9 +219,9 @@ export function AiAssistant() {
             <Sparkles size={20} />
           </span>
           <div>
-            <p className="font-black">Qwen 3.5 · Local AI</p>
+            <p className="font-black">Trợ lý HOSTORA</p>
             <p className="text-xs font-bold text-emerald-700">
-              ● Local · RAG grounded
+              Hoạt động trên máy của bạn
             </p>
           </div>
         </div>
@@ -123,7 +233,7 @@ export function AiAssistant() {
             <button
               key={x}
               onClick={() => send(x)}
-              className="w-full rounded-xl border border-slate-200 p-3 text-left text-sm font-semibold leading-5 hover:border-blue hover:bg-blue/5"
+              className="w-full min-h-12 rounded-xl border border-slate-200 p-3 text-left text-sm font-semibold leading-5 hover:border-blue hover:bg-blue/5"
             >
               {x}
             </button>
@@ -131,17 +241,18 @@ export function AiAssistant() {
         </div>
         <button
           onClick={clear}
-          className="mt-5 flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-red-600"
+          className="mt-3 flex min-h-11 items-center gap-2 rounded-lg px-2 text-xs font-bold text-slate-500 hover:bg-red-50 hover:text-red-600"
         >
           <Trash2 size={14} />
           Xóa lịch sử
         </button>
       </aside>
-      <section className="panel flex min-h-[620px] flex-col overflow-hidden">
+      <section className="panel flex min-h-[520px] flex-col overflow-hidden sm:min-h-[620px]">
         <div className="border-b border-slate-200 px-5 py-4">
           <p className="font-black">Trợ lý hạ tầng</p>
           <p className="text-xs text-slate-500">
-            Câu trả lời có thể sai; hãy mở nguồn trước quyết định mua.
+            Câu trả lời có thể sai; HOSTORA sẽ xác minh giá và điều kiện trước
+            khi tạo hóa đơn.
           </p>
         </div>
         <div className="flex-1 space-y-5 overflow-y-auto p-5 sm:p-7">
@@ -163,12 +274,7 @@ export function AiAssistant() {
                     remarkPlugins={[remarkGfm]}
                     components={{
                       a: (props) => (
-                        <a
-                          {...props}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="font-bold underline"
-                        />
+                        <span className="font-bold">{props.children}</span>
                       ),
                     }}
                   >
@@ -180,25 +286,40 @@ export function AiAssistant() {
                     Đang suy nghĩ trên máy…
                   </span>
                 )}
+                {m.role === "assistant" && m.nextAction === "create-site" && (
+                  <Link
+                    href="/website-studio"
+                    className="mt-4 inline-flex min-h-11 items-center justify-center rounded-lg bg-[#0f695c] px-4 py-2 font-black text-white transition-colors hover:bg-[#0a5148] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0f695c]"
+                  >
+                    Tạo trang web ngay
+                  </Link>
+                )}
+                {m.role === "assistant" && m.nextAction === "upload-screen" && (
+                  <button
+                    type="button"
+                    onClick={() => imageInput.current?.click()}
+                    className="mt-4 inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#0f695c] px-4 py-2 font-black text-white transition-colors hover:bg-[#0a5148] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0f695c]"
+                  >
+                    <ImageUp size={16} />
+                    Gửi ảnh màn hình
+                  </button>
+                )}
                 {m.role === "assistant" &&
                   m.content &&
                   m.sources &&
                   citedSources(m.content, m.sources).length > 0 && (
                     <div className="mt-4 border-t border-slate-200 pt-3 text-xs leading-5">
                       <p className="font-black text-slate-600">
-                        Nguồn được trích dẫn
+                        Dữ liệu đã kiểm tra
                       </p>
                       {citedSources(m.content, m.sources).map((source) => (
-                        <a
+                        <p
                           key={source.citation}
-                          href={source.sourceUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="mt-1 block font-bold text-blue underline"
+                          className="mt-1 font-bold text-slate-600"
                         >
                           [{source.citation}] {source.title} ·{" "}
                           {source.verifiedAt}
-                        </a>
+                        </p>
                       ))}
                     </div>
                   )}
@@ -208,8 +329,8 @@ export function AiAssistant() {
                   m.sources.length > 0 &&
                   citedSources(m.content, m.sources).length === 0 && (
                     <p className="mt-3 text-xs text-amber-800">
-                      Câu này chưa trích dẫn nguồn cụ thể; hãy kiểm chứng trước
-                      khi quyết định mua.
+                      Câu này chưa có đủ dữ liệu kiểm chứng; HOSTORA cần xác
+                      minh trước khi bạn quyết định mua.
                     </p>
                   )}
                 {m.role === "assistant" && m.ragMode === "lexical-fallback" && (
@@ -235,10 +356,35 @@ export function AiAssistant() {
             send();
           }}
         >
-          <div className="flex gap-2">
+          <div className="flex min-w-0 gap-2">
+            <input
+              ref={imageInput}
+              className="sr-only"
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              aria-label="Gửi ảnh màn hình để được hướng dẫn"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (file) void inspectScreenshot(file);
+              }}
+            />
+            <button
+              type="button"
+              aria-label="Gửi ảnh màn hình"
+              title="Gửi ảnh màn hình để HOSTORA chỉ bước tiếp theo"
+              disabled={busy || ocrBusy}
+              onClick={() => imageInput.current?.click()}
+              className="grid size-12 shrink-0 place-items-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:border-emerald-700 hover:text-emerald-800 disabled:opacity-40"
+            >
+              {ocrBusy ? (
+                <LoaderCircle size={18} className="animate-spin" />
+              ) : (
+                <ImageUp size={18} />
+              )}
+            </button>
             <input
               aria-label="Tin nhắn"
-              className="input"
+              className="input min-w-0 flex-1"
               placeholder="Hỏi về hosting, chi phí, SSL, CDN…"
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -246,8 +392,8 @@ export function AiAssistant() {
             />
             <button
               aria-label="Gửi"
-              disabled={busy || !input.trim()}
-              className="grid size-12 shrink-0 place-items-center rounded-2xl bg-blue text-white disabled:opacity-40"
+              disabled={busy || ocrBusy || !input.trim()}
+              className="grid size-12 shrink-0 place-items-center rounded-xl bg-blue text-white hover:bg-[#0b5249] disabled:opacity-40"
             >
               <Send size={18} />
             </button>
