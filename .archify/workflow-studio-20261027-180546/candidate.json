@@ -17,7 +17,8 @@
     { "id": "api", "label": "HOSTORA API" },
     { "id": "ai", "label": "LangGraph + Ollama local" },
     { "id": "render", "label": "Renderer kiểm soát" },
-    { "id": "delivery", "label": "Giao website", "variant": "exception" }
+    { "id": "delivery", "label": "Giao website", "variant": "exception" },
+    { "id": "publish", "label": "Đồng bộ tùy chọn", "variant": "exception" }
   ],
   "phases": [
     { "id": "brief", "label": "Nhận ý tưởng", "fromCol": 0, "toCol": 1 },
@@ -36,7 +37,7 @@
     { "id": "preview", "lane": "delivery", "col": 5, "type": "frontend", "label": "Preview tương tác", "sublabel": "Three.js + GSAP", "sources": [{ "path": "lib/site-studio.ts", "line": 185, "end_line": 290 }] },
     { "id": "zip", "lane": "render", "col": 5, "type": "cloud", "label": "Tải ZIP", "sublabel": "HTML + vendor cục bộ", "sources": [{ "path": "app/api/ai/site-studio/[id]/download/route.ts", "line": 8, "end_line": 55 }] },
     { "id": "revision", "lane": "customer", "col": 5, "type": "external", "label": "Chat để chỉnh", "sublabel": "nội dung · màu · giọng văn", "sources": [{ "path": "app/api/ai/site-studio/[id]/route.ts", "line": 30, "end_line": 69 }, { "path": "app/api/ai/site-studio/[id]/route.ts", "line": 110, "end_line": 201 }] },
-    { "id": "github", "lane": "delivery", "col": 4, "type": "cloud", "label": "Repo GitHub riêng", "sublabel": "tùy chọn khi đã bật", "sources": [{ "path": "lib/site-studio-store.ts", "line": 129, "end_line": 175 }] }
+    { "id": "github", "lane": "publish", "col": 5, "type": "cloud", "label": "Repo GitHub riêng", "sublabel": "tùy chọn khi đã bật", "sources": [{ "path": "lib/site-studio-store.ts", "line": 129, "end_line": 175 }] }
   ],
   "edges": [
     { "id": "idea-validate", "from": "idea", "to": "validate", "label": "brief", "variant": "emphasis" },
@@ -50,7 +51,7 @@
     { "id": "save-github", "from": "save", "to": "github", "label": "nếu đã bật", "variant": "dashed", "role": "branch" },
     { "id": "preview-zip", "from": "preview", "to": "zip", "label": "tải mã nguồn" },
     { "id": "preview-revision", "from": "preview", "to": "revision", "label": "yêu cầu sửa", "variant": "dashed", "role": "branch" },
-    { "id": "revision-write", "from": "revision", "to": "write", "label": "vòng chỉnh tiếp", "variant": "dashed", "role": "return", "route": "return-left" }
+    { "id": "revision-write", "from": "revision", "to": "write", "label": "vòng chỉnh tiếp", "variant": "dashed", "role": "return" }
   ],
   "cards": [
     { "dot": "emerald", "title": "AI không sinh mã tùy ý", "items": ["Model chỉ trả nội dung JSON theo schema", "Renderer do HOSTORA kiểm soát HTML, Three.js và GSAP"] },

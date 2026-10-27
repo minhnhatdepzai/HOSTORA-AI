@@ -1,5 +1,34 @@
 # Fine-tuning chatbot HOSTORA trong app
 
+## Cập nhật `chatbot-v5` ngày 27/10/2026
+
+Lần chạy tự động `chatbot-v5` đã hoàn tất đủ các bước tạo dữ liệu, snapshot,
+train, export GGUF, import Ollama, đánh giá, unload và tổng kết. Bằng chứng cục
+bộ nằm tại `training/runs/chatbot-v5/` và `training/output-chatbot-v5/`; hai thư
+mục chứa artifact lớn nên bị Git ignore.
+
+| Thuộc tính       | Kết quả đã quan sát                                                                                            |
+| ---------------- | -------------------------------------------------------------------------------------------------------------- |
+| Base             | `unsloth/Qwen3.5-4B`                                                                                           |
+| Dữ liệu          | 543 train, 124 holdout; file có SHA-256 trong manifest                                                         |
+| Huấn luyện       | 6 epoch, 1.086 optimizer step, loss 0,3769166, VRAM đỉnh 9,72 GB                                               |
+| Reload/export    | Adapter nạp lại được; GGUF Q8 4.610.580.288 byte                                                               |
+| Holdout kỹ thuật | 124/124 HTTP thành công và 124/124 đúng schema                                                                 |
+| Rubric           | 124/124 ngôn ngữ phổ thông; 124/124 không bịa số thương mại; 119/124 định tuyến đúng; 62/124 có bước tiếp theo |
+| Quyết định       | `candidate_only`; không tự động thay model runtime                                                             |
+
+Năm lỗi định tuyến còn lại gồm tình huống chưa có website/sản phẩm, thanh toán,
+lưu lượng và quyền riêng tư. Chỉ 50% câu có bước tiếp theo. Vì vậy v5 chưa được
+gọi là tốt hơn model đang phục vụ và không được promote chỉ dựa vào loss hoặc
+124 phản hồi HTTP thành công. Giá, khuyến mại, tên miền và dữ liệu khách vẫn
+không được đưa vào trọng số.
+
+Lệnh kiểm tra trạng thái mà không chạy lại training:
+
+```bash
+pnpm ai:train:chatbot:status
+```
+
 Ngày train và kiểm thử: 2026-10-23–24. Phạm vi là `/api/ai/chat`, dùng chung cho
 web và React Native. Các API AI trích xuất/cấu trúc khác vẫn dùng
 `OLLAMA_CHAT_MODEL=qwen3.5:9b-q8_0`; không có cloud fallback hay chatbot ngoài app.

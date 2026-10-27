@@ -51,7 +51,7 @@
       "sources": [{ "path": "lib/ollama.ts", "line": 3, "end_line": 12, "label": "Model và địa chỉ" }, { "path": "lib/ollama.ts", "line": 50, "end_line": 224, "label": "Inference local" }]
     },
     {
-      "id": "stores", "type": "database", "label": "Kho dữ liệu local", "sublabel": "SQLite + JSON + catalog", "pos": [960, 390], "size": [170, 82], "tag": "không commit PII",
+      "id": "stores", "type": "database", "label": "Kho dữ liệu local", "sublabel": "SQLite + JSON + catalog", "pos": [480, 420], "size": [170, 82], "tag": "không commit PII",
       "sources": [{ "path": "lib/site-studio-store.ts", "line": 30, "end_line": 45, "label": "Project website" }, { "path": "lib/payments/store.ts", "line": 711, "end_line": 714, "label": "Kho đơn hàng" }, { "path": "data/hosting-catalog.ts", "line": 1, "label": "Catalog hosting" }]
     }
   ],

@@ -7,6 +7,12 @@ playwright-report/
 .playwright-mcp/
 .playwright/
 .playwright-cli/
+.archify/**/hostora-*.html
+.archify/**/hostora-*.json
+docs/architecture/*.browser-check.json
+docs/architecture/*.delivery.json
+docs/architecture/*.finalize.json
+docs/architecture/*.finalize-summary.json
 .env
 .env.*
 !.env.example
