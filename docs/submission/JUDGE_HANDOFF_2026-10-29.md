@@ -31,7 +31,7 @@ SHA-256 của ba tệp nằm trong `HOSTORA-2.0.9-SHA256SUMS.txt`. Web local t�
 
 ## Giới hạn còn cần bằng chứng ngoài máy phát triển
 
-- Chưa có URL HTTPS công khai ổn định để người đánh giá truy cập; URL LAN `192.168.100.10` chỉ hoạt động trong mạng cục bộ.
+- Đã có URL HTTPS tạm thời qua Cloudflare Quick Tunnel để đánh giá ngoài mạng: xem [CLOUDFLARE_DEMO_2026-10-29.md](CLOUDFLARE_DEMO_2026-10-29.md). Đây không phải URL production cố định; URL sẽ mất khi tiến trình tunnel dừng.
 - Chưa có lần cài và chạy trên máy khác; người đánh giá cần Node.js/pnpm, Ollama và các model trong README. APK cần server HOSTORA để gọi AI.
 - Chưa có 5–10 chủ shop dùng thử có quan sát, điểm chấm mới, hoặc số chuyển đổi bán hàng thật.
 - Chưa kiểm thử tải thực tế từng gói hosting; điểm so sánh không đo hiệu năng. Độ trễ AI ở nhiều mức đồng thời, nội dung trả lời tự do và khả năng chịu tải vẫn cần kiểm tra riêng.

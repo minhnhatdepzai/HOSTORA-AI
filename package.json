@@ -26,6 +26,8 @@
     "package:submission": "node scripts/package-submission.mjs",
     "ai:check": "node --env-file-if-exists=.env.local scripts/check-local-ai.mjs",
     "ai:evaluate:advisor": "node scripts/evaluate-advisor.mjs",
+    "tunnel:cloudflare": "bash scripts/start-cloudflare-quick-tunnel.sh",
+    "tunnel:cloudflare:stop": "bash scripts/stop-cloudflare-quick-tunnel.sh",
     "ai:train:dual": "bash scripts/start-dual-finetune.sh",
     "ai:train:status": "bash scripts/dual-finetune-status.sh",
     "ai:train:deep": "bash scripts/start-deep-finetune.sh",

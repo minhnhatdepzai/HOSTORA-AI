@@ -312,3 +312,19 @@ docs/architecture/           Sơ đồ Archify tương tác
 - Năng lực chịu tải chỉ được kết luận sau benchmark workload thật trên máy triển khai.
 
 HOSTORA ưu tiên bằng chứng: phần đã có mã, đã test, đang là candidate và chưa sẵn sàng production phải luôn được ghi tách biệt.
+
+## URL public qua Cloudflare
+
+Khi cần cho giám khảo hoặc khách thử web ngoài mạng LAN, HOSTORA có lệnh mở Cloudflare Quick Tunnel:
+
+```bash
+pnpm tunnel:cloudflare
+```
+
+Lệnh kiểm tra `/api/health` rồi chuyển cổng web local 3000 thành URL HTTPS `https://*.trycloudflare.com`. Giữ cửa sổ lệnh chạy trong suốt thời gian demo; URL sẽ đổi sau khi tunnel dừng. Dừng bằng:
+
+```bash
+pnpm tunnel:cloudflare:stop
+```
+
+Quick Tunnel phù hợp cho đánh giá tạm thời, không phải địa chỉ production cố định. Muốn URL cố định cần tạo tunnel có tên trong Cloudflare, trỏ DNS của tên miền HOSTORA vào tunnel và đặt `HOSTORA_PUBLIC_BASE_URL` cùng các URL callback thanh toán theo tên miền HTTPS đó. Không đưa token Cloudflare vào Git hoặc `.env.example`.

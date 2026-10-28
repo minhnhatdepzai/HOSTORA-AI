@@ -70,6 +70,28 @@ describe("judge review regressions", () => {
   it("respects an explicit no-sales requirement", () => {
     expect(reconcileAnalysis("Trang giới thiệu công ty, không cần bán hàng hay thanh toán.", analysis)).toMatchObject({ websiteType: "company", ecommerce: false });
   });
+  it.each([
+    "Tôi làm blog du lịch, 1000 lượt mỗi tháng, ngân sách 100000 đồng, không cần mua kèm tên miền.",
+    "Làm trang giới thiệu, tôi không muốn đăng ký thêm domain vì đã có tên miền.",
+  ])("keeps a negated domain purchase negative: %s", (text) => {
+    expect(reconcileAnalysis(text, { ...analysis, needsDomain: true }).needsDomain).toBe(false);
+  });
+  it("asks when domain requirements contradict each other", () => {
+    expect(reconcileAnalysis("Tôi đã có tên miền nhưng cũng cần mua thêm domain mới.", analysis).needsDomain).toBeNull();
+  });
+  it.each([
+    "Blog chia sẻ kinh nghiệm bán hàng, chỉ đăng bài viết, không kinh doanh trên web.",
+    "Trang bài viết hướng dẫn mở cửa hàng; không bán sản phẩm qua website.",
+    "Blog viết về cách bán hàng online; độc giả chỉ đọc bài, không nhận đơn trên trang.",
+  ])("does not turn a blog topic into a shop: %s", (text) => {
+    expect(reconcileAnalysis(text, { ...analysis, websiteType: "store", ecommerce: true })).toMatchObject({ websiteType: "blog", ecommerce: false });
+  });
+  it("still recognizes sales when a blog also sells a product", () => {
+    expect(reconcileAnalysis("Blog chia sẻ kinh nghiệm kinh doanh và bán khóa học trực tiếp trên web qua giỏ hàng.", { ...analysis, websiteType: "blog", ecommerce: false })).toMatchObject({ websiteType: "store", ecommerce: true });
+  });
+  it("does not confuse skipping a cart with refusing online orders", () => {
+    expect(reconcileAnalysis("Không cần giỏ hàng, nhưng website cần nhận đơn qua web.", { ...analysis, websiteType: "unknown", ecommerce: false })).toMatchObject({ websiteType: "store", ecommerce: true });
+  });
   it("asks only for the first missing required field", () => {
     const result = reconcileAnalysis("Tôi cần website", { ...analysis, websiteType: "unknown", ecommerce: false, monthlyBudget: null, monthlyVisits: null, needsDomain: null });
     expect(result.missing).toHaveLength(4);
