@@ -20,7 +20,7 @@ const releases = {
   },
 } as const;
 const defaultReleaseBaseUrl =
-  "https://github.com/minhnhatdepzai/HOSTORA-AI/releases/download/v2.0.9-review-20261029";
+  "https://github.com/minhnhatdepzai/HOSTORA-AI/releases/download/v2.0.9-review-20261029-r2";
 
 function remoteReleaseUrl(filename: string) {
   const base = process.env.HOSTORA_RELEASE_BASE_URL ?? defaultReleaseBaseUrl;

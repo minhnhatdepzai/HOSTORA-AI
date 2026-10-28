@@ -41,6 +41,7 @@ const explicit = [
   "package.json",
   "playwright.config.ts",
   "pnpm-lock.yaml",
+  "pnpm-workspace.yaml",
   "postcss.config.mjs",
   "tsconfig.json",
   "vitest.config.ts",
@@ -49,6 +50,7 @@ const explicit = [
   "mobile/app.json",
   "mobile/package.json",
   "mobile/pnpm-lock.yaml",
+  "mobile/pnpm-workspace.yaml",
   "mobile/README.md",
   "mobile/tsconfig.json",
   "mobile/eslint.config.js",
@@ -68,7 +70,7 @@ const explicit = [
   "training/dataset.sample.jsonl",
 ];
 const forbidden =
-  /(^|\/)(\.env(?:\.[^/]*)?|node_modules|\.next|\.git|android|\.venv|output[^/]*|test-results|playwright-report|releases|runtime|rag-index\.json)(\/|$)/;
+  /(^|\/)(\.env(?:\.[^/]*)?|node_modules|\.next|\.git|android|\.venv|output[^/]*|test-results|playwright-report|releases|runtime)(\/|$)/;
 const forbiddenExtensions =
   /\.(?:apk|gguf|safetensors|pem|key|p12|keystore|jks|webm|mp4|zip|sqlite(?:-wal|-shm)?|db(?:-wal|-shm)?)$/i;
 const files = new Set();

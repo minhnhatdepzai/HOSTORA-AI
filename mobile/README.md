@@ -5,7 +5,7 @@
 ## Tải và cài APK
 
 - APK 2.0.9 arm64: `releases/HOSTORA-AI-2.0.9-arm64.apk`. Đã cài và mở trên Redmi Note 8 Pro ngày 28/10; bản universal hiện vẫn là 2.0.3.
-- Bản dùng để đánh giá: [HOSTORA AI 2.0.9 prerelease trên GitHub](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/tag/v2.0.9-review-20261029); bản ổn định cũ là v1.5.0.
+- Bản dùng để đánh giá: [HOSTORA AI 2.0.9 prerelease cập nhật trên GitHub](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/tag/v2.0.9-review-20261029-r2); bản ổn định cũ là v1.5.0.
 - Checksum APK cục bộ: `releases/SHA256SUMS.txt`.
 
 Cài bằng ADB:

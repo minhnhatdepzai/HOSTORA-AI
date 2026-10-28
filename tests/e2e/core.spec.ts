@@ -50,14 +50,22 @@ test("landing works on mobile without horizontal overflow", async ({
   ).toBeVisible();
 });
 
-test("landing exposes a directly downloadable Android APK", async ({
+test("landing offers the current Android APK", async ({
   page,
   request,
 }) => {
   await page.goto("/");
   const link = page.getByRole("link", { name: "Tải ứng dụng Android" });
   await expect(link).toHaveAttribute("href", "/downloads/android");
-  const response = await request.head("/downloads/android");
+  const response = await request.head("/downloads/android", {
+    maxRedirects: 0,
+  });
+  if (response.status() === 307) {
+    expect(response.headers().location).toBe(
+      `https://github.com/minhnhatdepzai/HOSTORA-AI/releases/download/v2.0.9-review-20261029-r2/HOSTORA-AI-${mobileVersion}-arm64.apk`,
+    );
+    return;
+  }
   expect(response.status()).toBe(200);
   expect(response.headers()["content-type"]).toContain(
     "android.package-archive",

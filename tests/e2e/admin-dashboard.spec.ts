@@ -5,7 +5,7 @@ import {
   issueAdminEmailSession,
 } from "@/lib/payments/admin-auth";
 
-process.loadEnvFile(".env.local");
+try { process.loadEnvFile(".env.local"); } catch { /* CI supplies an isolated test secret. */ }
 const appUrl = process.env.HOSTORA_E2E_BASE_URL ?? "http://127.0.0.1:3000";
 
 test.beforeEach(async ({ context }) => {

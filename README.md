@@ -203,6 +203,7 @@ Yêu cầu Node.js 22+, pnpm và Ollama. Dùng model cục bộ, không cần kh
 ```bash
 git clone https://github.com/minhnhatdepzai/HOSTORA-AI.git
 cd HOSTORA-AI
+git checkout v2.0.9-review-20261029-r2
 cp .env.example .env.local
 pnpm install
 ollama pull qwen3.5:9b-q8_0
@@ -230,11 +231,11 @@ Máy có NVIDIA Container Toolkit dùng `./scripts/docker-up.sh --gpu`. Lần đ
 - Bản arm64 local hiện tại: `mobile/releases/HOSTORA-AI-2.0.9-arm64.apk` (đã cài và mở trên Redmi Note 8 Pro).
 - Bản universal local: `mobile/releases/HOSTORA-AI-2.0.3-universal.apk`.
 - Khi web đang chạy: `/downloads/android` và `/downloads/android-universal`.
-- Bản đánh giá công khai: [HOSTORA 2.0.9 prerelease](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/tag/v2.0.9-review-20261029). Bản ổn định cũ: [v1.5.0](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/tag/v1.5.0).
+- Bản đánh giá công khai: [HOSTORA 2.0.9 prerelease cập nhật](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/tag/v2.0.9-review-20261029-r2). Bản ổn định cũ: [v1.5.0](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/tag/v1.5.0).
 
 APK build không được commit vào source vì kích thước lớn. Xem [hướng dẫn mobile](mobile/README.md), [audit giao diện](docs/MOBILE_UI_AUDIT.md) và `mobile/releases/SHA256SUMS.txt` trước khi phát hành.
 
-Bản nguồn chuẩn bị đánh giá nằm tại `docs/submission/HOSTORA-source-2.0.9-2026-10-29.zip`. ZIP này loại dữ liệu đơn hàng cục bộ, khóa bí mật, model weights và APK; người đánh giá cần cài dependency, tạo RAG index và cấu hình Ollama theo hướng dẫn trong README. Bản đối chiếu kết quả mới nằm ở [JUDGE_HANDOFF_2026-10-29.md](docs/submission/JUDGE_HANDOFF_2026-10-29.md).
+Bản nguồn chuẩn bị đánh giá nằm tại `docs/submission/HOSTORA-source-2.0.9-2026-10-29.zip`. ZIP này gồm RAG index của bộ tài liệu công khai và cấu hình cài dependency cho web/app; loại dữ liệu đơn hàng cục bộ, khóa bí mật, model weights và APK. Người đánh giá cần cài dependency và cấu hình Ollama theo hướng dẫn trong README; chạy `pnpm rag:index` khi đổi nguồn tri thức hoặc model embedding. Bản đối chiếu kết quả mới nằm ở [JUDGE_HANDOFF_2026-10-29.md](docs/submission/JUDGE_HANDOFF_2026-10-29.md).
 
 ## Cấu hình tùy chọn
 
