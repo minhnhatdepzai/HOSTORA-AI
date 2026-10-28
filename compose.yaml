@@ -53,7 +53,7 @@ services:
       HOSTORA_MAX_AI_CONCURRENCY: ${HOSTORA_MAX_AI_CONCURRENCY:-1}
       HOSTORA_BUILD_RAG_INDEX: ${HOSTORA_BUILD_RAG_INDEX:-1}
       RAG_INDEX_PATH: /app/runtime/rag-index.json
-      HOSTORA_RELEASE_BASE_URL: ${HOSTORA_RELEASE_BASE_URL:-https://github.com/minhnhatdepzai/HOSTORA-AI/releases/download/v1.5.0}
+      HOSTORA_RELEASE_BASE_URL: ${HOSTORA_RELEASE_BASE_URL:-https://github.com/minhnhatdepzai/HOSTORA-AI/releases/download/v2.0.9-review-20261029}
     volumes:
       - rag_data:/app/runtime
     init: true

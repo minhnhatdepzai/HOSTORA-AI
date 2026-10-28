@@ -14,11 +14,16 @@ export function HostoraScene() {
     let resizeObserver: ResizeObserver | undefined;
     let intersectionObserver: IntersectionObserver | undefined;
     let cleanupScene: (() => void) | undefined;
+    let scrollProgress = 0;
     const host = hostRef.current;
     const canvas = canvasRef.current;
     if (!host || !canvas) return;
 
-    void import("three").then((THREE) => {
+    void Promise.all([
+      import("three"),
+      import("gsap"),
+      import("gsap/ScrollTrigger"),
+    ]).then(([THREE, gsapModule, triggerModule]) => {
       if (disposed || !host || !canvas) return;
       try {
         const scene = new THREE.Scene();
@@ -85,6 +90,18 @@ export function HostoraScene() {
         scene.add(stars);
 
         const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        let scrollTrigger: { kill: () => void } | undefined;
+        if (!reducedMotion) {
+          const { gsap } = gsapModule;
+          const { ScrollTrigger } = triggerModule;
+          gsap.registerPlugin(ScrollTrigger);
+          scrollTrigger = ScrollTrigger.create({
+            trigger: host,
+            start: "top bottom",
+            end: "bottom top",
+            onUpdate: (self) => { scrollProgress = self.progress; },
+          });
+        }
         let visible = true;
         const resize = () => {
           const width = host.clientWidth;
@@ -100,24 +117,28 @@ export function HostoraScene() {
         resizeObserver.observe(host);
         intersectionObserver = new IntersectionObserver(([entry]) => {
           visible = entry.isIntersecting;
-          if (visible && !reducedMotion && !document.hidden) animate();
+          if (visible && !reducedMotion && !document.hidden && !frame) animate();
         }, { threshold: 0.05 });
         intersectionObserver.observe(host);
 
         const animate = () => {
+          frame = 0;
           if (disposed || reducedMotion || !visible || document.hidden) return;
           frame = window.requestAnimationFrame(animate);
           const time = performance.now() * 0.00012;
-          system.rotation.y = time;
+          system.rotation.y = time + scrollProgress * Math.PI * 0.85;
+          system.position.y = (scrollProgress - 0.5) * 0.54;
           core.rotation.x = Math.sin(time * 1.7) * 0.08;
-          rings.rotation.y = -time * 0.76;
+          rings.rotation.y = -time * 0.76 - scrollProgress * 0.7;
           rings.rotation.x = Math.sin(time) * 0.06;
           stars.rotation.y = time * 0.08;
           renderer?.render(scene, camera);
         };
         const onVisibility = () => {
-          if (document.hidden) window.cancelAnimationFrame(frame);
-          else if (visible && !reducedMotion) animate();
+          if (document.hidden) {
+            window.cancelAnimationFrame(frame);
+            frame = 0;
+          } else if (visible && !reducedMotion && !frame) animate();
         };
         document.addEventListener("visibilitychange", onVisibility);
         resize();
@@ -125,6 +146,7 @@ export function HostoraScene() {
 
         cleanupScene = () => {
           document.removeEventListener("visibilitychange", onVisibility);
+          scrollTrigger?.kill();
           scene.traverse((object) => {
             if (object instanceof THREE.Mesh || object instanceof THREE.Points || object instanceof THREE.LineSegments) {
               object.geometry.dispose();

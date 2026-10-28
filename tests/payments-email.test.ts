@@ -5,7 +5,14 @@ vi.mock("nodemailer", () => ({
   default: { createTransport: () => ({ sendMail: sendMailMock }) },
 }));
 
-import { emailConfigFromEnv, emailStatusFromEnv, notifyInvoiceCreated, notifySaleRequestCreated } from "@/lib/payments/email";
+import {
+  emailConfigFromEnv,
+  emailStatusFromEnv,
+  notifyInvoiceCreated,
+  notifyInvoiceStatusChanged,
+  notifySaleRequestCancelled,
+  notifySaleRequestCreated,
+} from "@/lib/payments/email";
 import type { CreatedInvoice, CreatedSaleRequest } from "@/lib/payments/types";
 
 const keys = [
@@ -85,17 +92,19 @@ describe("email đơn hàng HOSTORA", () => {
     };
     await notifySaleRequestCreated(request);
     const messages = sendMailMock.mock.calls.map(([message]) => message as { to: string; html: string; text: string });
-    expect(messages).toHaveLength(2);
+    expect(messages).toHaveLength(1);
     const customer = messages.find((message) => message.to === request.contact)!;
-    const admin = messages.find((message) => message.to === "owner@example.com")!;
     expect(customer.html).toContain("Hủy yêu cầu");
     expect(customer.html).toContain("#requestId=");
     expect(customer.html).toContain("Khách hàng mục tiêu");
     expect(customer.html).toContain("Thời trang công sở nữ");
-    expect(admin.html).toContain("váy công sở, thời trang nữ");
-    expect(admin.html).toContain("10.000–50.000 lượt/tháng");
-    expect(admin.html).toContain("Cuộc gọi video");
+    expect(messages.some((message) => message.to === "owner@example.com")).toBe(false);
     expect(JSON.stringify(messages)).not.toContain("app-password");
+
+    sendMailMock.mockClear();
+    await notifySaleRequestCancelled({ ...request, status: "cancelled", cancelReason: "Đổi kế hoạch" });
+    const cancellationRecipients = sendMailMock.mock.calls.map(([message]) => (message as { to: string }).to);
+    expect(cancellationRecipients).toEqual([request.contact]);
   });
 
   it("email hóa đơn hiển thị giảm giá, nút thanh toán/hủy và quà voucher", async () => {
@@ -127,11 +136,19 @@ describe("email đơn hàng HOSTORA", () => {
       updatedAt: "2026-10-27T05:00:00.000Z",
     };
     await notifyInvoiceCreated(invoice);
-    const customer = sendMailMock.mock.calls.map(([message]) => message as { to: string; html: string }).find((message) => message.to === invoice.customerEmail)!;
+    const invoiceMessages = sendMailMock.mock.calls.map(([message]) => message as { to: string; html: string });
+    expect(invoiceMessages).toHaveLength(1);
+    expect(invoiceMessages.some((message) => message.to === "owner@example.com")).toBe(false);
+    const customer = invoiceMessages.find((message) => message.to === invoice.customerEmail)!;
     expect(customer.html).toContain("Xem và thanh toán");
     expect(customer.html).toContain("Hủy trước thanh toán");
     expect(customer.html).toContain("Voucher");
     expect(customer.html).toContain("Quà cho đơn từ 1 triệu");
     expect(customer.html).toContain("#invoiceId=");
+
+    sendMailMock.mockClear();
+    await notifyInvoiceStatusChanged({ ...invoice, status: "paid" });
+    const statusRecipients = sendMailMock.mock.calls.map(([message]) => (message as { to: string }).to);
+    expect(statusRecipients).toEqual([invoice.customerEmail]);
   });
 });

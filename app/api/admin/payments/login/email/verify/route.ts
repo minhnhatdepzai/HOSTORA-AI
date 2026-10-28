@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ADMIN_COOKIE, adminConfigFromEnv, issueAdminEmailSession, sameOrigin } from "@/lib/payments/admin-auth";
+import { adminConfigFromEnv, adminSessionCookie, issueAdminEmailSession, sameOrigin } from "@/lib/payments/admin-auth";
 import { jsonError, noStoreJson, parseSmallJson } from "@/lib/payments/route-utils";
 import { getPaymentStore } from "@/lib/payments/store";
 
@@ -12,9 +12,9 @@ export async function POST(request: Request) {
     if (!getPaymentStore().verifyAdminEmailCode(body.code)) return jsonError("Mã không đúng, đã hết hạn hoặc đã dùng.", 401);
     const token = issueAdminEmailSession(adminConfigFromEnv());
     if (!token) return jsonError("Phiên quản trị chưa thể khởi tạo.", 503);
-    const secure = new URL(request.url).protocol === "https:" ? "; Secure" : "";
+    const secure = new URL(request.url).protocol === "https:";
     const response = noStoreJson({ ok: true });
-    response.headers.set("set-cookie", `${ADMIN_COOKIE}=${token}; HttpOnly; SameSite=Strict; Path=/api/admin/payments; Max-Age=28800${secure}`);
+    response.headers.set("set-cookie", adminSessionCookie(token, secure));
     return response;
   } catch {
     return jsonError("Mã đăng nhập không hợp lệ.", 400);

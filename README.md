@@ -4,7 +4,7 @@ HOSTORA AI là hệ thống bán dịch vụ website dành cho chủ shop và do
 
 AI của HOSTORA chạy cục bộ qua Ollama. AI chỉ đọc, giải thích và soạn nội dung; giá, xếp hạng gói, voucher, trạng thái đơn và kết quả thanh toán vẫn do mã nguồn tất định kiểm soát. Dữ liệu thiếu phải được ghi là “Chưa có dữ liệu” hoặc “Chưa xác minh”, không được để mô hình tự điền.
 
-> Trạng thái ngày 27/10/2026: luồng sản phẩm, đơn hàng, email, thanh toán thử nghiệm, RAG và Website Studio đã có mã nguồn và kiểm thử tự động. Stripe/VNPay thật, đồng bộ GitHub cho website khách, gửi email bằng tên miền riêng và triển khai Internet vẫn cần tài khoản/cấu hình của HOSTORA trước khi vận hành thật.
+> Trạng thái ngày 28/10/2026: luồng sản phẩm, đơn hàng, email, thanh toán thử nghiệm, RAG và Website Studio đã có mã nguồn và kiểm thử tự động. Stripe/VNPay thật, đồng bộ GitHub cho website khách, gửi email bằng tên miền riêng và triển khai Internet vẫn cần tài khoản/cấu hình của HOSTORA trước khi vận hành thật.
 
 ## HOSTORA bán gì?
 
@@ -160,7 +160,13 @@ Chatbot và Studio được train riêng bằng LoRA trên `unsloth/Qwen3.5-4B`;
 | `hostora-chatbot:4b-q8-v5` | 543 mẫu train, 6 epoch, 1.086 bước, loss 0,3769, VRAM đỉnh 9,72 GB | 124/124 HTTP/schema; 124/124 tiếng Việt phổ thông; 124/124 không bịa số thương mại; 119/124 định tuyến đúng; 62/124 có bước tiếp theo | **Candidate only**, không tự promote                                    |
 | `hostora-studio:4b-q8-v2`  | 928 mẫu train, 5 epoch, 1.160 bước, loss 0,0753, VRAM đỉnh 9,62 GB | 192/192 HTTP/schema cho design plan và code-package holdout                                                                           | **Candidate only**, renderer production vẫn không chạy mã model tự sinh |
 
-`chatbot-v5` reload adapter và export GGUF Q8 thành công, nhưng còn 5 lỗi định tuyến và chỉ 50% câu có bước tiếp theo. Vì vậy runtime không được tự đổi sang v5 chỉ dựa vào loss. Artifact model/GGUF khoảng 4,6 GB bị Git ignore; GitHub chứa cấu hình, script, manifest dữ liệu và tài liệu để tái lập, không chứa checkpoint nặng.
+`chatbot-v5` reload adapter và export GGUF Q8 thành công, nhưng còn 5 lỗi định tuyến; bộ đo ban đầu chỉ nhận ra 50% câu có bước tiếp theo. Vì vậy runtime không được tự đổi sang v5 chỉ dựa vào loss. Artifact model/GGUF khoảng 4,6 GB bị Git ignore; GitHub chứa cấu hình, script, manifest dữ liệu và tài liệu để tái lập, không chứa checkpoint nặng.
+
+Đợt `chatbot-v6` bổ sung tình huống tư vấn và đang được chạy như một ứng viên
+riêng; xem `pnpm ai:train:chatbot:status`. Bộ đo v5 cũ đã đếm thiếu các câu
+như “cần kiểm tra” và “nên thử”: chấm lại cùng câu trả lời là 121/124 có bước
+tiếp theo, còn 119/124 định tuyến đúng. V6 chỉ được đánh giá sau khi train
+xong và không tự thay model đang phục vụ.
 
 Xem [bằng chứng fine-tuning](docs/CHATBOT_FINETUNING.md), [rubric AI và chuyển đổi](docs/AI_EVALUATION.md) và `training/README.md`.
 
@@ -209,6 +215,8 @@ pnpm dev
 
 Mở <http://127.0.0.1:3000>. Nếu điện thoại cùng Wi-Fi cần truy cập máy HOSTORA, chạy `pnpm dev:lan`, cấu hình server trong app bằng `http://<IP-máy-HOSTORA>:3000` và chỉ dùng trên mạng tin cậy.
 
+Muốn kiểm tra bản production local: chạy `pnpm build` rồi `pnpm start`. Lệnh build chép JavaScript/CSS, ảnh và tối đa hai APK hiện có vào bản standalone, đồng thời loại dữ liệu đơn hàng và dự án khách khỏi thư mục build. Khi chép bản standalone sang máy khác, cấu hình `.env.local`/biến môi trường và dữ liệu vận hành riêng trên máy đó.
+
 ### Chạy bằng Docker
 
 ```bash
@@ -219,12 +227,14 @@ Máy có NVIDIA Container Toolkit dùng `./scripts/docker-up.sh --gpu`. Lần đ
 
 ## Android
 
-- Bản arm64 local hiện tại: `mobile/releases/HOSTORA-AI-2.0.5-arm64.apk`.
+- Bản arm64 local hiện tại: `mobile/releases/HOSTORA-AI-2.0.9-arm64.apk` (đã cài và mở trên Redmi Note 8 Pro).
 - Bản universal local: `mobile/releases/HOSTORA-AI-2.0.3-universal.apk`.
 - Khi web đang chạy: `/downloads/android` và `/downloads/android-universal`.
-- Bản GitHub công khai gần nhất: [v1.5.0](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/tag/v1.5.0).
+- Bản đánh giá công khai: [HOSTORA 2.0.9 prerelease](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/tag/v2.0.9-review-20261029). Bản ổn định cũ: [v1.5.0](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/tag/v1.5.0).
 
 APK build không được commit vào source vì kích thước lớn. Xem [hướng dẫn mobile](mobile/README.md), [audit giao diện](docs/MOBILE_UI_AUDIT.md) và `mobile/releases/SHA256SUMS.txt` trước khi phát hành.
+
+Bản nguồn chuẩn bị đánh giá nằm tại `docs/submission/HOSTORA-source-2.0.9-2026-10-29.zip`. ZIP này loại dữ liệu đơn hàng cục bộ, khóa bí mật, model weights và APK; người đánh giá cần cài dependency, tạo RAG index và cấu hình Ollama theo hướng dẫn trong README. Bản đối chiếu kết quả mới nằm ở [JUDGE_HANDOFF_2026-10-29.md](docs/submission/JUDGE_HANDOFF_2026-10-29.md).
 
 ## Cấu hình tùy chọn
 

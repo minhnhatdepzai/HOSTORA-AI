@@ -11,6 +11,7 @@ import {
   FileDown,
   Gauge,
   LayoutDashboard,
+  LifeBuoy,
   LockKeyhole,
   MessageSquareText,
   PackageCheck,
@@ -31,7 +32,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   leadsToCsv,
   leadStatuses,
-  readStoredLeads,
+  readStoredLeadReport,
+  mergeStoredLeads,
   type AdminLead,
   type LeadStatus,
 } from "@/lib/local-admin";
@@ -39,6 +41,12 @@ import type { Requirements } from "@/lib/types";
 import { formatVnd } from "@/lib/utils";
 import { TextRevealHeading } from "@/components/text-reveal-heading";
 import type { InvoicePage, SaleRequestPage } from "@/lib/payments/types";
+import { AdminRevenueDashboard } from "@/components/admin-revenue-dashboard";
+import { AdminServiceManager } from "@/components/admin-service-manager";
+import {
+  normalizeCommerceSummary,
+  type CommerceSummary,
+} from "@/lib/admin/commerce-summary";
 
 type CatalogSummary = {
   plans: number;
@@ -49,14 +57,6 @@ type CatalogSummary = {
 };
 
 type HealthState = "checking" | "ready" | "offline";
-type CommerceSummary = {
-  orders: number;
-  requests: number;
-  paid: number;
-  newRequests: number;
-  revenueVnd: number;
-};
-
 const statusLabels: Record<LeadStatus, string> = {
   new: "Mới",
   contacted: "Đã liên hệ",
@@ -115,6 +115,7 @@ function readRequirements(): Requirements | null {
 
 export function AdminControlCenter({ catalog }: { catalog: CatalogSummary }) {
   const [leads, setLeads] = useState<AdminLead[]>([]);
+  const [invalidLeads, setInvalidLeads] = useState(0);
   const [requirements, setRequirements] = useState<Requirements | null>(null);
   const [health, setHealth] = useState<HealthState>("checking");
   const [lastChecked, setLastChecked] = useState("");
@@ -126,7 +127,9 @@ export function AdminControlCenter({ catalog }: { catalog: CatalogSummary }) {
   const [commerce, setCommerce] = useState<CommerceSummary | null>(null);
 
   const loadLocalData = useCallback(() => {
-    setLeads(readStoredLeads(localStorage.getItem("hostora:leads")));
+    const report = readStoredLeadReport(localStorage.getItem("hostora:leads"));
+    setLeads(report.leads);
+    setInvalidLeads(report.invalidCount);
     setRequirements(readRequirements());
   }, []);
 
@@ -157,13 +160,7 @@ export function AdminControlCenter({ catalog }: { catalog: CatalogSummary }) {
         ordersResponse.json() as Promise<{ page: InvoicePage }>,
         requestsResponse.json() as Promise<{ page: SaleRequestPage }>,
       ]);
-      setCommerce({
-        orders: page.counts.all,
-        requests: requestPage.counts.all,
-        paid: page.financials.recognizedPaidOrders,
-        newRequests: requestPage.counts.new,
-        revenueVnd: page.financials.recognizedRevenueVnd,
-      });
+      setCommerce(normalizeCommerceSummary(page, requestPage));
     } catch {
       setCommerce(null);
     }
@@ -226,8 +223,8 @@ export function AdminControlCenter({ catalog }: { catalog: CatalogSummary }) {
   }, [leads, query, statusFilter]);
 
   function saveLeads(next: AdminLead[]) {
+    localStorage.setItem("hostora:leads", mergeStoredLeads(localStorage.getItem("hostora:leads"), next));
     setLeads(next);
-    localStorage.setItem("hostora:leads", JSON.stringify(next));
   }
 
   function updateStatus(id: string, status: LeadStatus) {
@@ -350,6 +347,12 @@ export function AdminControlCenter({ catalog }: { catalog: CatalogSummary }) {
           >
             <PackageCheck size={18} /> Đơn hàng & hoàn tiền
           </Link>
+          <Link
+            href="/admin/support"
+            className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-bold text-slate-300 hover:bg-white/10 hover:text-white"
+          >
+            <LifeBuoy size={18} /> Chăm sóc khách hàng
+          </Link>
         </nav>
         <div className="mt-auto rounded-3xl border border-white/10 bg-white/5 p-4">
           <div className="flex items-center gap-2 text-sm font-bold text-mint">
@@ -442,6 +445,7 @@ export function AdminControlCenter({ catalog }: { catalog: CatalogSummary }) {
         ) : null}
 
         <main className="mx-auto max-w-[1500px] space-y-8 px-5 py-8 lg:px-8 lg:py-10">
+          {invalidLeads > 0 && <p role="alert" className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">Có {invalidLeads} bản ghi chưa đọc được. Các khách hợp lệ vẫn hiển thị; dữ liệu gốc được giữ lại để khôi phục.</p>}
           {message ? (
             <div
               role="status"
@@ -499,34 +503,24 @@ export function AdminControlCenter({ catalog }: { catalog: CatalogSummary }) {
 
             <div className="mt-7 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
               <MetricCard
-                icon={Users}
-                label="Tổng đăng ký"
-                value={String(leads.length)}
-                note={`${statusCounts.new} khách chưa xử lý`}
+                icon={PackageCheck}
+                label="Tổng đơn hàng"
+                value={commerce ? String(commerce.orders) : "—"}
+                note={commerce ? `${commerce.paid} đơn đã thanh toán` : "Đang đồng bộ kho đơn"}
                 tone="blue"
               />
               <MetricCard
                 icon={UserRoundCheck}
-                label="Khách tiềm năng"
-                value={String(statusCounts.qualified)}
-                note={
-                  leads.length
-                    ? "Dữ liệu trên trình duyệt này"
-                    : "Chưa có dữ liệu"
-                }
+                label="Yêu cầu mua"
+                value={commerce ? String(commerce.requests) : "—"}
+                note={commerce ? `${commerce.newRequests} yêu cầu cần xử lý` : "Đang đồng bộ yêu cầu"}
                 tone="mint"
               />
               <MetricCard
-                icon={PackageCheck}
-                label="Tổng đơn và yêu cầu"
-                value={
-                  commerce ? String(commerce.orders + commerce.requests) : "—"
-                }
-                note={
-                  commerce
-                    ? `${commerce.newRequests} hồ sơ mới · ${commerce.paid} đơn đã thanh toán · ${formatVnd(commerce.revenueVnd)}`
-                    : "Mở Đơn hàng & hoàn tiền để đăng nhập an toàn"
-                }
+                icon={Gauge}
+                label="Doanh thu ghi nhận"
+                value={commerce ? formatVnd(commerce.revenueVnd) : "—"}
+                note="Không tính đơn đã hoàn tiền"
                 tone="violet"
               />
               <MetricCard
@@ -548,6 +542,10 @@ export function AdminControlCenter({ catalog }: { catalog: CatalogSummary }) {
               />
             </div>
           </section>
+
+          <AdminRevenueDashboard />
+
+          <AdminServiceManager />
 
           <section className="grid gap-5 xl:grid-cols-[1.15fr_.85fr]">
             <div className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm">
@@ -818,7 +816,7 @@ export function AdminControlCenter({ catalog }: { catalog: CatalogSummary }) {
           </section>
 
           <section
-            id="dich-vu"
+            id="he-thong"
             className="grid scroll-mt-28 gap-5 xl:grid-cols-3"
           >
             <div className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm xl:col-span-2">

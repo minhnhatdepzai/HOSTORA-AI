@@ -406,5 +406,56 @@
     ],
     "sourceUrl": "https://www.pavietnam.vn/vn/hosting/chuyen-muc",
     "verifiedAt": "2026-10-23"
+  },
+  {
+    "id": "backblaze-b2-backup",
+    "provider": "Backblaze",
+    "name": "Lưu bản sao dữ liệu B2",
+    "category": "backup",
+    "priceFromVnd": null,
+    "billingUnit": "contact",
+    "summary": "Nơi lưu bản sao dữ liệu website tách khỏi máy chủ chính; cần cấu hình sao lưu và thử khôi phục.",
+    "bestFor": [
+      "website có dữ liệu khách hàng",
+      "cửa hàng",
+      "ứng dụng"
+    ],
+    "sourceUrl": "https://www.backblaze.com/cloud-storage/pricing",
+    "verifiedAt": "2026-10-27",
+    "priceNote": "Chi phí phụ thuộc dung lượng và lưu lượng; HOSTORA xác nhận phương án, khả năng cung cấp và báo giá trước khi tạo hóa đơn."
+  },
+  {
+    "id": "uptimerobot-monitoring",
+    "provider": "UptimeRobot",
+    "name": "Theo dõi website hoạt động",
+    "category": "monitoring",
+    "priceFromVnd": null,
+    "billingUnit": "contact",
+    "summary": "Kiểm tra định kỳ website có truy cập được và gửi cảnh báo theo cấu hình đã chọn.",
+    "bestFor": [
+      "website bán hàng",
+      "dịch vụ đặt lịch",
+      "ứng dụng đang chạy"
+    ],
+    "sourceUrl": "https://uptimerobot.com/pricing/",
+    "verifiedAt": "2026-10-27",
+    "priceNote": "Tần suất kiểm tra và kênh cảnh báo tùy gói; HOSTORA xác nhận phạm vi hỗ trợ và báo giá trước khi tạo hóa đơn."
+  },
+  {
+    "id": "cloudflare-cdn-security",
+    "provider": "Cloudflare",
+    "name": "Tăng tốc và bảo vệ website",
+    "category": "security",
+    "priceFromVnd": null,
+    "billingUnit": "contact",
+    "summary": "Dùng mạng phân phối nội dung và các lớp bảo vệ phù hợp để giảm tải và lọc truy cập bất thường.",
+    "bestFor": [
+      "website nhiều khách truy cập",
+      "cửa hàng",
+      "trang giới thiệu"
+    ],
+    "sourceUrl": "https://www.cloudflare.com/plans/",
+    "verifiedAt": "2026-10-27",
+    "priceNote": "Tính năng phụ thuộc gói Cloudflare và cấu hình website; HOSTORA xác nhận khả năng cung cấp trước báo giá."
   }
 ]

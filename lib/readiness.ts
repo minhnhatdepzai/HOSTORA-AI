@@ -104,7 +104,7 @@ export function assessReadiness(input: ReadinessInput) {
       label: "Gói dịch vụ",
       score: infrastructureScore,
       max: 30,
-      note: `${recommendation.plan.provider} ${recommendation.plan.name} đang khớp ${recommendation.total}/100 theo nhu cầu đã nhập.`,
+      note: recommendation.eligibility === "eligible" ? `${recommendation.plan.provider} ${recommendation.plan.name} có điểm so sánh ${recommendation.total}/100; không phải bảo đảm sức chịu tải.` : "Chưa có gói đáp ứng đủ điều kiện đã nhập; cần điều chỉnh trước khi mua.",
     },
   ];
   const score = dimensions.reduce(

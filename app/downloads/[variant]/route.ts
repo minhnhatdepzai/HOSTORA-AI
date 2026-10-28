@@ -2,24 +2,25 @@ import { createReadStream } from "node:fs";
 import { stat } from "node:fs/promises";
 import path from "node:path";
 import { Readable } from "node:stream";
+import mobileConfig from "@/mobile/app.json";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const releases = {
   android: {
-    local: "HOSTORA-AI-2.0.5-arm64.apk",
-    published: "HOSTORA-AI-1.5.0.apk",
-    version: "2.0.5",
+    local: `HOSTORA-AI-${mobileConfig.expo.version}-arm64.apk`,
+    published: `HOSTORA-AI-${mobileConfig.expo.version}-arm64.apk`,
+    version: mobileConfig.expo.version,
   },
   "android-universal": {
     local: "HOSTORA-AI-2.0.3-universal.apk",
-    published: "HOSTORA-AI-1.5.0-universal.apk",
+    published: null,
     version: "2.0.3",
   },
 } as const;
 const defaultReleaseBaseUrl =
-  "https://github.com/minhnhatdepzai/HOSTORA-AI/releases/download/v1.5.0";
+  "https://github.com/minhnhatdepzai/HOSTORA-AI/releases/download/v2.0.9-review-20261029";
 
 function remoteReleaseUrl(filename: string) {
   const base = process.env.HOSTORA_RELEASE_BASE_URL ?? defaultReleaseBaseUrl;
@@ -61,7 +62,9 @@ async function releaseResponse(variant: string, body: boolean) {
       },
     );
   } catch {
-    return Response.redirect(remoteReleaseUrl(release.published), 307);
+    if (release.published)
+      return Response.redirect(remoteReleaseUrl(release.published), 307);
+    return new Response("Bản Android này chưa có trên máy chủ.", { status: 503 });
   }
 }
 

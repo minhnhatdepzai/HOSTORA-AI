@@ -45,8 +45,18 @@ test("chat recognizes a HOSTORA studio link", () => {
 test("chat turns a generated website plan into grounded hosting advice", () => {
   const result = buildStudioProjectAdvice(project);
   expect(result.answer).toContain("Nắng Studio");
-  expect(result.answer).toContain("Gói phù hợp nhất");
+  expect(result.answer).toContain("Gói ưu tiên theo ngân sách lưu trữ");
   expect(result.answer).toContain("3.500 lượt/tháng");
   expect(result.sources).toHaveLength(3);
   expect(result.answer).toContain("[P1]");
+});
+
+test("studio advice labels unaffordable plans as references", () => {
+  const result = buildStudioProjectAdvice({
+    ...project,
+    idea: { ...project.idea, monthlyBudget: 10000 },
+  });
+  expect(result.answer).toContain("Gói tham khảo, chưa đáp ứng đủ điều kiện");
+  expect(result.answer).not.toContain("Gói ưu tiên theo ngân sách lưu trữ");
+  expect(result.answer).toContain("trả trước");
 });

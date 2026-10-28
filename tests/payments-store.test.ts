@@ -539,6 +539,25 @@ describe("sổ đơn hàng HOSTORA", () => {
     store.close();
   });
 
+  it("tính doanh thu thật và loại đơn đã hoàn tiền khỏi dashboard", () => {
+    const store = new PaymentStore(":memory:");
+    expect(store.getRevenueAnalytics().current30Days).toEqual({ revenueVnd: 0, paidOrders: 0 });
+
+    const kept = store.createInvoice({ title: "Hosting đã mua", amountVnd: 600_000 });
+    store.markPaid(kept.id, "stripe", "pi-kept", 600_000, "vnd");
+    const refunded = store.createInvoice({ title: "Dịch vụ hoàn tiền", amountVnd: 400_000 });
+    store.markPaid(refunded.id, "stripe", "pi-refunded", 400_000, "vnd");
+    store.requestRefund(refunded.id, refunded.accessCode, "Không còn phù hợp nhu cầu");
+    store.startRefund(refunded.id, "re-refunded");
+    store.markRefunded(refunded.id, "re-refunded", 400_000);
+
+    const analytics = store.getRevenueAnalytics();
+    expect(analytics.current30Days).toEqual({ revenueVnd: 600_000, paidOrders: 1 });
+    expect(analytics.statusMix.refunded).toBe(1);
+    expect(analytics.daily.at(-1)).toMatchObject({ revenueVnd: 600_000, paidOrders: 1 });
+    store.close();
+  });
+
   it("giới hạn mã đăng nhập email, hết hạn và chỉ dùng một lần", () => {
     const store = new PaymentStore(":memory:");
     const now = 1_000_000;

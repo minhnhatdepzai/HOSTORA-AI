@@ -1,6 +1,6 @@
 import { CinematicBackdrop } from "@/components/cinematic-backdrop";
 import { BrandOrbit } from "@/components/brand-orbit";
-import { Reveal, RevealWords } from "@/components/motion";
+import { Reveal, RevealWords, ScrollParallax, ScrollReveal } from "@/components/motion";
 import { Pressable } from "@/components/pressable";
 import { Feather } from "@expo/vector-icons";
 import { router, type Href } from "expo-router";
@@ -29,10 +29,16 @@ const essentials = [
   {
     number: "03",
     icon: "mail" as const,
-    title: "Thư điện tử & bảo mật",
-    copy: "Bổ sung khi doanh nghiệp cần",
+    title: "Thư điện tử",
+    copy: "Hộp thư mang tên doanh nghiệp",
     category: "email",
   },
+];
+
+const afterLaunch = [
+  { icon: "archive" as const, title: "Giữ bản sao dữ liệu", detail: "Chuẩn bị đường khôi phục khi cần", category: "backup" },
+  { icon: "activity" as const, title: "Biết khi web gián đoạn", detail: "Nhận cảnh báo để xử lý sớm", category: "monitoring" },
+  { icon: "shield" as const, title: "Bảo vệ và tăng tốc", detail: "Chọn lớp bảo vệ theo nhu cầu", category: "security" },
 ];
 
 export default function HomeScreen() {
@@ -41,17 +47,17 @@ export default function HomeScreen() {
   const top = plans[0];
 
   return (
-    <Screen>
+    <Screen revealChildren={false}>
       <View style={styles.topbar}>
         <Brand />
         <View style={styles.topActions}>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Tạo trang web với trợ lý"
-            onPress={() => router.push("/studio" as Href)}
+            accessibilityLabel="Mở tài khoản khách hàng"
+            onPress={() => router.push("/account" as Href)}
             style={styles.settings}
           >
-            <Feather name="edit-3" size={20} color={colors.ink} />
+            <Feather name="user" size={20} color={colors.ink} />
           </Pressable>
           <Pressable
             accessibilityRole="button"
@@ -74,7 +80,9 @@ export default function HomeScreen() {
 
       <Reveal delay={80} style={styles.hero}>
         <CinematicBackdrop />
-        <BrandOrbit />
+        <ScrollParallax style={styles.brandParallax} distance={52}>
+          <BrandOrbit />
+        </ScrollParallax>
         <View style={styles.heroTop}>
           <View style={styles.heroRule} />
           <Text style={styles.heroEyebrow}>MỘT KHỞI ĐẦU RÕ RÀNG</Text>
@@ -91,17 +99,17 @@ export default function HomeScreen() {
           chọn gói phù hợp.
         </Text>
         <Button
-          label="Tạo trang web với trợ lý"
-          icon="edit-3"
+          label="Tư vấn chọn gói phù hợp"
+          icon="compass"
           variant="mint"
-          onPress={() => router.push("/studio" as Href)}
+          onPress={() => router.push("/consult")}
         />
         <Pressable
           accessibilityRole="button"
-          onPress={() => router.push("/products")}
+          onPress={() => router.push("/studio" as Href)}
           style={styles.heroLink}
         >
-          <Text style={styles.heroLinkText}>Xem toàn bộ dịch vụ</Text>
+          <Text style={styles.heroLinkText}>Chưa có web? Tạo cùng trợ lý</Text>
           <Feather name="arrow-up-right" size={16} color={colors.mint} />
         </Pressable>
         <View style={styles.heroStamp}>
@@ -112,45 +120,82 @@ export default function HomeScreen() {
         </View>
       </Reveal>
 
-      <Reveal delay={200} style={styles.content}>
-        <View style={styles.sectionHeading}>
+      <ScrollReveal animate={false} style={styles.content}>
+        <ScrollReveal style={styles.sectionHeading}>
           <Text style={styles.kicker}>BẮT ĐẦU TỪ ĐÂU?</Text>
           <Text style={styles.sectionTitle}>Một trang web cần gì?</Text>
           <Text style={styles.sectionCopy}>
             Ba phần cơ bản để đưa trang web của bạn đến với khách hàng.
           </Text>
-        </View>
-        <View style={styles.essentials}>
+        </ScrollReveal>
+        <ScrollReveal animate={false} style={styles.essentials}>
           {essentials.map((item) => (
-            <Pressable
-              key={item.number}
-              accessibilityRole="button"
-              accessibilityLabel={`Xem ${item.title}: ${item.copy}`}
-              onPress={() =>
-                router.push({
-                  pathname: "/products",
-                  params: { category: item.category },
-                })
-              }
-              style={({ pressed }) => [
-                styles.essential,
-                pressed && styles.pressed,
-              ]}
-            >
-              <Text style={styles.essentialNumber}>{item.number}</Text>
-              <View style={styles.essentialIcon}>
-                <Feather name={item.icon} size={19} color={colors.primary} />
-              </View>
-              <View style={styles.essentialText}>
-                <Text style={styles.essentialTitle}>{item.title}</Text>
-                <Text style={styles.essentialCopy}>{item.copy}</Text>
-              </View>
-              <Feather name="arrow-up-right" size={18} color={colors.primary} />
-            </Pressable>
+            <ScrollReveal key={item.number}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Xem ${item.title}: ${item.copy}`}
+                onPress={() =>
+                  router.push({
+                    pathname: "/products",
+                    params: { category: item.category },
+                  })
+                }
+                style={({ pressed }) => [
+                  styles.essential,
+                  pressed && styles.pressed,
+                ]}
+              >
+                <Text style={styles.essentialNumber}>{item.number}</Text>
+                <View style={styles.essentialIcon}>
+                  <Feather name={item.icon} size={19} color={colors.primary} />
+                </View>
+                <View style={styles.essentialText}>
+                  <Text style={styles.essentialTitle}>{item.title}</Text>
+                  <Text style={styles.essentialCopy}>{item.copy}</Text>
+                </View>
+                <Feather name="arrow-up-right" size={18} color={colors.primary} />
+              </Pressable>
+            </ScrollReveal>
           ))}
-        </View>
+        </ScrollReveal>
 
-        <View style={styles.how}>
+        <ScrollReveal style={styles.afterLaunch}>
+          <View style={styles.sectionHeading}>
+            <Text style={styles.kicker}>SAU KHI WEBSITE HOẠT ĐỘNG</Text>
+            <Text style={styles.sectionTitle}>Giữ trang web vận hành tốt.</Text>
+            <Text style={styles.sectionCopy}>Chọn thêm khi cần. HOSTORA xác nhận phạm vi và báo giá trước khi tạo hóa đơn.</Text>
+          </View>
+          <ScrollReveal animate={false} style={styles.afterLaunchList}>
+            {afterLaunch.map((item, index) => (
+              <ScrollReveal key={item.category}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Xem dịch vụ ${item.title}`}
+                  onPress={() =>
+                    router.push({
+                      pathname: "/products",
+                      params: { category: item.category },
+                    })
+                  }
+                  style={({ pressed }) => [
+                    styles.afterLaunchRow,
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  <Text style={styles.afterLaunchNumber}>{String(index + 1).padStart(2, "0")}</Text>
+                  <Feather name={item.icon} size={19} color={colors.primary} />
+                  <View style={styles.afterLaunchText}>
+                    <Text style={styles.afterLaunchTitle}>{item.title}</Text>
+                    <Text style={styles.afterLaunchDetail}>{item.detail}</Text>
+                  </View>
+                  <Feather name="arrow-up-right" size={18} color={colors.primary} />
+                </Pressable>
+              </ScrollReveal>
+            ))}
+          </ScrollReveal>
+        </ScrollReveal>
+
+        <ScrollReveal style={styles.how}>
           <Text style={styles.kicker}>CHỈ 3 BƯỚC</Text>
           <Text style={styles.sectionTitle}>Chọn và mua thế nào?</Text>
           <View style={styles.howSteps}>
@@ -179,12 +224,18 @@ export default function HomeScreen() {
             icon="file-text"
             onPress={() => router.push("/orders" as Href)}
           />
-        </View>
+        </ScrollReveal>
+
+        <ScrollReveal>
+          <Pressable accessibilityRole="button" accessibilityLabel="Mở sổ tay làm website" onPress={() => router.push("/journal" as Href)} style={({ pressed }) => [styles.journalEntry, pressed && styles.pressed]}>
+            <View style={styles.journalEntryCopy}><Text style={styles.kicker}>SỔ TAY HOSTORA</Text><Text style={styles.sectionTitle}>Làm xong rồi, tiếp theo là gì?</Text><Text style={styles.sectionCopy}>Bốn bài đọc ngắn từ ý tưởng, chọn nơi lưu trữ đến ngày ra mắt và thêm AI.</Text><Text style={styles.journalEntryAction}>Mở sổ tay  →</Text></View><Feather name="book-open" size={25} color={colors.primary}/>
+          </Pressable>
+        </ScrollReveal>
 
         {top ? (
-          <View style={styles.featured}>
+          <ScrollReveal style={styles.featured}>
             <View style={styles.featuredHeader}>
-              <Text style={styles.kicker}>GỢI Ý CHO BẠN</Text>
+              <Text style={styles.kicker}>{top.eligibility === "eligible" ? "GỢI Ý CHO BẠN" : "CHỈ THAM KHẢO · CHƯA ĐỦ ĐIỀU KIỆN"}</Text>
               <Text style={styles.featuredStatus}>
                 {status === "verified"
                   ? "Đã đối chiếu"
@@ -201,16 +252,15 @@ export default function HomeScreen() {
               <Text style={styles.featuredUnit}> / tháng</Text>
             </Text>
             <Text style={styles.featuredFine}>
-              Giá theo kỳ {top.billingMonths} tháng; cần xem tổng tiền và giá
-              gia hạn trước khi mua.
+              Trả trước {formatVnd(top.upfrontVnd)} cho kỳ {top.billingMonths} tháng; cần xem giá gia hạn, thuế và phí tên miền trước khi mua.
             </Text>
             <Button
               label="So sánh 3 gói"
               onPress={() => router.push("/recommendations")}
             />
-          </View>
+          </ScrollReveal>
         ) : null}
-      </Reveal>
+      </ScrollReveal>
     </Screen>
   );
 }
@@ -236,6 +286,15 @@ function Step({
 }
 
 const styles = StyleSheet.create({
+  afterLaunch: { gap: 20 },
+  afterLaunchList: { borderTopWidth: 1, borderTopColor: colors.line },
+  afterLaunchRow: { minHeight: 76, flexDirection: "row", alignItems: "center", gap: 10, borderBottomWidth: 1, borderBottomColor: colors.line },
+  afterLaunchNumber: { width: 24, color: colors.faint, fontFamily: "BeVietnamPro_700Bold", fontSize: 10 },
+  afterLaunchText: { flex: 1 },
+  afterLaunchTitle: { color: colors.text, fontFamily: "BeVietnamPro_700Bold", fontSize: 13 },
+  afterLaunchDetail: { color: colors.muted, fontFamily: "BeVietnamPro_400Regular", fontSize: 10, marginTop: 3 },
+  journalEntry:{ marginHorizontal:16, marginTop:20, padding:22, borderWidth:1, borderColor:colors.line, borderLeftWidth:3, borderLeftColor:colors.primary, backgroundColor:colors.surface, flexDirection:"row", alignItems:"flex-start", gap:12, borderRadius:18 },
+  journalEntryCopy:{ flex:1 }, journalEntryAction:{ marginTop:12, color:colors.primary, fontFamily:"BeVietnamPro_700Bold", fontSize:13 },
   topbar: {
     paddingHorizontal: 20,
     paddingTop: 12,
@@ -263,6 +322,7 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
     overflow: "hidden",
   },
+  brandParallax: { height: 142 },
   heroTop: { flexDirection: "row", alignItems: "center", gap: 9 },
   heroRule: { width: 22, height: 2, backgroundColor: colors.mint },
   heroEyebrow: {

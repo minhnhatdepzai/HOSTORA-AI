@@ -11,7 +11,8 @@ test-results
 playwright-report
 .playwright-mcp
 tests
-mobile
+mobile/**
+!mobile/app.json
 docs
 training/.venv
 training/output-*

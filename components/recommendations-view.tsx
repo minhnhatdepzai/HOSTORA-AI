@@ -12,6 +12,10 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { RecommendationScore, Requirements } from "@/lib/types";
 import { formatVnd } from "@/lib/utils";
+import { normalizeContact } from "@/shared/contact";
+import { adminLeadSchema, mergeStoredLeads, readStoredLeads } from "@/lib/local-admin";
+import { recommendationDecision } from "@/lib/recommendation";
+import { featureState } from "@/lib/advisor-explanation";
 
 const defaults: Requirements = {
   websiteType: "store",
@@ -28,6 +32,7 @@ const backupLabel = {
 
 export function RecommendationsView() {
   const [items, setItems] = useState<RecommendationScore[]>([]);
+  const [requirements, setRequirements] = useState(defaults);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [retry, setRetry] = useState(0);
@@ -57,18 +62,19 @@ export function RecommendationsView() {
       signal: controller.signal,
     })
       .then(async (r) => {
-        if (!r.ok) throw new Error("Catalog chưa sẵn sàng.");
+        if (!r.ok) throw new Error("Bảng giá chưa sẵn sàng.");
         return r.json();
       })
       .then((o) => {
         if (!Array.isArray(o.recommendations) || o.recommendations.length !== 3)
-          throw new Error("Catalog chưa trả đủ ba gói để so sánh.");
+          throw new Error("Chưa nhận đủ ba gói để so sánh.");
         setItems(o.recommendations);
+        setRequirements(o.requirements);
         setLoadError("");
       })
       .catch(() => {
         if (!controller.signal.aborted)
-          setLoadError("Không kết nối được catalog. Vui lòng thử lại.");
+          setLoadError("Chưa tải được bảng giá. Vui lòng thử lại.");
       })
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false);
@@ -78,22 +84,21 @@ export function RecommendationsView() {
   function saveLead(e: React.FormEvent) {
     e.preventDefault();
     if (!selectedItem) return;
+    const contact = normalizeContact({ name, phone });
+    if (contact.error) { setLeadError(contact.error); return; }
     try {
-      const savedLeads = JSON.parse(
-        localStorage.getItem("hostora:leads") ?? "[]",
-      );
-      if (!Array.isArray(savedLeads))
-        throw new Error("Dữ liệu lead cục bộ không hợp lệ.");
-      savedLeads.unshift({
+      const raw = localStorage.getItem("hostora:leads");
+      const savedLeads = readStoredLeads(raw);
+      savedLeads.unshift(adminLeadSchema.parse({
         id: crypto.randomUUID(),
-        name: name.trim(),
-        phone: phone.trim(),
+        name: contact.name,
+        phone: contact.phone,
         plan: `${selectedItem.plan.provider} ${selectedItem.plan.name}`,
         planId: selectedItem.plan.id,
         createdAt: new Date().toISOString(),
         status: "new",
-      });
-      localStorage.setItem("hostora:leads", JSON.stringify(savedLeads));
+      }));
+      localStorage.setItem("hostora:leads", mergeStoredLeads(raw, savedLeads));
       setLeadError("");
       setSaved(true);
       setName("");
@@ -113,17 +118,17 @@ export function RecommendationsView() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           topic: "recommendation",
-          facts: JSON.stringify(items.slice(0, 3)),
+          requirements,
         }),
       });
       if (!response.ok) throw new Error("Local AI chưa sẵn sàng.");
       const result = await response.json();
       setExplanation(
-        `${result.summary}\n\n${(result.tradeoffs ?? []).map((item: string) => `• ${item}`).join("\n")}\n\nBước tiếp theo: ${result.nextStep}`,
+        `${result.aiAvailable === false ? "Trợ lý đang bận. Đây là giải thích từ dữ liệu đã kiểm tra.\n\n" : ""}${result.summary}\n\n${(result.tradeoffs ?? []).map((item: string) => `• ${item}`).join("\n")}\n\nBước tiếp theo: ${result.nextStep}`,
       );
     } catch {
       setExplainError(
-        "Không tải được giải thích AI. Điểm và bảng so sánh vẫn dùng dữ liệu catalog.",
+        "Chưa tải được giải thích. Bạn vẫn có thể xem giá và điều kiện trong bảng so sánh.",
       );
     } finally {
       setExplaining(false);
@@ -145,7 +150,7 @@ export function RecommendationsView() {
           </div>
         ))}
         <div className="sr-only">
-          <LoaderCircle /> Đang chấm điểm catalog…
+          <LoaderCircle /> Đang so sánh các gói…
         </div>
       </div>
     );
@@ -154,7 +159,7 @@ export function RecommendationsView() {
       <div className="panel p-8" role="alert">
         <p className="font-bold">{loadError || "Chưa có dữ liệu đề xuất."}</p>
         <p className="mt-2 text-sm text-slate-600">
-          Không hiển thị giá hoặc xếp hạng dự phòng khi catalog không phản hồi.
+          Không hiển thị giá hoặc xếp hạng dự phòng khi chưa tải được bảng giá.
         </p>
         <button
           className="button-primary mt-5"
@@ -169,6 +174,13 @@ export function RecommendationsView() {
     );
   return (
     <div className="space-y-8">
+      <section className={`rounded-2xl border p-5 ${recommendationDecision(items).status === "no-match" ? "border-amber-300 bg-amber-50" : "border-emerald-200 bg-emerald-50"}`} aria-label="Kết luận theo ngân sách">
+        <h2 className="text-lg font-black">{recommendationDecision(items).status === "no-match" ? "Chưa có gói đáp ứng ngân sách này" : "Có gói đáp ứng ngân sách lưu trữ"}</h2>
+        <p className="mt-2 text-sm leading-6">{recommendationDecision(items).message}</p>
+        <p className="mt-2 text-sm">Ngân sách hosting: {formatVnd(requirements.monthlyBudget)}/tháng · Trả trước tối đa: {requirements.upfrontBudget === undefined ? "Chưa xác nhận" : formatVnd(requirements.upfrontBudget)}.</p>
+        <p className="mt-2 text-xs leading-5 text-slate-600">Điểm và thứ tự chỉ giúp so sánh theo thông tin đã công bố, không phải cam kết hiệu năng hay tổng giá thanh toán.</p>
+        <Link href="/consultation" className="mt-3 inline-block font-bold text-blue underline">Sửa nhu cầu và ngân sách</Link>
+      </section>
       <div className="grid gap-5 lg:grid-cols-3">
         {items.map((item, i) => (
           <article
@@ -177,7 +189,7 @@ export function RecommendationsView() {
           >
             {i === 0 && (
               <div className="absolute inset-x-0 top-0 bg-blue py-2 text-center text-[10px] font-black tracking-[.18em] text-white">
-                PHÙ HỢP NHẤT
+                {item.eligibility === "eligible" ? "ƯU TIÊN THEO NGÂN SÁCH LƯU TRỮ" : "PHƯƠNG ÁN THAM KHẢO"}
               </div>
             )}
             <div className={i === 0 ? "pt-5" : ""}>
@@ -218,10 +230,12 @@ export function RecommendationsView() {
                   </p>
                 ))}
               </div>
-              {item.cautions[0] && (
+              {item.eligibility !== "eligible" && <p className="mt-3 text-sm font-bold text-amber-800">Chỉ tham khảo · chưa đáp ứng đủ điều kiện</p>}
+              {item.cautions.length > 0 && (
                 <div className="mt-5 rounded-xl bg-amber-50 p-3 text-xs leading-5 text-amber-900">
                   <AlertTriangle className="mr-1 inline" size={14} />
                   {item.cautions[0]}
+                  <details className="mt-2"><summary className="cursor-pointer font-bold">Xem toàn bộ điều kiện</summary><ul className="mt-2 list-disc space-y-1 pl-4">{item.cautions.slice(1).map((caution) => <li key={caution}>{caution}</li>)}</ul></details>
                 </div>
               )}
               <p className="mt-5 text-xs font-bold text-slate-500">
@@ -254,8 +268,9 @@ export function RecommendationsView() {
         <div className="border-b border-slate-200 p-6">
           <p className="eyebrow">So sánh 3 gói</p>
           <h2 className="mt-2 text-2xl font-black">
-            Dữ liệu gốc, không để LLM sửa số.
+            Giá, kỳ hạn và những gì bạn nhận được.
           </h2>
+          <p className="mt-2 text-sm text-slate-600">Vuốt ngang để xem đủ ba gói. “Chưa xác minh” nghĩa là chưa đủ thông tin, không có nghĩa tính năng không tồn tại.</p>
         </div>
         <div
           className="overflow-x-auto"
@@ -298,10 +313,10 @@ export function RecommendationsView() {
                 [
                   "SSL",
                   (x: RecommendationScore) =>
-                    x.plan.ssl ? "Có" : "Chưa có dữ liệu",
+                    featureState(x.plan.ssl),
                 ],
                 [
-                  "Backup",
+                  "Sao lưu",
                   (x: RecommendationScore) =>
                     x.plan.backup
                       ? backupLabel[x.plan.backup]
@@ -321,7 +336,7 @@ export function RecommendationsView() {
                   (x: RecommendationScore) => `${x.plan.billingMonths} tháng`,
                 ],
                 [
-                  "E-commerce",
+                  "Bán hàng trực tuyến",
                   (x: RecommendationScore) =>
                     x.plan.ecommerce ? "Có hỗ trợ" : "Chưa xác nhận",
                 ],
@@ -345,19 +360,20 @@ export function RecommendationsView() {
         <div className="mesh-dark rounded-[1.75rem] p-7 text-white">
           <div className="flex items-center gap-3">
             <Sparkles className="text-mint" />
-            <h2 className="text-2xl font-black">Vì sao gói đầu đứng số 1?</h2>
+            <h2 className="text-2xl font-black">Vì sao có thứ tự này?</h2>
           </div>
           <p className="mt-4 leading-7 text-slate-300">
-            Điểm tổng được code tính từ ngân sách, tài nguyên ước tính,
-            e-commerce, chi phí sở hữu, khả năng mở rộng, backup/bảo mật và độ
-            dễ vận hành. AI không được phép thay điểm hoặc giá.
+            Gói đáp ứng ngân sách được ưu tiên trước. Điểm giúp so sánh chi phí,
+            nhu cầu bán hàng, sao lưu và độ dễ vận hành; không phải phần trăm
+            bảo đảm phù hợp hay cam kết sức chịu tải. Chưa nhập tiền trả trước
+            thì cần xác nhận khoản này trước khi mua.
           </p>
           <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
             {Object.entries(items[0].breakdown)
               .slice(0, 4)
               .map(([key, value]) => (
                 <div className="rounded-xl bg-white/8 p-3" key={key}>
-                  <p className="text-[10px] uppercase text-slate-400">{key}</p>
+                  <p className="text-[10px] uppercase text-slate-400">{{ budget: "Ngân sách", resources: "Tài nguyên cần xác nhận", ecommerce: "Bán hàng", ownership: "Chi phí dài hạn" }[key as "budget"] ?? key}</p>
                   <p className="mt-1 text-xl font-black">{Math.round(value)}</p>
                 </div>
               ))}
@@ -383,7 +399,7 @@ export function RecommendationsView() {
             ) : (
               <Sparkles size={16} />
             )}
-            Vì sao AI chọn gói này?
+            Giải thích các gói cho tôi
           </button>
         </div>
         <form onSubmit={saveLead} className="panel p-6">
@@ -402,8 +418,9 @@ export function RecommendationsView() {
               <ShieldCheck className="mb-2" />
               <p className="font-black">Đã lưu trên trình duyệt này.</p>
               <p className="mt-1 text-sm">
-                Không gửi số điện thoại tới AI hoặc cloud.
+                Thông tin liên hệ chỉ lưu tại đây; chưa gửi cho nhân viên. Để được hỗ trợ, hãy gửi yêu cầu từ trang tài khoản.
               </p>
+              <Link href="/account" className="mt-3 inline-block font-bold underline">Gửi yêu cầu hỗ trợ</Link>
             </div>
           ) : (
             <>
@@ -421,7 +438,7 @@ export function RecommendationsView() {
                 <span className="label">Số điện thoại</span>
                 <input
                   required
-                  pattern="[0-9 +]{9,15}"
+                  maxLength={30}
                   inputMode="tel"
                   className="input"
                   value={phone}

@@ -1,11 +1,13 @@
-# Lời dẫn video Đề 01 — 60–90 giây
+# Video giới thiệu HOSTORA 2.0.9
 
-Video quay sẵn `HOSTORA-demo-2026-10-24.mp4` dài 34,4 giây, im tiếng, dùng lead giả. Khi thuyết trình trực tiếp hoặc quay bản có lời, giữ tổng video **không quá 2 phút** theo [hướng dẫn chính thức](https://vibecoding.info.vn/bai-viet/yeu-cau-dau-ra-va-huong-dan-nop-bai-vibe-coding-2026).
+Tệp mới: `HOSTORA-demo-2.0.9-2026-10-29.mp4` (40,36 giây, 1280×720, **không có tiếng**). Từ 0–28 giây là trình duyệt chạy bản production local 2.0.9; từ 28–40 giây là **ảnh chụp màn hình** app 2.0.9 trên Redmi Note 8 Pro. Phần cuối không phải video thao tác trên điện thoại. Video cũ ngày 24/10 chỉ phản ánh bản cũ.
 
-1. **0–10 giây:** “Đây là HOSTORA AI cho chủ shop mới chưa rành hosting. Form hỏi loại website, truy cập tháng, ngân sách và nhu cầu tên miền.”
-2. **10–30 giây:** “Kết quả cho một gói phù hợp nhất cùng hai gói thay thế. Điểm, giá và chi phí do code tính từ catalog có ngày xác minh; AI chỉ giải thích.”
-3. **30–45 giây:** “Bảng so sánh cho thấy giá ưu đãi, giá gia hạn, dung lượng, băng thông và tính năng. Giá thiếu dữ liệu được ghi rõ.”
-4. **45–65 giây:** “Tôi chọn gói thay thế, điền tên và số điện thoại giả để lưu vào danh sách khách tư vấn ngay trên máy. FAQ có năm câu hỏi thường gặp.”
-5. **65–90 giây:** “Chatbot dùng Ollama và RAG local, hiển thị nguồn có thể mở. Tình trạng tên miền hôm nay không được đoán. Đây là link APK cài trực tiếp và source chạy local.”
+Lời dẫn tùy chọn nếu thuyết trình trực tiếp, theo đúng hình ảnh đang có:
 
-Nếu dùng video 34,4 giây hiện có, chỉ trình bày những gì màn hình thực sự hiển thị; không đọc lời dẫn 90 giây chồng lên video ngắn. Bản quay có lời có thể tạo lại từ kịch bản và giữ dưới 2 phút. Xem `TEST_MATRIX.md` để chuẩn bị case sai và case lỗi khi giám khảo hỏi thêm.
+1. **0–7 giây:** HOSTORA giúp người mới chọn dịch vụ website từ loại trang, lưu lượng và ngân sách.
+2. **7–18 giây:** Wizard cho khách chọn điều kiện; bảng so sánh tách giá quy đổi theo tháng, tiền trả đầu kỳ và giá gia hạn.
+3. **18–25 giây:** Ngân sách 10.000đ/tháng trả trạng thái chưa có gói đáp ứng; các gói chỉ để tham khảo.
+4. **25–28 giây:** Trang quản trị yêu cầu đăng nhập trước khi cho xem dữ liệu.
+5. **28–40 giây:** Đây là ảnh chụp bản Android đã cài trên Redmi: trang chủ, màn chọn gói và kết quả nêu rõ chưa xác nhận tiền trả trước.
+
+Video không chứng minh thanh toán thật, URL truy cập công khai, tốc độ khi nhiều khách đồng thời hoặc thử nghiệm với chủ shop. Người đánh giá có thể kiểm tra riêng bằng APK và ZIP nguồn cùng phiên bản trong [bàn giao 29/10](JUDGE_HANDOFF_2026-10-29.md).

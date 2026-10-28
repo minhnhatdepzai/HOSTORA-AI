@@ -4,19 +4,19 @@
 
 ## Tải và cài APK
 
-- Bản 2.0.4 arm64 đã build và cài trên Redmi Note 8 Pro: `releases/HOSTORA-AI-2.0.4-arm64.apk`. Bản universal vẫn là 2.0.3.
-- Bản đã phát hành công khai: [HOSTORA AI 1.5.0 trên GitHub](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/tag/v1.5.0).
+- APK 2.0.9 arm64: `releases/HOSTORA-AI-2.0.9-arm64.apk`. Đã cài và mở trên Redmi Note 8 Pro ngày 28/10; bản universal hiện vẫn là 2.0.3.
+- Bản dùng để đánh giá: [HOSTORA AI 2.0.9 prerelease trên GitHub](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/tag/v2.0.9-review-20261029); bản ổn định cũ là v1.5.0.
 - Checksum APK cục bộ: `releases/SHA256SUMS.txt`.
 
 Cài bằng ADB:
 
 ```bash
-adb install -r releases/HOSTORA-AI-2.0.4-arm64.apk
+adb install -r releases/HOSTORA-AI-2.0.9-arm64.apk
 ```
 
 Android có thể yêu cầu cho phép “Cài ứng dụng không rõ nguồn gốc” nếu mở APK từ trình quản lý file.
 
-Nếu máy HOSTORA đang chạy `pnpm dev:lan`, mở `http://<IP-máy-HOSTORA>:3000/downloads/android` trên điện thoại để tải trực tiếp; bản universal ở `/downloads/android-universal`. Nếu thiếu bản cục bộ, URL chuyển tới bản 1.5.0 đã phát hành. Máy và điện thoại cần cùng mạng, cổng TCP 3000 phải truy cập được. IP LAN có thể đổi theo mạng.
+Nếu máy HOSTORA đang chạy `pnpm dev:lan`, mở `http://<IP-máy-HOSTORA>:3000/downloads/android` trên điện thoại để tải trực tiếp; bản universal ở `/downloads/android-universal`. Nếu máy chủ thiếu APK arm64, URL chỉ chuyển tới đúng bản 2.0.9 trong GitHub prerelease đánh giá; bản universal thiếu tệp trả lỗi rõ ràng. Máy và điện thoại cần cùng mạng, cổng TCP 3000 phải truy cập được. IP LAN có thể đổi theo mạng.
 
 ## Kết nối local AI
 
@@ -59,6 +59,10 @@ Bản 2.0.2 cho phép nhập lượng khách và ngân sách riêng (trong giớ
 
 Bản 2.0.4 đổi thẻ demo Website Studio thành khung xem nhanh cao cố định. Khách bấm Trang đầu, Giới thiệu, Liên hệ và CTA ngay trong app; nút “Mở link website” mở bản HTML thật trên máy chủ HOSTORA.
 
+Bản 2.0.6 bổ sung sổ tay bốn chặng và ba dịch vụ đi kèm: sao lưu dữ liệu, theo dõi tình trạng website, bảo vệ/tăng tốc. Trang chủ mở đúng nhóm dịch vụ; danh mục cho thấy mô tả từng sản phẩm và đưa bộ lọc đang chọn vào tầm nhìn. Giá của ba dịch vụ mới cần xác nhận trước khi tạo hóa đơn.
+
+Bản 2.0.9 ghi rõ gói được ưu tiên mới đáp ứng ngân sách lưu trữ theo tháng. Nếu chưa nhập giới hạn trả trước, màn kết quả nói rõ chưa xác nhận tổng tiền thanh toán; Xưởng tạo website cũng ghi gói vượt điều kiện là phương án tham khảo. Điểm so sánh chỉ là quy tắc chọn gói theo dữ liệu đã công bố, không phải phép đo hiệu năng.
+
 ## Phát triển và build
 
 ```bash
@@ -74,4 +78,4 @@ APK sinh tại `android/app/build/outputs/apk/release/app-release.apk`. Android 
 
 ## Trạng thái ký
 
-APK 2.0.1 dùng cùng Android debug certificate với các bản cục bộ trước đó; package `com.hostora.ai`, versionCode 13, min SDK 24, target SDK 36. Trạng thái build, checksum, nội dung tải web và kiểm tra trên Redmi được ghi trong [audit giao diện](../docs/MOBILE_UI_AUDIT.md). APK **chưa phải bản ký production cho Google Play**. Trước khi phát hành công khai cần tạo keystore production và bảo quản ngoài Git.
+APK 2.0.9 dùng chữ ký debug cục bộ; package `com.hostora.ai`, versionCode 21, min SDK 24, target SDK 36. Checksum SHA-256 có trong `releases/SHA256SUMS.txt`. APK **chưa phải bản ký production cho Google Play**. Trước khi phát hành công khai cần tạo keystore production và bảo quản ngoài Git.

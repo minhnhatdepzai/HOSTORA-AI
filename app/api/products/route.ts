@@ -1,11 +1,14 @@
-import { productCatalog } from "@/data/product-catalog";
-import { NextRequest } from "next/server";
+import { getCatalogStore } from "@/lib/admin/catalog-store";
 
-export function GET(request: NextRequest) {
-  const provider = request.nextUrl.searchParams.get("provider")?.toLowerCase();
-  const category = request.nextUrl.searchParams.get("category")?.toLowerCase();
-  const query = request.nextUrl.searchParams.get("q")?.trim().toLowerCase();
-  const products = productCatalog.filter((item) => {
+export const runtime = "nodejs";
+
+export function GET(request: Request) {
+  const searchParams = new URL(request.url).searchParams;
+  const provider = searchParams.get("provider")?.toLowerCase();
+  const category = searchParams.get("category")?.toLowerCase();
+  const query = searchParams.get("q")?.trim().toLowerCase();
+  const catalog = getCatalogStore().listPublishedProducts();
+  const products = catalog.filter((item) => {
     if (provider && item.provider.toLowerCase() !== provider) return false;
     if (category && item.category !== category) return false;
     if (query) {
@@ -18,9 +21,10 @@ export function GET(request: NextRequest) {
   return Response.json({
     products,
     total: products.length,
-    catalogTotal: productCatalog.length,
-    verifiedAt: "2026-10-23",
+    catalogTotal: catalog.length,
+    verifiedAt: catalog.map((item) => item.verifiedAt).sort().at(-1) ?? null,
+    catalogUpdatedAt: catalog.map((item) => item.verifiedAt).sort().at(-1) ?? null,
     disclaimer:
       "Giá hiển thị là mức tham khảo tại ngày kiểm tra và có thể phụ thuộc kỳ hạn hoặc thuế. HOSTORA xác nhận tổng tiền trước khi tạo hóa đơn; bạn gửi yêu cầu mua ngay trong HOSTORA.",
-  });
+  }, { headers: { "cache-control": "no-store" } });
 }

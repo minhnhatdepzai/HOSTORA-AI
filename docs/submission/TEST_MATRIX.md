@@ -1,5 +1,7 @@
 # Ma trận kiểm tra Đề 01
 
+**Bản này ghi nhận ca chạy ngày 24/10.** Xem [bàn giao 2.0.9 ngày 29/10](JUDGE_HANDOFF_2026-10-29.md) để biết kết quả mới và giới hạn chưa kiểm chứng.
+
 Ngày chạy cuối: 24/10/2026. Nguồn thực thi: `tests/e2e/rubric.spec.ts`, `tests/api-validation.test.ts`, `tests/recommendation.test.ts`, `scripts/evaluate-rag-live.mjs`. Kết quả: 39/39 unit, 18/18 Playwright desktop/mobile; 12/12 retrieval hard queries qua endpoint ở chế độ hybrid.
 
 | Nhóm          | Case                                                                 | Kỳ vọng và cách kiểm tra                                                            | Trạng thái          |

@@ -7,27 +7,36 @@ import { promisify } from "node:util";
 
 const execFileAsync = promisify(execFile);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const output = path.join(root, "docs/submission/HOSTORA-source-2026-10-24.zip");
+const output = path.join(root, "docs/submission/HOSTORA-source-2.0.9-2026-10-29.zip");
 const roots = [
   "app",
   "components",
   "lib",
   "data",
+  "public",
+  "shared",
   "scripts",
   "tests",
   "docs",
+  "docker",
   "mobile/src",
   "mobile/assets",
-  "training/data",
 ];
 const explicit = [
   ".env.example",
+  ".env.docker.example",
+  ".dockerignore",
   ".gitignore",
   ".prettierignore",
   "AGENTS.md",
+  "Dockerfile",
   "README.md",
+  "compose.yaml",
+  "compose.gpu.yaml",
   "eslint.config.mjs",
   "next.config.ts",
+  "instrumentation.ts",
+  "jsrepo.config.ts",
   "next-env.d.ts",
   "package.json",
   "playwright.config.ts",
@@ -59,20 +68,21 @@ const explicit = [
   "training/dataset.sample.jsonl",
 ];
 const forbidden =
-  /(^|\/)(\.env(?:\.|$)|node_modules|\.next|\.git|android|\.venv|output[^/]*|test-results|playwright-report|releases|rag-index\.json)(\/|$)/;
+  /(^|\/)(\.env(?:\.[^/]*)?|node_modules|\.next|\.git|android|\.venv|output[^/]*|test-results|playwright-report|releases|runtime|rag-index\.json)(\/|$)/;
 const forbiddenExtensions =
-  /\.(?:apk|gguf|safetensors|pem|key|p12|keystore|jks|webm|zip)$/i;
+  /\.(?:apk|gguf|safetensors|pem|key|p12|keystore|jks|webm|mp4|zip|sqlite(?:-wal|-shm)?|db(?:-wal|-shm)?)$/i;
 const files = new Set();
 
 async function add(relative) {
+  if (relative === "docs/submission/HOSTORA-2.0.9-SHA256SUMS.txt") return;
   if (
     forbidden.test(relative) &&
     relative !== ".env.example" &&
+    relative !== ".env.docker.example" &&
     !relative.endsWith("/.env.example")
   )
     return;
-  if (forbiddenExtensions.test(relative)) return;
-  if (relative === "docs/submission/HOSTORA-source-2026-10-24.zip") return;
+  if (forbiddenExtensions.test(relative) && !relative.startsWith("mobile/assets/video/")) return;
   const full = path.join(root, relative);
   let info;
   try {

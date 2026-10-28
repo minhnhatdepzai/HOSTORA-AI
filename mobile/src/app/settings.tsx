@@ -77,6 +77,12 @@ export default function SettingsScreen() {
         </View>
         <View style={styles.content}>
           <Button
+            label="Mở tài khoản khách hàng"
+            icon="user"
+            variant="secondary"
+            onPress={() => router.push("/account")}
+          />
+          <Button
             label="Xem yêu cầu tư vấn đã lưu"
             icon="users"
             variant="secondary"

@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { absoluteSiteUrl } from "@/lib/site-url";
+import { journalArticles } from "@/data/journal";
 
 const publicRoutes = [
   ["/", "weekly", 1],
@@ -12,14 +13,16 @@ const publicRoutes = [
   ["/website-analyzer", "monthly", 0.75],
   ["/readiness", "monthly", 0.7],
   ["/knowledge", "weekly", 0.65],
+  ["/journal", "weekly", 0.75],
+  ["/about", "monthly", 0.55],
   ["/intelligence", "monthly", 0.6],
 ] as const;
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  return publicRoutes.map(([pathname, changeFrequency, priority]) => ({
+  return [...publicRoutes.map(([pathname, changeFrequency, priority]) => ({
     url: absoluteSiteUrl(pathname),
     lastModified: new Date("2026-10-27T00:00:00+07:00"),
     changeFrequency,
     priority,
-  }));
+  })), ...journalArticles.map((article) => ({ url: absoluteSiteUrl(`/journal/${article.slug}`), lastModified: new Date(`${article.updatedAt}T00:00:00+07:00`), changeFrequency: "monthly" as const, priority: 0.65 }))];
 }

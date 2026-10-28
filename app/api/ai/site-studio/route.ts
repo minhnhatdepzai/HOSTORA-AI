@@ -3,14 +3,27 @@ import { runSiteStudioWorkflow } from "@/lib/site-studio-workflow";
 import { siteIdeaSchema } from "@/lib/site-studio";
 import { captureSiteStudioRun } from "@/lib/ai-observability";
 import { createStudioProject } from "@/lib/site-studio-store";
+import {
+  customerFromRequest,
+  requestUsesBearer,
+} from "@/lib/customer/auth";
+import { sameOrigin } from "@/lib/payments/admin-auth";
 
 export async function POST(request: Request) {
+  const customer = customerFromRequest(request);
+  if (!customer)
+    return Response.json(
+      { error: "Bạn cần đăng nhập để tạo website với AI." },
+      { status: 401 },
+    );
+  if (!requestUsesBearer(request) && !sameOrigin(request))
+    return Response.json({ error: "Nguồn yêu cầu không hợp lệ." }, { status: 403 });
   const parsed = await parseRequestJson(request, siteIdeaSchema);
   if (parsed.response) return parsed.response;
   const startedAt = Date.now();
   try {
     const result = await runSiteStudioWorkflow(parsed.data);
-    const project = await createStudioProject(parsed.data, result);
+    const project = await createStudioProject(parsed.data, result, customer.id);
     const requestedSessionId = request.headers.get("x-hostora-session");
     const sessionId =
       requestedSessionId &&

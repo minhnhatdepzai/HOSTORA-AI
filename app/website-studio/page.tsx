@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { WebsiteStudio } from "@/components/website-studio";
 import { pageMetadata } from "@/lib/page-metadata";
+import { requireCustomerPage } from "@/lib/customer/access";
 
 export const metadata: Metadata = pageMetadata({
   title: "Tạo website với AI",
@@ -10,6 +11,7 @@ export const metadata: Metadata = pageMetadata({
   keywords: ["tạo website AI", "thiết kế website bằng AI", "website doanh nghiệp"],
 });
 
-export default function WebsiteStudioPage() {
+export default async function WebsiteStudioPage() {
+  await requireCustomerPage("/website-studio");
   return <WebsiteStudio />;
 }

@@ -1,6 +1,6 @@
 # Nguồn dữ liệu
 
-Ngày snapshot: **2026-10-23**.
+Ngày snapshot danh mục gốc: **2026-10-23**. Ba dịch vụ bổ trợ được rà nguồn ngày **2026-10-27**; chưa có báo giá HOSTORA.
 
 | Nguồn                                                                                                 | Dùng cho                                                       | Trạng thái        | Giới hạn                                                          |
 | ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- | ----------------- | ----------------------------------------------------------------- |
@@ -14,7 +14,9 @@ Ngày snapshot: **2026-10-23**.
 | [Google Search Central](https://developers.google.com/search/docs/fundamentals/seo-starter-guide)     | SEO nền tảng, crawl/index, canonical, sitemap, structured data | Verified          | Không bảo đảm thứ hạng hoặc traffic                               |
 | [web.dev — Core Web Vitals](https://web.dev/articles/vitals)                                          | LCP, INP, CLS                                                  | Verified          | Audit HTML không thay thế field data p75                          |
 | [Langfuse — RAG faithfulness](https://langfuse.com/resources/engineering/rag-faithfulness-evaluation) | Thiết kế eval RAG                                              | Verified          | Chưa bật project tracing/evaluator runtime                        |
-| [Cloudflare Plans](https://www.cloudflare.com/plans/)                                                 | Kiến thức CDN, SSL, DDoS, pricing tiers                        | Verified          | Không phải origin hosting catalog                                 |
+| [Cloudflare Plans](https://www.cloudflare.com/plans/)                                                 | Kiến thức CDN, SSL, DDoS và dịch vụ bảo vệ web (rà 27/10/2026) | Verified source   | Tính năng tùy gói/cấu hình; chưa có giá HOSTORA                    |
+| [Backblaze B2 Pricing](https://www.backblaze.com/cloud-storage/pricing)                                | Dịch vụ lưu bản sao dữ liệu, kiểm tra 27/10/2026               | Verified source   | Giá theo mức dùng; chưa quy đổi thành báo giá VND                  |
+| [UptimeRobot Pricing](https://uptimerobot.com/pricing/)                                                | Dịch vụ theo dõi website, kiểm tra 27/10/2026                  | Verified source   | Tần suất và cảnh báo tùy gói; chưa có giá HOSTORA                  |
 | [Ollama Qwen3.5](https://ollama.com/library/qwen3.5)                                                  | Model sizes/capabilities                                       | Verified          | VRAM thực tế phụ thuộc context/runtime                            |
 | [Ollama Qwen3 Embedding](https://ollama.com/library/qwen3-embedding)                                  | Embedding model                                                | Verified          | Chất lượng retrieval chưa có benchmark domain riêng               |
 | [Unsloth Qwen3.5](https://unsloth.ai/docs/models/qwen3.5/fine-tune)                                   | Khả năng LoRA/VRAM                                             | Verified          | Ước lượng upstream, chưa phải run training của HOSTORA            |

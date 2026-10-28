@@ -84,6 +84,15 @@ export type InvoiceQueueCounts = {
   cancelled: number;
 };
 
+export type RevenueAnalytics = {
+  daily: Array<{ date: string; revenueVnd: number; paidOrders: number }>;
+  statusMix: Record<InvoiceStatus, number>;
+  current30Days: { revenueVnd: number; paidOrders: number };
+  previous30Days: { revenueVnd: number; paidOrders: number };
+  differenceVnd: number;
+  differencePercent: number | null;
+};
+
 export type InvoicePage = {
   items: Invoice[];
   total: number;

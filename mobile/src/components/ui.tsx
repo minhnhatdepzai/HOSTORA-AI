@@ -1,9 +1,12 @@
 import { Pressable } from "@/components/pressable";
 import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
+import { Children, isValidElement, useCallback, useMemo, useState } from "react";
 import type { ComponentProps, PropsWithChildren, ReactNode, Ref } from "react";
 import {
-  ScrollView,
+  Animated,
+  type LayoutChangeEvent,
+  type ScrollViewProps,
   StyleSheet,
   Text,
   type ScrollViewInstance,
@@ -14,32 +17,126 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, radii, shadows } from "@/constants/theme";
+import {
+  ScrollMotionContext,
+  ScrollReveal,
+  ScrollRevealText,
+} from "@/components/motion";
 
 export function Screen({
   children,
   dark = false,
   insetTop = true,
   scrollRef,
+  onScroll,
+  revealChildren = true,
 }: PropsWithChildren<{
   dark?: boolean;
   insetTop?: boolean;
   scrollRef?: Ref<ScrollViewInstance>;
+  onScroll?: ScrollViewProps["onScroll"];
+  revealChildren?: boolean;
 }>) {
+  const [scrollY] = useState(() => new Animated.Value(0));
+  const [viewportHeight, setViewportHeight] = useState(0);
+  const handleScroll = useMemo(
+    () =>
+      Animated.event(
+        [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+        { useNativeDriver: true, listener: onScroll },
+      ),
+    [onScroll, scrollY],
+  );
+  const handleViewportLayout = useCallback((event: LayoutChangeEvent) => {
+    setViewportHeight(event.nativeEvent.layout.height);
+  }, []);
+
   return (
     <SafeAreaView
       style={[styles.safe, dark && styles.safeDark]}
       edges={insetTop ? ["top", "left", "right", "bottom"] : ["bottom"]}
+      onLayout={handleViewportLayout}
     >
-      <ScrollView
-        ref={scrollRef}
-        contentContainerStyle={styles.scroll}
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="on-drag"
-        showsVerticalScrollIndicator={false}
-      >
-        {children}
-      </ScrollView>
+      <ScrollMotionContext.Provider value={{ scrollY, viewportHeight, baseTop: 0 }}>
+        <Animated.ScrollView
+          ref={scrollRef}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+          contentContainerStyle={styles.scroll}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          showsVerticalScrollIndicator={false}
+        >
+          {revealChildren
+            ? Children.map(children, (child, index) =>
+                isValidElement(child) ? (
+                  <ScrollReveal key={child.key ?? `screen-section-${index}`}>
+                    {child}
+                  </ScrollReveal>
+                ) : (
+                  child
+                ),
+              )
+            : children}
+        </Animated.ScrollView>
+      </ScrollMotionContext.Provider>
     </SafeAreaView>
+  );
+}
+
+export function CinematicScrollView({
+  children,
+  scrollRef,
+  onScroll,
+  onLayout,
+  revealChildren = true,
+  ...props
+}: PropsWithChildren<
+  ScrollViewProps & {
+    scrollRef?: Ref<ScrollViewInstance>;
+    revealChildren?: boolean;
+  }
+>) {
+  const [scrollY] = useState(() => new Animated.Value(0));
+  const [viewportHeight, setViewportHeight] = useState(0);
+  const handleScroll = useMemo(
+    () =>
+      Animated.event(
+        [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+        { useNativeDriver: true, listener: onScroll },
+      ),
+    [onScroll, scrollY],
+  );
+  const handleLayout = useCallback(
+    (event: LayoutChangeEvent) => {
+      setViewportHeight(event.nativeEvent.layout.height);
+      onLayout?.(event);
+    },
+    [onLayout],
+  );
+
+  return (
+    <ScrollMotionContext.Provider value={{ scrollY, viewportHeight, baseTop: 0 }}>
+      <Animated.ScrollView
+        {...props}
+        ref={scrollRef}
+        onLayout={handleLayout}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+      >
+        {revealChildren
+          ? Children.map(children, (child, index) =>
+              isValidElement(child) ? (
+                <ScrollReveal key={child.key ?? `scroll-section-${index}`}>
+                  {child}
+                </ScrollReveal>
+              ) : (
+                child
+              ),
+            )
+          : children}
+      </Animated.ScrollView>
+    </ScrollMotionContext.Provider>
   );
 }
 
@@ -69,9 +166,9 @@ export function Eyebrow({
   light = false,
 }: PropsWithChildren<{ light?: boolean }>) {
   return (
-    <Text style={[styles.eyebrow, light && { color: colors.mint }]}>
+    <ScrollRevealText style={[styles.eyebrow, light && { color: colors.mint }]}>
       {children}
-    </Text>
+    </ScrollRevealText>
   );
 }
 
@@ -81,9 +178,11 @@ export function Title({
   style,
 }: PropsWithChildren<{ light?: boolean; style?: TextStyle }>) {
   return (
-    <Text style={[styles.title, light && { color: "white" }, style]}>
+    <ScrollRevealText
+      style={[styles.title, light && { color: "white" }, style]}
+    >
       {children}
-    </Text>
+    </ScrollRevealText>
   );
 }
 
@@ -93,9 +192,11 @@ export function Body({
   style,
 }: PropsWithChildren<{ light?: boolean; style?: TextStyle }>) {
   return (
-    <Text style={[styles.body, light && { color: "#CAD5E3" }, style]}>
+    <ScrollRevealText
+      style={[styles.body, light && { color: "#CAD5E3" }, style]}
+    >
       {children}
-    </Text>
+    </ScrollRevealText>
   );
 }
 

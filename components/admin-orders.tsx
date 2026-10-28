@@ -139,8 +139,8 @@ function QueueButton({
 }
 
 export function AdminOrders() {
-  const [configured, setConfigured] = useState(false);
-  const [authenticated, setAuthenticated] = useState(false);
+  const [configured, setConfigured] = useState(true);
+  const [authenticated, setAuthenticated] = useState(true);
   const [emailLoginEnabled, setEmailLoginEnabled] = useState(false);
   const [passwordLoginEnabled, setPasswordLoginEnabled] = useState(false);
   const [emailCodeSent, setEmailCodeSent] = useState(false);
@@ -205,7 +205,7 @@ export function AdminOrders() {
           { cache: "no-store" },
         );
         if (response.status === 401) {
-          setAuthenticated(false);
+          window.location.replace("/admin/login?next=%2Fadmin%2Forders");
           return;
         }
         const result = (await response.json()) as {
@@ -243,7 +243,7 @@ export function AdminOrders() {
         cache: "no-store",
       });
       if (response.status === 401) {
-        setAuthenticated(false);
+        window.location.replace("/admin/login?next=%2Fadmin%2Forders");
         return;
       }
       const result = (await response.json()) as {
@@ -305,7 +305,11 @@ export function AdminOrders() {
           passwordLoginEnabled?: boolean;
         }) => {
           setConfigured(result.configured);
-          setAuthenticated(result.authenticated);
+          if (!result.authenticated) {
+            window.location.replace("/admin/login?next=%2Fadmin%2Forders");
+            return;
+          }
+          setAuthenticated(true);
           setEmailLoginEnabled(Boolean(result.emailLoginEnabled));
           setPasswordLoginEnabled(Boolean(result.passwordLoginEnabled));
         },

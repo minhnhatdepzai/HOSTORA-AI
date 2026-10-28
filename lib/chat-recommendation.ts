@@ -77,8 +77,8 @@ export function explicitChatRecommendation(question: string) {
       verifiedAt: performance.verifiedAt,
       kind: "knowledge",
     });
-  const lines = recommendations.map(({ plan, cautions }, index) => {
-    const label = index === 0 ? "Gói chính" : "Thay thế " + index;
+  const lines = recommendations.map(({ plan, cautions, eligibility }, index) => {
+    const label = eligibility !== "eligible" ? "Chỉ tham khảo " + (index + 1) : index === 0 ? "Gói chính" : "Thay thế " + index;
     const renewal =
       plan.renewalMonthlyVnd === null
         ? "gia hạn chưa xác minh"
@@ -118,7 +118,7 @@ export function explicitChatRecommendation(question: string) {
   });
   return {
     answer:
-      "Dựa trên nhu cầu bạn nêu và bảng gói đã xác minh, thứ tự gợi ý của app là:\n" +
+      (recommendations.some((item) => item.eligibility === "eligible") ? "Dựa trên nhu cầu bạn nêu và bảng gói đã xác minh, thứ tự gợi ý của app là:\n" : "Chưa có gói đáp ứng ngân sách và nhu cầu đã nhập. Đây chỉ là phương án tham khảo, cần sửa ngân sách hoặc tư vấn thêm:\n") +
       lines.join("\n") +
       "\nĐây là xếp hạng theo nhu cầu, không phải cam kết chịu tải. Lượt truy cập tháng chưa đủ để khẳng định website sẽ hoạt động tốt trong đợt bán cao điểm; hãy chạy thử quy trình mua hàng với nhiều người dùng trước khi mua. [K1] Giá, thuế, điều kiện tên miền và tình trạng đăng ký cần kiểm tra lại trên trang thanh toán.",
     sources,

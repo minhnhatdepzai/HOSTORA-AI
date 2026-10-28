@@ -62,5 +62,22 @@ test("rejects obvious unsupported promises before asking the audit model", async
 
   const result = await runSiteStudioWorkflow(idea);
   expect(result.generationMode).toBe("template-fallback");
-  expect(mocked.structuredChat).toHaveBeenCalledTimes(1);
+  expect(mocked.structuredChat).toHaveBeenCalledTimes(2);
+  expect(mocked.structuredChat.mock.calls[1][4]).toBe("site_studio_copy_repair");
+});
+
+test("repairs unsupported copy before accepting a grounded result", async () => {
+  const draft = {
+    ...buildFallbackBrief(idea),
+    subheadline: "Không gian ấm cúng giúp khách không bị gián đoạn khi xem gốm.",
+  };
+  const repaired = buildFallbackBrief(idea);
+  mocked.structuredChat
+    .mockResolvedValueOnce(draft)
+    .mockResolvedValueOnce(repaired)
+    .mockResolvedValueOnce({ supported: true, issues: [] });
+  const result = await runSiteStudioWorkflow(idea);
+  expect(result.generationMode).toBe("local-ai");
+  expect(result.brief).toEqual(repaired);
+  expect(mocked.structuredChat.mock.calls[1][4]).toBe("site_studio_copy_repair");
 });

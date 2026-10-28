@@ -1,5 +1,25 @@
 # Fine-tuning chatbot HOSTORA trong app
 
+## Đợt `chatbot-v6` ngày 27/10/2026
+
+Đã chuẩn bị 655 mẫu học và 142 ca kiểm tra, gồm 18 ca mới chỉ ở tập kiểm
+tra. Các tình huống mới bao phủ khách chưa có web, sửa bản thử, chọn dịch vụ
+lưu trữ, giờ cao điểm, chuyển trang, sao lưu, bảo vệ, giá/ưu đãi chưa xác
+minh, đơn hàng, hủy/hoàn tiền, ảnh có thông tin nhạy cảm và chuyển sang người
+tư vấn. Đây là ví dụ về **cách tư vấn**; giá, ưu đãi và trạng thái giao dịch vẫn
+phải lấy từ dữ liệu đã xác minh lúc chạy ứng dụng.
+
+Đợt v6 chạy độc lập bằng `hostora-chatbot-v6-finetune.service`. Lệnh
+`pnpm ai:train:chatbot:status` xem từng pha, GPU và tiến độ. Dịch vụ sẽ train,
+xuất/nạp model ứng viên và so sánh trên holdout với v5 và model 9B. Không có
+bước tự đổi model đang phục vụ. Kết quả chất lượng chỉ có giá trị sau khi
+`training/output-chatbot-v6/evaluation.json` được ghi và các lỗi được xem lại.
+
+Bộ đo v5 ban đầu chỉ nhận vài động từ ra lệnh nên bỏ sót câu kiểu “cần kiểm
+tra” hoặc “nên thử”. Khi chấm lại **cùng 124 câu trả lời đã lưu** bằng bộ đo
+mở rộng, chỉ số bước tiếp theo là 121/124 thay cho 62/124. Đây là sửa bộ đo,
+không phải hiệu quả huấn luyện mới; năm ca định tuyến sai của v5 vẫn còn.
+
 ## Cập nhật `chatbot-v5` ngày 27/10/2026
 
 Lần chạy tự động `chatbot-v5` đã hoàn tất đủ các bước tạo dữ liệu, snapshot,
@@ -14,11 +34,12 @@ mục chứa artifact lớn nên bị Git ignore.
 | Huấn luyện       | 6 epoch, 1.086 optimizer step, loss 0,3769166, VRAM đỉnh 9,72 GB                                               |
 | Reload/export    | Adapter nạp lại được; GGUF Q8 4.610.580.288 byte                                                               |
 | Holdout kỹ thuật | 124/124 HTTP thành công và 124/124 đúng schema                                                                 |
-| Rubric           | 124/124 ngôn ngữ phổ thông; 124/124 không bịa số thương mại; 119/124 định tuyến đúng; 62/124 có bước tiếp theo |
+| Rubric ban đầu  | 124/124 ngôn ngữ phổ thông; 124/124 không bịa số thương mại; 119/124 định tuyến đúng; 62/124 bước tiếp theo theo bộ đo cũ |
 | Quyết định       | `candidate_only`; không tự động thay model runtime                                                             |
 
 Năm lỗi định tuyến còn lại gồm tình huống chưa có website/sản phẩm, thanh toán,
-lưu lượng và quyền riêng tư. Chỉ 50% câu có bước tiếp theo. Vì vậy v5 chưa được
+lưu lượng và quyền riêng tư. Bộ đo cũ chỉ nhận ra 50% câu có bước tiếp theo;
+chấm lại các câu đã lưu bằng bộ đo mở rộng là 121/124. Vì vậy v5 chưa được
 gọi là tốt hơn model đang phục vụ và không được promote chỉ dựa vào loss hoặc
 124 phản hồi HTTP thành công. Giá, khuyến mại, tên miền và dữ liệu khách vẫn
 không được đưa vào trọng số.

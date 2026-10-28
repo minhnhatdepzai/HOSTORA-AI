@@ -11,6 +11,8 @@ import {
   ReceiptText,
   Server,
   Sparkles,
+  BookOpen,
+  UserRound,
   X,
 } from "lucide-react";
 import { useState } from "react";
@@ -20,7 +22,9 @@ const links = [
   ["/", "Trang chủ", Home],
   ["/website-studio", "Tạo trang web", Sparkles],
   ["/services", "Dịch vụ", Server],
+  ["/journal", "Sổ tay", BookOpen],
   ["/orders", "Đơn hàng", ReceiptText],
+  ["/account", "Tài khoản", UserRound],
   ["/ai-assistant", "Hỏi trợ lý", Bot],
   ["/downloads/android", "Tải app", Download],
 ] as const;
@@ -36,6 +40,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   if (pathname.startsWith("/admin")) return <main>{children}</main>;
+  const customerAuthFlow = pathname.startsWith("/account/");
   return (
     <>
       <header className="site-header">
@@ -68,6 +73,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             ))}
           </nav>
           <div className="site-header-actions">
+            <Link href="/account" className="site-account-link" aria-label="Mở tài khoản khách hàng">
+              <UserRound size={18} />
+              <span>Tài khoản</span>
+            </Link>
             <Link href="/downloads/android" className="site-header-cta">
               Tải ứng dụng
             </Link>
@@ -103,7 +112,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <main key={pathname} className="page-enter">
         {children}
       </main>
-      <footer className="site-footer">
+      {!customerAuthFlow && <footer className="site-footer">
         <div className="site-footer-inner">
           <div>
             <strong>HOSTORA</strong>
@@ -113,7 +122,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Link href="/website-studio">Tạo trang web với trợ lý</Link>
             <Link href="/services">Dịch vụ</Link>
             <Link href="/orders">Đơn hàng</Link>
+            <Link href="/account">Tài khoản khách hàng</Link>
             <Link href="/knowledge">Kiến thức</Link>
+            <Link href="/journal">Sổ tay làm website</Link>
+            <Link href="/about">Câu chuyện HOSTORA</Link>
             <Link href="/website-analyzer">Kiểm tra trang web</Link>
             <Link href="/ai-assistant">Hỏi HOSTORA</Link>
           </nav>
@@ -122,8 +134,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             tra.
           </small>
         </div>
-      </footer>
-      <nav
+      </footer>}
+      {!customerAuthFlow && <nav
         className="site-mobile-dock"
         aria-label="Điều hướng nhanh trên điện thoại"
       >
@@ -144,7 +156,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </Link>
           );
         })}
-      </nav>
+      </nav>}
     </>
   );
 }

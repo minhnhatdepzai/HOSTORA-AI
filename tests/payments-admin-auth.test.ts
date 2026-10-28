@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { issueAdminSession, sameOrigin, verifyAdminSession } from "@/lib/payments/admin-auth";
+import {
+  adminSessionCookie,
+  clearedAdminSessionCookie,
+  issueAdminSession,
+  safeAdminNextPath,
+  sameOrigin,
+  verifyAdminSession,
+} from "@/lib/payments/admin-auth";
 
 describe("quản trị thanh toán", () => {
   const config = { password: "mat-khau-quan-tri-du-dai", secret: "session-secret-at-least-32-characters" };
@@ -23,5 +30,14 @@ describe("quản trị thanh toán", () => {
     });
     expect(sameOrigin(request)).toBe(true);
     expect(sameOrigin(new Request(request.url, { headers: { host: "127.0.0.1:3100", origin: "http://evil.example" } }))).toBe(false);
+  });
+
+  it("đặt cookie cho toàn bộ trang quản trị và chỉ nhận đường dẫn nội bộ", () => {
+    expect(adminSessionCookie("signed-token", false)).toContain("Path=/;");
+    expect(adminSessionCookie("signed-token", false)).not.toContain("Path=/api/admin/payments");
+    expect(clearedAdminSessionCookie(false)).toContain("Path=/;");
+    expect(safeAdminNextPath("/admin/orders?queue=paid")).toBe("/admin/orders?queue=paid");
+    expect(safeAdminNextPath("https://evil.example/admin")).toBe("/admin");
+    expect(safeAdminNextPath("//evil.example/admin")).toBe("/admin");
   });
 });

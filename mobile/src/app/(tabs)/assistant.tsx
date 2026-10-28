@@ -18,7 +18,7 @@ import {
 } from "react-native";
 import Markdown from "react-native-markdown-display";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Brand, Pill } from "@/components/ui";
+import { Brand, CinematicScrollView, Pill } from "@/components/ui";
 import { colors, radii } from "@/constants/theme";
 import { getApiBase } from "@/lib/api";
 import { toCustomerLanguage } from "@/lib/customer-language";
@@ -262,8 +262,8 @@ export default function AssistantScreen() {
           </Text>
         </View>
 
-        <ScrollView
-          ref={list}
+        <CinematicScrollView
+          scrollRef={list}
           style={styles.chat}
           contentContainerStyle={styles.chatContent}
           onContentSizeChange={() =>
@@ -372,7 +372,7 @@ export default function AssistantScreen() {
               </Text>
             </View>
           ) : null}
-        </ScrollView>
+        </CinematicScrollView>
 
         {messages.length < 3 ? (
           <ScrollView

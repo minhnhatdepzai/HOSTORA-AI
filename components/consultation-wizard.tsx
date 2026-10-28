@@ -21,9 +21,9 @@ const defaults: Requirements = {
   notes: "",
 };
 const types: Array<[WebsiteType, string, string]> = [
-  ["store", "Bán hàng", "Checkout, đơn hàng, chiến dịch"],
-  ["company", "Giới thiệu", "Thương hiệu, dịch vụ, lead"],
-  ["blog", "Blog / nội dung", "Bài viết, độc giả, SEO"],
+  ["store", "Bán hàng", "Giỏ hàng, thanh toán và đơn hàng"],
+  ["company", "Giới thiệu", "Thương hiệu, dịch vụ và liên hệ"],
+  ["blog", "Blog / nội dung", "Bài viết và độc giả"],
 ];
 
 export function ConsultationWizard() {
@@ -225,7 +225,7 @@ export function ConsultationWizard() {
                 Ngân sách vận hành mỗi tháng?
               </h2>
               <p className="mt-2 text-slate-600">
-                Chấm điểm dùng giá gia hạn khi đã có dữ liệu.
+                Chọn gói theo giá gia hạn để tránh vượt ngân sách sau ưu đãi. Tiền tên miền và thuế cần xác nhận riêng.
               </p>
               <label className="mt-9 block">
                 <span className="label">Ngân sách (VND/tháng)</span>
@@ -241,6 +241,11 @@ export function ConsultationWizard() {
                   }
                 />
               </label>
+              <label className="mt-5 block">
+                <span className="label">Số tiền có thể trả ban đầu (đồng, không bắt buộc)</span>
+                <input className="input" type="number" min="0" max="1000000000" step="1" value={data.upfrontBudget ?? ""} placeholder="Để trống nếu chưa quyết định" onChange={(e) => save({ ...data, upfrontBudget: e.target.value === "" ? undefined : Number(e.target.value) })} />
+              </label>
+              <p className="mt-2 text-xs text-slate-600">Giá ưu đãi thường yêu cầu trả trước 12–48 tháng. Nhập khoản này để loại gói vượt khả năng thanh toán ban đầu.</p>
               <div className="mt-5 flex flex-wrap gap-2">
                 {[100000, 300000, 600000, 1000000].map((v) => (
                   <button
@@ -314,7 +319,7 @@ export function ConsultationWizard() {
               className="button-primary"
               disabled={
                 (step === 1 && (!Number.isInteger(data.monthlyVisits) || data.monthlyVisits < 1 || data.monthlyVisits > 100000000)) ||
-                (step === 2 && (!Number.isInteger(data.monthlyBudget) || data.monthlyBudget < 10000 || data.monthlyBudget > 100000000))
+                (step === 2 && (!Number.isInteger(data.monthlyBudget) || data.monthlyBudget < 10000 || data.monthlyBudget > 100000000 || (data.upfrontBudget !== undefined && (!Number.isInteger(data.upfrontBudget) || data.upfrontBudget < 0 || data.upfrontBudget > 1000000000))))
               }
               onClick={() => setStep(step + 1)}
             >

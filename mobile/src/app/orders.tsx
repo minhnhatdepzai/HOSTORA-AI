@@ -1,10 +1,12 @@
 import { DetailHeader } from "@/components/detail-header";
-import { Button } from "@/components/ui";
+import { Button, CinematicScrollView } from "@/components/ui";
 import { colors } from "@/constants/theme";
-import { getApiBase, postJson } from "@/lib/api";
-import { useLocalSearchParams } from "expo-router";
+import { ApiError, getApiBase, postJson } from "@/lib/api";
+import { createAppNotification } from "@/lib/app-notifications";
+import { useApp } from "@/context/app-context";
+import { router, useLocalSearchParams, type Href } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Alert, AppState, Linking, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Alert, AppState, Linking, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type Invoice = {
@@ -22,6 +24,7 @@ const status: Record<Invoice["status"], string> = {
 };
 
 export default function OrdersScreen() {
+  const { pushNotification } = useApp();
   const params = useLocalSearchParams<{ requestId?: string; requestCode?: string }>();
   const [id, setId] = useState("");
   const [code, setCode] = useState("");
@@ -32,16 +35,42 @@ export default function OrdersScreen() {
   const [saleRequest, setSaleRequest] = useState<SaleRequest | null>(null);
   const [requestReason, setRequestReason] = useState("");
   const activeOrder = useRef<{ id: string; code: string } | null>(null);
+  const knownStatuses = useRef<Record<string, Invoice["status"]>>({});
+
+  const applyOrderDetail = useCallback((result: Detail) => {
+    const previousStatus = knownStatuses.current[result.invoice.id];
+    knownStatuses.current[result.invoice.id] = result.invoice.status;
+    if (previousStatus && previousStatus !== result.invoice.status) {
+      const kind = result.invoice.status === "paid" ? "payment" : result.invoice.status.includes("refund") ? "refund" : "order";
+      pushNotification(createAppNotification({
+        id: `invoice-${result.invoice.id}-${result.invoice.status}`,
+        kind,
+        title: status[result.invoice.status],
+        message: `${result.invoice.title} vừa chuyển sang trạng thái “${status[result.invoice.status]}”.`,
+        route: "/orders",
+      }));
+      if (result.invoice.earnedVoucherCode) {
+        pushNotification(createAppNotification({
+          id: `voucher-${result.invoice.earnedVoucherCode}`,
+          kind: "voucher",
+          title: "Bạn có voucher mới",
+          message: `Mã ${result.invoice.earnedVoucherCode} đã sẵn sàng cho đơn tiếp theo.`,
+          route: "/orders",
+        }));
+      }
+    }
+    setDetail(result);
+  }, [pushNotification]);
 
   useEffect(() => {
     const subscription = AppState.addEventListener("change", (state) => {
       const saved = activeOrder.current;
       if (state !== "active" || !saved) return;
       void postJson<Detail>("/api/payments/orders", { id: saved.id, accessCode: saved.code })
-        .then(setDetail).catch(() => undefined);
+        .then(applyOrderDetail).catch(() => undefined);
     });
     return () => subscription.remove();
-  }, []);
+  }, [applyOrderDetail]);
 
   useEffect(() => {
     if (!params.requestId || !params.requestCode) return;
@@ -56,6 +85,7 @@ export default function OrdersScreen() {
     try {
       const result = await postJson<{ request: SaleRequest }>(`/api/payments/requests/${saleRequest.id}/cancel`, { accessCode: params.requestCode, reason: requestReason });
       setSaleRequest(result.request); setRequestReason(""); setMessage("Đã hủy yêu cầu và gửi email xác nhận.");
+      pushNotification(createAppNotification({ id: `request-${result.request.id}-cancelled`, kind: "order", title: "Yêu cầu mua đã hủy", message: `${result.request.productName} đã được hủy và không phát hành hóa đơn.`, route: "/orders" }));
     } catch (error) { setMessage(error instanceof Error ? error.message : "Không thể hủy yêu cầu."); }
     finally { setBusy(false); }
   }
@@ -65,10 +95,10 @@ export default function OrdersScreen() {
     if (!quiet) setBusy(true);
     try {
       const result = await postJson<Detail>("/api/payments/orders", { id: id.trim().toUpperCase(), accessCode: code });
-      setDetail(result); activeOrder.current = { id: id.trim().toUpperCase(), code }; if (!quiet) setMessage("");
+      applyOrderDetail(result); activeOrder.current = { id: id.trim().toUpperCase(), code }; if (!quiet) setMessage("");
     } catch (error) { if (!quiet) { setDetail(null); setMessage(error instanceof Error ? error.message : "Không thể xem đơn hàng."); } }
     finally { if (!quiet) setBusy(false); }
-  }, [id, code]);
+  }, [applyOrderDetail, id, code]);
 
   async function mutate(path: string, body: object) {
     if (!detail) return;
@@ -84,14 +114,19 @@ export default function OrdersScreen() {
         if (!isHostedGateway && !isHostoraDemo) throw new Error("Địa chỉ thanh toán không hợp lệ.");
         await Linking.openURL(url.toString());
       } else { setReason(""); await lookup(true); setMessage("HOSTORA đã ghi nhận yêu cầu của bạn."); }
-    } catch (error) { setMessage(error instanceof Error ? error.message : "Không thể xử lý yêu cầu."); }
+    } catch (error) {
+      if (path === "refund-request" && error instanceof ApiError && error.status === 401) {
+        Alert.alert("Cần đăng nhập", "Đăng nhập bằng email nhận hóa đơn để xác minh quyền yêu cầu hoàn tiền.", [{ text: "Để sau", style: "cancel" }, { text: "Đăng nhập", onPress: () => router.push({ pathname: "/account-login", params: { next: "/orders" } }) }]);
+      }
+      setMessage(error instanceof Error ? error.message : "Không thể xử lý yêu cầu.");
+    }
     finally { setBusy(false); }
   }
 
   const invoice = detail?.invoice;
   return <SafeAreaView style={styles.safe} edges={["top", "bottom", "left", "right"]}>
     <DetailHeader title="Đơn hàng của bạn" />
-    <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
+    <CinematicScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
       <View style={styles.intro}><Text style={[styles.eyebrow, styles.introEyebrow]}>THEO DÕI & THANH TOÁN</Text><Text style={styles.title}>Mọi khoản tiền, rõ từng bước.</Text><Text style={[styles.copy, styles.introCopy]}>Nhập mã riêng trên hóa đơn để xem trạng thái và yêu cầu hỗ trợ.</Text></View>
       <View style={styles.lookup}><Text style={styles.label}>Mã đơn hàng</Text><TextInput accessibilityLabel="Mã đơn hàng" style={styles.input} placeholder="HST-..." placeholderTextColor={colors.muted} autoCapitalize="characters" value={id} onChangeText={setId} /><Text style={styles.label}>Mã truy cập riêng</Text><TextInput accessibilityLabel="Mã truy cập riêng" style={styles.input} placeholder="Mã được gửi cùng hóa đơn" placeholderTextColor={colors.muted} secureTextEntry autoCapitalize="none" value={code} onChangeText={setCode} /><Button label={busy ? "Đang kiểm tra" : "Xem đơn hàng"} disabled={busy || !id.trim() || !code.trim()} onPress={() => void lookup()} /></View>
       {busy && <ActivityIndicator color={colors.primary} style={{ marginTop: 18 }} />}
@@ -100,11 +135,12 @@ export default function OrdersScreen() {
       {invoice ? <View style={styles.detail}><Text style={styles.eyebrow}>HÓA ĐƠN {invoice.id}</Text><Text style={styles.service}>{invoice.title}</Text><Text style={styles.provider}>{invoice.saleType === "partner_service" ? `Dịch vụ đối tác · ${invoice.partnerProvider}` : "Dịch vụ HOSTORA"}</Text>{invoice.description ? <Text style={styles.copy}>{invoice.description}</Text> : null}<Text style={styles.status}>{invoice.provider === "demo" && invoice.status === "paid" ? "Đã ghi nhận thanh toán" : invoice.provider === "demo" && invoice.status === "refunded" ? "Đã ghi nhận hoàn tiền" : status[invoice.status]}</Text><View style={styles.total}><Text style={styles.totalLabel}>Tổng tiền đã thỏa thuận</Text><Text style={styles.amount}>{new Intl.NumberFormat("vi-VN").format(invoice.amountVnd)} ₫</Text></View>
         {invoice.discountVnd > 0 ? <Text style={styles.notice}>Voucher {invoice.voucherCode}: giảm {new Intl.NumberFormat("vi-VN").format(invoice.discountVnd)}đ từ giá {new Intl.NumberFormat("vi-VN").format(invoice.subtotalVnd)}đ.</Text> : null}
         {invoice.earnedVoucherCode ? <View style={styles.voucher}><Text style={styles.sectionTitle}>Voucher cho lần mua tiếp theo</Text><Text style={styles.voucherCode}>{invoice.earnedVoucherCode}</Text><Text style={styles.copy}>Giảm {new Intl.NumberFormat("vi-VN").format(invoice.earnedVoucherAmountVnd ?? 0)}đ cho đơn từ 1 triệu.</Text></View> : null}
+        {invoice.status === "paid" ? <View style={styles.section}><Text style={styles.sectionTitle}>Bước tiếp theo cho website</Text><Text style={styles.copy}>Xem checklist ra mắt và kiểm tra các nút, nội dung trước khi gửi đường dẫn cho khách.</Text><Button label="Mở checklist ra mắt" variant="secondary" icon="book-open" onPress={() => router.push("/journal?slug=dua-website-len-mang" as Href)} /></View> : null}
         {invoice.status === "pending" ? <View style={styles.section}><Text style={styles.sectionTitle}>Thanh toán</Text><Text style={styles.copy}>{detail?.gateways.mode === "demo" ? "Ở bước kế tiếp, Stripe yêu cầu nhập thông tin thẻ thử nghiệm; VNPay yêu cầu chọn ngân hàng và nhập OTP thử nghiệm. Tuyệt đối không dùng thông tin thật." : "Sau khi trở lại ứng dụng, bấm Tải lại để kiểm tra kết quả từ cổng."}</Text><Button label="Tải lại trạng thái" variant="secondary" icon="refresh-cw" onPress={() => void lookup()} disabled={busy} />{detail?.gateways.stripe && (!invoice.provider || invoice.provider === "stripe") ? <Button label="Thanh toán với Stripe" onPress={() => void mutate("checkout", { provider: "stripe" })} disabled={busy} /> : null}{detail?.gateways.vnpay && (!invoice.provider || invoice.provider === "vnpay") ? <Button label="Thanh toán với VNPay" onPress={() => void mutate("checkout", { provider: "vnpay" })} disabled={busy} /> : null}{detail?.gateways.mode === "demo" ? <Text style={styles.notice}>Môi trường kiểm thử: đơn, email và voucher được cập nhật nhưng không thu tiền thật.</Text> : !detail?.gateways.stripe && !detail?.gateways.vnpay ? <Text style={styles.notice}>Cổng thanh toán thử nghiệm chưa được cấu hình. Bạn chưa bị tính tiền.</Text> : null}</View> : null}
         {invoice.status === "pending" || invoice.status === "paid" ? <View style={styles.section}><Text style={styles.sectionTitle}>{invoice.status === "pending" ? "Hủy đơn" : "Yêu cầu hoàn tiền"}</Text><Text style={styles.copy}>Nêu lý do để HOSTORA kiểm tra và xử lý.</Text><TextInput accessibilityLabel="Lý do yêu cầu" multiline style={[styles.input, styles.reason]} value={reason} onChangeText={setReason} maxLength={500} placeholder="Nhập lý do của bạn" placeholderTextColor={colors.muted} /><Button label={invoice.status === "pending" ? "Gửi yêu cầu hủy" : "Gửi yêu cầu hoàn tiền"} variant="secondary" icon="rotate-ccw" disabled={busy || reason.trim().length < (invoice.status === "pending" ? 5 : 8)} onPress={() => Alert.alert("Xác nhận yêu cầu", "HOSTORA sẽ ghi nhận và xem xét yêu cầu này.", [{ text: "Để sau", style: "cancel" }, { text: "Gửi yêu cầu", onPress: () => void mutate(invoice.status === "pending" ? "cancel" : "refund-request", { reason }) }])} /></View> : null}
         <View style={styles.section}><Text style={styles.sectionTitle}>Lịch sử</Text>{detail?.events.map((event) => <View key={event.id} style={styles.event}><View style={styles.dot} /><View style={{ flex: 1 }}><Text style={styles.eventText}>{event.detail}</Text><Text style={styles.eventTime}>{new Date(event.createdAt).toLocaleString("vi-VN")}</Text></View></View>)}</View>
       </View> : !saleRequest ? <Text style={styles.help}>Giá dịch vụ đối tác trên danh mục chỉ để tham khảo. Hóa đơn HOSTORA ghi số tiền đã thỏa thuận riêng.</Text> : null}
-    </ScrollView>
+    </CinematicScrollView>
   </SafeAreaView>;
 }
 

@@ -1,14 +1,22 @@
 import { zipSync, strToU8 } from "fflate";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { getStudioProject, renderStudioProject } from "@/lib/site-studio-store";
+import {
+  getStudioProject,
+  isStudioProjectOwner,
+  renderStudioProject,
+} from "@/lib/site-studio-store";
+import { customerFromRequest } from "@/lib/customer/auth";
 
 export const runtime = "nodejs";
 
 export async function GET(
-  _request: Request,
+  request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
+  const customer = customerFromRequest(request);
+  if (!customer)
+    return Response.json({ error: "Bạn cần đăng nhập để tải mã nguồn." }, { status: 401 });
   const { id } = await context.params;
   const project = await getStudioProject(id);
   if (!project)
@@ -16,16 +24,23 @@ export async function GET(
       { error: "Không tìm thấy bản website này." },
       { status: 404 },
     );
+  if (!isStudioProjectOwner(project, customer.id))
+    return Response.json(
+      { error: "Website này không thuộc tài khoản của bạn." },
+      { status: 403 },
+    );
 
   const html = renderStudioProject(project);
   const vendorRoot = path.join(process.cwd(), "public", "vendor");
-  const [three, threeCore, gsap, scrollTrigger, threeLicense] =
+  const [three, threeCore, gsap, scrollTrigger, anime, threeLicense, animeLicense] =
     await Promise.all([
       readFile(path.join(vendorRoot, "three.module.js")),
       readFile(path.join(vendorRoot, "three.core.js")),
       readFile(path.join(vendorRoot, "gsap.min.js")),
       readFile(path.join(vendorRoot, "ScrollTrigger.min.js")),
+      readFile(path.join(vendorRoot, "anime.esm.min.js")),
       readFile(path.join(vendorRoot, "THREE-LICENSE.txt")),
+      readFile(path.join(vendorRoot, "ANIME-LICENSE.txt")),
     ]);
   const archive = zipSync({
     "index.html": strToU8(html),
@@ -33,9 +48,11 @@ export async function GET(
     "vendor/three.core.js": new Uint8Array(threeCore),
     "vendor/gsap.min.js": new Uint8Array(gsap),
     "vendor/ScrollTrigger.min.js": new Uint8Array(scrollTrigger),
+    "vendor/anime.esm.min.js": new Uint8Array(anime),
     "vendor/THREE-LICENSE.txt": new Uint8Array(threeLicense),
+    "vendor/ANIME-LICENSE.txt": new Uint8Array(animeLicense),
     "README.md": strToU8(
-      `# ${project.idea.brand}\n\nĐây là website tĩnh do HOSTORA Studio tạo. Giải nén toàn bộ thư mục rồi mở index.html qua một web server tĩnh để xem đầy đủ hiệu ứng 3D. Bạn có thể tải nguyên thư mục lên hosting.\n\nWebsite dùng Three.js và GSAP cục bộ trong thư mục vendor, không cần CDN. Nội dung mẫu cần được bạn kiểm tra và thay bằng thông tin chính thức trước khi xuất bản.`,
+      `# ${project.idea.brand}\n\nĐây là website tĩnh do HOSTORA Studio tạo. Giải nén toàn bộ thư mục rồi mở index.html qua một web server tĩnh để xem đầy đủ hiệu ứng. Bạn có thể tải nguyên thư mục lên hosting.\n\nWebsite dùng Three.js, GSAP và Anime.js cục bộ trong thư mục vendor, không cần CDN. Nội dung mẫu cần được bạn kiểm tra và thay bằng thông tin chính thức trước khi xuất bản.`,
     ),
   });
   const filename =
