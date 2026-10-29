@@ -13,7 +13,7 @@ Ngày đánh giá: 29/10/2026. Mục tiêu: Đề 01, rubric người dùng cung
 | Chức năng, đúng nghiệp vụ | 24/25 | 24/25 | Giữ trọn 5 chức năng, phân biệt tiền trả trước/gia hạn và không có gói phù hợp; xác minh thêm giá/điều kiện trước nộp. |
 | Kỹ thuật, chất lượng mã | 19/20 | 19/20 | Đã có build tái lập, stream body limit, header/CSP, quota/Turnstile và test; vẫn cần chứng minh edge/origin production. |
 | AI, kiểm soát đầu ra | 12/15 | 14/15 | Tập độc lập có paraphrase/phủ định/mâu thuẫn, đo cold/warm và nhiều lượt đồng thời; không có claim thương mại sai trong tập chấm. |
-| Kiểm thử, xử lý lỗi | 14/15 | 14/15 | 220 unit, 47 E2E và 12 trạng thái UI đạt; vẫn thiếu load/stress và bộ native tự động do quyền Maestro. |
+| Kiểm thử, xử lý lỗi | 14/15 | 14/15 | 220 unit, 47 E2E, 12 trạng thái UI và load/stress AI 1–32 đồng thời đã đo; vẫn thiếu bộ native tự động do quyền Maestro và soak/mạng ngoài. |
 | Làm chủ Vibe Coding, phản biện | 10/15 tạm tính | 14/15 | Bảo vệ kiến trúc và một chuỗi prompt thật → lỗi thật → test → quyết định sửa; trả lời câu hỏi trực tiếp. |
 | UI/UX | 5/5 | 5/5 | Contrast/ARIA web-admin và overlay accessibility Android đã sửa; audit tự động xanh, vẫn cần TalkBack/usability độc lập. |
 | Triển khai, bàn giao | 3/5 | 5/5 | URL HTTPS hoạt động từ mạng ngoài, source/APK/video cùng phiên bản, cài máy khác theo README, có phương án demo dự phòng. |
@@ -29,6 +29,7 @@ Ngày đánh giá: 29/10/2026. Mục tiêu: Đề 01, rubric người dùng cung
 - Accessibility đã sửa: contrast/ARIA web-admin và Stack native không còn mount phía sau intro/onboarding. Android source vẫn qua typecheck/lint và bản 2.1.0/versionCode 22 trên Redmi không có crash/fatal trong lượt kiểm tra gần nhất.
 - Hardening mới: CSP/header, giới hạn body theo stream, quota `429 + Retry-After`, canonical origin, proxy trust opt-in và Turnstile thích ứng cho login/register/forgot. Stripe raw webhook, OCR lớn, replay/timeout/misconfiguration đều có test hồi quy.
 - `pnpm audit --prod` không báo advisory đã biết. Runtime production local trả đúng security headers và `413` cho JSON 20 KiB. Cloudflare WAF/origin lock production **chưa được bật hoặc xác minh** trong lượt này.
+- Load/stress staging production cô lập đã đo từ 1 đến 32 request AI đồng thời. Throughput bão hòa khoảng 0,35 request/giây; p95 tăng từ 3,16 giây ở concurrency 1 lên 45,89 giây ở concurrency 16. Ở concurrency 32 có 1/32 request trả 503 tại khoảng 90,1 giây. Đây là bằng chứng queue/model đang là nút thắt, không phải năng lực production ngoài mạng.
 - AI smoke thật đạt. Bộ advisor thật **24/25**: ca đầu HTTP 503 sau khoảng 90 giây; các ca sau hoàn tất. Trung vị quan sát khoảng 3,08 giây, p95 trong tập này khoảng 61,53 giây. Đây là tập nhỏ, tuần tự, không phải p95 production. Không được dùng con số 25/25 của lần trước thay thế.
 - Mobile MCP đã initialize, khám phá Redmi, đọc tree và chụp ảnh qua giao thức MCP thật. Luồng native từ cold launch/intro → trang chủ → bốn bước → kết quả **đạt**, có bảng giá tải được và ảnh từng bước. Test không gửi lead hoặc thanh toán.
 - Kết nối app ban đầu không tải catalog: app đã trỏ `127.0.0.1:3000` nhưng không có ADB reverse. Đã tạo `adb reverse tcp:3000 tcp:3000` và xác nhận màn Kết nối dịch vụ “SẴN SÀNG”. Đây là cấu hình phát triển USB, không chứng minh truy cập Internet.
@@ -144,4 +145,4 @@ pnpm android:update
 - [URL public trong lượt này](../../output/playwright/full-review-tooling/public-check.json).
 - [Maestro đang bị chặn](../../output/playwright/full-review-tooling/maestro-blocker.log).
 
-Giới hạn: chưa so sánh 264 đối thủ, chưa chấm thuyết trình thật, chưa pentest độc lập hay xác minh Cloudflare production, chưa chạy transaction Stripe/VNPay merchant thật, chưa load/stress test và chưa có usability độc lập. 87/100 là mô phỏng có bằng chứng, không phải kết quả ban tổ chức.
+Giới hạn: chưa so sánh 264 đối thủ, chưa chấm thuyết trình thật, chưa pentest độc lập hay xác minh Cloudflare production, chưa chạy transaction Stripe/VNPay merchant thật, chưa load test mạng ngoài/multi-node hoặc soak dài hạn và chưa có usability độc lập. 87/100 là mô phỏng có bằng chứng, không phải kết quả ban tổ chức.

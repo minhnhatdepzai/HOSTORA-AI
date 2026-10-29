@@ -367,6 +367,7 @@ docs/architecture/           Sơ đồ Archify tương tác
 - [Đánh giá AI và phễu chuyển đổi](docs/AI_EVALUATION.md)
 - [Báo cáo bảo mật](docs/SECURITY_REVIEW.md)
 - [Hardening Cloudflare, Turnstile và chống abuse](docs/SECURITY_HARDENING_2026-10-29.md)
+- [Load/stress test AI staging](docs/AI_LOAD_TEST_2026-10-29.md)
 - [Báo cáo QA](docs/QA_REPORT.md)
 - [Kịch bản demo](docs/DEMO_SCRIPT.md)
 - [Thiết lập môi trường](docs/ENVIRONMENT_SETUP.md)

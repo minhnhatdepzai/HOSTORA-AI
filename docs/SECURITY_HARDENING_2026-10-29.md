@@ -114,12 +114,12 @@ Không có repo nào được kéo nguyên vào dự án và không thêm depend
 - **Fix:** khi scale, chuyển quota sang Redis/Valkey hoặc Cloudflare rate limiting.
 - **Mitigation/false-positive:** SQLite phù hợp deployment local-first một node; không gọi cơ chế này là distributed protection.
 
-### SEC-008 — Medium — Chưa load/stress test
+### SEC-008 — Medium — AI queue bão hòa trước khi timeout
 
-- **Location/evidence:** khoảng trống kiểm thử; chưa có artifact tải đồng thời/slow client/Ollama queue trong repo.
-- **Impact:** chưa biết ngưỡng suy giảm và khả năng phục hồi khi có traffic burst.
-- **Fix:** test staging bằng dữ liệu giả, ghi throughput/error/p95 và ngưỡng dừng an toàn.
-- **Mitigation/false-positive:** body stream limit và AI concurrency limit giảm blast radius nhưng không thay benchmark.
+- **Location/evidence:** [AI_LOAD_TEST_2026-10-29.md](AI_LOAD_TEST_2026-10-29.md); throughput giữ khoảng 0,34–0,35 request/giây từ concurrency 1 đến 16, trong khi p95 tăng từ 3,16 lên 45,89 giây. Ở concurrency 32 có 1/32 request trả 503 sau 90,108 giây.
+- **Impact:** traffic burst không làm tăng công suất nhưng giữ connection và tài nguyên lâu; người dùng có thể chờ gần 90 giây trước khi nhận lỗi.
+- **Fix:** semaphore 1–2 tác vụ structured AI, queue hữu hạn, deadline ngắn hơn và fail-fast `429/503 + Retry-After`; giữ wizard tất định hoạt động khi AI bận.
+- **Mitigation/false-positive:** không có OOM/crash trong benchmark loopback; đây vẫn chưa phải load test mạng ngoài, multi-node hoặc soak test dài hạn.
 
 ### SEC-009 — Low — Turnstile native chưa bật
 
