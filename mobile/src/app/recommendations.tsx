@@ -31,6 +31,7 @@ import {
   useRecommendedPlans,
   type RecommendedPlan,
 } from "@/lib/recommendations";
+import { getRecommendationDisclosure } from "@/lib/recommendation-disclosure";
 
 type ExplainResult = {
   summary: string;
@@ -70,7 +71,18 @@ export default function RecommendationsScreen() {
   const [phone, setPhone] = useState("");
   const [saved, setSaved] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const [costDetailsOpen, setCostDetailsOpen] = useState(false);
   const selectedPlan = ranked.find((plan) => plan.id === selected) ?? ranked[0];
+  const hasEligiblePlan = ranked.some(
+    (plan) => plan.eligibility === "eligible",
+  );
+  const disclosure = selectedPlan
+    ? getRecommendationDisclosure({
+        hasEligiblePlan,
+        upfrontBudgetProvided: requirements.upfrontBudget !== undefined,
+        plan: selectedPlan,
+      })
+    : null;
 
   async function shareSummary() {
     const lines = [
@@ -161,9 +173,38 @@ export default function RecommendationsScreen() {
         <View style={styles.content}>
           {status === "offline" && <Button label="Thử tải lại" icon="refresh-cw" onPress={retry} />}
           {status === "verified" && <Card style={{ gap: 10 }}>
-            <Text style={styles.formTitle}>{ranked.some((plan) => plan.eligibility === "eligible") ? "Có gói đáp ứng ngân sách lưu trữ" : "Chưa có gói đáp ứng ngân sách này"}</Text>
-            <Body>{ranked.some((plan) => plan.eligibility === "eligible") ? requirements.upfrontBudget === undefined ? "Mới so sánh ngân sách lưu trữ theo tháng. Bạn chưa nhập số tiền có thể trả trước; cần xác nhận tổng tiền, thuế và phí tên miền trước khi mua." : "Gói đáp ứng ngân sách lưu trữ và giới hạn trả trước đã nhập. Cần xác nhận thuế và phí tên miền trước khi mua." : "Các gói dưới đây chỉ để tham khảo. Bạn có thể sửa ngân sách hoặc trao đổi thêm với tư vấn viên."}</Body>
-            <Body>Điểm chỉ giúp so sánh theo dữ liệu đã công bố, không bảo đảm hiệu năng hay tổng giá thanh toán.</Body>
+            <Text style={styles.formTitle}>{hasEligiblePlan ? "Có gói đáp ứng ngân sách lưu trữ" : "Chưa có gói đáp ứng ngân sách này"}</Text>
+            <Body>{disclosure?.summary}</Body>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ expanded: costDetailsOpen }}
+              onPress={() => setCostDetailsOpen((current) => !current)}
+              style={({ pressed }) => [
+                styles.disclosureToggle,
+                pressed && styles.disclosureTogglePressed,
+              ]}
+            >
+              <Text style={styles.disclosureToggleText}>
+                {costDetailsOpen ? "Thu gọn chi phí" : "Xem chi tiết chi phí"}
+              </Text>
+              <Feather
+                name={costDetailsOpen ? "chevron-up" : "chevron-down"}
+                color={colors.primary}
+                size={17}
+              />
+            </Pressable>
+            {costDetailsOpen ? (
+              <View style={styles.disclosureDetails}>
+                {disclosure?.details.map((detail) => (
+                  <Text key={detail} style={styles.disclosureDetail}>
+                    {detail}
+                  </Text>
+                ))}
+                <Text style={styles.disclosureDetail}>
+                  Điểm chỉ hỗ trợ so sánh theo dữ liệu đã công bố, không bảo đảm hiệu năng.
+                </Text>
+              </View>
+            ) : null}
             <Button label="Sửa nhu cầu và ngân sách" variant="secondary" onPress={() => router.push("/(tabs)/consult")} />
           </Card>}
           {ranked.map((plan, index) => (
@@ -459,6 +500,29 @@ const styles = StyleSheet.create({
     marginTop: 9,
   },
   content: { paddingHorizontal: 18, paddingTop: 16, gap: 14 },
+  disclosureToggle: {
+    minHeight: 44,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: colors.line,
+    paddingVertical: 10,
+  },
+  disclosureTogglePressed: { opacity: 0.65 },
+  disclosureToggleText: {
+    color: colors.primary,
+    fontFamily: "BeVietnamPro_700Bold",
+    fontSize: 11,
+  },
+  disclosureDetails: { gap: 7 },
+  disclosureDetail: {
+    color: colors.muted,
+    fontFamily: "BeVietnamPro_400Regular",
+    fontSize: 10,
+    lineHeight: 17,
+  },
   purchaseHint: {
     color: colors.muted,
     fontFamily: "BeVietnamPro_400Regular",
