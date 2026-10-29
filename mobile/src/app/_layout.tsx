@@ -26,6 +26,7 @@ import {
   ONBOARDING_STORAGE_KEY,
   shouldShowOnboarding,
 } from "@/lib/onboarding";
+import { getRoutedContentAccessibility } from "@/lib/app-accessibility";
 
 void SplashScreen.preventAutoHideAsync();
 
@@ -70,6 +71,9 @@ export default function RootLayout() {
   if (!loaded || !onboardingReady || !motionReady) return null;
 
   const playingIntro = showIntro && !reduceMotion;
+  const routedContentAccessibility = getRoutedContentAccessibility(
+    playingIntro || showOnboarding,
+  );
 
   function finishOnboarding() {
     setShowOnboarding(false);
@@ -89,29 +93,31 @@ export default function RootLayout() {
               style={showOnboarding || playingIntro ? "light" : "dark"}
               hidden={playingIntro}
             />
-            <Stack
-              screenOptions={{
-                headerShown: false,
-                contentStyle: { backgroundColor: colors.canvas },
-                animation: reduceMotion ? "none" : "fade_from_bottom",
-              }}
-            >
-              <Stack.Screen name="(tabs)" />
-              <Stack.Screen name="recommendations" />
-              <Stack.Screen name="domain" />
-              <Stack.Screen name="analyzer" />
-              <Stack.Screen name="knowledge" />
-              <Stack.Screen name="journal" />
-              <Stack.Screen name="seo" />
-              <Stack.Screen name="readiness" />
-              <Stack.Screen name="settings" />
-              <Stack.Screen name="orders" />
-              <Stack.Screen name="studio" />
-              <Stack.Screen name="account" />
-              <Stack.Screen name="account-login" />
-              <Stack.Screen name="account-register" />
-              <Stack.Screen name="account-forgot" />
-            </Stack>
+            <View style={styles.routedContent} {...routedContentAccessibility}>
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                  contentStyle: { backgroundColor: colors.canvas },
+                  animation: reduceMotion ? "none" : "fade_from_bottom",
+                }}
+              >
+                <Stack.Screen name="(tabs)" />
+                <Stack.Screen name="recommendations" />
+                <Stack.Screen name="domain" />
+                <Stack.Screen name="analyzer" />
+                <Stack.Screen name="knowledge" />
+                <Stack.Screen name="journal" />
+                <Stack.Screen name="seo" />
+                <Stack.Screen name="readiness" />
+                <Stack.Screen name="settings" />
+                <Stack.Screen name="orders" />
+                <Stack.Screen name="studio" />
+                <Stack.Screen name="account" />
+                <Stack.Screen name="account-login" />
+                <Stack.Screen name="account-register" />
+                <Stack.Screen name="account-forgot" />
+              </Stack>
+            </View>
             {playingIntro ? (
               <BrandFilm onFinish={() => setShowIntro(false)} />
             ) : showOnboarding ? (
@@ -127,3 +133,7 @@ export default function RootLayout() {
     </SafeAreaProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  routedContent: { flex: 1 },
+});
