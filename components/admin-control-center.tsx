@@ -394,7 +394,7 @@ export function AdminControlCenter({ catalog }: { catalog: CatalogSummary }) {
               </button>
               <div>
                 <p className="text-sm font-black">Bảng điều hành</p>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-600">
                   Theo dõi và xử lý công việc trong ngày
                 </p>
               </div>
@@ -577,7 +577,7 @@ export function AdminControlCenter({ catalog }: { catalog: CatalogSummary }) {
                     Trạng thái khách đăng ký
                   </h2>
                 </div>
-                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500">
+                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">
                   {leads.length} mục
                 </span>
               </div>

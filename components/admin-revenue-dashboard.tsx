@@ -94,7 +94,11 @@ export function AdminRevenueDashboard() {
             <article><span>So với 30 ngày trước</span><strong className={differencePositive ? "is-up" : "is-down"}>{data ? `${differencePositive ? "+" : ""}${formatVnd(data.differenceVnd)}` : "—"}</strong><small>{data?.differencePercent == null ? "Chưa có kỳ trước để so sánh" : `${data.differencePercent > 0 ? "+" : ""}${data.differencePercent}%`}</small></article>
             <article><span>Ước tính 30 ngày tới</span><strong>{data?.forecast.available ? formatVnd(data.forecast.next30DaysVnd) : "Chưa đủ dữ liệu"}</strong><small>{forecastNote}</small></article>
           </div>
-          <div className="admin-revenue-chart" aria-label="Biểu đồ doanh thu 30 ngày">
+          <div
+            className="admin-revenue-chart"
+            role="img"
+            aria-label="Biểu đồ doanh thu 30 ngày"
+          >
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData} margin={{ top: 12, right: 8, left: -12, bottom: 0 }}>
                 <defs><linearGradient id="revenueFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#0B6B5D" stopOpacity=".32"/><stop offset="1" stopColor="#0B6B5D" stopOpacity="0"/></linearGradient></defs>

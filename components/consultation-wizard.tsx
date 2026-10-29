@@ -160,7 +160,7 @@ export function ConsultationWizard() {
                   >
                     <div>
                       <p className="font-black">{label}</p>
-                      <p className="mt-1 text-sm text-slate-500">{copy}</p>
+                      <p className="mt-1 text-sm text-slate-600">{copy}</p>
                     </div>
                     {data.websiteType === value && (
                       <span className="grid size-7 place-items-center rounded-full bg-blue text-white">
@@ -288,7 +288,7 @@ export function ConsultationWizard() {
                     className={`rounded-2xl border p-6 text-left ${data.needsDomain === value ? "border-blue bg-blue/5" : "border-slate-200"}`}
                   >
                     <p className="font-black">{String(label)}</p>
-                    <p className="mt-2 text-sm leading-6 text-slate-500">
+                    <p className="mt-2 text-sm leading-6 text-slate-600">
                       {String(copy)}
                     </p>
                   </button>

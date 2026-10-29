@@ -338,7 +338,7 @@ export function AdminServiceManager() {
                   <h3 className="font-black">{product.name}</h3>
                   <StatusBadge status={product.status} />
                 </div>
-                <p className="mt-1 text-xs font-bold text-slate-400">
+                <p className="mt-1 text-xs font-bold text-slate-600">
                   {product.provider} · {categoryLabels[product.category]}
                 </p>
                 <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">
@@ -346,7 +346,7 @@ export function AdminServiceManager() {
                 </p>
               </div>
               <div>
-                <p className="text-xs font-bold text-slate-400 uppercase">
+                <p className="text-xs font-bold text-slate-600 uppercase">
                   Giá từ
                 </p>
                 <p className="mt-1 font-black">
@@ -359,7 +359,7 @@ export function AdminServiceManager() {
                 </p>
               </div>
               <div>
-                <p className="text-xs font-bold text-slate-400 uppercase">
+                <p className="text-xs font-bold text-slate-600 uppercase">
                   Kiểm tra giá
                 </p>
                 <p className="mt-1 text-sm font-bold">
@@ -367,7 +367,7 @@ export function AdminServiceManager() {
                     "vi-VN",
                   )}
                 </p>
-                <p className="mt-1 truncate text-xs text-slate-400">
+                <p className="mt-1 truncate text-xs text-slate-600">
                   Mã: {product.id}
                 </p>
               </div>
