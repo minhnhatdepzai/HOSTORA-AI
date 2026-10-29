@@ -1,4 +1,8 @@
 import { expect, test } from "@playwright/test";
+import { authenticateAdmin } from "./helpers/admin-session";
+import { readFileSync } from "node:fs";
+
+const mobileVersion = (JSON.parse(readFileSync(new URL("../../mobile/app.json", import.meta.url), "utf8")) as { expo: { version: string } }).expo.version;
 
 test("wizard produces three recommendations", async ({ page }) => {
   await page.goto("/consultation");
@@ -11,15 +15,16 @@ test("wizard produces three recommendations", async ({ page }) => {
   await page.getByRole("button", { name: "Tiếp tục" }).click();
   await page.getByRole("button", { name: "Xem đề xuất" }).click();
   await expect(page).toHaveURL(/recommendations/);
-  await expect(page.getByText("PHÙ HỢP NHẤT")).toBeVisible();
+  await expect(page.getByText("ƯU TIÊN THEO NGÂN SÁCH LƯU TRỮ")).toBeVisible();
   await expect(page.locator("article").filter({ hasText: "/100" })).toHaveCount(
     3,
   );
 });
 
 test("lead is persisted and can be deleted with confirmation", async ({
-  page,
+  page, context, baseURL,
 }) => {
+  await authenticateAdmin(context, baseURL!);
   await page.goto("/recommendations");
   await page.getByLabel("Họ tên").fill("Nguyễn Minh");
   await page.getByLabel("Số điện thoại").fill("0912345678");
@@ -41,24 +46,32 @@ test("landing works on mobile without horizontal overflow", async ({
   }));
   expect(sizes.scroll).toBeLessThanOrEqual(sizes.client + 1);
   await expect(
-    page.getByRole("heading", { name: /Chọn dịch vụ cho trang web/ }),
+    page.getByRole("heading", { name: /Ý tưởng của bạn.*Một nơi để bắt đầu/ }),
   ).toBeVisible();
 });
 
-test("landing exposes a directly downloadable Android APK", async ({
+test("landing offers the current Android APK", async ({
   page,
   request,
 }) => {
   await page.goto("/");
   const link = page.getByRole("link", { name: "Tải ứng dụng Android" });
   await expect(link).toHaveAttribute("href", "/downloads/android");
-  const response = await request.head("/downloads/android");
+  const response = await request.head("/downloads/android", {
+    maxRedirects: 0,
+  });
+  if (response.status() === 307) {
+    expect(response.headers().location).toBe(
+      `https://github.com/minhnhatdepzai/HOSTORA-AI/releases/download/v2.0.9-review-20261029-r2/HOSTORA-AI-${mobileVersion}-arm64.apk`,
+    );
+    return;
+  }
   expect(response.status()).toBe(200);
   expect(response.headers()["content-type"]).toContain(
     "android.package-archive",
   );
   expect(response.headers()["content-disposition"]).toContain(
-    "HOSTORA-AI-2.0.5-arm64.apk",
+    `HOSTORA-AI-${mobileVersion}-arm64.apk`,
   );
   expect(Number(response.headers()["content-length"])).toBeGreaterThan(
     30_000_000,
@@ -76,8 +89,9 @@ test("AI gives customers without a website a direct path to the site studio", as
   const action = page.getByRole("link", { name: "Tạo trang web ngay" });
   await expect(action).toBeVisible();
   await action.click();
-  await expect(page).toHaveURL(/\/website-studio$/);
+  await expect(page).toHaveURL(/\/account\/login\?next=/);
   await expect(
-    page.getByRole("heading", { name: "Mô tả ý tưởng. Nhìn thấy trang web." }),
+    page.getByRole("heading", { name: "Mở sổ dịch vụ" }),
   ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Đăng nhập" })).toBeVisible();
 });

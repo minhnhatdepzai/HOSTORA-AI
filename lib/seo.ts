@@ -1,6 +1,6 @@
 export type SeoFinding = {
   id: string;
-  group: "indexability" | "content" | "technical" | "social";
+  group: "indexability" | "content" | "technical" | "social" | "geo";
   label: string;
   status: "pass" | "warning" | "fail";
   impact: "high" | "medium" | "low";
@@ -39,7 +39,7 @@ function status(
 export function auditSeoHtml(
   html: string,
   url: URL,
-  discovery: { robots: boolean; sitemap: boolean },
+  discovery: { robots: boolean; sitemap: boolean; llmsTxt?: boolean },
 ) {
   const title = decode(capture(html, /<title[^>]*>([^<]*)<\/title>/i));
   const description = decode(
@@ -243,6 +243,29 @@ export function auditSeoHtml(
       detail: `Tìm thấy ${internalLinks} liên kết giúp khách đi tới nội dung khác trong cùng website.`,
     },
   ];
+  if (typeof discovery.llmsTxt === "boolean") {
+    findings.push(
+      status(
+        discovery.llmsTxt,
+        "Có tài liệu llms.txt giúp trợ lý AI nhận diện nội dung chính thức.",
+        "Chưa có llms.txt để trợ lý AI đọc phạm vi sản phẩm và nguồn chính thức.",
+        "medium",
+        "llms-txt",
+        "geo",
+        "Tài liệu cho trợ lý AI",
+      ),
+      status(
+        schemaTypes.has("Organization") &&
+          (schemaTypes.has("WebSite") || schemaTypes.has("WebApplication")),
+        "Đã khai báo thực thể thương hiệu và website để máy hiểu ngữ cảnh.",
+        "Thiếu thực thể thương hiệu hoặc website trong dữ liệu cấu trúc.",
+        "medium",
+        "entity-schema",
+        "geo",
+        "Ngữ cảnh thương hiệu cho AI",
+      ),
+    );
+  }
   const weights = { high: 3, medium: 2, low: 1 } as const;
   const earned = findings.reduce(
     (sum, finding) =>

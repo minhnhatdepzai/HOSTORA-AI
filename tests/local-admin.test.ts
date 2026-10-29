@@ -39,7 +39,7 @@ describe("local admin data", () => {
         },
       ]),
     );
-    expect(leadsToCsv([lead!])).toContain("'  =HYPERLINK");
+    expect(leadsToCsv([lead!])).toContain("'=HYPERLINK");
     expect(leadsToCsv([lead!])).toContain("'+84900000000");
   });
 });

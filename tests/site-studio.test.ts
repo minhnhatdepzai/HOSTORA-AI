@@ -34,15 +34,59 @@ test("site idea input accepts custom hex colors and rejects unsafe values", () =
     true,
   );
   expect(
-    siteIdeaSchema.safeParse({ ...idea, idea: "x".repeat(501) }).success,
+    siteIdeaSchema.safeParse({ ...idea, idea: "x".repeat(1001) }).success,
   ).toBe(false);
 });
 
 test("fallback copy stays within the schema for maximum length customer input", () => {
   const longIdea = { ...idea, brand: "A".repeat(60), idea: "B".repeat(500) };
   const brief = buildFallbackBrief(longIdea);
+  const parsed = siteBriefSchema.safeParse(brief);
+  if (!parsed.success) throw new Error(JSON.stringify(parsed.error.issues));
+  expect(brief.aboutCopy).toContain(longIdea.brand);
+});
+
+test("fallback uses separate customer facts across the story, offer and next step", () => {
+  const described = {
+    ...idea,
+    idea: "Quán cà phê yên tĩnh cho người làm việc gần văn phòng. Menu có cà phê pha máy và đồ uống không cà phê. Khách xem ảnh không gian rồi gửi yêu cầu đặt bàn.",
+  };
+  const brief = buildFallbackBrief(described);
+  expect(brief.subheadline).toContain("Quán cà phê yên tĩnh");
+  expect(brief.offerCopy).toContain("Menu có cà phê pha máy");
+  expect(brief.audienceCopy).toContain("Khách xem ảnh không gian");
+  expect(brief.offerCopy).not.toContain("Nội dung chi tiết");
+});
+
+test("structured customer details shape different chapters without invented claims", () => {
+  const described = {
+    ...idea,
+    story: "Tôi bắt đầu quán khi cần một chỗ yên tĩnh để đọc sách sau giờ làm.",
+    offerings: "Menu có cà phê pha máy và trà nóng.",
+    customerAction: "Khách xem menu rồi gửi yêu cầu đặt bàn.",
+  };
+  expect(siteIdeaSchema.safeParse(described).success).toBe(true);
+  const brief = buildFallbackBrief(described);
+  expect(brief.aboutCopy).toContain("đọc sách sau giờ làm");
+  expect(brief.offerCopy).toContain("trà nóng");
+  expect(brief.audienceCopy).toContain("gửi yêu cầu đặt bàn");
+  expect(unsupportedStudioClaims(described, brief)).toEqual([]);
+  const html = buildPreviewHtml(described, brief);
+  expect(html).toContain('data-reveal-words');
+  expect(html).toContain("window.__siteMotion.chapter = chapter");
+  expect(html).toContain("satellite.position.x");
+});
+
+test("short optional details still produce a valid fallback brief", () => {
+  const brief = buildFallbackBrief({
+    ...idea,
+    story: "A",
+    offerings: "Ly",
+    customerAction: "Xem",
+    audience: "mọi",
+    idea: "Tôi bán cà phê.",
+  });
   expect(siteBriefSchema.safeParse(brief).success).toBe(true);
-  expect(brief.aboutCopy).toContain("bản demo");
 });
 
 test("compact preview is a seamless local cinematic website", () => {
@@ -53,6 +97,9 @@ test("compact preview is a seamless local cinematic website", () => {
   expect(html).toContain("/vendor/three.module.js");
   expect(html).toContain("/vendor/gsap.min.js");
   expect(html).toContain("ScrollTrigger");
+  expect(html).toContain("/vendor/anime.esm.min.js");
+  expect(html).toContain('id="cho-ban"');
+  expect(html).toContain('class="ambient-stage"');
   expect(html).toContain('class="interlude"');
 });
 
@@ -85,6 +132,12 @@ test("studio flags product promises absent from the customer's brief", () => {
         "Chúng tôi chuyên thu gom sản phẩm và là điểm đến tin cậy cho mọi người.",
     }),
   ).toEqual(expect.arrayContaining(["thu gom", "tin cậy"]));
+  expect(
+    unsupportedStudioClaims(idea, {
+      ...brief,
+      subheadline: "Không gian ấm cúng giúp bạn tập trung và giữ nhịp sống cân bằng.",
+    }),
+  ).toEqual(expect.arrayContaining(["ấm cúng", "giữ nhịp sống cân bằng"]));
 });
 
 test("hosting requirements stay deterministic and separate from generated copy", () => {

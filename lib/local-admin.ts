@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { normalizeContact } from "@/shared/contact";
 
 export const leadStatuses = [
   "new",
@@ -22,7 +23,7 @@ const intelligenceSchema = z.object({
 
 export const adminLeadSchema = z.object({
   id: z.string().min(1).max(100),
-  name: z.string().min(1).max(100),
+  name: z.string().trim().min(2).max(100),
   phone: z.string().min(3).max(30),
   plan: z.string().min(1).max(160),
   planId: z.string().max(100).optional(),
@@ -30,21 +31,42 @@ export const adminLeadSchema = z.object({
   status: z.enum(leadStatuses).catch("new"),
   note: z.string().max(500).optional(),
   intelligence: intelligenceSchema.optional(),
+}).superRefine((value, context) => {
+  const { error } = normalizeContact(value);
+  if (error) context.addIssue({ code: "custom", message: error });
 });
 
 export type AdminLead = z.infer<typeof adminLeadSchema>;
 
 export function readStoredLeads(raw: string | null): AdminLead[] {
-  if (!raw) return [];
+  return readStoredLeadReport(raw).leads;
+}
+
+export function readStoredLeadReport(raw: string | null): { leads: AdminLead[]; invalidCount: number } {
+  if (!raw) return { leads: [], invalidCount: 0 };
   try {
-    const parsed = z
-      .array(adminLeadSchema)
-      .max(1000)
-      .safeParse(JSON.parse(raw));
-    return parsed.success ? parsed.data : [];
+    const records: unknown = JSON.parse(raw);
+    if (!Array.isArray(records)) return { leads: [], invalidCount: 1 };
+    const leads: AdminLead[] = [];
+    let invalidCount = 0;
+    for (const record of records) {
+      const parsed = adminLeadSchema.safeParse(record);
+      if (parsed.success && !leads.some((lead) => lead.id === parsed.data.id)) leads.push(parsed.data);
+      else invalidCount++;
+    }
+    return { leads, invalidCount };
   } catch {
-    return [];
+    return { leads: [], invalidCount: 1 };
   }
+}
+
+/** Preserve damaged historical entries when editing valid records. Never overwrite broken JSON. */
+export function mergeStoredLeads(raw: string | null, next: AdminLead[]) {
+  const existing: unknown = JSON.parse(raw ?? "[]");
+  if (!Array.isArray(existing)) throw new Error("Dữ liệu lưu trữ cần được khôi phục trước khi ghi.");
+  const valid = next.map((lead) => adminLeadSchema.parse(lead));
+  const damaged = existing.filter((lead) => !adminLeadSchema.safeParse(lead).success);
+  return JSON.stringify([...valid, ...damaged]);
 }
 
 function csvCell(value: string) {

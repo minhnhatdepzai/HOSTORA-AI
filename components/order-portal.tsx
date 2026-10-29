@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { ArrowRight, Check, Clock3, CreditCard, RotateCcw, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { Invoice, InvoiceEvent, PaymentMethod, SaleRequest } from "@/lib/payments/types";
@@ -22,6 +23,7 @@ export function OrderPortal() {
   const [saleRequest, setSaleRequest] = useState<SaleRequest | null>(null);
   const [requestAccessCode, setRequestAccessCode] = useState("");
   const [requestReason, setRequestReason] = useState("");
+  const [loginRequired, setLoginRequired] = useState(false);
 
   async function lookupRequest(requestId: string, accessCode: string) {
     setBusy("request-lookup"); setMessage("");
@@ -81,11 +83,14 @@ export function OrderPortal() {
 
   async function mutate(path: string, body: object, action: string) {
     if (!detail) return;
-    setBusy(action); setMessage("");
+    setBusy(action); setMessage(""); setLoginRequired(false);
     try {
       const response = await fetch(`/api/payments/orders/${encodeURIComponent(detail.invoice.id)}/${path}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ accessCode: code, ...body }) });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Không xử lý được yêu cầu.");
+      if (!response.ok) {
+        if (response.status === 401) setLoginRequired(true);
+        throw new Error(data.error || "Không xử lý được yêu cầu.");
+      }
       if (data.url) { trackFunnelStep("checkout_started"); window.location.assign(data.url); return; }
       setReason("");
       await lookup(detail.invoice.id, code);
@@ -118,8 +123,9 @@ export function OrderPortal() {
           {invoice.discountVnd > 0 && <div className="order-discount"><span>Giá trước giảm: {money(invoice.subtotalVnd)}</span><strong>Voucher {invoice.voucherCode}: -{money(invoice.discountVnd)}</strong></div>}
           <div className="order-total"><span>{invoice.provider === "demo" ? "Tổng tiền xác nhận" : "Tổng tiền đã thỏa thuận"}</span><strong>{money(invoice.amountVnd)}</strong></div>
           {invoice.earnedVoucherCode && <div className="order-voucher"><span>Voucher cho lần mua tiếp theo</span><strong>{invoice.earnedVoucherCode} · {money(invoice.earnedVoucherAmountVnd ?? 0)}</strong><small>Đơn tiếp theo từ 1.000.000đ · hết hạn {invoice.earnedVoucherExpiresAt ? new Date(invoice.earnedVoucherExpiresAt).toLocaleDateString("vi-VN") : "—"}</small></div>}
+          {invoice.status === "paid" && <div className="order-next-step"><span>SAU KHI THANH TOÁN</span><h3>Website của bạn đang ở chặng nào?</h3><p>Đọc checklist ra mắt, rồi kiểm tra các nút và nội dung trước khi gửi đường dẫn cho khách.</p><Link href="/journal/dua-website-len-mang">Mở checklist ra mắt <ArrowRight size={16}/></Link></div>}
           {invoice.status === "pending" && <div className="order-actions"><h3>Chọn cách thanh toán</h3><p>{detail?.gateways.mode === "demo" ? "Ở bước kế tiếp, Stripe yêu cầu nhập thông tin thẻ thử nghiệm; VNPay yêu cầu chọn ngân hàng và nhập OTP thử nghiệm. Tuyệt đối không dùng thông tin thật." : "Trang thanh toán mở tại cổng bảo mật. Trạng thái đơn được xác nhận sau khi cổng gửi kết quả về HOSTORA."}</p><div className="order-gateways">{(["stripe", "vnpay"] as PaymentMethod[]).map((provider) => <button key={provider} type="button" className="button-primary" disabled={Boolean(busy) || !detail?.gateways[provider] || Boolean(invoice.provider && invoice.provider !== provider)} onClick={() => void mutate("checkout", { provider }, provider)}>{provider === "stripe" ? "Thanh toán với Stripe" : "Thanh toán với VNPay"}</button>)}</div>{detail?.gateways.mode === "demo" ? <p className="order-demo-note"><ShieldCheck size={16} /> Môi trường kiểm thử: HOSTORA cập nhật đơn, email và voucher nhưng không thu tiền thật.</p> : !detail?.gateways.stripe && !detail?.gateways.vnpay ? <p className="order-unavailable"><Clock3 size={16} /> Cổng thanh toán sandbox chưa được cấu hình. Hóa đơn chưa bị tính tiền.</p> : null}</div>}
-          {invoice.status === "pending" || invoice.status === "paid" ? <div className="order-request"><h3>{invoice.status === "pending" ? "Cần hủy đơn?" : "Cần hoàn tiền?"}</h3><p>{invoice.status === "pending" ? "Nêu lý do trước khi thanh toán. Nếu phiên thanh toán đang mở, chúng tôi sẽ kiểm tra trước khi xác nhận hủy." : "Gửi lý do để quản trị viên xem xét. Tiền chỉ được ghi nhận đã hoàn khi cổng xác nhận."}</p><label className="label" htmlFor="order-reason">Lý do</label><textarea id="order-reason" className="input" rows={3} maxLength={500} value={reason} onChange={(event) => setReason(event.target.value)} /><button type="button" className="button-secondary" disabled={Boolean(busy) || reason.trim().length < (invoice.status === "pending" ? 5 : 8)} onClick={() => void mutate(invoice.status === "pending" ? "cancel" : "refund-request", { reason }, invoice.status === "pending" ? "cancel" : "refund")}>{invoice.status === "pending" ? "Gửi yêu cầu hủy" : "Gửi yêu cầu hoàn tiền"}<RotateCcw size={16} /></button></div> : null}
+          {invoice.status === "pending" || invoice.status === "paid" ? <div className="order-request"><h3>{invoice.status === "pending" ? "Cần hủy đơn?" : "Cần hoàn tiền?"}</h3><p>{invoice.status === "pending" ? "Nêu lý do trước khi thanh toán. Nếu phiên thanh toán đang mở, chúng tôi sẽ kiểm tra trước khi xác nhận hủy." : "Để bảo vệ đơn hàng, hãy đăng nhập bằng email nhận hóa đơn rồi gửi lý do. Tiền chỉ được ghi nhận đã hoàn khi cổng xác nhận."}</p>{loginRequired ? <p className="order-login-required"><Link href="/account/login?next=%2Forders">Đăng nhập để tiếp tục <ArrowRight size={15} /></Link></p> : null}<label className="label" htmlFor="order-reason">Lý do</label><textarea id="order-reason" className="input" rows={3} maxLength={500} value={reason} onChange={(event) => setReason(event.target.value)} /><button type="button" className="button-secondary" disabled={Boolean(busy) || reason.trim().length < (invoice.status === "pending" ? 5 : 8)} onClick={() => void mutate(invoice.status === "pending" ? "cancel" : "refund-request", { reason }, invoice.status === "pending" ? "cancel" : "refund")}>{invoice.status === "pending" ? "Gửi yêu cầu hủy" : "Gửi yêu cầu hoàn tiền"}<RotateCcw size={16} /></button></div> : null}
           <div className="order-history"><h3>Lịch sử đơn</h3><ol>{detail?.events.map((event) => <li key={event.id}><span className="order-event-dot"><Check size={11} /></span><div><strong>{event.detail}</strong><time>{new Date(event.createdAt).toLocaleString("vi-VN")}</time></div></li>)}</ol></div>
         </>}
       </section>

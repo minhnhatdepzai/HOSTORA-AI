@@ -16,7 +16,14 @@ const priority = (
 ): SeoAutomationTask["priority"] =>
   impact === "high" ? "P0" : impact === "medium" ? "P1" : "P2";
 
-const verifyOnly = new Set(["https", "indexable", "robots", "sitemap"]);
+const verifyOnly = new Set([
+  "https",
+  "indexable",
+  "robots",
+  "sitemap",
+  "llms-txt",
+  "entity-schema",
+]);
 
 function draftFor(
   finding: SeoFinding,
@@ -93,6 +100,14 @@ function instruction(finding: SeoFinding) {
     "internal-links": [
       "Thêm liên kết tới những nội dung liên quan trong cùng website.",
       "Tên liên kết dễ hiểu và trang được dẫn tới vẫn hoạt động.",
+    ],
+    "llms-txt": [
+      "Tạo tài liệu llms.txt ngắn, chỉ nêu nội dung chính thức, URL nội bộ và quy tắc không đoán dữ kiện.",
+      "Tệp llms.txt mở được, cập nhật cùng website và không chứa dữ liệu khách hàng.",
+    ],
+    "entity-schema": [
+      "Bổ sung Organization, WebSite hoặc WebApplication khớp thương hiệu thật.",
+      "Tên thương hiệu, URL và tính năng trong dữ liệu cấu trúc khớp nội dung khách nhìn thấy.",
     ],
   };
   return (

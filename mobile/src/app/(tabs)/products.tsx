@@ -3,22 +3,26 @@ import { toCustomerLanguage } from "@/lib/customer-language";
 import { Pressable } from "@/components/pressable";
 import { Feather } from "@expo/vector-icons";
 import { useLocalSearchParams, useFocusEffect, router } from "expo-router";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
   Modal,
   ScrollView,
+  type ScrollViewInstance,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Brand, Button } from "@/components/ui";
+import { Brand, Button, CinematicScrollView } from "@/components/ui";
 import { colors } from "@/constants/theme";
 import { getJson, postJson } from "@/lib/api";
 import { formatVnd } from "@/lib/catalog";
+import { useApp } from "@/context/app-context";
+import { createAppNotification } from "@/lib/app-notifications";
+import { useCustomerAuth } from "@/context/customer-auth-context";
 
 type Product = {
   id: string;
@@ -51,19 +55,10 @@ const categories = [
   { id: "ssl", label: "Bảo mật" },
   { id: "automation", label: "Tự động hóa" },
   { id: "workspace", label: "Văn phòng" },
+  { id: "backup", label: "Sao lưu" },
+  { id: "monitoring", label: "Theo dõi" },
+  { id: "security", label: "Bảo vệ web" },
 ];
-const categoryCopy: Record<string, string> = {
-  hosting: "Nơi lưu trữ và vận hành trang web của bạn.",
-  wordpress: "Lưu trữ chuẩn bị sẵn cho trang web WordPress.",
-  domain: "Địa chỉ để khách truy cập trang web.",
-  email: "Hộp thư dùng tên miền của doanh nghiệp.",
-  vps: "Máy chủ ảo cần người có kinh nghiệm quản trị.",
-  cloud: "Lưu trữ linh hoạt cho trang web đang tăng trưởng.",
-  ssl: "Bảo vệ kết nối với khách truy cập.",
-  automation: "Tự động hóa các việc lặp lại.",
-  workspace: "Công cụ cộng tác cho đội nhóm.",
-};
-
 export default function ProductsScreen() {
   const params = useLocalSearchParams<{ category?: string }>();
   const requested = params.category;
@@ -76,6 +71,8 @@ export default function ProductsScreen() {
 }
 
 function ProductsContent({ initialCategory }: { initialCategory: string }) {
+  const { pushNotification } = useApp();
+  const auth = useCustomerAuth();
   const [data, setData] = useState<ProductResponse>({
     products: offlineProducts as Product[],
     total: offlineProducts.length,
@@ -87,9 +84,16 @@ function ProductsContent({ initialCategory }: { initialCategory: string }) {
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState(initialCategory);
+  const filtersRef = useRef<ScrollViewInstance>(null);
+  const filterOffsets = useRef<Record<string, number>>({});
+  const revealCategory = useCallback((id: string) => {
+    filtersRef.current?.scrollTo({ x: Math.max(0, (filterOffsets.current[id] ?? 0) - 16), animated: true });
+  }, []);
   const [selected, setSelected] = useState<Product | null>(null);
-  const [contact, setContact] = useState("");
-  const [customerName, setCustomerName] = useState("");
+  const [contactDraft, setContact] = useState<string | null>(null);
+  const [customerNameDraft, setCustomerName] = useState<string | null>(null);
+  const contact = contactDraft ?? auth.customer?.email ?? "";
+  const customerName = customerNameDraft ?? auth.customer?.name ?? "";
   const [phone, setPhone] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [businessType, setBusinessType] = useState("");
@@ -208,6 +212,15 @@ function ProductsContent({ initialCategory }: { initialCategory: string }) {
         voucherCode,
       });
       setRequestResult(result);
+      pushNotification(
+        createAppNotification({
+          id: `request-${result.id}`,
+          kind: "order",
+          title: "Đã nhận yêu cầu mua",
+          message: `${selected.name} đã được ghi nhận. HOSTORA sẽ cập nhật báo giá và bước tiếp theo ngay trong ứng dụng.`,
+          route: `/orders?requestId=${encodeURIComponent(result.id)}&requestCode=${encodeURIComponent(result.accessCode)}`,
+        }),
+      );
       setContact("");
       setNote("");
     } catch (error) {
@@ -224,7 +237,7 @@ function ProductsContent({ initialCategory }: { initialCategory: string }) {
 
   return (
     <SafeAreaView style={styles.safe} edges={["top", "left", "right"]}>
-      <ScrollView
+      <CinematicScrollView
         contentContainerStyle={styles.scroll}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
@@ -258,16 +271,22 @@ function ProductsContent({ initialCategory }: { initialCategory: string }) {
           />
         </View>
         <ScrollView
+          ref={filtersRef}
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.filters}
+          onContentSizeChange={() => revealCategory(category)}
         >
           {categories.map((item) => (
             <Pressable
               key={item.id}
               accessibilityRole="button"
               accessibilityState={{ selected: category === item.id }}
-              onPress={() => setCategory(item.id)}
+              onLayout={(event) => {
+                filterOffsets.current[item.id] = event.nativeEvent.layout.x;
+                if (category === item.id) revealCategory(item.id);
+              }}
+              onPress={() => { setCategory(item.id); revealCategory(item.id); }}
               style={[
                 styles.filter,
                 category === item.id && styles.filterActive,
@@ -328,9 +347,7 @@ function ProductsContent({ initialCategory }: { initialCategory: string }) {
               </Text>
             </View>
             <Text style={styles.name}>{item.name}</Text>
-            <Text style={styles.summary}>
-              {toCustomerLanguage(categoryCopy[item.category] ?? item.summary)}
-            </Text>
+            <Text style={styles.summary}>{toCustomerLanguage(item.summary)}</Text>
             <View style={styles.priceBlock}>
               <Text style={styles.priceLabel}>GIÁ THAM KHẢO</Text>
               <Text style={styles.price}>
@@ -365,7 +382,7 @@ function ProductsContent({ initialCategory }: { initialCategory: string }) {
           </View>
         ))}
         {data ? <Text style={styles.disclaimer}>{data.disclaimer}</Text> : null}
-      </ScrollView>
+      </CinematicScrollView>
       <Modal
         visible={Boolean(selected)}
         transparent
@@ -605,6 +622,13 @@ function ProductsContent({ initialCategory }: { initialCategory: string }) {
                     ]}
                   />
                   <Text style={styles.modalLabel}>Mã voucher (nếu có)</Text>
+                  {auth.customer ? (
+                    <Text style={styles.modalHelp}>
+                      {auth.vouchers.some((item) => item.status === "active")
+                        ? "Voucher còn hiệu lực trong tài khoản sẽ được chọn tự động nếu bạn để trống."
+                        : "Voucher mới sẽ tự lưu vào tài khoản sau đơn đủ điều kiện."}
+                    </Text>
+                  ) : null}
                   <TextInput
                     accessibilityLabel="Mã voucher"
                     style={styles.modalInput}
@@ -1041,6 +1065,12 @@ const styles = StyleSheet.create({
     fontFamily: "BeVietnamPro_700Bold",
     fontSize: 11,
     marginTop: 4,
+  },
+  modalHelp: {
+    color: colors.primary,
+    fontFamily: "BeVietnamPro_500Medium",
+    fontSize: 10,
+    lineHeight: 17,
   },
   modalInput: {
     minHeight: 48,

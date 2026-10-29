@@ -6,7 +6,6 @@ import {
   AccessibilityInfo,
   Animated,
   Platform,
-  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -14,6 +13,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, radii } from "@/constants/theme";
 import { getNextOnboardingStep } from "@/lib/onboarding";
+import { CinematicScrollView } from "@/components/ui";
 
 const steps = [
   {
@@ -84,7 +84,7 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
           </Pressable>
         </View>
 
-        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
+        <CinematicScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
         <Animated.View style={[styles.visual, { opacity: progress, transform: [{ translateY: progress.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }] }]} accessibilityElementsHidden>
           <View style={styles.stepNumber}>
             <Text style={styles.stepNumberText}>0{index + 1}</Text>
@@ -109,7 +109,7 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
           </View>
         </Animated.View>
 
-        </ScrollView>
+        </CinematicScrollView>
         <View style={styles.footer}>
           <View style={styles.progress} accessibilityLabel={`Bước ${index + 1} trên 3`}>
             {steps.map((item, itemIndex) => (

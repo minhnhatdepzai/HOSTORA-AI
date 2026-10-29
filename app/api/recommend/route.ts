@@ -1,23 +1,16 @@
-import { recommendPlans } from "@/lib/recommendation";
+import { recommendPlans, recommendationDecision } from "@/lib/recommendation";
 import { parseRequestJson } from "@/lib/api-validation";
-import { z } from "zod";
-
-const schema = z.object({
-  websiteType: z.enum(["store", "company", "blog"]),
-  monthlyVisits: z.number().int().min(1).max(100000000),
-  monthlyBudget: z.number().int().min(10000).max(100000000),
-  needsDomain: z.boolean(),
-  ecommerce: z.boolean(),
-  notes: z.string().max(1000).optional(),
-});
+import { requirementsSchema } from "@/lib/requirements";
 export async function POST(request: Request) {
-  const parsed = await parseRequestJson(request, schema);
+  const parsed = await parseRequestJson(request, requirementsSchema);
   if (parsed.response) return parsed.response;
   const requirements = parsed.data;
+  const recommendations = recommendPlans(requirements);
   return Response.json({
     requirements,
-    recommendations: recommendPlans(requirements),
-    calculatedBy: "deterministic-weighted-ranking-v1",
+    recommendations,
+    decision: recommendationDecision(recommendations),
+    calculatedBy: "eligibility-first-ranking-v2",
     catalogVerifiedAt: "2026-10-23",
   });
 }

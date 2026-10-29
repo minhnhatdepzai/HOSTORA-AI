@@ -21,6 +21,13 @@ import { asksToPutContactInfoInModel, redactContactInfo } from "@/lib/privacy";
 import { retrieveDetailed } from "@/lib/rag";
 import { buildStudioProjectAdvice, studioProjectIdFromMessage } from "@/lib/chat-studio";
 import { getStudioProject } from "@/lib/site-studio-store";
+import {
+  chatMemorySchema,
+  mergeConversationMemory,
+  recommendationContextQuestion,
+  recentChatMessages,
+  type ChatMemoryMessage,
+} from "@/lib/chat-memory";
 import { z } from "zod";
 
 const schema = z.object({
@@ -32,7 +39,10 @@ const schema = z.object({
       }),
     )
     .min(1)
-    .max(20),
+    .max(24),
+  // The client sends only bounded recent turns plus deterministic facts. The
+  // summary is rebuilt on the server; client-provided prose is never trusted.
+  memory: chatMemorySchema.optional(),
 });
 
 function textAnswer(
@@ -52,10 +62,15 @@ function textAnswer(
 export async function POST(request: Request) {
   const parsed = await parseRequestJson(request, schema);
   if (parsed.response) return parsed.response;
-  const messages = parsed.data.messages.map((message) => ({
+  const inputMessages = parsed.data.messages.map((message) => ({
     ...message,
     content: redactContactInfo(message.content),
   }));
+  const memory = mergeConversationMemory(
+    parsed.data.memory,
+    inputMessages as ChatMemoryMessage[],
+  );
+  const messages = recentChatMessages(inputMessages as ChatMemoryMessage[]);
   const latest = messages.at(-1)?.content ?? "";
   if (asksToPutContactInfoInModel(latest))
     return textAnswer(
@@ -81,10 +96,18 @@ export async function POST(request: Request) {
     return textAnswer(journey.answer, journey.sources, journey.nextAction);
   const costGuard = unknownRenewalCostAnswer(latest);
   if (costGuard) return textAnswer(costGuard.answer, costGuard.sources);
-  const recommendationGuard = explicitChatRecommendation(latest);
+  const recommendationGuard = explicitChatRecommendation(
+    recommendationContextQuestion(latest, memory.facts),
+  );
   if (recommendationGuard)
     return textAnswer(recommendationGuard.answer, recommendationGuard.sources);
-  if (needsRecommendationRequirements(latest))
+  if (
+    needsRecommendationRequirements(latest) &&
+    (memory.facts.websiteType === null ||
+      memory.facts.monthlyVisits === null ||
+      memory.facts.monthlyBudget === null ||
+      memory.facts.needsDomain === null)
+  )
     return textAnswer(
       "Để chọn đúng một gói chính và hai gói thay thế, bạn cho mình biết: website bán hàng/giới thiệu/blog, lượt truy cập dự kiến mỗi tháng, ngân sách mỗi tháng và có cần tên miền không. Bạn cũng có thể mở mục Tư vấn để nhập bốn thông tin này. Khi chưa có nhu cầu cụ thể, mình không xếp hạng hay báo giá gói thay bạn.",
     );
@@ -192,6 +215,10 @@ export async function POST(request: Request) {
 - Với câu hỏi vận hành website hoặc khả năng xuất hiện trên Google: tách "Phát hiện", "Tác động", "Ưu tiên hành động" khi phù hợp.
 - Kết thúc bằng điều cần xác minh tiếp theo. Không tuyên bố bảo đảm chịu tải, SEO hạng 1 hoặc domain còn trống.
 </answer_contract>
+<conversation_memory>
+Đây là bộ nhớ yêu cầu được trích xuất tất định từ các lượt trước. Dùng để nối mạch câu chuyện khi khách nói “lúc nãy”, “gói đó” hoặc “ngân sách cũ”. Tin nhắn mới nhất có quyền sửa hoặc phủ định bộ nhớ này. Không coi bộ nhớ là giá, khuyến mại, tình trạng thanh toán hay dữ kiện thương mại; luôn dùng catalog hiện tại bên dưới cho các thông tin đó.
+${JSON.stringify({ summary: memory.summary, facts: memory.facts, unresolved: memory.unresolved })}
+</conversation_memory>
 <hosting_plans>${JSON.stringify(catalog)}</hosting_plans>
 <product_offerings>${JSON.stringify(products)}</product_offerings>
 <retrieved_knowledge>${JSON.stringify(knowledgeContext)}</retrieved_knowledge>`;

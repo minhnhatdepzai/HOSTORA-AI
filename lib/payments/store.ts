@@ -17,6 +17,7 @@ import type {
   PurchaseProfile,
   SaleRequest,
   SaleRequestPage,
+  RevenueAnalytics,
 } from "./types";
 
 type InvoiceRow = {
@@ -434,6 +435,58 @@ export class PaymentStore {
 
   listInvoices(): Invoice[] {
     return (this.db.prepare("SELECT * FROM invoices ORDER BY created_at DESC").all() as InvoiceRow[]).map(toInvoice);
+  }
+
+  getRevenueAnalytics(now = new Date()): RevenueAnalytics {
+    const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    const dateKey = (offset: number) => {
+      const date = new Date(today);
+      date.setUTCDate(date.getUTCDate() + offset);
+      return date.toISOString().slice(0, 10);
+    };
+    const currentStart = dateKey(-29);
+    const previousStart = dateKey(-59);
+    const previousEnd = dateKey(-30);
+    const recognized = "('paid','refund_requested','refund_pending')";
+    const dailyRows = this.db.prepare(`
+      SELECT substr(created_at, 1, 10) AS day,
+        SUM(CASE WHEN status IN ${recognized} THEN amount_vnd ELSE 0 END) AS revenue_vnd,
+        SUM(CASE WHEN status IN ${recognized} THEN 1 ELSE 0 END) AS paid_orders
+      FROM invoices
+      WHERE substr(created_at, 1, 10) >= ?
+      GROUP BY day
+      ORDER BY day
+    `).all(previousStart) as Array<{ day: string; revenue_vnd: number; paid_orders: number }>;
+    const byDay = new Map(dailyRows.map((row) => [row.day, row]));
+    const daily = Array.from({ length: 30 }, (_, index) => {
+      const date = dateKey(index - 29);
+      const row = byDay.get(date);
+      return { date, revenueVnd: row?.revenue_vnd ?? 0, paidOrders: row?.paid_orders ?? 0 };
+    });
+    const period = (from: string, to: string) => this.db.prepare(`
+      SELECT
+        COALESCE(SUM(CASE WHEN status IN ${recognized} THEN amount_vnd ELSE 0 END), 0) AS revenue_vnd,
+        COALESCE(SUM(CASE WHEN status IN ${recognized} THEN 1 ELSE 0 END), 0) AS paid_orders
+      FROM invoices
+      WHERE substr(created_at, 1, 10) BETWEEN ? AND ?
+    `).get(from, to) as { revenue_vnd: number; paid_orders: number };
+    const current = period(currentStart, dateKey(0));
+    const previous = period(previousStart, previousEnd);
+    const mixRows = this.db.prepare("SELECT status, COUNT(*) AS count FROM invoices GROUP BY status").all() as Array<{ status: InvoiceStatus; count: number }>;
+    const statusMix: Record<InvoiceStatus, number> = {
+      pending: 0, cancel_requested: 0, paid: 0, refund_requested: 0,
+      refund_pending: 0, refunded: 0, cancelled: 0,
+    };
+    for (const row of mixRows) statusMix[row.status] = row.count;
+    const differenceVnd = current.revenue_vnd - previous.revenue_vnd;
+    return {
+      daily,
+      statusMix,
+      current30Days: { revenueVnd: current.revenue_vnd, paidOrders: current.paid_orders },
+      previous30Days: { revenueVnd: previous.revenue_vnd, paidOrders: previous.paid_orders },
+      differenceVnd,
+      differencePercent: previous.revenue_vnd > 0 ? Math.round((differenceVnd / previous.revenue_vnd) * 10_000) / 100 : null,
+    };
   }
 
   listInvoicesPage(input: InvoiceListQuery): InvoicePage {

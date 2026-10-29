@@ -1,6 +1,8 @@
 import { expect, test } from "@playwright/test";
+import { authenticateAdmin } from "./helpers/admin-session";
 
-test("five required features complete one business flow", async ({ page }) => {
+test("five required features complete one business flow", async ({ page, context, baseURL }) => {
+  await authenticateAdmin(context, baseURL!);
   await page.goto("/");
   const faq = page.getByRole("button", {
     name: "Cửa hàng mới có cần thuê máy riêng không?",

@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { postJson } from "@/lib/api";
-import { rankPlans, type Requirements } from "@/lib/catalog";
+import { type Requirements } from "@/lib/catalog";
 
 type BackendPlan = {
+  eligibility: "eligible" | "over-budget" | "unverified" | "unsupported";
+  upfrontVnd: number;
   plan: {
     id: string;
     provider: string;
@@ -28,6 +30,8 @@ type BackendPlan = {
 };
 
 export type RecommendedPlan = {
+  eligibility: BackendPlan["eligibility"];
+  upfrontVnd: number;
   id: string;
   provider: string;
   name: string;
@@ -48,25 +52,14 @@ export type RecommendedPlan = {
   verifiedAt: string | null;
 };
 
-function fallbackPlans(requirements: Requirements): RecommendedPlan[] {
-  return rankPlans(requirements).map((plan) => ({
-    ...plan,
-    billingMonths: 48,
-    ssl: true,
-    sourceUrl: "https://www.hostinger.com/vn/web-hosting",
-    verifiedAt: "2026-10-23",
-    caution:
-      "Dữ liệu được lưu ngày 23/10/2026 và có thể chưa phải giá hiện tại. HOSTORA sẽ xác nhận tổng tiền và kỳ hạn trước khi tạo hóa đơn.",
-  }));
-}
-
 export function useRecommendedPlans(requirements: Requirements) {
   const key = JSON.stringify(requirements);
+  const [retryCount, setRetryCount] = useState(0);
   const [result, setResult] = useState<{
     key: string;
     plans: RecommendedPlan[];
     status: "loading" | "verified" | "offline";
-  }>(() => ({ key, plans: fallbackPlans(requirements), status: "loading" }));
+  }>(() => ({ key, plans: [], status: "loading" }));
   useEffect(() => {
     let active = true;
     postJson<{ recommendations: BackendPlan[] }>("/api/recommend", requirements)
@@ -82,7 +75,9 @@ export function useRecommendedPlans(requirements: Requirements) {
           key,
           status: "verified",
           plans: response.recommendations.map(
-            ({ plan, total, reasons, cautions }) => ({
+            ({ plan, total, reasons, cautions, eligibility, upfrontVnd }) => ({
+              eligibility,
+              upfrontVnd,
               id: plan.id,
               provider: plan.provider,
               name: plan.name,
@@ -114,7 +109,7 @@ export function useRecommendedPlans(requirements: Requirements) {
               reasons,
               caution:
                 cautions[0] ??
-                "Kiểm tra điều khoản tại nguồn trước khi thanh toán.",
+                "Xác nhận tổng tiền và điều khoản trước khi thanh toán.",
               sourceUrl: plan.sourceUrl,
               verifiedAt: plan.verifiedAt,
             }),
@@ -125,7 +120,7 @@ export function useRecommendedPlans(requirements: Requirements) {
         if (active) {
           setResult({
             key,
-            plans: fallbackPlans(requirements),
+            plans: [],
             status: "offline",
           });
         }
@@ -133,8 +128,9 @@ export function useRecommendedPlans(requirements: Requirements) {
     return () => {
       active = false;
     };
-  }, [key, requirements]);
-  return result.key === key
-    ? { plans: result.plans, status: result.status }
-    : { plans: fallbackPlans(requirements), status: "loading" as const };
+  }, [key, requirements, retryCount]);
+  return {
+    ...(result.key === key ? { plans: result.plans, status: result.status } : { plans: [], status: "loading" as const }),
+    retry: () => { setResult({ key, plans: [], status: "loading" }); setRetryCount((value) => value + 1); },
+  };
 }

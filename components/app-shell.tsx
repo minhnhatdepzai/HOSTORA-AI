@@ -11,16 +11,20 @@ import {
   ReceiptText,
   Server,
   Sparkles,
+  BookOpen,
+  UserRound,
   X,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
 const links = [
   ["/", "Trang chủ", Home],
   ["/website-studio", "Tạo trang web", Sparkles],
   ["/services", "Dịch vụ", Server],
+  ["/journal", "Sổ tay", BookOpen],
   ["/orders", "Đơn hàng", ReceiptText],
+  ["/account", "Tài khoản", UserRound],
   ["/ai-assistant", "Hỏi trợ lý", Bot],
   ["/downloads/android", "Tải app", Download],
 ] as const;
@@ -35,10 +39,28 @@ const mobileLinks = [
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const headerRef = useRef<HTMLElement>(null);
+  const menuRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    const update = () => headerRef.current?.classList.toggle("is-scrolled", window.scrollY > 16);
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    return () => window.removeEventListener("scroll", update);
+  }, [pathname]);
+  useEffect(() => {
+    if (!open) return;
+    const dismiss = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { setOpen(false); menuRef.current?.focus(); }
+    };
+    document.addEventListener("keydown", dismiss);
+    return () => document.removeEventListener("keydown", dismiss);
+  }, [open]);
   if (pathname.startsWith("/admin")) return <main>{children}</main>;
+  const customerAuthFlow = pathname.startsWith("/account/");
   return (
     <>
-      <header className="site-header">
+      <a href="#main-content" className="site-skip-link">Đến nội dung chính</a>
+      <header ref={headerRef} className="site-header">
         <div className="site-header-inner">
           <Link href="/" className="site-brand" onClick={() => setOpen(false)}>
             <Image
@@ -54,7 +76,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </span>
           </Link>
           <nav className="site-desktop-nav" aria-label="Điều hướng chính">
-            {links.map(([href, label]) => (
+            {links.filter(([href]) => href !== "/account" && href !== "/downloads/android").map(([href, label]) => (
               <Link
                 key={href}
                 href={href}
@@ -68,11 +90,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             ))}
           </nav>
           <div className="site-header-actions">
+            <Link href="/account" className="site-account-link" aria-label="Mở tài khoản khách hàng">
+              <UserRound size={18} />
+              <span>Tài khoản</span>
+            </Link>
             <Link href="/downloads/android" className="site-header-cta">
               Tải ứng dụng
             </Link>
             <button
+              ref={menuRef}
               className="site-menu-button"
+              aria-controls={open ? "site-mobile-menu" : undefined}
               aria-label={open ? "Đóng menu" : "Mở menu"}
               aria-expanded={open}
               onClick={() => setOpen(!open)}
@@ -82,7 +110,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
         {open && (
-          <nav className="site-mobile-nav" aria-label="Điều hướng di động">
+          <nav id="site-mobile-menu" className="site-mobile-nav" aria-label="Điều hướng di động">
             {links.map(([href, label, Icon]) => (
               <Link
                 key={href}
@@ -100,10 +128,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </nav>
         )}
       </header>
-      <main key={pathname} className="page-enter">
+      <main id="main-content" tabIndex={-1} key={pathname} className="page-enter">
         {children}
       </main>
-      <footer className="site-footer">
+      {!customerAuthFlow && <footer className="site-footer">
         <div className="site-footer-inner">
           <div>
             <strong>HOSTORA</strong>
@@ -113,7 +141,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Link href="/website-studio">Tạo trang web với trợ lý</Link>
             <Link href="/services">Dịch vụ</Link>
             <Link href="/orders">Đơn hàng</Link>
+            <Link href="/account">Tài khoản khách hàng</Link>
             <Link href="/knowledge">Kiến thức</Link>
+            <Link href="/journal">Sổ tay làm website</Link>
+            <Link href="/about">Câu chuyện HOSTORA</Link>
             <Link href="/website-analyzer">Kiểm tra trang web</Link>
             <Link href="/ai-assistant">Hỏi HOSTORA</Link>
           </nav>
@@ -122,8 +153,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             tra.
           </small>
         </div>
-      </footer>
-      <nav
+      </footer>}
+      {!customerAuthFlow && <nav
         className="site-mobile-dock"
         aria-label="Điều hướng nhanh trên điện thoại"
       >
@@ -144,7 +175,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </Link>
           );
         })}
-      </nav>
+      </nav>}
     </>
   );
 }

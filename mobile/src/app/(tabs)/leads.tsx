@@ -22,6 +22,7 @@ import {
 import { colors, radii } from "@/constants/theme";
 import { useApp } from "@/context/app-context";
 import { useRecommendedPlans } from "@/lib/recommendations";
+import { normalizeContact } from "@/lib/contact";
 
 export default function LeadsScreen() {
   const { leads, addLead, removeLead, requirements } = useApp();
@@ -30,18 +31,17 @@ export default function LeadsScreen() {
   const [saved, setSaved] = useState(false);
   const { plans, status } = useRecommendedPlans(requirements);
   const topPlan = plans[0];
-  const topPlanLabel = `${topPlan.provider} ${topPlan.name}`;
+  const topPlanLabel = topPlan ? `${topPlan.provider} ${topPlan.name}` : "Chưa tải được gói tư vấn";
 
   function submit() {
     if (
-      status === "loading" ||
-      name.trim().length < 2 ||
-      phone.replace(/\D/g, "").length < 9
+      status !== "verified" || !topPlan || Boolean(normalizeContact({ name, phone }).error)
     )
       return;
+    const contact = normalizeContact({ name, phone });
     addLead({
-      name: name.trim(),
-      phone: phone.trim(),
+      name: contact.name,
+      phone: contact.phone,
       plan: topPlanLabel,
       planId: topPlan.id,
     });
@@ -85,7 +85,7 @@ export default function LeadsScreen() {
               <Text style={styles.formCopy}>
                 Gói đang quan tâm: {topPlanLabel}
                 {status !== "verified"
-                  ? " · dữ liệu ngày 23/10/2026, cần kiểm tra lại giá"
+                  ? " · hãy kết nối lại để tải bảng giá"
                   : ""}
               </Text>
             </View>
@@ -110,9 +110,7 @@ export default function LeadsScreen() {
             icon="shield"
             variant="mint"
             disabled={
-              status === "loading" ||
-              name.trim().length < 2 ||
-              phone.replace(/\D/g, "").length < 9
+              status !== "verified" || !topPlan || Boolean(normalizeContact({ name, phone }).error)
             }
             onPress={submit}
           />
@@ -137,8 +135,8 @@ export default function LeadsScreen() {
               {
                 leads.filter(
                   (lead) =>
-                    lead.planId === topPlan.id ||
-                    lead.plan === topPlan.name ||
+                    lead.planId === topPlan?.id ||
+                    lead.plan === topPlan?.name ||
                     lead.plan === topPlanLabel,
                 ).length
               }

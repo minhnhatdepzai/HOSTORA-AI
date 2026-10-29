@@ -7,6 +7,8 @@ playwright-report/
 .playwright-mcp/
 .playwright/
 .playwright-cli/
+.codex/
+output/
 .archify/**/hostora-*.html
 .archify/**/hostora-*.json
 docs/architecture/*.browser-check.json
@@ -20,6 +22,7 @@ docs/architecture/*.finalize-summary.json
 *.log
 .DS_Store
 training/.venv/
+training/output-*/
 training/output-smoke/
 training/output-chatbot/
 training/output-chatbot-v2/

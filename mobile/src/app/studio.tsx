@@ -1,5 +1,5 @@
 import { DetailHeader } from "@/components/detail-header";
-import { RevealWords } from "@/components/motion";
+import { RevealWords, ScrollReveal } from "@/components/motion";
 import { Pressable } from "@/components/pressable";
 import { Body, Button, Eyebrow, Screen, Title } from "@/components/ui";
 import { ColorPalette } from "@/components/color-palette";
@@ -7,9 +7,11 @@ import { colors } from "@/constants/theme";
 import { getApiBase, postJson } from "@/lib/api";
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
+import { useCustomerAuth } from "@/context/customer-auth-context";
 import { useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Animated,
   Linking,
   type ScrollViewInstance,
   StyleSheet,
@@ -44,6 +46,8 @@ type Result = {
   };
   recommendations: {
     id: string;
+    eligibility: "eligible" | "over-budget" | "unverified" | "unsupported";
+    upfrontVnd: number;
     provider: string;
     name: string;
     score: number;
@@ -85,9 +89,14 @@ function money(value: number | null) {
 }
 
 export default function StudioScreen() {
+  const auth = useCustomerAuth();
   const scrollRef = useRef<ScrollViewInstance>(null);
+  const [scrollY] = useState(() => new Animated.Value(0));
   const [brand, setBrand] = useState("");
   const [idea, setIdea] = useState("");
+  const [story, setStory] = useState("");
+  const [offerings, setOfferings] = useState("");
+  const [customerAction, setCustomerAction] = useState("");
   const [audience, setAudience] = useState("");
   const [business, setBusiness] = useState<Choice>("service");
   const [goal, setGoal] = useState<Goal>("contact");
@@ -144,6 +153,9 @@ export default function StudioScreen() {
       const output = await postJson<Result>("/api/ai/site-studio", {
         brand: brand.trim(),
         idea: idea.trim(),
+        story: story.trim(),
+        offerings: offerings.trim(),
+        customerAction: customerAction.trim(),
         business,
         goal,
         audience: audience.trim(),
@@ -163,10 +175,45 @@ export default function StudioScreen() {
     }
   }
 
+  if (!auth.hydrated) {
+    return <Screen><DetailHeader title="Xưởng tạo trang web" /><ActivityIndicator color={colors.primary} /></Screen>;
+  }
+  if (!auth.customer) {
+    return <Screen><DetailHeader title="Xưởng tạo trang web" /><View style={page.form}><Eyebrow>WEBSITE THUỘC VỀ BẠN</Eyebrow><Title>Đăng nhập trước khi bắt đầu.</Title><Body>HOSTORA giữ bản xem trước, lịch sử chỉnh sửa và mã nguồn theo đúng tài khoản sở hữu.</Body><Button label="Đăng nhập để tạo website" icon="log-in" onPress={() => router.push({ pathname: "/account-login", params: { next: "/studio" } })} /><Button label="Tạo tài khoản mới" variant="secondary" icon="user-plus" onPress={() => router.push({ pathname: "/account-register", params: { next: "/studio" } })} /></View></Screen>;
+  }
+
   return (
-    <Screen scrollRef={scrollRef}>
+    <Screen
+      revealChildren={false}
+      scrollRef={scrollRef}
+      onScroll={(event) => scrollY.setValue(event.nativeEvent.contentOffset.y)}
+    >
       <DetailHeader title="Xưởng tạo trang web" />
       <View style={page.hero}>
+        <Animated.View
+          pointerEvents="none"
+          accessible={false}
+          style={[
+            page.heroOrbit,
+            {
+              transform: [{
+                translateY: scrollY.interpolate({
+                  inputRange: [0, 360],
+                  outputRange: [0, -76],
+                  extrapolate: "clamp",
+                }),
+              }, {
+                rotate: scrollY.interpolate({
+                  inputRange: [0, 360],
+                  outputRange: ["-18deg", "48deg"],
+                  extrapolate: "clamp",
+                }),
+              }],
+            },
+          ]}
+        >
+          <View style={page.heroOrbitInner} />
+        </Animated.View>
         <Eyebrow light>TRỢ LÝ TẠO TRANG WEB · HOSTORA</Eyebrow>
         <RevealWords
           style={[page.heroTitle, { color: "#fff" }]}
@@ -181,7 +228,7 @@ export default function StudioScreen() {
         </Body>
       </View>
 
-      <View style={page.form}>
+      <ScrollReveal animate={false} style={page.form}>
         <Question
           number="01"
           title="Bạn muốn tạo trang web gì?"
@@ -200,11 +247,34 @@ export default function StudioScreen() {
           placeholder="Ví dụ: dân văn phòng ở trung tâm"
         />
         <Field
-          label="Ý tưởng của bạn"
+          label="Sản phẩm và câu chuyện của bạn"
           value={idea}
           onChangeText={setIdea}
-          placeholder="Tôi mở một quán cà phê yên tĩnh…"
+          placeholder="Bạn bán gì, khách nên biết điều gì, và muốn họ làm gì?"
           multiline
+        />
+        <Field
+          label="Vì sao thương hiệu bắt đầu? · nếu có"
+          value={story}
+          onChangeText={setStory}
+          maxLength={400}
+          placeholder="Một chi tiết riêng mà bạn muốn khách nhớ"
+          multiline
+        />
+        <Field
+          label="Bạn đang bán hoặc làm cụ thể gì? · nếu có"
+          value={offerings}
+          onChangeText={setOfferings}
+          maxLength={400}
+          placeholder="Tên món, nhóm sản phẩm hoặc dịch vụ thật"
+          multiline
+        />
+        <Field
+          label="Khách nên làm gì sau khi xem? · nếu có"
+          value={customerAction}
+          onChangeText={setCustomerAction}
+          maxLength={300}
+          placeholder="Ví dụ: xem mẫu rồi gửi yêu cầu"
         />
 
         <Question
@@ -365,7 +435,7 @@ export default function StudioScreen() {
         <Text style={page.privacy}>
           Không nhập số điện thoại, email hoặc thông tin bí mật.
         </Text>
-      </View>
+      </ScrollReveal>
 
       {result ? (
         <View
@@ -580,7 +650,7 @@ function StudioResult({
         <View key={item.id} style={[page.plan, index === 0 && page.planBest]}>
           <View style={page.planTop}>
             <Text style={page.planLabel}>
-              {index === 0 ? "PHÙ HỢP NHẤT" : `PHƯƠNG ÁN ${index + 1}`}
+              {item.eligibility === "eligible" ? index === 0 ? "ƯU TIÊN THEO NGÂN SÁCH LƯU TRỮ" : `PHƯƠNG ÁN ${index + 1}` : "CHỈ ĐỂ THAM KHẢO"}
             </Text>
             <Text style={page.planScore}>{item.score}/100</Text>
           </View>
@@ -594,6 +664,7 @@ function StudioResult({
             Kỳ {item.billingMonths} tháng · Gia hạn{" "}
             {money(item.renewalMonthlyVnd)}
           </Text>
+          <Text style={page.planFine}>Tiền lưu trữ kỳ đầu: {money(item.upfrontVnd).replace("/tháng", "")}. Chưa gồm thuế và tên miền.</Text>
           {item.reasons.map((reason) => (
             <Text key={reason} style={page.planReason}>
               + {reason}
@@ -646,18 +717,19 @@ function Question({
   copy: string;
 }) {
   return (
-    <View style={page.question}>
+    <ScrollReveal style={page.question}>
       <Text style={page.questionNumber}>{number}</Text>
       <View style={{ flex: 1 }}>
         <Text style={page.questionTitle}>{title}</Text>
         <Text style={page.questionCopy}>{copy}</Text>
       </View>
-    </View>
+    </ScrollReveal>
   );
 }
 function Field({
   label,
   multiline = false,
+  maxLength,
   ...props
 }: {
   label: string;
@@ -665,6 +737,7 @@ function Field({
   value: string;
   onChangeText: (value: string) => void;
   placeholder: string;
+  maxLength?: number;
 }) {
   return (
     <View style={page.field}>
@@ -672,7 +745,7 @@ function Field({
       <TextInput
         {...props}
         multiline={multiline}
-        maxLength={multiline ? 500 : 160}
+        maxLength={maxLength ?? (multiline ? 1000 : 160)}
         placeholderTextColor={colors.faint}
         style={[page.input, multiline && page.textarea]}
       />
@@ -723,6 +796,27 @@ const page = StyleSheet.create({
     backgroundColor: colors.ink,
     padding: 24,
     borderRadius: 24,
+    overflow: "hidden",
+  },
+  heroOrbit: {
+    position: "absolute",
+    right: -78,
+    top: -58,
+    width: 218,
+    height: 218,
+    borderRadius: 109,
+    borderWidth: 1,
+    borderColor: "#A6EBD166",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  heroOrbitInner: {
+    width: 142,
+    height: 142,
+    borderRadius: 71,
+    borderWidth: 1,
+    borderColor: "#A6EBD13D",
+    transform: [{ scaleX: 0.65 }],
   },
   heroTitle: { marginTop: 9, fontSize: 31, lineHeight: 37 },
   heroAccent: {

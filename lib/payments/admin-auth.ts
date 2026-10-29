@@ -3,6 +3,19 @@ import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypt
 export const ADMIN_COOKIE = "hostora_admin_session";
 const SESSION_MS = 8 * 60 * 60 * 1000;
 
+export function adminSessionCookie(token: string, secure: boolean) {
+  return `${ADMIN_COOKIE}=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=28800${secure ? "; Secure" : ""}`;
+}
+
+export function clearedAdminSessionCookie(secure: boolean) {
+  return `${ADMIN_COOKIE}=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0${secure ? "; Secure" : ""}`;
+}
+
+export function safeAdminNextPath(value: string | null | undefined) {
+  if (!value || !value.startsWith("/admin") || value.startsWith("//")) return "/admin";
+  return value;
+}
+
 export type AdminConfig = { password: string; secret: string };
 
 export function adminConfigFromEnv(): AdminConfig {

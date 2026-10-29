@@ -5,6 +5,7 @@ import { GET as getOrderDetail } from "@/app/api/admin/payments/orders/[id]/rout
 import { GET as listSaleRequests } from "@/app/api/admin/payments/requests/route";
 import { POST as lookupOrder } from "@/app/api/payments/orders/route";
 import { POST as createSaleRequest } from "@/app/api/payments/requests/route";
+import { getCatalogStore } from "@/lib/admin/catalog-store";
 
 const origin = "http://127.0.0.1:3000";
 const request = (path: string, body: unknown, cookie = "", method = "POST") => new Request(`${origin}${path}`, {
@@ -14,11 +15,68 @@ const request = (path: string, body: unknown, cookie = "", method = "POST") => n
 
 beforeAll(() => {
   process.env.HOSTORA_PAYMENTS_DB_PATH = ":memory:";
+  process.env.HOSTORA_CATALOG_DB_PATH = ":memory:";
   process.env.HOSTORA_ADMIN_PASSWORD = "test-admin-password-long-enough";
   process.env.HOSTORA_ADMIN_SESSION_SECRET = "test-admin-session-secret-long-enough";
 });
 
 describe("API hóa đơn", () => {
+  it("mua được dịch vụ được xuất bản từ quản trị và báo rõ trường còn thiếu", async () => {
+    getCatalogStore().createProduct({
+      id: "hostora-admin-care",
+      provider: "HOSTORA",
+      name: "Chăm sóc website từ quản trị",
+      category: "monitoring",
+      priceFromVnd: 490000,
+      billingUnit: "month",
+      summary: "Theo dõi hoạt động, sao lưu và hỗ trợ xử lý lỗi định kỳ.",
+      bestFor: ["doanh nghiệp nhỏ"],
+      sourceUrl: "https://hostora.example/services/admin-care",
+      verifiedAt: "2026-10-28",
+      status: "published",
+    });
+    const base = {
+      productId: "hostora-admin-care",
+      contact: "catalog-buyer@example.com",
+      note: "",
+      profile: {
+        customerName: "Khách Redmi",
+        phone: "0901234567",
+        companyName: "",
+        businessType: "Dịch vụ web",
+        currentWebsite: "",
+        mainOffer: "Chăm sóc website",
+        serviceArea: "Toàn quốc",
+        seoGoals: "",
+        websiteStatus: "idea",
+        websiteGoal: "Nhận khách hàng mới",
+        targetCustomers: "Doanh nghiệp nhỏ",
+        estimatedTraffic: "under_1k",
+        budgetRange: "under_500k",
+      },
+      consultationPreference: "ai",
+      consultationAt: null,
+      consultationChannel: "email",
+      voucherCode: "",
+    };
+
+    const created = await createSaleRequest(
+      request("/api/payments/requests", base),
+    );
+    expect(created.status).toBe(201);
+
+    const invalid = await createSaleRequest(
+      request("/api/payments/requests", {
+        ...base,
+        profile: { ...base.profile, websiteGoal: "" },
+      }),
+    );
+    expect(invalid.status).toBe(400);
+    expect(await invalid.json()).toEqual({
+      error: expect.stringMatching(/Mục tiêu website/),
+    });
+  });
+
   it("bảo vệ quản trị và chỉ cho khách có mã riêng xem hóa đơn", async () => {
     const denied = await listOrders(new Request(`${origin}/api/admin/payments/orders`));
     expect(denied.status).toBe(401);

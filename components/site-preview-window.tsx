@@ -47,11 +47,8 @@ export function SitePreviewWindow({
     return () => observer.disconnect();
   }, []);
   const viewport = dimensions[mode];
-  const scale = Math.min(
-    1,
-    Math.max(0.1, (availableWidth - 16) / viewport.width),
-    560 / viewport.height,
-  );
+  const displayWidth = Math.min(viewport.width, Math.max(280, availableWidth - 20));
+  const displayHeight = Math.min(viewport.height, 560);
   const html = buildCompactPreviewHtml(idea, brief);
 
   return (
@@ -85,8 +82,8 @@ export function SitePreviewWindow({
           <div
             className={`studio-device-frame ${mode === "phone" ? "is-phone" : ""}`}
             style={{
-              width: viewport.width * scale,
-              height: viewport.height * scale,
+              width: displayWidth,
+              height: displayHeight,
             }}
           >
             <iframe
@@ -96,10 +93,8 @@ export function SitePreviewWindow({
               scrolling="yes"
               srcDoc={html}
               style={{
-                width: viewport.width,
-                height: viewport.height,
-                transform: `scale(${scale})`,
-                transformOrigin: "top left",
+                width: displayWidth,
+                height: displayHeight,
               }}
             />
           </div>

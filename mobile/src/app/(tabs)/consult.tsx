@@ -222,6 +222,9 @@ export default function ConsultScreen() {
               style={styles.customInput}
             />
             <Text style={styles.inputHint}>Từ 10.000đ đến 100.000.000đ/tháng.</Text>
+            <Text style={styles.inputLabel}>Số tiền có thể trả ban đầu (không bắt buộc)</Text>
+            <TextInput accessibilityLabel="Số tiền trả ban đầu" keyboardType="number-pad" maxLength={10} value={data.upfrontBudget === undefined ? "" : String(data.upfrontBudget)} onChangeText={(value) => update({ upfrontBudget: value ? Number(value.replace(/\D/g, "")) : undefined })} placeholder="Để trống nếu chưa quyết định" placeholderTextColor={colors.faint} style={styles.customInput} />
+            <Text style={styles.inputHint}>Giá ưu đãi thường phải trả trước 12–48 tháng; chưa gồm thuế và phí tên miền.</Text>
           </ChoiceStep>
         )}
         {step === 3 && (
@@ -264,7 +267,7 @@ export default function ConsultScreen() {
                 label="Tiếp tục"
                 disabled={
                   (step === 1 && (!Number.isInteger(data.monthlyVisits) || data.monthlyVisits < 1 || data.monthlyVisits > 100000000)) ||
-                  (step === 2 && (!Number.isInteger(data.monthlyBudget) || data.monthlyBudget < 10000 || data.monthlyBudget > 100000000))
+                  (step === 2 && (!Number.isInteger(data.monthlyBudget) || data.monthlyBudget < 10000 || data.monthlyBudget > 100000000 || (data.upfrontBudget !== undefined && (!Number.isInteger(data.upfrontBudget) || data.upfrontBudget < 0 || data.upfrontBudget > 1000000000))))
                 }
                 onPress={() => setStep(step + 1)}
               />

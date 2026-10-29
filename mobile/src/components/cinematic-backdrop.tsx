@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useState } from "react";
-import { AppState, StyleSheet, View } from "react-native";
+import { useCallback, useContext, useEffect, useState } from "react";
+import { Animated, AppState, StyleSheet } from "react-native";
 import { useFocusEffect } from "expo-router";
 import { Canvas, Fill, Shader, Skia, useClock } from "@shopify/react-native-skia";
 import { useDerivedValue } from "react-native-reanimated";
-import { useMotionPreference } from "./motion";
+import { ScrollMotionContext, useMotionPreference } from "./motion";
 
 // Original HOSTORA scene: a softly lit orbital lens in the brand's mint/navy.
 const lens = Skia.RuntimeEffect.Make(`
@@ -36,6 +36,12 @@ function LiveLens({ width, height }: { width: number; height: number }) {
 
 export function CinematicBackdrop() {
   const reduced = useMotionPreference();
+  const { scrollY } = useContext(ScrollMotionContext);
+  const drift = scrollY?.interpolate({
+    inputRange: [0, 720],
+    outputRange: [0, 104],
+    extrapolate: "clamp",
+  });
   const [focused, setFocused] = useState(false);
   const [active, setActive] = useState(AppState.currentState === "active");
   const [size, setSize] = useState({ width: 360, height: 480 });
@@ -45,9 +51,9 @@ export function CinematicBackdrop() {
     return () => subscription.remove();
   }, []);
   return (
-    <View pointerEvents="none" accessible={false} importantForAccessibility="no-hide-descendants" style={styles.stage} onLayout={({ nativeEvent }) => setSize(nativeEvent.layout)}>
+    <Animated.View pointerEvents="none" accessible={false} importantForAccessibility="no-hide-descendants" style={[styles.stage, !reduced && drift ? { transform: [{ translateY: drift }] } : null]} onLayout={({ nativeEvent }) => setSize(nativeEvent.layout)}>
       {focused && active && !reduced && <LiveLens {...size} />}
-    </View>
+    </Animated.View>
   );
 }
 

@@ -4,6 +4,7 @@ import { POST as confirmDemoPayment } from "@/app/api/payments/orders/[id]/demo-
 import { POST as lookupOrder } from "@/app/api/payments/orders/route";
 import { POST as refundRequest } from "@/app/api/payments/orders/[id]/refund-request/route";
 import { getPaymentStore } from "@/lib/payments/store";
+import { getCustomerStore } from "@/lib/customer/store";
 
 const origin = "http://127.0.0.1:3000";
 
@@ -15,14 +16,17 @@ beforeAll(() => {
 describe("mở thanh toán và yêu cầu hoàn", () => {
   it("chặn cổng chưa cấu hình và yêu cầu hoàn khi chưa trả tiền", async () => {
     const store = getPaymentStore();
-    const invoice = store.createInvoice({ title: "Thiết lập website", amountVnd: 100000 });
+    const email = `refund-${Date.now()}@example.com`;
+    const account = getCustomerStore().createCustomer({ name: "Khách hoàn tiền", email, passwordHash: "test-hash" });
+    const session = getCustomerStore().createSession(account.id);
+    const invoice = store.createInvoice({ title: "Thiết lập website", amountVnd: 100000, customerEmail: email });
     const context = { params: Promise.resolve({ id: invoice.id }) };
     const response = await checkout(new Request(`${origin}/api/payments/orders/${invoice.id}/checkout`, {
       method: "POST", body: JSON.stringify({ accessCode: invoice.accessCode, provider: "stripe" }),
     }), context);
     expect(response.status).toBe(503);
     const refund = await refundRequest(new Request(`${origin}/api/payments/orders/${invoice.id}/refund-request`, {
-      method: "POST", body: JSON.stringify({ accessCode: invoice.accessCode, reason: "Dịch vụ không hoạt động" }),
+      method: "POST", headers: { authorization: `Bearer ${session.token}`, "x-hostora-client": "mobile" }, body: JSON.stringify({ accessCode: invoice.accessCode, reason: "Dịch vụ không hoạt động" }),
     }), context);
     expect(refund.status).toBe(409);
   });

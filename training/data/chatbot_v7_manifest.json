@@ -1,0 +1,12 @@
+{
+  "version": "chatbot-v7",
+  "created_at": "2026-10-28T19:16:27.366632+00:00",
+  "files": {
+    "chatbot_v7_train": "df2457a3d8fcfb79f26dc2148f7239d8b2c2a23f078c9cd80f95eee080f7c450",
+    "chatbot_v7_holdout": "0d0e465ad1548494b19e4810405281523119cc4e6a5dd4943bbddd6db78ea267"
+  },
+  "counts": {
+    "chatbot_v7_train": 671,
+    "chatbot_v7_holdout": 146
+  }
+}

@@ -11,6 +11,7 @@ import { pushStudioProjectToGitHub } from "@/lib/site-studio-github";
 
 export type StoredStudioProject = {
   id: string;
+  ownerCustomerId?: string;
   idea: SiteIdea;
   brief: SiteBrief;
   generationMode: "local-ai" | "template-fallback";
@@ -114,10 +115,12 @@ export async function createStudioProject(
     brief: SiteBrief;
     generationMode: StoredStudioProject["generationMode"];
   },
+  ownerCustomerId: string,
 ) {
   const now = new Date().toISOString();
   const project = await saveStudioProject({
     id: randomUUID(),
+    ownerCustomerId,
     idea,
     brief: result.brief,
     generationMode: result.generationMode,
@@ -153,6 +156,13 @@ export async function createStudioProject(
     repositoryUrl: repositoryUrl ?? null,
     publishMessage,
   };
+}
+
+export function isStudioProjectOwner(
+  project: StoredStudioProject,
+  customerId: string,
+) {
+  return Boolean(project.ownerCustomerId && project.ownerCustomerId === customerId);
 }
 
 export async function publishStudioProjectUpdate(project: StoredStudioProject) {

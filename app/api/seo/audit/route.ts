@@ -72,17 +72,21 @@ export async function POST(request: Request) {
         { status: 422 },
       );
     const origin = page.url.origin;
-    const [robots, sitemap] = await Promise.all([
+    const [robots, sitemap, llmsTxt] = await Promise.all([
       validatePublicUrl(`${origin}/robots.txt`)
         .then((url) => fetchPublic(url, 200_000))
         .catch(() => ({ ok: false })),
       validatePublicUrl(`${origin}/sitemap.xml`)
         .then((url) => fetchPublic(url, 200_000))
         .catch(() => ({ ok: false })),
+      validatePublicUrl(`${origin}/llms.txt`)
+        .then((url) => fetchPublic(url, 200_000))
+        .catch(() => ({ ok: false })),
     ]);
     const audit = auditSeoHtml(page.text, page.url, {
       robots: robots.ok,
       sitemap: sitemap.ok,
+      llmsTxt: llmsTxt.ok,
     });
     const failed = audit.findings.filter(
       (finding) => finding.status !== "pass",

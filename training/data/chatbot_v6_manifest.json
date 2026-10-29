@@ -1,0 +1,12 @@
+{
+  "version": "chatbot-v6",
+  "created_at": "2026-10-27T16:52:29.427870+00:00",
+  "files": {
+    "chatbot_v6_train": "315f3edd521135fb323a9062670df351c3bca405122dcffe92f0c57c7800e725",
+    "chatbot_v6_holdout": "c1330adc8342f908ed394331524448815bfca94840fd919649a824251e65825a"
+  },
+  "counts": {
+    "chatbot_v6_train": 655,
+    "chatbot_v6_holdout": 142
+  }
+}

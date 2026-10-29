@@ -22,9 +22,12 @@ import { getAnonymousSessionId, trackFunnelStep } from "@/lib/funnel-client";
 import { TextRevealHeading } from "@/components/text-reveal-heading";
 import { SitePreviewWindow } from "@/components/site-preview-window";
 import { StudioSharedProject } from "@/components/studio-shared-project";
+import { EditorialScrollMotion } from "@/components/editorial-scroll-motion";
 
 type Recommendation = {
   id: string;
+  eligibility: "eligible" | "over-budget" | "unverified" | "unsupported";
+  upfrontVnd: number;
   provider: string;
   name: string;
   score: number;
@@ -184,6 +187,7 @@ export function WebsiteStudio() {
 
   return (
     <div className="studio-page">
+      <EditorialScrollMotion page="studio" />
       <section className="studio-hero">
         <div className="commerce-shell studio-hero-grid">
           <div>
@@ -226,8 +230,8 @@ export function WebsiteStudio() {
             <div>
               <strong>Bạn đang muốn tạo trang web gì?</strong>
               <p>
-                Nói như đang kể cho một người thiết kế. Không cần dùng thuật ngữ
-                kỹ thuật.
+                Kể bạn bán gì, điều khách cần biết và điều bạn muốn họ làm.
+                Thông tin càng cụ thể, bản web càng có nội dung thật.
               </p>
             </div>
           </div>
@@ -256,14 +260,43 @@ export function WebsiteStudio() {
             </label>
           </div>
           <label className="studio-textarea">
-            <span>Ý tưởng của bạn</span>
+            <span>Sản phẩm, câu chuyện và điều bạn muốn khách làm</span>
             <textarea
               required
               minLength={12}
-              maxLength={500}
+              maxLength={1000}
               value={idea.idea}
               onChange={(event) => update("idea", event.target.value)}
-              placeholder="Tôi mở quán cà phê yên tĩnh, muốn khách xem menu, không gian và đặt bàn…"
+              placeholder="Ví dụ: Tôi mở quán cà phê yên tĩnh cho người làm việc gần đó. Khách có thể xem menu, không gian, giờ mở cửa và đặt bàn. Chúng tôi có…"
+            />
+          </label>
+          <div className="studio-fields two">
+            <label>
+              <span>Câu chuyện thương hiệu · nếu có</span>
+              <textarea
+                maxLength={400}
+                value={idea.story ?? ""}
+                onChange={(event) => update("story", event.target.value)}
+                placeholder="Vì sao bạn bắt đầu? Có chi tiết nào chỉ thương hiệu bạn mới có?"
+              />
+            </label>
+            <label>
+              <span>Sản phẩm hoặc dịch vụ cụ thể · nếu có</span>
+              <textarea
+                maxLength={400}
+                value={idea.offerings ?? ""}
+                onChange={(event) => update("offerings", event.target.value)}
+                placeholder="Tên món, nhóm sản phẩm, buổi học hoặc dịch vụ bạn thật sự có"
+              />
+            </label>
+          </div>
+          <label className="studio-textarea">
+            <span>Khách nên làm gì sau khi xem? · nếu có</span>
+            <input
+              maxLength={300}
+              value={idea.customerAction ?? ""}
+              onChange={(event) => update("customerAction", event.target.value)}
+              placeholder="Ví dụ: xem bộ sưu tập rồi gửi yêu cầu về món mình thích"
             />
           </label>
 
@@ -496,7 +529,7 @@ export function WebsiteStudio() {
                 <article key={item.id} className={index === 0 ? "is-best" : ""}>
                   <div>
                     <span>
-                      {index === 0 ? "PHÙ HỢP NHẤT" : `PHƯƠNG ÁN ${index + 1}`}
+                      {item.eligibility === "eligible" ? index === 0 ? "ƯU TIÊN THEO NGÂN SÁCH LƯU TRỮ" : `PHƯƠNG ÁN ${index + 1}` : "CHỈ ĐỂ THAM KHẢO"}
                     </span>
                     <b>{item.score}/100</b>
                   </div>
@@ -510,6 +543,7 @@ export function WebsiteStudio() {
                     Trả theo kỳ {item.billingMonths} tháng · Gia hạn:{" "}
                     {money(item.renewalMonthlyVnd)}
                   </p>
+                  <p>Tiền lưu trữ kỳ đầu: {money(item.upfrontVnd).replace("/tháng", "")}. Chưa gồm thuế và tên miền.</p>
                   <ul>
                     {item.reasons.map((reason) => (
                       <li key={reason}>

@@ -1,7 +1,16 @@
 import { z } from "zod";
 import { parseRequestJson } from "@/lib/api-validation";
 import { captureSiteStudioFeedback } from "@/lib/ai-observability";
-import { getStudioProject, saveStudioFeedback } from "@/lib/site-studio-store";
+import {
+  getStudioProject,
+  isStudioProjectOwner,
+  saveStudioFeedback,
+} from "@/lib/site-studio-store";
+import {
+  customerFromRequest,
+  requestUsesBearer,
+} from "@/lib/customer/auth";
+import { sameOrigin } from "@/lib/payments/admin-auth";
 
 const feedbackSchema = z
   .object({
@@ -14,12 +23,22 @@ export async function POST(
   request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
+  const customer = customerFromRequest(request);
+  if (!customer)
+    return Response.json({ error: "Bạn cần đăng nhập." }, { status: 401 });
+  if (!requestUsesBearer(request) && !sameOrigin(request))
+    return Response.json({ error: "Nguồn yêu cầu không hợp lệ." }, { status: 403 });
   const { id } = await context.params;
   const project = await getStudioProject(id);
   if (!project)
     return Response.json(
       { error: "Không tìm thấy bản website này." },
       { status: 404 },
+    );
+  if (!isStudioProjectOwner(project, customer.id))
+    return Response.json(
+      { error: "Website này không thuộc tài khoản của bạn." },
+      { status: 403 },
     );
   const parsed = await parseRequestJson(request, feedbackSchema);
   if (parsed.response) return parsed.response;

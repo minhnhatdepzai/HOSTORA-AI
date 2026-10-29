@@ -40,6 +40,10 @@ Giữ HOSTORA AI local-first, có bằng chứng và hữu ích cho người kin
 
 `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm build`, Playwright desktop/mobile và `pnpm ai:check` phải được chạy. Một HTTP 200 không thay thế test luồng AI thật.
 
+## Bộ công cụ Codex và kiểm thử Android
+
+Xem `docs/CODEX_TOOLCHAIN.md` trước khi phát triển hoặc đánh giá cả web/admin/app. `pnpm agent:doctor` kiểm tra công cụ và phiên bản trên thiết bị; `pnpm test:e2e:isolated` và `pnpm audit:ui` dùng dữ liệu kiểm thử cách ly. `pnpm test:mobile:e2e` chạy luồng native bằng Maestro; MCP `mobile` dùng để đọc cây giao diện, chụp ảnh và thao tác điện thoại thật. `pnpm android:update` build, kiểm tra metadata rồi cài đè APK bằng `adb install -r`. Không xóa dữ liệu app để làm test xanh. Browser mobile viewport không thay thế bằng chứng APK thật. Skill `hostora-quality` hỗ trợ workflow và rubric đánh giá; điểm tự chấm không bảo đảm top 10.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 ## This is NOT the Next.js you know

@@ -9,6 +9,10 @@ const deps = vi.hoisted(() => ({
 vi.mock("@/lib/site-studio-workflow", () => deps);
 vi.mock("@/lib/site-studio-store", () => deps);
 vi.mock("@/lib/ai-observability", () => deps);
+vi.mock("@/lib/customer/auth", () => ({
+  customerFromRequest: () => ({ id: "customer-1", email: "moc@example.com" }),
+  requestUsesBearer: () => true,
+}));
 
 import { POST } from "@/app/api/ai/site-studio/route";
 
@@ -58,5 +62,10 @@ describe("website studio generation API", () => {
     );
     expect(payload.project.downloadUrl).toContain("/download");
     expect(payload.brief.headline).toContain("Mộc Cafe");
+    expect(deps.createStudioProject).toHaveBeenCalledWith(
+      expect.objectContaining({ brand: "Mộc Cafe" }),
+      expect.any(Object),
+      "customer-1",
+    );
   });
 });

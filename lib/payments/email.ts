@@ -2,6 +2,7 @@ import nodemailer from "nodemailer";
 import { after } from "next/server";
 import { z } from "zod";
 import type { CreatedInvoice, CreatedSaleRequest, Invoice, SaleRequest } from "./types";
+import type { CustomerAccount, CustomerSupportCase } from "@/lib/customer/types";
 
 const emailSchema = z.string().trim().email().max(160);
 const smtpSchema = z.object({
@@ -59,7 +60,6 @@ function publicBaseUrl() {
 }
 
 const publicOrderUrl = () => new URL("/orders", publicBaseUrl()).toString();
-const adminOrderUrl = () => new URL("/admin/orders", publicBaseUrl()).toString();
 const aiUrl = () => new URL("/ai-assistant", publicBaseUrl()).toString();
 const requestPortalUrl = (request: CreatedSaleRequest) => `${publicOrderUrl()}#requestId=${encodeURIComponent(request.id)}&requestCode=${encodeURIComponent(request.accessCode)}`;
 const invoicePortalUrl = (invoice: CreatedInvoice) => `${publicOrderUrl()}#invoiceId=${encodeURIComponent(invoice.id)}&accessCode=${encodeURIComponent(invoice.accessCode)}`;
@@ -129,7 +129,7 @@ const budgetCopy: Record<SaleRequest["profile"]["budgetRange"], string> = {
 };
 
 export async function notifySaleRequestCreated(request: CreatedSaleRequest) {
-  const config = emailConfigFromEnv(); if (!config) return;
+  if (!emailConfigFromEnv()) return;
   const manageUrl = requestPortalUrl(request);
   const detailRows: Array<[string, string]> = [
     ["Mã yêu cầu", request.id], ["Dịch vụ", `${request.productName} · ${request.provider}`],
@@ -144,14 +144,7 @@ export async function notifySaleRequestCreated(request: CreatedSaleRequest) {
     ["Tư vấn", consultationCopy(request)],
   ];
   const customerBody = rows(detailRows) + notice("Bước tiếp theo", request.consultationPreference === "ai" ? "Bạn có thể mở AI HOSTORA ngay. Báo giá và điều kiện vẫn do HOSTORA xác nhận trước khi phát hành hóa đơn." : "HOSTORA sẽ xác nhận lại lịch tư vấn qua email. Bạn chưa bị tính tiền.");
-  const adminBody = rows([
-    ...detailRows, ["Email", request.contact], ["Điện thoại", request.profile.phone || "Không cung cấp"],
-    ["Mã voucher", request.voucherCode || "Không dùng"], ["Ghi chú", request.note || "Không có"],
-  ]);
   await safelySend("sale_request_created", request.id, [
-    { to: config.adminTo, subject: `[HOSTORA] Yêu cầu mới ${request.id} · ${request.productName}`, reference: request.id,
-      text: `Yêu cầu ${request.id}: ${request.productName}. Khách: ${request.profile.customerName}. Email: ${request.contact}. Tư vấn: ${consultationCopy(request)}. Quản trị: ${adminOrderUrl()}`,
-      html: emailDocument({ preheader: `${request.profile.customerName} vừa yêu cầu ${request.productName}`, eyebrow: "YÊU CẦU MUA MỚI", title: "Có hồ sơ khách hàng cần xử lý", intro: "Thông tin doanh nghiệp, nhu cầu và lịch tư vấn đã được lưu vào backend HOSTORA.", body: adminBody, actions: [{ label: "Mở trang quản trị", url: adminOrderUrl() }], reference: request.id }) },
     { to: request.contact, subject: `HOSTORA đã nhận yêu cầu ${request.id}`, reference: request.id,
       text: `HOSTORA đã nhận yêu cầu ${request.id} cho ${request.productName}. ${consultationCopy(request)}. Theo dõi hoặc hủy: ${manageUrl}`,
       html: emailDocument({ preheader: `Yêu cầu ${request.id} đã được ghi nhận`, eyebrow: "ĐÃ NHẬN YÊU CẦU", title: `Chào ${request.profile.customerName}, hồ sơ đã sẵn sàng`, intro: "HOSTORA đã lưu nhu cầu của bạn. Chúng tôi sẽ chỉ tạo hóa đơn sau khi xác nhận giá, kỳ hạn và điều kiện.", body: customerBody, actions: [{ label: request.consultationPreference === "ai" ? "Tư vấn với AI ngay" : "Theo dõi yêu cầu", url: request.consultationPreference === "ai" ? aiUrl() : manageUrl }, { label: "Hủy yêu cầu", url: manageUrl, tone: "danger" }], reference: request.id }) },
@@ -159,29 +152,26 @@ export async function notifySaleRequestCreated(request: CreatedSaleRequest) {
 }
 
 export async function notifySaleRequestCancelled(request: SaleRequest) {
-  const config = emailConfigFromEnv(); if (!config) return;
+  if (!emailConfigFromEnv()) return;
   const body = rows([["Mã yêu cầu", request.id], ["Dịch vụ", request.productName], ["Trạng thái", "Đã hủy"], ["Lý do", request.cancelReason || "Không cung cấp"]]);
-  await safelySend("sale_request_cancelled", request.id, [config.adminTo, request.contact].map((to) => ({
-    to, subject: `[HOSTORA] Đã hủy yêu cầu ${request.id}`, reference: request.id,
+  await safelySend("sale_request_cancelled", request.id, [{
+    to: request.contact, subject: `[HOSTORA] Đã hủy yêu cầu ${request.id}`, reference: request.id,
     text: `Yêu cầu ${request.id} đã được hủy. Lý do: ${request.cancelReason || "Không cung cấp"}.`,
     html: emailDocument({ preheader: `Yêu cầu ${request.id} đã được hủy`, eyebrow: "CẬP NHẬT YÊU CẦU", title: "Yêu cầu mua đã được hủy", intro: "HOSTORA đã ghi nhận thay đổi và sẽ không phát hành hóa đơn từ yêu cầu này.", body, reference: request.id }),
-  })));
+  }]);
 }
 
 export async function notifyInvoiceCreated(invoice: CreatedInvoice) {
-  const config = emailConfigFromEnv(); if (!config) return;
+  if (!emailConfigFromEnv() || !invoice.customerEmail) return;
   const portalUrl = invoicePortalUrl(invoice);
   const priceRows: Array<[string, string]> = [["Mã hóa đơn", invoice.id], ["Dịch vụ", invoice.title]];
   if (invoice.discountVnd > 0) priceRows.push(["Giá trước giảm", money(invoice.subtotalVnd)], ["Voucher", `-${money(invoice.discountVnd)} · ${invoice.voucherCode}`]);
   priceRows.push(["Tổng cần thanh toán", money(invoice.amountVnd)], ["Mã truy cập", invoice.accessCode]);
   const voucherNotice = invoice.amountVnd >= 1_000_000 ? notice("Quà cho đơn từ 1 triệu", "Sau khi thanh toán được xác nhận, bạn nhận voucher 100.000đ cho đơn tiếp theo từ 1.000.000đ, hiệu lực 30 ngày.") : "";
   const body = rows(priceRows) + voucherNotice;
-  const messages: Parameters<typeof sendMail>[0][] = [{ to: config.adminTo, subject: `[HOSTORA] Đã tạo hóa đơn ${invoice.id}`, reference: invoice.id,
-    text: `Hóa đơn ${invoice.id} - ${invoice.title} - ${money(invoice.amountVnd)} đã được tạo.`,
-    html: emailDocument({ preheader: `Hóa đơn ${invoice.id} trị giá ${money(invoice.amountVnd)}`, eyebrow: "HÓA ĐƠN MỚI", title: "Hóa đơn đã được phát hành", intro: "Đơn đã sẵn sàng để khách kiểm tra và thanh toán trên HOSTORA.", body, actions: [{ label: "Mở trang quản trị", url: adminOrderUrl() }], reference: invoice.id }) }];
-  if (invoice.customerEmail) messages.push({ to: invoice.customerEmail, subject: `Hóa đơn HOSTORA ${invoice.id} · ${money(invoice.amountVnd)}`, reference: invoice.id,
+  const messages: Parameters<typeof sendMail>[0][] = [{ to: invoice.customerEmail, subject: `Hóa đơn HOSTORA ${invoice.id} · ${money(invoice.amountVnd)}`, reference: invoice.id,
     text: `Hóa đơn ${invoice.id} - ${invoice.title} - ${money(invoice.amountVnd)}. Mã truy cập: ${invoice.accessCode}. Xem, thanh toán hoặc hủy: ${portalUrl}`,
-    html: emailDocument({ preheader: `Hóa đơn ${invoice.id} đã sẵn sàng`, eyebrow: "HÓA ĐƠN HOSTORA", title: "Kiểm tra trước khi thanh toán", intro: "Hãy kiểm tra dịch vụ, số tiền và điều kiện. Bạn có thể hủy trước khi thanh toán ngay trên HOSTORA.", body, actions: [{ label: "Xem và thanh toán", url: portalUrl }, { label: "Hủy trước thanh toán", url: portalUrl, tone: "danger" }], reference: invoice.id }) });
+    html: emailDocument({ preheader: `Hóa đơn ${invoice.id} đã sẵn sàng`, eyebrow: "HÓA ĐƠN HOSTORA", title: "Kiểm tra trước khi thanh toán", intro: "Hãy kiểm tra dịch vụ, số tiền và điều kiện. Bạn có thể hủy trước khi thanh toán ngay trên HOSTORA.", body, actions: [{ label: "Xem và thanh toán", url: portalUrl }, { label: "Hủy trước thanh toán", url: portalUrl, tone: "danger" }], reference: invoice.id }) }];
   await safelySend("invoice_created", invoice.id, messages);
 }
 
@@ -192,7 +182,7 @@ const statusCopy: Record<Invoice["status"], string> = {
 };
 
 export async function notifyInvoiceStatusChanged(invoice: Invoice) {
-  const config = emailConfigFromEnv(); if (!config) return;
+  if (!emailConfigFromEnv() || !invoice.customerEmail) return;
   const copy = invoice.provider === "demo" && invoice.status === "paid"
     ? "Giao dịch kiểm thử đã hoàn tất; không có tiền thật được thu."
     : invoice.provider === "demo" && invoice.status === "refunded"
@@ -202,11 +192,9 @@ export async function notifyInvoiceStatusChanged(invoice: Invoice) {
     (invoice.earnedVoucherCode && invoice.earnedVoucherAmountVnd && invoice.earnedVoucherExpiresAt
       ? notice(`Voucher ${money(invoice.earnedVoucherAmountVnd)}`, `Mã ${invoice.earnedVoucherCode} · dùng cho đơn tiếp theo từ 1.000.000đ · hết hạn ${dateOnly(invoice.earnedVoucherExpiresAt)}.`)
       : "");
-  const messages: Parameters<typeof sendMail>[0][] = [{ to: config.adminTo, subject: `[HOSTORA] ${invoice.id} · ${copy}`, reference: invoice.id,
-    text: `${invoice.id} - ${invoice.title}: ${copy}`, html: emailDocument({ preheader: copy, eyebrow: "TRẠNG THÁI ĐƠN HÀNG", title: `Đơn ${invoice.id} vừa thay đổi`, intro: "Backend HOSTORA đã ghi nhận trạng thái mới từ khách hoặc cổng thanh toán.", body, actions: [{ label: "Mở trang quản trị", url: adminOrderUrl() }], reference: invoice.id }) }];
-  if (invoice.customerEmail) messages.push({ to: invoice.customerEmail, subject: `Cập nhật đơn HOSTORA ${invoice.id}`, reference: invoice.id,
+  const messages: Parameters<typeof sendMail>[0][] = [{ to: invoice.customerEmail, subject: `Cập nhật đơn HOSTORA ${invoice.id}`, reference: invoice.id,
     text: `${invoice.id} - ${invoice.title}: ${copy}${invoice.earnedVoucherCode ? ` Voucher: ${invoice.earnedVoucherCode}` : ""}`,
-    html: emailDocument({ preheader: copy, eyebrow: "CẬP NHẬT ĐƠN HÀNG", title: copy, intro: `HOSTORA vừa cập nhật đơn ${invoice.id}.`, body, actions: [{ label: "Mở đơn hàng", url: publicOrderUrl() }], reference: invoice.id }) });
+    html: emailDocument({ preheader: copy, eyebrow: "CẬP NHẬT ĐƠN HÀNG", title: copy, intro: `HOSTORA vừa cập nhật đơn ${invoice.id}.`, body, actions: [{ label: "Mở đơn hàng", url: publicOrderUrl() }], reference: invoice.id }) }];
   await safelySend(`invoice_${invoice.status}`, invoice.id, messages);
 }
 
@@ -216,4 +204,77 @@ export async function notifyAdminLoginCode(code: string, expiresAt: string) {
   await safelySend("admin_login_code", "ADMIN-LOGIN", [{ to: config.adminTo, subject: `[HOSTORA] Mã đăng nhập quản trị ${code}`, reference: "ADMIN-LOGIN",
     text: `Mã đăng nhập quản trị HOSTORA: ${code}. Hết hạn: ${dateTime(expiresAt)}.`,
     html: emailDocument({ preheader: "Mã đăng nhập quản trị HOSTORA", eyebrow: "ĐĂNG NHẬP QUẢN TRỊ", title: "Mã xác minh dùng một lần", intro: "Nhập mã bên dưới tại trang quản trị. HOSTORA không bao giờ hỏi lại mã này qua điện thoại.", body, reference: "ADMIN-LOGIN" }) }]);
+}
+
+export async function notifyCustomerPasswordReset(
+  customer: CustomerAccount,
+  token: string,
+  expiresAt: string,
+) {
+  if (!emailConfigFromEnv()) return;
+  const resetUrl = new URL("/account/reset-password", publicBaseUrl());
+  resetUrl.searchParams.set("token", token);
+  const body =
+    notice(
+      "Liên kết dùng một lần",
+      `Liên kết hết hạn lúc ${dateTime(expiresAt)}. Sau khi đổi mật khẩu, mọi phiên đăng nhập cũ sẽ bị đóng.`,
+      "amber",
+    ) +
+    notice(
+      "Không phải bạn?",
+      "Hãy bỏ qua email này. Mật khẩu hiện tại vẫn được giữ nguyên.",
+    );
+  await safelySend("customer_password_reset", customer.id, [
+    {
+      to: customer.email,
+      subject: "Đặt lại mật khẩu HOSTORA",
+      reference: customer.id,
+      text: `Đặt lại mật khẩu HOSTORA: ${resetUrl.toString()} Liên kết hết hạn lúc ${dateTime(expiresAt)}.`,
+      html: emailDocument({
+        preheader: "Liên kết đặt lại mật khẩu HOSTORA",
+        eyebrow: "BẢO MẬT TÀI KHOẢN",
+        title: `Chào ${customer.name}, bạn vừa yêu cầu mật khẩu mới`,
+        intro:
+          "Chỉ tiếp tục nếu chính bạn vừa yêu cầu. HOSTORA không bao giờ hỏi mật khẩu qua email hoặc điện thoại.",
+        body,
+        actions: [{ label: "Tạo mật khẩu mới", url: resetUrl.toString() }],
+        reference: customer.id,
+      }),
+    },
+  ]);
+}
+
+export async function notifyCustomerSupportCreated(
+  customer: CustomerAccount,
+  supportCase: CustomerSupportCase,
+) {
+  if (!emailConfigFromEnv()) return;
+  const body = rows([
+    ["Mã hỗ trợ", supportCase.id],
+    ["Chủ đề", supportCase.subject],
+    ["Trạng thái", "Đã tiếp nhận"],
+  ]);
+  await safelySend("customer_support_created", supportCase.id, [
+    {
+      to: customer.email,
+      subject: `HOSTORA đã nhận hỗ trợ ${supportCase.id}`,
+      reference: supportCase.id,
+      text: `HOSTORA đã nhận yêu cầu ${supportCase.id}: ${supportCase.subject}.`,
+      html: emailDocument({
+        preheader: `Yêu cầu ${supportCase.id} đã được tiếp nhận`,
+        eyebrow: "CHĂM SÓC KHÁCH HÀNG",
+        title: "Chúng tôi đã nhận vấn đề của bạn",
+        intro:
+          "Yêu cầu đã nằm trong tài khoản HOSTORA. Bạn có thể theo dõi trạng thái tại Trung tâm khách hàng.",
+        body,
+        actions: [
+          {
+            label: "Mở Trung tâm khách hàng",
+            url: new URL("/account", publicBaseUrl()).toString(),
+          },
+        ],
+        reference: supportCase.id,
+      }),
+    },
+  ]);
 }

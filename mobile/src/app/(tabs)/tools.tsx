@@ -20,11 +20,8 @@ import { formatVnd } from "@/lib/catalog";
 import { hostingCost } from "@/lib/hosting-cost";
 import { useRecommendedPlans } from "@/lib/recommendations";
 
-const multipliers = [1, 3, 5, 10];
-
 export default function ToolsScreen() {
   const [months, setMonths] = useState<12 | 24 | 36 | 48>(48);
-  const [traffic, setTraffic] = useState(5);
   const { requirements } = useApp();
   const { plans, status } = useRecommendedPlans(requirements);
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
@@ -35,7 +32,7 @@ export default function ToolsScreen() {
       ? hostingCost(selectedPlan, months)
       : null;
   const costNote =
-    status !== "verified"
+    status !== "verified" || !selectedPlan
       ? "Cần kết nối để dùng bảng giá mới nhất đã kiểm tra."
       : months < selectedPlan.billingMonths
         ? `Giá ưu đãi công bố cho kỳ ${selectedPlan.billingMonths} tháng; chưa có giá chắc chắn cho kỳ ${months} tháng.`
@@ -74,11 +71,11 @@ export default function ToolsScreen() {
               <Pressable
                 key={plan.id}
                 accessibilityRole="button"
-                accessibilityState={{ selected: selectedPlan.id === plan.id }}
+                accessibilityState={{ selected: selectedPlan?.id === plan.id }}
                 onPress={() => setSelectedPlanId(plan.id)}
                 style={[
                   styles.planChoice,
-                  selectedPlan.id === plan.id && styles.planChoiceActive,
+                  selectedPlan?.id === plan.id && styles.planChoiceActive,
                 ]}
               >
                 <Text style={styles.planChoiceText}>
@@ -127,53 +124,21 @@ export default function ToolsScreen() {
         <Card style={{ gap: 16 }}>
           <View style={styles.cardTop}>
             <IconBox name="zap" />
-            <Pill tone="warning">LÚC ĐÔNG KHÁCH</Pill>
+            <Pill tone="warning">TRƯỚC CHIẾN DỊCH</Pill>
           </View>
-          <Text style={styles.cardTitle}>Ước tính khi khách tăng đột biến</Text>
+          <Text style={styles.cardTitle}>Khi lượng khách tăng đột biến</Text>
           <Text style={styles.cardCopy}>
-            Xem nhanh mức rủi ro khi lượng khách cùng lúc tăng cao hơn bình
-            thường.
+            Dung lượng lưu trữ không cho biết website chịu được bao nhiêu người cùng lúc. Hãy kiểm tra ba việc này trước khi chạy quảng cáo.
           </Text>
-          <View style={styles.periodsLight}>
-            {multipliers.map((value) => (
-              <Pressable
-                key={value}
-                onPress={() => setTraffic(value)}
-                style={[
-                  styles.periodLight,
-                  traffic === value && styles.periodLightActive,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.periodLightText,
-                    traffic === value && { color: "white" },
-                  ]}
-                >
-                  ×{value}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-          <View style={styles.chart}>
-            {[0.28, 0.38, 0.34, 0.52, 0.8, 0.56, 0.42, 0.3].map(
-              (value, index) => (
-                <View
-                  key={index}
-                  style={[
-                    styles.bar,
-                    { height: 24 + value * 84 * (traffic / 5) },
-                  ]}
-                />
-              ),
-            )}
+          <View style={styles.checklist}>
+            <Text style={styles.checklistRow}>01  Chạy thử tốc độ với trang web thật.</Text>
+            <Text style={styles.checklistRow}>02  Hỏi nhà cung cấp về giới hạn tài nguyên và khả năng mở rộng.</Text>
+            <Text style={styles.checklistRow}>03  Theo dõi lỗi và thời gian tải trong lúc có khách.</Text>
           </View>
           <View style={styles.warning}>
             <Feather name="alert-triangle" color={colors.warning} size={17} />
             <Text style={styles.warningText}>
-              {traffic >= 5
-                ? "Nên tối ưu tốc độ và chạy thử trước chiến dịch lớn."
-                : "Rủi ro vừa; hãy tiếp tục theo dõi khi trang web hoạt động."}
+              Chưa có kết quả thử tải cho website của bạn nên HOSTORA chưa thể dự đoán lượng khách chịu được.
             </Text>
           </View>
         </Card>
@@ -378,36 +343,13 @@ const styles = StyleSheet.create({
     fontSize: 11,
     lineHeight: 18,
   },
-  periodsLight: { flexDirection: "row", gap: 7 },
-  periodLight: {
-    flex: 1,
-    alignItems: "center",
-    paddingVertical: 9,
-    borderRadius: 12,
-    backgroundColor: colors.surfaceAlt,
-  },
-  periodLightActive: { backgroundColor: colors.primary },
-  periodLightText: {
+  checklist: { gap: 0, borderTopWidth: 1, borderBottomWidth: 1, borderColor: colors.line },
+  checklistRow: {
+    paddingVertical: 12,
     color: colors.text,
-    fontFamily: "BeVietnamPro_800ExtraBold",
+    fontFamily: "BeVietnamPro_600SemiBold",
     fontSize: 11,
-  },
-  chart: {
-    height: 135,
-    flexDirection: "row",
-    alignItems: "flex-end",
-    gap: 7,
-    paddingTop: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.line,
-  },
-  bar: {
-    flex: 1,
-    maxHeight: 125,
-    minHeight: 18,
-    borderTopLeftRadius: 7,
-    borderTopRightRadius: 7,
-    backgroundColor: colors.primary,
+    lineHeight: 18,
   },
   warning: {
     flexDirection: "row",

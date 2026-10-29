@@ -18,7 +18,7 @@ import {
 } from "react-native";
 import Markdown from "react-native-markdown-display";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Brand, Pill } from "@/components/ui";
+import { Brand, CinematicScrollView, Pill } from "@/components/ui";
 import { colors, radii } from "@/constants/theme";
 import { getApiBase } from "@/lib/api";
 import { toCustomerLanguage } from "@/lib/customer-language";
@@ -27,6 +27,11 @@ import {
   readChatSources,
   type ChatSource,
 } from "@/lib/chat-sources";
+import {
+  buildConversationMemory,
+  recentChatMessages,
+  type MobileChatMemory,
+} from "@/lib/chat-memory";
 
 type Message = {
   role: "user" | "assistant";
@@ -37,6 +42,7 @@ type Message = {
 };
 // A new key keeps customer-facing copy separate from conversations created by older builds.
 const KEY = "hostora:mobile:chat:v3";
+const MEMORY_KEY = "hostora:mobile:chat-memory:v1";
 const starters = [
   "Tôi chưa có trang web, bắt đầu từ đâu?",
   "Cửa hàng mới nên chọn gói nào?",
@@ -65,12 +71,14 @@ export default function AssistantScreen() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [imageLoading, setImageLoading] = useState(false);
+  const [memory, setMemory] = useState<MobileChatMemory | null>(null);
   const list = useRef<ScrollViewInstance>(null);
 
   useEffect(() => {
-    AsyncStorage.getItem(KEY)
-      .then((saved) => {
+    Promise.all([AsyncStorage.getItem(KEY), AsyncStorage.getItem(MEMORY_KEY)])
+      .then(([saved, savedMemory]) => {
         if (saved) setMessages(JSON.parse(saved));
+        if (savedMemory) setMemory(JSON.parse(savedMemory));
       })
       .catch(() => undefined);
   }, []);
@@ -79,7 +87,12 @@ export default function AssistantScreen() {
     const clean = text.trim();
     if (!clean || loading) return;
     const next: Message[] = [...messages, { role: "user", content: clean }];
+    const nextMemory = buildConversationMemory(
+      next.map(({ role, content }) => ({ role, content })),
+      memory,
+    );
     setMessages(next);
+    setMemory(nextMemory);
     setInput("");
     setLoading(true);
     try {
@@ -89,9 +102,8 @@ export default function AssistantScreen() {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          messages: next
-            .slice(-12)
-            .map(({ role, content }) => ({ role, content })),
+          messages: recentChatMessages(next.map(({ role, content }) => ({ role, content }))),
+          memory: nextMemory,
         }),
       });
       const answer = await response.text();
@@ -114,6 +126,7 @@ export default function AssistantScreen() {
       ];
       setMessages(completed);
       await AsyncStorage.setItem(KEY, JSON.stringify(completed));
+      await AsyncStorage.setItem(MEMORY_KEY, JSON.stringify(nextMemory));
     } catch {
       const failed: Message[] = [
         ...next,
@@ -125,6 +138,7 @@ export default function AssistantScreen() {
       ];
       setMessages(failed);
       await AsyncStorage.setItem(KEY, JSON.stringify(failed));
+      await AsyncStorage.setItem(MEMORY_KEY, JSON.stringify(nextMemory));
     } finally {
       setLoading(false);
       setTimeout(() => list.current?.scrollToEnd({ animated: true }), 80);
@@ -160,7 +174,12 @@ export default function AssistantScreen() {
       content: "Đã gửi ảnh màn hình để xác định bước tiếp theo.",
     };
     const next = [...messages, userMessage];
+    const nextMemory = buildConversationMemory(
+      next.map(({ role, content }) => ({ role, content })),
+      memory,
+    );
     setMessages(next);
+    setMemory(nextMemory);
     setImageLoading(true);
     try {
       const apiBase = await getApiBase();
@@ -188,6 +207,7 @@ export default function AssistantScreen() {
       ];
       setMessages(completed);
       await AsyncStorage.setItem(KEY, JSON.stringify(completed));
+      await AsyncStorage.setItem(MEMORY_KEY, JSON.stringify(nextMemory));
     } catch (error) {
       const failed: Message[] = [
         ...next,
@@ -201,6 +221,7 @@ export default function AssistantScreen() {
       ];
       setMessages(failed);
       await AsyncStorage.setItem(KEY, JSON.stringify(failed));
+      await AsyncStorage.setItem(MEMORY_KEY, JSON.stringify(nextMemory));
     } finally {
       setImageLoading(false);
       setTimeout(() => list.current?.scrollToEnd({ animated: true }), 80);
@@ -225,7 +246,9 @@ export default function AssistantScreen() {
               },
             ];
             setMessages(initial);
+            setMemory(null);
             void AsyncStorage.setItem(KEY, JSON.stringify(initial));
+            void AsyncStorage.removeItem(MEMORY_KEY);
           },
         },
       ],
@@ -262,8 +285,8 @@ export default function AssistantScreen() {
           </Text>
         </View>
 
-        <ScrollView
-          ref={list}
+        <CinematicScrollView
+          scrollRef={list}
           style={styles.chat}
           contentContainerStyle={styles.chatContent}
           onContentSizeChange={() =>
@@ -372,7 +395,7 @@ export default function AssistantScreen() {
               </Text>
             </View>
           ) : null}
-        </ScrollView>
+        </CinematicScrollView>
 
         {messages.length < 3 ? (
           <ScrollView

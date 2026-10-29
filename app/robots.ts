@@ -3,11 +3,25 @@ import { absoluteSiteUrl, siteOrigin } from "@/lib/site-url";
 
 export default function robots(): MetadataRoute.Robots {
   return {
-    rules: {
-      userAgent: "*",
-      allow: "/",
-      disallow: ["/admin", "/api", "/orders"],
-    },
+    rules: [
+      {
+        userAgent: "*",
+        allow: "/",
+        disallow: ["/admin", "/api", "/orders"],
+      },
+      {
+        userAgent: [
+          "Googlebot",
+          "Bingbot",
+          "OAI-SearchBot",
+          "ChatGPT-User",
+          "Claude-SearchBot",
+          "PerplexityBot",
+        ],
+        allow: "/",
+        disallow: ["/admin", "/api", "/orders"],
+      },
+    ],
     sitemap: absoluteSiteUrl("/sitemap.xml"),
     host: siteOrigin(),
   };

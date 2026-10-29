@@ -2,6 +2,9 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  outputFileTracingExcludes: {
+    "/*": ["./data/runtime/**/*", "./mobile/releases/**/*"],
+  },
   allowedDevOrigins: ["127.0.0.1", "192.168.100.10"],
   devIndicators: false,
   reactStrictMode: true,

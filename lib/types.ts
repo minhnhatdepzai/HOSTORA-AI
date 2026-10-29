@@ -4,6 +4,7 @@ export interface Requirements {
   websiteType: WebsiteType;
   monthlyVisits: number;
   monthlyBudget: number;
+  upfrontBudget?: number;
   needsDomain: boolean;
   ecommerce: boolean;
   notes?: string;
@@ -37,6 +38,9 @@ export interface HostingPlan {
 }
 
 export interface RecommendationScore {
+  eligibility: "eligible" | "over-budget" | "unverified" | "unsupported";
+  upfrontVnd: number;
+  upfrontConfirmed: boolean;
   plan: HostingPlan;
   total: number;
   breakdown: Record<
@@ -46,7 +50,8 @@ export interface RecommendationScore {
     | "ownership"
     | "scalability"
     | "resilience"
-    | "usability",
+    | "usability"
+    | "domain",
     number
   >;
   reasons: string[];

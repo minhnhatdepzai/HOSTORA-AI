@@ -6,12 +6,18 @@ import {
   getStudioProject,
   publishStudioProjectUpdate,
   saveStudioProject,
+  isStudioProjectOwner,
 } from "@/lib/site-studio-store";
 import {
   siteBriefSchema,
   siteIdeaSchema,
   unsupportedStudioClaims,
 } from "@/lib/site-studio";
+import {
+  customerFromRequest,
+  requestUsesBearer,
+} from "@/lib/customer/auth";
+import { sameOrigin } from "@/lib/payments/admin-auth";
 
 const requestSchema = z
   .object({
@@ -31,12 +37,22 @@ export async function PATCH(
   request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
+  const customer = customerFromRequest(request);
+  if (!customer)
+    return Response.json({ error: "Bạn cần đăng nhập." }, { status: 401 });
+  if (!requestUsesBearer(request) && !sameOrigin(request))
+    return Response.json({ error: "Nguồn yêu cầu không hợp lệ." }, { status: 403 });
   const { id } = await context.params;
   const project = await getStudioProject(id);
   if (!project)
     return Response.json(
       { error: "Không tìm thấy bản website này." },
       { status: 404 },
+    );
+  if (!isStudioProjectOwner(project, customer.id))
+    return Response.json(
+      { error: "Website này không thuộc tài khoản của bạn." },
+      { status: 403 },
     );
   const parsed = designSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success)
@@ -92,6 +108,11 @@ const briefJsonSchema = {
         required: ["title", "copy"],
       },
     },
+    offerTitle: { type: "string", minLength: 4, maxLength: 80 },
+    offerCopy: { type: "string", minLength: 30, maxLength: 320 },
+    audienceTitle: { type: "string", minLength: 4, maxLength: 80 },
+    audienceCopy: { type: "string", minLength: 30, maxLength: 320 },
+    closingLine: { type: "string", minLength: 12, maxLength: 160 },
     seoTitle: { type: "string", minLength: 6, maxLength: 60 },
     seoDescription: { type: "string", minLength: 20, maxLength: 160 },
   },
@@ -102,6 +123,11 @@ const briefJsonSchema = {
     "aboutTitle",
     "aboutCopy",
     "features",
+    "offerTitle",
+    "offerCopy",
+    "audienceTitle",
+    "audienceCopy",
+    "closingLine",
     "seoTitle",
     "seoDescription",
   ],
@@ -111,12 +137,22 @@ export async function POST(
   request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
+  const customer = customerFromRequest(request);
+  if (!customer)
+    return Response.json({ error: "Bạn cần đăng nhập." }, { status: 401 });
+  if (!requestUsesBearer(request) && !sameOrigin(request))
+    return Response.json({ error: "Nguồn yêu cầu không hợp lệ." }, { status: 403 });
   const { id } = await context.params;
   const project = await getStudioProject(id);
   if (!project)
     return Response.json(
       { error: "Không tìm thấy bản website này." },
       { status: 404 },
+    );
+  if (!isStudioProjectOwner(project, customer.id))
+    return Response.json(
+      { error: "Website này không thuộc tài khoản của bạn." },
+      { status: 403 },
     );
 
   let body: unknown;

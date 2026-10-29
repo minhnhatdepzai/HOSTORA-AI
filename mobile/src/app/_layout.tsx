@@ -19,6 +19,8 @@ import { MotionContext } from "@/components/motion";
 import { BrandFilm } from "@/components/brand-film";
 import { Onboarding } from "@/components/onboarding";
 import { AppProvider } from "@/context/app-context";
+import { CustomerAuthProvider } from "@/context/customer-auth-context";
+import { NotificationCenter } from "@/components/notification-center";
 import {
   ONBOARDING_COMPLETED_VALUE,
   ONBOARDING_STORAGE_KEY,
@@ -81,6 +83,7 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <MotionContext.Provider value={reduceMotion}>
         <AppProvider>
+          <CustomerAuthProvider>
           <View style={{ flex: 1 }}>
             <StatusBar
               style={showOnboarding || playingIntro ? "light" : "dark"}
@@ -98,11 +101,16 @@ export default function RootLayout() {
               <Stack.Screen name="domain" />
               <Stack.Screen name="analyzer" />
               <Stack.Screen name="knowledge" />
+              <Stack.Screen name="journal" />
               <Stack.Screen name="seo" />
               <Stack.Screen name="readiness" />
               <Stack.Screen name="settings" />
               <Stack.Screen name="orders" />
               <Stack.Screen name="studio" />
+              <Stack.Screen name="account" />
+              <Stack.Screen name="account-login" />
+              <Stack.Screen name="account-register" />
+              <Stack.Screen name="account-forgot" />
             </Stack>
             {playingIntro ? (
               <BrandFilm onFinish={() => setShowIntro(false)} />
@@ -111,7 +119,9 @@ export default function RootLayout() {
                 <Onboarding onFinish={finishOnboarding} />
               </View>
             ) : null}
+            {!showOnboarding && !playingIntro ? <NotificationCenter /> : null}
           </View>
+          </CustomerAuthProvider>
         </AppProvider>
       </MotionContext.Provider>
     </SafeAreaProvider>

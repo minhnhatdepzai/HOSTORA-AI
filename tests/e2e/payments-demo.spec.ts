@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { PaymentStore } from "@/lib/payments/store";
 
 test("khách xác nhận thanh toán kiểm thử mà không bị hiểu là tiền thật", async ({ page }) => {
-  const store = new PaymentStore();
+  const store = new PaymentStore(process.env.HOSTORA_PAYMENTS_DB_PATH);
   const invoice = store.createInvoice({
     title: "Hosting doanh nghiệp 12 tháng",
     description: "Kiểm thử luồng thanh toán HOSTORA",
@@ -28,7 +28,7 @@ test("khách xác nhận thanh toán kiểm thử mà không bị hiểu là ti�
 });
 
 test("giao diện Stripe yêu cầu thông tin thẻ demo trước khi xác nhận", async ({ page }, testInfo) => {
-  const store = new PaymentStore();
+  const store = new PaymentStore(process.env.HOSTORA_PAYMENTS_DB_PATH);
   const invoice = store.createInvoice({ title: "Tên miền và SSL", amountVnd: 350_000 });
   store.close();
 

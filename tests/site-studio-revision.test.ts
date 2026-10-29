@@ -7,6 +7,7 @@ const deps = vi.hoisted(() => ({
   getStudioProject: vi.fn(),
   saveStudioProject: vi.fn(),
   publishStudioProjectUpdate: vi.fn(),
+  isStudioProjectOwner: vi.fn(() => true),
 }));
 
 vi.mock("@/lib/ollama", async (importOriginal) => {
@@ -17,6 +18,10 @@ vi.mock("@/lib/site-studio-workflow", () => ({
   auditSiteBrief: deps.auditSiteBrief,
 }));
 vi.mock("@/lib/site-studio-store", () => deps);
+vi.mock("@/lib/customer/auth", () => ({
+  customerFromRequest: () => ({ id: "customer-1", email: "moc@example.com" }),
+  requestUsesBearer: () => true,
+}));
 
 import { POST } from "@/app/api/ai/site-studio/[id]/route";
 
@@ -41,6 +46,7 @@ const project = {
   revisionCount: 0,
   createdAt: "2026-10-26T00:00:00.000Z",
   updatedAt: "2026-10-26T00:00:00.000Z",
+  ownerCustomerId: "customer-1",
 };
 
 function request(message: string) {

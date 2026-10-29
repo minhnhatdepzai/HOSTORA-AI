@@ -3,5 +3,5 @@ const { defineConfig, globalIgnores } = require("eslint/config");
 
 module.exports = defineConfig([
   ...expoConfig,
-  globalIgnores([".expo/**", "android/**", "releases/**"]),
+  globalIgnores([".expo/**", "android/**", "releases/**", "dist/**", "web-build/**"]),
 ]);

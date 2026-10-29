@@ -1,0 +1,22 @@
+{
+  "name": "studio-v3",
+  "base_model": "unsloth/Qwen3.5-4B",
+  "train_file": "data/studio_v3_train.jsonl",
+  "holdout_file": "data/studio_v3_holdout.jsonl",
+  "output_dir": "output-studio-v3",
+  "ollama_model": "hostora-studio:4b-q8-v3",
+  "max_length": 4096,
+  "lora_rank": 24,
+  "lora_alpha": 24,
+  "epochs": 6,
+  "learning_rate": 0.00004,
+  "per_device_train_batch_size": 3,
+  "gradient_accumulation_steps": 1,
+  "dataset_num_proc": 4,
+  "dataloader_num_workers": 2,
+  "seed": 6137,
+  "comparison_models": [
+    "hostora-studio:4b-q8-v2",
+    "hostora-chatbot:4b-q8-20261023-v2"
+  ]
+}

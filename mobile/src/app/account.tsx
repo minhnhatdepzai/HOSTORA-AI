@@ -1,0 +1,74 @@
+import { DetailHeader } from "@/components/detail-header";
+import { Button, CinematicScrollView } from "@/components/ui";
+import { colors } from "@/constants/theme";
+import { type MobileSupportCase, useCustomerAuth } from "@/context/customer-auth-context";
+import { Feather } from "@expo/vector-icons";
+import { router } from "expo-router";
+import { useEffect, useMemo, useState } from "react";
+import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+
+const money = (value: number) => `${new Intl.NumberFormat("vi-VN").format(value)} ₫`;
+const orderStatus = { pending: "Chờ thanh toán", cancel_requested: "Đang xem yêu cầu hủy", paid: "Đã thanh toán", refund_requested: "Chờ duyệt hoàn tiền", refund_pending: "Đang hoàn tiền", refunded: "Đã hoàn tiền", cancelled: "Đã hủy" } as const;
+const supportStatus = { new: "Đã tiếp nhận", in_progress: "Đang xử lý", resolved: "Đã giải quyết" } as const;
+
+export default function AccountScreen() {
+  const auth = useCustomerAuth();
+  const [subject, setSubject] = useState("");
+  const [category, setCategory] = useState<MobileSupportCase["category"]>("order");
+  const [message, setMessage] = useState("");
+  const [notice, setNotice] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => { const timer = setInterval(() => setNow(Date.now()), 60000); return () => clearInterval(timer); }, []);
+  const activeVouchers = useMemo(() => auth.vouchers.filter((item) => item.status === "active" && new Date(item.expiresAt).valueOf() > now), [auth.vouchers, now]);
+
+  if (!auth.hydrated) return <SafeAreaView style={styles.loading}><ActivityIndicator color={colors.primary} /></SafeAreaView>;
+  if (!auth.customer) return <SafeAreaView style={styles.safe} edges={["top", "bottom", "left", "right"]}><DetailHeader title="Tài khoản" /><View style={styles.gate}><View style={styles.gateIcon}><Feather name="user" size={28} color={colors.mint} /></View><Text style={styles.gateEyebrow}>SỔ DỊCH VỤ HOSTORA</Text><Text style={styles.gateTitle}>Giữ voucher và hỗ trợ luôn bên bạn.</Text><Text style={styles.gateCopy}>Đăng nhập bằng email nhận hóa đơn để xem đơn, dùng ưu đãi và tạo website AI.</Text><Button label="Đăng nhập" onPress={() => router.push("/account-login")} /><Button label="Tạo tài khoản" variant="secondary" onPress={() => router.push("/account-register")} /></View></SafeAreaView>;
+
+  async function sendSupport() {
+    setBusy(true); setNotice("");
+    try {
+      const item = await auth.createSupportCase({ subject, category, message });
+      setSubject(""); setMessage(""); setNotice(`Đã tạo yêu cầu ${item.id}. HOSTORA sẽ phản hồi qua email.`);
+    } catch (cause) { setNotice(cause instanceof Error ? cause.message : "Chưa gửi được yêu cầu."); }
+    finally { setBusy(false); }
+  }
+
+  return <SafeAreaView style={styles.safe} edges={["top", "bottom", "left", "right"]}>
+    <DetailHeader title="Sổ dịch vụ" action={<Pressable accessibilityRole="button" accessibilityLabel="Đăng xuất" onPress={() => void auth.logout().then(() => router.replace("/(tabs)"))} style={styles.logout}><Feather name="log-out" size={17} color={colors.text} /></Pressable>} />
+    <CinematicScrollView contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled" contentContainerStyle={styles.scroll}>
+      <View style={styles.hero}><Text style={styles.heroKicker}>TÀI KHOẢN KHÁCH HÀNG</Text><Text style={styles.heroTitle}>Chào {auth.customer.name}.</Text><Text style={styles.heroEmail}>{auth.customer.email}</Text><View style={styles.heroRule} /><Text style={styles.heroCopy}>{activeVouchers.length ? `Bạn có ${activeVouchers.length} voucher sẵn sàng cho lần mua tiếp theo.` : "Voucher mới sẽ tự xuất hiện sau đơn đủ điều kiện."}</Text></View>
+      <View style={styles.actions}><AccountAction icon="edit-3" title="Tạo website với AI" copy="Website mới được giữ theo tài khoản này" onPress={() => router.push("/studio")} /><AccountAction icon="file-text" title="Tra cứu đơn hàng" copy="Xem thanh toán, hủy và hoàn tiền" onPress={() => router.push("/orders")} /></View>
+      <SectionHeading number="01" title="Ví ưu đãi" copy="Khi đặt mua bằng email tài khoản, HOSTORA tự chọn voucher còn hiệu lực." />
+      {auth.vouchers.length ? auth.vouchers.map((voucher) => <View key={voucher.code} style={[styles.ticket, voucher.status !== "active" && styles.ticketInactive]}><View style={styles.ticketMain}><Text style={styles.ticketState}>{voucher.status === "active" ? "SẴN SÀNG" : voucher.status === "redeemed" ? "ĐÃ DÙNG" : "KHÔNG CÒN HIỆU LỰC"}</Text><Text style={styles.ticketCode}>{voucher.code}</Text><Text style={styles.ticketCopy}>Giảm {money(voucher.amountVnd)} · đơn từ {money(voucher.minOrderVnd)}</Text></View><View style={styles.ticketDate}><Feather name="calendar" size={14} color={voucher.status === "active" ? colors.mint : colors.muted} /><Text style={[styles.ticketDateText, voucher.status !== "active" && styles.ticketDateInactive]}>{new Date(voucher.expiresAt).toLocaleDateString("vi-VN")}</Text></View></View>) : <Empty text="Chưa có voucher trong tài khoản." />}
+      <SectionHeading number="02" title="Đơn gần đây" copy="Thông tin tóm tắt theo email; mã truy cập riêng vẫn cần để mở chi tiết." />
+      <View style={styles.ledger}>{auth.orders.length ? auth.orders.map((order) => <View key={order.id} style={styles.ledgerRow}><View style={styles.ledgerMain}><Text style={styles.ledgerTitle}>{order.title}</Text><Text style={styles.ledgerMeta}>{order.id} · {new Date(order.updatedAt).toLocaleDateString("vi-VN")}</Text></View><View style={styles.ledgerSide}><Text style={styles.ledgerAmount}>{money(order.amountVnd)}</Text><Text style={styles.ledgerStatus}>{orderStatus[order.status]}</Text></View></View>) : <Empty text="Chưa có hóa đơn gắn với email này." />}</View>
+      <SectionHeading number="03" title="Chăm sóc khách hàng" copy="Tạo mã hỗ trợ để HOSTORA biết vấn đề và theo dõi tới khi giải quyết." />
+      <View style={styles.supportForm}>
+        <Text style={styles.label}>Nhóm vấn đề</Text><View style={styles.categoryRow}>{(["order", "payment", "refund", "website", "account", "other"] as const).map((item) => <Pressable key={item} accessibilityRole="button" onPress={() => setCategory(item)} style={[styles.category, category === item && styles.categoryActive]}><Text style={[styles.categoryText, category === item && styles.categoryTextActive]}>{{ order: "Đơn", payment: "Thanh toán", refund: "Hoàn tiền", website: "Website", account: "Tài khoản", other: "Khác" }[item]}</Text></Pressable>)}</View>
+        <Text style={styles.label}>Tiêu đề</Text><TextInput accessibilityLabel="Tiêu đề hỗ trợ" value={subject} onChangeText={setSubject} maxLength={140} style={styles.input} />
+        <Text style={styles.label}>Điều đã xảy ra</Text><TextInput accessibilityLabel="Mô tả vấn đề" value={message} onChangeText={setMessage} maxLength={2000} multiline textAlignVertical="top" style={[styles.input, styles.textarea]} />
+        {notice ? <Text accessibilityRole="alert" style={styles.notice}>{notice}</Text> : null}<Button label={busy ? "Đang gửi" : "Gửi yêu cầu hỗ trợ"} disabled={busy || subject.trim().length < 5 || message.trim().length < 20} onPress={() => void sendSupport()} />
+      </View>
+      <View style={styles.supportHistory}><Text style={styles.historyTitle}>Yêu cầu đã gửi</Text>{auth.supportCases.length ? auth.supportCases.map((item) => <View key={item.id} style={styles.historyRow}><View><Text style={styles.historySubject}>{item.subject}</Text><Text style={styles.historyMeta}>{item.id} · {new Date(item.createdAt).toLocaleDateString("vi-VN")}</Text></View><Text style={styles.historyState}>{supportStatus[item.status]}</Text></View>) : <Text style={styles.emptyText}>Chưa có yêu cầu hỗ trợ.</Text>}</View>
+    </CinematicScrollView>
+  </SafeAreaView>;
+}
+
+function AccountAction({ icon, title, copy, onPress }: { icon: React.ComponentProps<typeof Feather>["name"]; title: string; copy: string; onPress: () => void }) { return <Pressable accessibilityRole="button" onPress={onPress} style={styles.action}><View style={styles.actionIcon}><Feather name={icon} size={19} color={colors.primary} /></View><View style={styles.actionCopy}><Text style={styles.actionTitle}>{title}</Text><Text style={styles.actionText}>{copy}</Text></View><Feather name="arrow-right" size={17} color={colors.muted} /></Pressable>; }
+function SectionHeading({ number, title, copy }: { number: string; title: string; copy: string }) { return <View style={styles.sectionHeading}><Text style={styles.sectionNumber}>{number}</Text><View style={styles.sectionCopy}><Text style={styles.sectionTitle}>{title}</Text><Text style={styles.sectionText}>{copy}</Text></View></View>; }
+function Empty({ text }: { text: string }) { return <View style={styles.empty}><Text style={styles.emptyText}>{text}</Text></View>; }
+
+const styles = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: colors.canvas }, loading: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.canvas }, scroll: { paddingHorizontal: 20, paddingBottom: 56, gap: 18 },
+  logout: { width: 44, height: 44, borderRadius: 13, borderCurve: "continuous", borderWidth: 1, borderColor: colors.line, backgroundColor: "white", alignItems: "center", justifyContent: "center" },
+  gate: { flex: 1, padding: 24, justifyContent: "center", gap: 14 }, gateIcon: { width: 64, height: 64, borderRadius: 32, backgroundColor: colors.ink, alignItems: "center", justifyContent: "center" }, gateEyebrow: { color: colors.primary, fontFamily: "BeVietnamPro_800ExtraBold", fontSize: 10, letterSpacing: 1.5 }, gateTitle: { color: colors.ink, fontFamily: "BeVietnamPro_800ExtraBold", fontSize: 29, lineHeight: 36 }, gateCopy: { color: colors.muted, fontFamily: "BeVietnamPro_400Regular", fontSize: 13, lineHeight: 21, marginBottom: 8 },
+  hero: { backgroundColor: colors.ink, padding: 24, borderRadius: 24, borderCurve: "continuous", gap: 7 }, heroKicker: { color: colors.mint, fontFamily: "BeVietnamPro_800ExtraBold", fontSize: 10, letterSpacing: 1.5 }, heroTitle: { color: "white", fontFamily: "BeVietnamPro_800ExtraBold", fontSize: 29, lineHeight: 36 }, heroEmail: { color: "#B8C8C6", fontFamily: "BeVietnamPro_500Medium", fontSize: 11 }, heroRule: { height: 1, backgroundColor: "rgba(255,255,255,.17)", marginVertical: 8 }, heroCopy: { color: "#D5E2DF", fontFamily: "BeVietnamPro_400Regular", fontSize: 12, lineHeight: 20 },
+  actions: { borderTopWidth: 1, borderBottomWidth: 1, borderColor: colors.line }, action: { minHeight: 76, flexDirection: "row", alignItems: "center", gap: 12, borderBottomWidth: 1, borderColor: colors.line }, actionIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.primarySoft, alignItems: "center", justifyContent: "center" }, actionCopy: { flex: 1, gap: 3 }, actionTitle: { color: colors.text, fontFamily: "BeVietnamPro_700Bold", fontSize: 13 }, actionText: { color: colors.muted, fontFamily: "BeVietnamPro_400Regular", fontSize: 10, lineHeight: 15 },
+  sectionHeading: { flexDirection: "row", gap: 12, marginTop: 13 }, sectionNumber: { color: colors.primary, fontFamily: "BeVietnamPro_800ExtraBold", fontSize: 10, paddingTop: 4 }, sectionCopy: { flex: 1, gap: 4 }, sectionTitle: { color: colors.ink, fontFamily: "BeVietnamPro_800ExtraBold", fontSize: 21 }, sectionText: { color: colors.muted, fontFamily: "BeVietnamPro_400Regular", fontSize: 11, lineHeight: 18 },
+  ticket: { backgroundColor: colors.ink, borderLeftWidth: 5, borderLeftColor: colors.mint, padding: 16, flexDirection: "row", gap: 10, justifyContent: "space-between" }, ticketInactive: { backgroundColor: "#DFE5E1", borderLeftColor: "#9DAFAA" }, ticketMain: { flex: 1, gap: 4 }, ticketState: { color: colors.mint, fontFamily: "BeVietnamPro_800ExtraBold", fontSize: 9, letterSpacing: 1 }, ticketCode: { color: "white", fontFamily: "BeVietnamPro_800ExtraBold", fontSize: 15, letterSpacing: 1 }, ticketCopy: { color: "#C8D5D4", fontFamily: "BeVietnamPro_400Regular", fontSize: 10 }, ticketDate: { alignItems: "flex-end", justifyContent: "space-between" }, ticketDateText: { color: "#C8D5D4", fontFamily: "BeVietnamPro_500Medium", fontSize: 9 }, ticketDateInactive: { color: colors.muted },
+  ledger: { borderTopWidth: 1, borderColor: colors.line }, ledgerRow: { flexDirection: "row", justifyContent: "space-between", gap: 12, paddingVertical: 13, borderBottomWidth: 1, borderColor: colors.line }, ledgerMain: { flex: 1, gap: 3 }, ledgerSide: { alignItems: "flex-end", gap: 3 }, ledgerTitle: { color: colors.text, fontFamily: "BeVietnamPro_700Bold", fontSize: 12 }, ledgerMeta: { color: colors.muted, fontFamily: "BeVietnamPro_400Regular", fontSize: 9 }, ledgerAmount: { color: colors.text, fontFamily: "BeVietnamPro_700Bold", fontSize: 11 }, ledgerStatus: { color: colors.primary, fontFamily: "BeVietnamPro_600SemiBold", fontSize: 9 },
+  supportForm: { gap: 9, backgroundColor: "white", borderWidth: 1, borderColor: colors.line, borderRadius: 18, borderCurve: "continuous", padding: 18 }, label: { color: colors.text, fontFamily: "BeVietnamPro_700Bold", fontSize: 11, marginTop: 3 }, categoryRow: { flexDirection: "row", flexWrap: "wrap", gap: 7 }, category: { paddingHorizontal: 11, paddingVertical: 8, borderRadius: 9, borderWidth: 1, borderColor: colors.line }, categoryActive: { backgroundColor: colors.primary, borderColor: colors.primary }, categoryText: { color: colors.muted, fontFamily: "BeVietnamPro_600SemiBold", fontSize: 10 }, categoryTextActive: { color: "white" }, input: { minHeight: 47, borderRadius: 10, borderCurve: "continuous", borderWidth: 1, borderColor: colors.line, backgroundColor: colors.canvas, paddingHorizontal: 12, color: colors.text, fontFamily: "BeVietnamPro_500Medium", fontSize: 12 }, textarea: { minHeight: 105, paddingTop: 12 }, notice: { color: colors.primary, backgroundColor: colors.primarySoft, padding: 10, fontFamily: "BeVietnamPro_600SemiBold", fontSize: 10, lineHeight: 17 },
+  supportHistory: { borderTopWidth: 1, borderColor: colors.line, paddingTop: 16, gap: 7 }, historyTitle: { color: colors.ink, fontFamily: "BeVietnamPro_800ExtraBold", fontSize: 15 }, historyRow: { flexDirection: "row", justifyContent: "space-between", gap: 10, paddingVertical: 9, borderBottomWidth: 1, borderColor: colors.line }, historySubject: { color: colors.text, fontFamily: "BeVietnamPro_700Bold", fontSize: 11 }, historyMeta: { color: colors.muted, fontFamily: "BeVietnamPro_400Regular", fontSize: 9, marginTop: 3 }, historyState: { color: colors.primary, fontFamily: "BeVietnamPro_700Bold", fontSize: 9 }, empty: { borderTopWidth: 1, borderBottomWidth: 1, borderColor: colors.line, paddingVertical: 17 }, emptyText: { color: colors.muted, fontFamily: "BeVietnamPro_400Regular", fontSize: 11 },
+});

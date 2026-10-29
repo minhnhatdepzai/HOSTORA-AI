@@ -25,6 +25,7 @@ import {
 import { colors, radii } from "@/constants/theme";
 import { useApp } from "@/context/app-context";
 import { postJson } from "@/lib/api";
+import { normalizeContact } from "@/lib/contact";
 import { formatVnd } from "@/lib/catalog";
 import {
   useRecommendedPlans,
@@ -60,7 +61,7 @@ const faqItems: [string, string][] = [
 ];
 export default function RecommendationsScreen() {
   const { requirements, addLead } = useApp();
-  const { plans: ranked, status } = useRecommendedPlans(requirements);
+  const { plans: ranked, status, retry } = useRecommendedPlans(requirements);
   const [explanation, setExplanation] = useState("");
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
@@ -73,10 +74,10 @@ export default function RecommendationsScreen() {
 
   async function shareSummary() {
     const lines = [
-      `HOSTORA · 3 gói ${status === "verified" ? "phù hợp" : "tham khảo từ dữ liệu ngày 23/10/2026 (chưa kiểm tra giá hiện tại)"}`,
+      "HOSTORA · 3 gói để so sánh. Chỉ gói đáp ứng đủ điều kiện đã nhập mới được ưu tiên.",
       ...ranked.map(
         (plan, index) =>
-          `${index + 1}. ${plan.provider} ${plan.name}: ${formatVnd(plan.promo)}/tháng với kỳ ${plan.billingMonths} tháng; gia hạn ${plan.renewal == null ? "chưa xác minh" : `${formatVnd(plan.renewal)}/tháng`}; ${plan.storage}; băng thông ${plan.bandwidth ?? "chưa xác minh"}.`,
+          `${index + 1}. ${plan.provider} ${plan.name} (${plan.eligibility === "eligible" ? "đáp ứng ngân sách hosting" : "chỉ tham khảo"}): ${formatVnd(plan.promo)}/tháng với kỳ ${plan.billingMonths} tháng; trả trước ${formatVnd(plan.upfrontVnd)}; gia hạn ${plan.renewal == null ? "chưa xác minh" : `${formatVnd(plan.renewal)}/tháng`}; ${plan.storage}; băng thông ${plan.bandwidth ?? "chưa xác minh"}.`,
       ),
       "Giá có thể thay đổi; HOSTORA xác nhận tổng tiền và kỳ hạn trước khi tạo hóa đơn.",
     ];
@@ -85,15 +86,15 @@ export default function RecommendationsScreen() {
 
   function saveLead() {
     if (
-      status === "loading" ||
+      status !== "verified" ||
       !selectedPlan ||
-      name.trim().length < 2 ||
-      phone.replace(/\D/g, "").length < 9
+      Boolean(normalizeContact({ name, phone }).error)
     )
       return;
+    const contact = normalizeContact({ name, phone });
     addLead({
-      name: name.trim(),
-      phone: phone.trim(),
+      name: contact.name,
+      phone: contact.phone,
       plan: `${selectedPlan.provider} ${selectedPlan.name}`,
       planId: selectedPlan.id,
     });
@@ -108,7 +109,7 @@ export default function RecommendationsScreen() {
     try {
       const out = await postJson<ExplainResult>("/api/ai/explain", {
         topic: "recommendation",
-        facts: JSON.stringify(ranked),
+        requirements,
       });
       setExplanation(
         [
@@ -137,7 +138,7 @@ export default function RecommendationsScreen() {
         title="Gói đề xuất"
         action={
           <Pill tone={status === "verified" ? "mint" : "warning"}>
-            {status === "verified" ? "ĐÃ KIỂM TRA" : "THAM KHẢO"}
+            {status === "verified" ? "ĐÃ TẢI BẢNG GIÁ" : "CHƯA CÓ DỮ LIỆU"}
           </Pill>
         }
       />
@@ -153,11 +154,18 @@ export default function RecommendationsScreen() {
             {status === "verified"
               ? "So sánh từ 13 gói đã đối chiếu với trang chính thức"
               : status === "offline"
-                ? "Dữ liệu ngày 23/10/2026 · chỉ để tham khảo, hãy kết nối lại để cập nhật"
+                ? "Chưa tải được bảng giá. Kiểm tra kết nối rồi thử lại."
                 : "Đang kiểm tra bảng giá..."}
           </Text>
         </View>
         <View style={styles.content}>
+          {status === "offline" && <Button label="Thử tải lại" icon="refresh-cw" onPress={retry} />}
+          {status === "verified" && <Card style={{ gap: 10 }}>
+            <Text style={styles.formTitle}>{ranked.some((plan) => plan.eligibility === "eligible") ? "Có gói đáp ứng ngân sách lưu trữ" : "Chưa có gói đáp ứng ngân sách này"}</Text>
+            <Body>{ranked.some((plan) => plan.eligibility === "eligible") ? requirements.upfrontBudget === undefined ? "Mới so sánh ngân sách lưu trữ theo tháng. Bạn chưa nhập số tiền có thể trả trước; cần xác nhận tổng tiền, thuế và phí tên miền trước khi mua." : "Gói đáp ứng ngân sách lưu trữ và giới hạn trả trước đã nhập. Cần xác nhận thuế và phí tên miền trước khi mua." : "Các gói dưới đây chỉ để tham khảo. Bạn có thể sửa ngân sách hoặc trao đổi thêm với tư vấn viên."}</Body>
+            <Body>Điểm chỉ giúp so sánh theo dữ liệu đã công bố, không bảo đảm hiệu năng hay tổng giá thanh toán.</Body>
+            <Button label="Sửa nhu cầu và ngân sách" variant="secondary" onPress={() => router.push("/(tabs)/consult")} />
+          </Card>}
           {ranked.map((plan, index) => (
             <Card
               key={plan.id}
@@ -165,7 +173,7 @@ export default function RecommendationsScreen() {
             >
               {index === 0 ? (
                 <View style={styles.bestRibbon}>
-                  <Text style={styles.bestRibbonText}>PHÙ HỢP NHẤT</Text>
+                  <Text style={styles.bestRibbonText}>{plan.eligibility === "eligible" ? "ƯU TIÊN TRONG CÁC GÓI ĐÃ SO SÁNH" : "PHƯƠNG ÁN THAM KHẢO"}</Text>
                 </View>
               ) : null}
               <View style={[styles.planTop, index === 0 && { marginTop: 10 }]}>
@@ -185,6 +193,9 @@ export default function RecommendationsScreen() {
               <Text style={styles.renewal}>
                 Giá ưu đãi áp dụng cho kỳ {plan.billingMonths} tháng; không phải
                 giá cho mọi kỳ.
+              </Text>
+              <Text style={styles.renewal}>
+                Trả trước {formatVnd(plan.upfrontVnd)} tiền hosting, chưa gồm thuế và dịch vụ bổ sung.
               </Text>
               <Text style={styles.renewal}>
                 Gia hạn:{" "}
@@ -286,9 +297,7 @@ export default function RecommendationsScreen() {
                   label="Lưu yêu cầu tư vấn"
                   icon="shield"
                   disabled={
-                    status === "loading" ||
-                    name.trim().length < 2 ||
-                    phone.replace(/\D/g, "").length < 9
+                    status !== "verified" || Boolean(normalizeContact({ name, phone }).error)
                   }
                   onPress={saveLead}
                 />
@@ -306,12 +315,12 @@ export default function RecommendationsScreen() {
             <View style={styles.explainTop}>
               <Feather name="zap" color={colors.mint} size={20} />
               <Text style={styles.explainTitle}>
-                Vì sao gói này phù hợp nhất?
+                Vì sao có thứ tự này?
               </Text>
             </View>
             <Text style={styles.explainCopy}>
               HOSTORA giải thích từ nhu cầu của bạn và thông tin đã kiểm tra;
-              không tự thêm giá hay tính năng.
+              điểm so sánh không phải cam kết sức chịu tải. Chưa nhập tiền trả trước thì cần xác nhận trước khi mua.
             </Text>
             {explanation ? (
               <Text style={styles.explanation}>{explanation}</Text>

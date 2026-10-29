@@ -1,0 +1,54 @@
+appId: com.hostora.ai
+name: HOSTORA native consultation smoke
+tags:
+  - smoke
+  - android
+---
+- launchApp:
+    clearState: false
+- tapOn:
+    text: "Bỏ qua"
+    optional: true
+- tapOn:
+    text: "Trang chủ"
+    optional: true
+- scrollUntilVisible:
+    element:
+      text: "Tư vấn chọn gói phù hợp"
+    direction: UP
+    timeout: 20000
+- tapOn: "Tư vấn chọn gói phù hợp"
+- assertVisible: "BƯỚC 1/4"
+- takeScreenshot: consultation-step-1
+- scrollUntilVisible:
+    element:
+      text: "Tiếp tục"
+    direction: DOWN
+    timeout: 15000
+- tapOn: "Tiếp tục"
+- assertVisible: "BƯỚC 2/4"
+- scrollUntilVisible:
+    element:
+      text: "Tiếp tục"
+    direction: DOWN
+    timeout: 15000
+- tapOn: "Tiếp tục"
+- assertVisible: "BƯỚC 3/4"
+- scrollUntilVisible:
+    element:
+      text: "Tiếp tục"
+    direction: DOWN
+    timeout: 15000
+- tapOn: "Tiếp tục"
+- assertVisible: "BƯỚC 4/4"
+- scrollUntilVisible:
+    element:
+      text: "Xem đề xuất"
+    direction: DOWN
+    timeout: 15000
+- tapOn: "Xem đề xuất"
+- extendedWaitUntil:
+    visible: "ĐÃ TẢI BẢNG GIÁ"
+    timeout: 30000
+- assertVisible: "3 gói để bạn so sánh"
+- takeScreenshot: consultation-result

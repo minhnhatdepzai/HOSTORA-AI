@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { AdminControlCenter } from "@/components/admin-control-center";
 import { hostingCatalog } from "@/data/hosting-catalog";
-import { productCatalog } from "@/data/product-catalog";
+import { requireAdminPage } from "@/lib/admin/access";
+import { getCatalogStore } from "@/lib/admin/catalog-store";
 
 export const metadata: Metadata = {
   title: "Trung tâm quản trị",
@@ -9,12 +10,14 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function AdminPage() {
+export default async function AdminPage() {
+  await requireAdminPage("/admin");
+  const products = getCatalogStore().listAdminProducts();
   const providers = new Set([
     ...hostingCatalog.map((plan) => plan.provider),
-    ...productCatalog.map((product) => product.provider),
+    ...products.map((product) => product.provider),
   ]);
-  const verifiedAt = [...hostingCatalog, ...productCatalog]
+  const verifiedAt = [...hostingCatalog, ...products]
     .map((item) => item.verifiedAt)
     .sort()
     .at(-1);
@@ -23,7 +26,7 @@ export default function AdminPage() {
     <AdminControlCenter
       catalog={{
         plans: hostingCatalog.length,
-        products: productCatalog.length,
+        products: products.length,
         providers: providers.size,
         verifiedAt: verifiedAt ?? "2026-10-23",
         missingRenewal: hostingCatalog.filter(

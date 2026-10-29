@@ -14,3 +14,45 @@ test("chat routes a customer without a website to the builder before asking for 
   expect(response.headers.get("x-hostora-next-action")).toBe("create-site");
   expect(await response.text()).toContain("/website-studio");
 });
+
+test("chat uses remembered requirements when the newest message says the old budget", async () => {
+  const response = await POST(new Request("http://127.0.0.1:3000/api/ai/chat", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      messages: [
+        { role: "assistant", content: "Mình đã ghi nhận nhu cầu của bạn." },
+        { role: "user", content: "Với ngân sách cũ, gợi ý gói nào?" },
+      ],
+      memory: {
+        facts: {
+          websiteType: "blog",
+          ecommerce: false,
+          monthlyVisits: 3000,
+          monthlyBudget: 500000,
+          upfrontBudget: null,
+          needsDomain: false,
+        },
+        summary: "nội dung khách tự nhập không được tin",
+        unresolved: ["giới hạn trả trước (nếu có)"],
+      },
+    }),
+  }));
+
+  expect(response.status).toBe(200);
+  const answer = await response.text();
+  expect(answer).toContain("Dựa trên nhu cầu");
+  expect(answer).not.toContain("cho mình biết: website");
+});
+
+test("chat rejects malformed memory instead of forwarding it to the model", async () => {
+  const response = await POST(new Request("http://127.0.0.1:3000/api/ai/chat", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      messages: [{ role: "user", content: "gói nào?" }],
+      memory: { facts: { websiteType: "unsafe-injection" } },
+    }),
+  }));
+  expect(response.status).toBe(400);
+});

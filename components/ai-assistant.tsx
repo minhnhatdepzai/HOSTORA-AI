@@ -18,6 +18,7 @@ import {
   readChatSources,
   type ChatSource,
 } from "@/lib/chat-sources";
+import { buildConversationMemory, recentChatMessages } from "@/lib/chat-memory";
 
 type Message = {
   role: "user" | "assistant";
@@ -78,10 +79,14 @@ export function AiAssistant() {
     setInput("");
     setBusy(true);
     try {
+      const contextMessages = next.map(({ role, content }) => ({ role, content }));
       const res = await fetch("/api/ai/chat", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ messages: next.slice(-12) }),
+        body: JSON.stringify({
+          messages: recentChatMessages(contextMessages),
+          memory: buildConversationMemory(contextMessages),
+        }),
       });
       if (!res.ok || !res.body) throw new Error("Local AI chưa sẵn sàng");
       const sources = readChatSources(res.headers.get("x-hostora-sources"));

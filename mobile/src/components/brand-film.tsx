@@ -1,5 +1,4 @@
 import { Pressable } from "@/components/pressable";
-import { colors } from "@/constants/theme";
 import { VideoView, useVideoPlayer } from "expo-video";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
@@ -67,9 +66,9 @@ export function BrandFilm({ onFinish }: { onFinish: () => void }) {
 const fill = { position: "absolute" as const, top: 0, right: 0, bottom: 0, left: 0 };
 
 const styles = StyleSheet.create({
-  screen: { ...fill, backgroundColor: colors.ink },
+  screen: { ...fill, backgroundColor: "#080d10" },
   video: { ...fill, width: "100%", height: "100%" },
-  cover: { ...fill, backgroundColor: colors.ink },
+  cover: { ...fill, backgroundColor: "#080d10" },
   controls: {
     ...fill,
     paddingHorizontal: 20,

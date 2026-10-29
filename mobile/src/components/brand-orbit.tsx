@@ -1,13 +1,33 @@
 import { Image } from "expo-image";
-import { useEffect } from "react";
-import { StyleSheet, View } from "react-native";
-import Animated, { Easing, cancelAnimation, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from "react-native-reanimated";
+import { useEffect, useMemo } from "react";
+import { PanResponder, StyleSheet, View } from "react-native";
+import Animated, { Easing, cancelAnimation, useAnimatedStyle, useSharedValue, withRepeat, withSpring, withTiming } from "react-native-reanimated";
 import { useMotionPreference } from "./motion";
 
 export function BrandOrbit() {
   const reduced = useMotionPreference();
   const float = useSharedValue(0);
   const spin = useSharedValue(0);
+  const dragX = useSharedValue(0);
+  const dragY = useSharedValue(0);
+  const responder = useMemo(() =>
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => !reduced,
+      onMoveShouldSetPanResponder: (_, gesture) =>
+        !reduced && Math.abs(gesture.dx) + Math.abs(gesture.dy) > 4,
+      onPanResponderMove: (_, gesture) => {
+        dragX.set(Math.max(-26, Math.min(26, gesture.dy * -0.28)));
+        dragY.set(Math.max(-34, Math.min(34, gesture.dx * 0.34)));
+      },
+      onPanResponderRelease: () => {
+        dragX.set(withSpring(0, { damping: 12, stiffness: 110 }));
+        dragY.set(withSpring(0, { damping: 12, stiffness: 110 }));
+      },
+      onPanResponderTerminate: () => {
+        dragX.set(withSpring(0));
+        dragY.set(withSpring(0));
+      },
+    }), [reduced, dragX, dragY]);
   useEffect(() => {
     if (!reduced) {
       float.set(withRepeat(withTiming(1, { duration: 2800, easing: Easing.inOut(Easing.sin) }), -1, true));
@@ -15,10 +35,16 @@ export function BrandOrbit() {
     }
     return () => { cancelAnimation(float); cancelAnimation(spin); };
   }, [float, reduced, spin]);
-  const movement = useAnimatedStyle(() => ({ transform: [{ translateY: float.get() * -7 }, { rotate: `${float.get() * 3 - 1.5}deg` }] }));
+  const movement = useAnimatedStyle(() => ({ transform: [{ perspective: 520 }, { translateY: float.get() * -7 }, { rotateX: `${dragX.get()}deg` }, { rotateY: `${dragY.get()}deg` }, { rotate: `${float.get() * 3 - 1.5}deg` }] }));
   const orbitMovement = useAnimatedStyle(() => ({ transform: [{ rotate: `${spin.get()}deg` }] }));
   const counterOrbitMovement = useAnimatedStyle(() => ({ transform: [{ rotate: `${-spin.get() * .65}deg` }] }));
-  return <View style={styles.stage} accessible={false} importantForAccessibility="no-hide-descendants">
+  return <View
+    style={styles.stage}
+    accessible
+    accessibilityRole="image"
+    accessibilityLabel="Biểu tượng HOSTORA ba chiều, có thể kéo để xoay"
+    {...responder.panHandlers}
+  >
     <Animated.View style={[styles.orbit, orbitMovement]}><View style={styles.orbitPoint} /></Animated.View>
     <Animated.View style={[styles.counterOrbit, counterOrbitMovement]}><View style={styles.counterPoint} /></Animated.View>
     <Animated.View style={[styles.logo, movement]}>

@@ -296,10 +296,9 @@ def build_real_stages(
             if not line.strip():
                 continue
             name = line.split()[0]
-            if name.startswith("hostora-") or name.startswith(
-                "qwen3-embedding:"
-            ):
-                names.append(name)
+            # A non-HOSTORA Ollama model can still occupy most of VRAM. Stop
+            # every loaded Ollama model before the dedicated CUDA trainer.
+            names.append(name)
         for name in names:
             runner.run([ollama, "stop", name])
 
@@ -409,6 +408,7 @@ def main() -> None:
     parser.add_argument("--chatbot-config", type=Path, default=CONFIGS["chatbot"])
     parser.add_argument("--studio-config", type=Path, default=CONFIGS["studio"])
     parser.add_argument("--chatbot-only", action="store_true")
+    parser.add_argument("--studio-only", action="store_true")
     parser.add_argument(
         "--dataset-builder", type=Path, default=ROOT / "build_dual_datasets.py"
     )
@@ -423,7 +423,11 @@ def main() -> None:
 
     signal.signal(signal.SIGTERM, interrupt)
     signal.signal(signal.SIGINT, interrupt)
-    configs = {"chatbot": args.chatbot_config.resolve()}
+    if args.chatbot_only and args.studio_only:
+        raise ValueError("choose chatbot-only or studio-only, not both")
+    configs = {}
+    if not args.studio_only:
+        configs["chatbot"] = args.chatbot_config.resolve()
     if not args.chatbot_only:
         configs["studio"] = args.studio_config.resolve()
     stages = (

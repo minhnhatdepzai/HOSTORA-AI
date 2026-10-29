@@ -12,12 +12,16 @@ import {
 } from "lucide-react";
 import { FAQ } from "@/components/faq";
 import { HeroVisual } from "@/components/hero-visual";
+import { EditorialScrollMotion } from "@/components/editorial-scroll-motion";
 import { TextRevealHeading } from "@/components/text-reveal-heading";
 import { StructuredData } from "@/components/structured-data";
 import ClickSpark from "@/components/ui/click-spark";
 import { hostingCatalog } from "@/data/hosting-catalog";
+import { journalArticles } from "@/data/journal";
 import { pageMetadata } from "@/lib/page-metadata";
 import { absoluteSiteUrl } from "@/lib/site-url";
+import { faqQuestions } from "@/lib/faq";
+import mobileConfig from "@/mobile/app.json";
 
 export const metadata: Metadata = pageMetadata({
   title: "Hosting, tên miền và website AI cho doanh nghiệp Việt",
@@ -48,6 +52,11 @@ function money(value: number) {
 }
 
 export default function HomePage() {
+  const faqStructuredData = faqQuestions.map(([question, answer]) => ({
+    "@type": "Question",
+    name: question,
+    acceptedAnswer: { "@type": "Answer", text: answer },
+  }));
   const structuredData = {
     "@context": "https://schema.org",
     "@graph": [
@@ -76,25 +85,54 @@ export default function HomePage() {
         inLanguage: "vi-VN",
         description:
           "Ứng dụng tạo ý tưởng website, so sánh dịch vụ và theo dõi đơn hàng HOSTORA.",
+        softwareVersion: mobileConfig.expo.version,
         downloadUrl: absoluteSiteUrl("/downloads/android"),
+        installUrl: absoluteSiteUrl("/downloads/android"),
+        featureList: [
+          "Tư vấn chọn gói hosting",
+          "Xem dịch vụ và hóa đơn",
+          "Tạo bản xem trước website",
+        ],
         offers: { "@type": "Offer", price: "0", priceCurrency: "VND" },
+      },
+      {
+        "@type": "WebApplication",
+        "@id": `${absoluteSiteUrl("/")}#webapp`,
+        name: "HOSTORA AI trên web",
+        url: absoluteSiteUrl("/"),
+        applicationCategory: "BusinessApplication",
+        operatingSystem: "Web",
+        inLanguage: "vi-VN",
+        featureList: [
+          "Tư vấn chọn hosting và tên miền",
+          "Tạo bản xem trước website bằng AI",
+          "Xem dịch vụ và gửi yêu cầu mua tại HOSTORA",
+        ],
+        isPartOf: { "@id": `${absoluteSiteUrl("/")}#website` },
+      },
+      {
+        "@type": "FAQPage",
+        "@id": `${absoluteSiteUrl("/")}#faq`,
+        mainEntity: faqStructuredData,
       },
     ],
   };
   return (
     <>
       <StructuredData data={structuredData} />
+      <EditorialScrollMotion page="home" />
+      <div className="hostora-home">
       <section className="commerce-hero compact-home-hero">
         <div className="commerce-shell commerce-hero-grid">
           <div className="commerce-hero-copy">
             <p className="commerce-kicker">
-              ỨNG DỤNG CỐ VẤN TRANG WEB · ANDROID
+              TỪ Ý TƯỞNG ĐẾN TRANG WEB CỦA BẠN
             </p>
             <TextRevealHeading
               level="h1"
               segments={[
-                { text: "Chọn dịch vụ cho trang web." },
-                { text: "Rõ giá trước khi mua.", emphasis: true },
+                { text: "Ý tưởng của bạn." },
+                { text: "Một nơi để bắt đầu.", emphasis: true },
               ]}
             />
             <p className="commerce-lede">
@@ -112,14 +150,13 @@ export default function HomePage() {
               >
                 <a
                   className="button-primary commerce-primary"
-                  href="/downloads/android"
-                  download
+                  href="/consultation"
                 >
-                  <Download size={18} /> Tải ứng dụng Android
+                  <ArrowRight size={18} /> Tư vấn chọn hosting
                 </a>
               </ClickSpark>
-              <Link className="commerce-text-link" href="/website-studio">
-                Tạo trang web với trợ lý <Sparkles size={17} />
+              <Link className="commerce-text-link" href="/downloads/android">
+                Tải ứng dụng Android <Download size={17} />
               </Link>
             </div>
           </div>
@@ -163,7 +200,10 @@ export default function HomePage() {
         <div className="commerce-shell app-editorial-grid">
           <div className="app-editorial-copy">
             <p className="commerce-kicker">ƯU TIÊN TRẢI NGHIỆM TRÊN ỨNG DỤNG</p>
-            <h2>Mang cố vấn trang web theo cùng bạn.</h2>
+            <TextRevealHeading
+              segments={[{ text: "Mang cố vấn trang web theo cùng bạn." }]}
+              stagger={0.014}
+            />
             <p>
               Tạo ý tưởng, xem dịch vụ, nhận hướng dẫn và tra cứu đơn hàng trên
               điện thoại. Giao diện đã tối ưu vùng an toàn cho màn hình nhỏ.
@@ -181,7 +221,7 @@ export default function HomePage() {
                 href="/downloads/android"
                 download
               >
-                <Download size={18} /> Tải HOSTORA 2.0.5
+                <Download size={18} /> Tải HOSTORA 2.1.0
               </a>
             </ClickSpark>
           </div>
@@ -223,7 +263,10 @@ export default function HomePage() {
             <p className="commerce-kicker dark">
               CHƯA BIẾT NÊN LÀM WEBSITE GÌ?
             </p>
-            <h2>Kể ý tưởng. HOSTORA dựng thử.</h2>
+            <TextRevealHeading
+              segments={[{ text: "Kể ý tưởng. HOSTORA dựng thử." }]}
+              stagger={0.014}
+            />
             <p>
               Trợ lý hỏi về khách hàng, mục tiêu và phong cách. Bạn nhận một
               trang web xem trước có thể tải xuống, sau đó HOSTORA gợi ý nơi lưu
@@ -268,14 +311,26 @@ export default function HomePage() {
               <p className="commerce-kicker dark">
                 MỘT VÀI GÓI ĐỂ SO SÁNH NHANH
               </p>
-              <h2>Không cần xem cả danh sách dài.</h2>
+              <TextRevealHeading
+                segments={[{ text: "Không cần xem cả danh sách dài." }]}
+                stagger={0.014}
+              />
             </div>
             <p>
               Ba gói khởi điểm được lấy trực tiếp từ danh mục đã ghi nguồn. Muốn
               xem đầy đủ, mở danh sách dịch vụ hoặc dùng ứng dụng.
             </p>
           </div>
-          <div className="plan-rail">
+          <div className="plan-rail-caption" aria-hidden="true">
+            <span>CUỘN NGANG ĐỂ KHÁM PHÁ</span>
+            <span className="plan-rail-arrow"><ArrowRight size={17} /></span>
+          </div>
+          <div
+            className="plan-rail"
+            role="region"
+            aria-label="Lướt ngang để xem các gói hosting nổi bật"
+            tabIndex={0}
+          >
             {featuredPlans.map((plan, index) => (
               <article className="plan-card" key={plan.id}>
                 <div className="plan-card-topline">
@@ -340,7 +395,10 @@ export default function HomePage() {
         <div className="commerce-shell">
           <div>
             <p className="commerce-kicker">ĐÃ CÓ MÃ HÓA ĐƠN?</p>
-            <h2>Tra cứu và thanh toán ngay.</h2>
+            <TextRevealHeading
+              segments={[{ text: "Tra cứu và thanh toán ngay." }]}
+              stagger={0.014}
+            />
             <p>
               Stripe và VNPay hiện chỉ dùng để thử quy trình, chưa thu tiền
               thật.
@@ -351,7 +409,14 @@ export default function HomePage() {
           </Link>
         </div>
       </section>
+      <section className="home-journal">
+        <div className="commerce-shell home-journal-inner">
+          <div className="home-journal-intro"><p className="journal-eyebrow">SỔ TAY HOSTORA</p><TextRevealHeading segments={[{ text: "Mua xong là bắt đầu một chặng mới." }]} stagger={0.014}/><p>Từ bản thử đến ngày ra mắt: mỗi chặng có một bài đọc ngắn và một việc bạn có thể làm ngay.</p><Link href="/about">Vì sao HOSTORA làm sổ tay này <ArrowRight size={16}/></Link></div>
+          <div className="home-journal-links">{journalArticles.slice(0, 3).map((article) => <Link key={article.slug} href={`/journal/${article.slug}`}><small>{article.stage}</small><strong>{article.title}</strong><ArrowRight size={18}/></Link>)}<Link className="home-journal-all" href="/journal">Xem toàn bộ sổ tay <ArrowRight size={18}/></Link></div>
+        </div>
+      </section>
       <FAQ />
+      </div>
     </>
   );
 }

@@ -4,6 +4,7 @@ export type Requirements = {
   websiteType: WebsiteType;
   monthlyVisits: number;
   monthlyBudget: number;
+  upfrontBudget?: number;
   needsDomain: boolean;
   ecommerce: boolean;
   notes?: string;

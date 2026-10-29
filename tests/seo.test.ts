@@ -4,14 +4,18 @@ import { buildSeoAutomationPlan } from "@/lib/seo-automation";
 
 describe("SEO audit", () => {
   it("scores a complete public HTML page deterministically", () => {
-    const html = `<!doctype html><html lang="vi"><head><title>HOSTORA AI</title><meta name="description" content="Tư vấn hosting"><meta name="viewport" content="width=device-width"><link rel="canonical" href="https://example.com/"><meta property="og:title" content="HOSTORA AI"><script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization"}</script></head><body><h1>HOSTORA AI</h1><h2>Hosting</h2><a href="/hosting">Xem gói</a><img src="a.jpg" alt="Máy chủ"></body></html>`;
+    const html = `<!doctype html><html lang="vi"><head><title>HOSTORA AI</title><meta name="description" content="Tư vấn hosting"><meta name="viewport" content="width=device-width"><link rel="canonical" href="https://example.com/"><meta property="og:title" content="HOSTORA AI"><script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization"},{"@type":"WebSite"}]}</script></head><body><h1>HOSTORA AI</h1><h2>Hosting</h2><a href="/hosting">Xem gói</a><img src="a.jpg" alt="Máy chủ"></body></html>`;
     const result = auditSeoHtml(html, new URL("https://example.com"), {
       robots: true,
       sitemap: true,
+      llmsTxt: true,
     });
     expect(result.score).toBe(100);
     expect(result.structuredData.types).toContain("Organization");
     expect(result.links.internal).toBe(1);
+    expect(result.findings.find((item) => item.id === "llms-txt")?.status).toBe(
+      "pass",
+    );
   });
 
   it("flags noindex and missing high-impact signals", () => {
@@ -37,5 +41,14 @@ describe("SEO audit", () => {
     expect(plan.find((task) => task.id === "title")?.draft).toContain(
       "hosting bán hàng",
     );
+  });
+
+  it("keeps GEO discovery checks optional for third-party audits", () => {
+    const result = auditSeoHtml(
+      '<html lang="vi"><head><title>A</title></head><body><h1>A</h1></body></html>',
+      new URL("https://example.com"),
+      { robots: false, sitemap: false },
+    );
+    expect(result.findings.some((item) => item.id === "llms-txt")).toBe(false);
   });
 });

@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { authenticateAdmin } from "./helpers/admin-session";
 
 const lead = {
   id: "judge-lead",
@@ -9,7 +10,8 @@ const lead = {
   status: "new",
 };
 
-test.beforeEach(async ({ page }) => {
+test.beforeEach(async ({ page, context, baseURL }) => {
+  await authenticateAdmin(context, baseURL!);
   await page.addInitScript((value) => {
     localStorage.setItem("hostora:leads", JSON.stringify([value]));
     localStorage.setItem(
@@ -40,10 +42,10 @@ test("admin controls local leads and shows service data", async ({ page }) => {
   });
   await page.goto("/admin");
   await expect(
-    page.getByRole("heading", { name: "Tình trạng tư vấn và dữ liệu." }),
+    page.getByRole("heading", { name: "Doanh thu và nhịp tăng trưởng." }),
   ).toBeVisible();
   await expect(page.getByText("Khách kiểm thử")).toBeVisible();
-  await expect(page.getByText("13", { exact: true }).first()).toBeVisible();
+  await expect(page.getByTestId("service-manager")).toBeVisible();
 
   await page
     .getByLabel("TRẠNG THÁI", { exact: true })

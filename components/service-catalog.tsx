@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import {
@@ -23,6 +23,9 @@ const categoryLabels: Record<ProductCategory | "all", string> = {
   ssl: "SSL",
   automation: "Tự động hóa",
   workspace: "Văn phòng",
+  backup: "Sao lưu",
+  monitoring: "Theo dõi",
+  security: "Bảo vệ và tăng tốc",
 };
 
 const unitLabels: Record<ProductOffering["billingUnit"], string> = {
@@ -48,6 +51,14 @@ export function ServiceCatalog({
   const [category, setCategory] = useState<ProductCategory | "all">(
     initialCategory,
   );
+  const categoriesRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const container = categoriesRef.current;
+    const active = container?.querySelector<HTMLButtonElement>("button.is-active");
+    if (container && active) {
+      container.scrollTo({ left: Math.max(0, active.offsetLeft - container.offsetLeft - 16), behavior: "auto" });
+    }
+  }, [category]);
   const [provider, setProvider] = useState("all");
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<ProductOffering | null>(null);
@@ -175,7 +186,7 @@ export function ServiceCatalog({
         </div>
       </div>
 
-      <div className="catalog-categories" aria-label="Lọc theo nhóm dịch vụ">
+      <div ref={categoriesRef} className="catalog-categories" aria-label="Lọc theo nhóm dịch vụ">
         {categories.map((item) => (
           <button
             key={item}

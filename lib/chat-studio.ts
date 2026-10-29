@@ -29,7 +29,8 @@ export function buildStudioProjectAdvice(project: StoredStudioProject) {
   return {
     answer: [
       `Mình đã nhận website **${project.idea.brand}**. Bản này hướng tới ${project.idea.audience}, mục tiêu chính là ${project.idea.goal === "sell" ? "bán hàng" : project.idea.goal === "book" ? "nhận lịch hẹn" : project.idea.goal === "showcase" ? "giới thiệu sản phẩm" : "nhận liên hệ tư vấn"}, với khoảng ${project.idea.monthlyVisits.toLocaleString("vi-VN")} lượt/tháng và ngân sách ${project.idea.monthlyBudget.toLocaleString("vi-VN")}đ/tháng.`,
-      `**Gói phù hợp nhất:** ${primary.plan.provider} ${primary.plan.name}, giá kỳ đầu quy đổi ${money(primary.plan.promoMonthlyVnd)} [P1]. ${primaryRenewal}`,
+      `**${primary.eligibility === "eligible" ? "Gói ưu tiên theo ngân sách lưu trữ" : "Gói tham khảo, chưa đáp ứng đủ điều kiện"}:** ${primary.plan.provider} ${primary.plan.name}, giá kỳ đầu quy đổi ${money(primary.plan.promoMonthlyVnd)} cho kỳ ${primary.plan.billingMonths} tháng (trả trước ${(primary.upfrontVnd).toLocaleString("vi-VN")}đ tiền lưu trữ, chưa gồm thuế và tên miền) [P1]. ${primaryRenewal}`,
+      "Bạn chưa nhập giới hạn trả trước; cần xác nhận tổng tiền thanh toán trước khi mua.",
       ...alternativeLines,
       `Bước tiếp theo: hãy cho mình biết bạn muốn giữ lượng khách dự kiến này hay chuẩn bị cho chiến dịch tăng trưởng; HOSTORA sẽ chốt cấu hình và xác minh giá ngay trước khi tạo hóa đơn.`,
     ].join("\n\n"),
