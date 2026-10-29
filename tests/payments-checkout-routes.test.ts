@@ -55,6 +55,18 @@ describe("mở thanh toán và yêu cầu hoàn", () => {
     delete process.env.HOSTORA_PAYMENTS_MODE;
   });
 
+  it("không biến mode thanh toán không hợp lệ thành sandbox", async () => {
+    process.env.HOSTORA_PAYMENTS_MODE = "live";
+    const store = getPaymentStore();
+    const invoice = store.createInvoice({ title: "Kiểm tra mode", amountVnd: 100000 });
+    const lookup = await lookupOrder(new Request(`${origin}/api/payments/orders`, {
+      method: "POST", body: JSON.stringify({ id: invoice.id, accessCode: invoice.accessCode }),
+    }));
+    const result = await lookup.json() as { gateways: { stripe: boolean; vnpay: boolean; mode?: string } };
+    expect(result.gateways).toEqual({ stripe: false, vnpay: false, mode: "disabled" });
+    delete process.env.HOSTORA_PAYMENTS_MODE;
+  });
+
   it("chỉ xác nhận giao dịch ảo từ cùng website khi chế độ demo đang bật", async () => {
     process.env.HOSTORA_PAYMENTS_MODE = "demo";
     const store = getPaymentStore();

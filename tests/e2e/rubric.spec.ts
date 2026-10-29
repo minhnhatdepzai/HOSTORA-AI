@@ -64,7 +64,7 @@ test("chat shows verified citations without sending customers away", async ({
   await page.getByRole("button", { name: "Gửi", exact: true }).click();
   await expect(page.getByText("Dữ liệu đã kiểm tra")).toBeVisible();
   await expect(
-    page.getByText(/không thể xác nhận tên miền còn trống/i),
+    page.getByText(/không thể xác nhận trực tiếp trạng thái tên miền/i),
   ).toBeVisible();
   await expect(page.getByText(/\[K1\].*Tên miền/)).toBeVisible();
   await expect(
