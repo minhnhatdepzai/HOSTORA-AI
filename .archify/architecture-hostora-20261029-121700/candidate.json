@@ -1,0 +1,160 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kiến trúc HOSTORA AI 2.1",
+    "output": "docs/architecture/hostora-system.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/minhnhatdepzai/HOSTORA-AI.git",
+      "provider": "github",
+      "link_mode": "web",
+      "revision": "1eb26b94ca0e237676f0488099c281c81a0ee6c1"
+    },
+    "views": [
+      { "id": "customerPath", "label": "Khách hàng", "focus": ["customer", "web", "mobile", "api"] },
+      { "id": "adminPath", "label": "Vận hành", "focus": ["operator", "admin", "api", "stores", "integrations"] },
+      { "id": "aiPath", "label": "AI local", "focus": ["api", "guards", "ai", "ollama"] }
+    ]
+  },
+  "components": [
+    {
+      "id": "customer",
+      "type": "external",
+      "label": "Khách hàng",
+      "sublabel": "chủ shop / doanh nghiệp",
+      "pos": [40, 160],
+      "size": [145, 68],
+      "sources": [{ "path": "components/app-shell.tsx", "line": 21, "end_line": 37, "label": "Khu vực khách dùng" }]
+    },
+    {
+      "id": "operator",
+      "type": "external",
+      "label": "Người vận hành",
+      "sublabel": "quản trị catalog và đơn",
+      "pos": [40, 455],
+      "size": [145, 68],
+      "sources": [{ "path": "app/admin/page.tsx", "line": 13, "end_line": 36, "label": "Trung tâm quản trị" }]
+    },
+    {
+      "id": "web",
+      "type": "frontend",
+      "label": "Website khách hàng",
+      "sublabel": "Next.js · responsive",
+      "pos": [255, 80],
+      "size": [165, 68],
+      "sources": [{ "path": "components/app-shell.tsx", "line": 39, "end_line": 149, "label": "Shell và điều hướng" }]
+    },
+    {
+      "id": "mobile",
+      "type": "frontend",
+      "label": "Ứng dụng Android",
+      "sublabel": "Expo Router · React Native",
+      "pos": [255, 235],
+      "size": [165, 68],
+      "sources": [{ "path": "mobile/src/lib/api.ts", "line": 5, "end_line": 71, "label": "Kết nối API dùng chung" }]
+    },
+    {
+      "id": "admin",
+      "type": "frontend",
+      "label": "Web quản trị",
+      "sublabel": "đăng nhập · catalog · hỗ trợ",
+      "pos": [255, 455],
+      "size": [165, 72],
+      "sources": [{ "path": "lib/admin/access.ts", "line": 12, "end_line": 20, "label": "Cổng phiên quản trị" }, { "path": "app/admin/page.tsx", "line": 13, "end_line": 36, "label": "Dữ liệu dashboard" }]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "HOSTORA API",
+      "sublabel": "Next.js route handlers dùng chung",
+      "pos": [505, 235],
+      "size": [170, 76],
+      "tag": "một nguồn dữ liệu",
+      "sources": [{ "path": "app/api/ai/chat/route.ts", "line": 62, "end_line": 125, "label": "Điểm vào trợ lý" }, { "path": "app/api/payments/requests/route.ts", "line": 86, "end_line": 133, "label": "Điểm vào mua hàng" }]
+    },
+    {
+      "id": "guards",
+      "type": "security",
+      "label": "Xác thực và rào chắn",
+      "sublabel": "Zod · session · che PII",
+      "pos": [735, 235],
+      "size": [180, 76],
+      "tag": "input không tin cậy",
+      "sources": [{ "path": "app/api/ai/chat/route.ts", "line": 33, "end_line": 78, "label": "Schema và che PII" }, { "path": "app/api/ai/site-studio/route.ts", "line": 12, "end_line": 26, "label": "Chủ sở hữu project" }, { "path": "lib/admin/access.ts", "line": 12, "end_line": 20, "label": "Phiên admin" }]
+    },
+    {
+      "id": "domain",
+      "type": "backend",
+      "label": "Logic tất định",
+      "sublabel": "xếp hạng · giá · trạng thái",
+      "pos": [735, 420],
+      "size": [180, 76],
+      "tag": "LLM không ghi đè",
+      "sources": [{ "path": "lib/recommendation.ts", "line": 10, "end_line": 163, "label": "Chấm điểm hosting" }, { "path": "lib/payments/store.ts", "line": 614, "end_line": 637, "label": "Xác nhận giao dịch" }]
+    },
+    {
+      "id": "ai",
+      "type": "backend",
+      "label": "RAG và AI workflow",
+      "sublabel": "hybrid retrieval · LangGraph",
+      "pos": [970, 235],
+      "size": [180, 76],
+      "tag": "context có nguồn",
+      "sources": [{ "path": "lib/rag.ts", "line": 198, "end_line": 289, "label": "RAG hybrid" }, { "path": "lib/site-studio-workflow.ts", "line": 139, "end_line": 237, "label": "Studio workflow" }]
+    },
+    {
+      "id": "stores",
+      "type": "database",
+      "label": "Kho dữ liệu local",
+      "sublabel": "SQLite · JSON · catalog",
+      "pos": [505, 420],
+      "size": [170, 78],
+      "tag": "không commit PII",
+      "sources": [{ "path": "lib/payments/store.ts", "line": 106, "end_line": 111, "label": "SQLite đơn hàng" }, { "path": "lib/site-studio-store.ts", "line": 31, "end_line": 46, "label": "Project mode 0600" }, { "path": "data/hosting-catalog.ts", "line": 1, "label": "Catalog hosting" }]
+    },
+    {
+      "id": "ollama",
+      "type": "backend",
+      "label": "Ollama local",
+      "sublabel": "chat · vision · embedding",
+      "pos": [1215, 235],
+      "size": [175, 82],
+      "tag": "127.0.0.1",
+      "sources": [{ "path": "lib/ollama.ts", "line": 3, "end_line": 12, "label": "Model và loopback" }, { "path": "lib/ollama.ts", "line": 50, "end_line": 109, "label": "Structured output" }, { "path": "lib/ollama.ts", "line": 172, "end_line": 224, "label": "Embedding và chat" }]
+    },
+    {
+      "id": "integrations",
+      "type": "cloud",
+      "label": "Tích hợp tùy chọn",
+      "sublabel": "Stripe · VNPay · SMTP · GitHub",
+      "pos": [505, 30],
+      "size": [175, 82],
+      "tag": "cần cấu hình thật",
+      "sources": [{ "path": "app/api/payments/orders/[id]/checkout/route.ts", "line": 32, "end_line": 47, "label": "Cổng thanh toán" }, { "path": "lib/site-studio-store.ts", "line": 132, "end_line": 158, "label": "GitHub tùy chọn" }, { "path": "lib/payments/email.ts", "line": 131, "end_line": 203, "label": "Thông báo email" }]
+    }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Máy chủ HOSTORA local-first", "wraps": ["api", "guards", "domain", "ai", "stores", "ollama"], "pad": 22 }
+  ],
+  "connections": [
+    { "id": "customerWeb", "from": "customer", "to": "web", "label": "mở web", "variant": "emphasis" },
+    { "id": "customerMobile", "from": "customer", "to": "mobile", "label": "dùng app", "variant": "emphasis" },
+    { "id": "operatorAdmin", "from": "operator", "to": "admin", "label": "vận hành", "variant": "security" },
+    { "id": "webApi", "from": "web", "to": "api", "label": "HTTPS / JSON" },
+    { "id": "mobileApi", "from": "mobile", "to": "api", "label": "LAN / HTTPS" },
+    { "id": "adminApi", "from": "admin", "to": "api", "label": "session admin", "variant": "security" },
+    { "id": "apiGuards", "from": "api", "to": "guards", "label": "validate + authorize", "variant": "security" },
+    { "id": "guardsDomain", "from": "guards", "to": "domain", "label": "dữ liệu hợp lệ" },
+    { "id": "guardsAi", "from": "guards", "to": "ai", "label": "context đã lọc", "variant": "security" },
+    { "id": "domainStores", "from": "domain", "to": "stores", "label": "đọc / ghi trạng thái" },
+    { "id": "apiStores", "from": "api", "to": "stores", "label": "project + account", "variant": "dashed" },
+    { "id": "aiOllama", "from": "ai", "to": "ollama", "label": "inference loopback", "variant": "emphasis" },
+    { "id": "apiIntegrations", "from": "api", "to": "integrations", "label": "chỉ khi đã cấu hình", "variant": "dashed" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "Một backend, ba bề mặt", "items": ["Web, Android và admin cùng dùng API và dữ liệu vận hành", "Ứng dụng Android không phải bản web bọc lại"] },
+    { "dot": "violet", "title": "Ranh giới quyết định", "items": ["Giá, xếp hạng và trạng thái tiền do TypeScript/SQLite quyết định", "Model chỉ trích xuất, soạn và giải thích"] },
+    { "dot": "rose", "title": "Giới hạn triển khai", "items": ["Ollama chỉ loopback; không có cloud AI fallback", "Thanh toán, SMTP và GitHub cần credential riêng trước production"] }
+  ]
+}

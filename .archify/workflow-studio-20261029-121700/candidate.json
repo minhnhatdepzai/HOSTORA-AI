@@ -1,0 +1,61 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Luồng HOSTORA AI Website Studio",
+    "output": "docs/architecture/hostora-site-studio-flow.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/minhnhatdepzai/HOSTORA-AI.git",
+      "provider": "github",
+      "link_mode": "web",
+      "revision": "1eb26b94ca0e237676f0488099c281c81a0ee6c1"
+    }
+  },
+  "lanes": [
+    { "id": "customer", "label": "Khách hàng" },
+    { "id": "api", "label": "HOSTORA API" },
+    { "id": "ai", "label": "LangGraph + Ollama local" },
+    { "id": "render", "label": "Renderer kiểm soát" },
+    { "id": "delivery", "label": "Bàn giao", "variant": "exception" },
+    { "id": "publish", "label": "Đồng bộ tùy chọn", "variant": "exception" }
+  ],
+  "phases": [
+    { "id": "brief", "label": "Nhận ý tưởng", "fromCol": 0, "toCol": 1 },
+    { "id": "generate", "label": "Soạn và kiểm chứng", "fromCol": 2, "toCol": 3, "variant": "emphasis" },
+    { "id": "deliver", "label": "Render và bàn giao", "fromCol": 4, "toCol": 5, "variant": "dashed" }
+  ],
+  "mainPath": ["idea", "validate", "write", "audit", "recommend", "save", "preview"],
+  "nodes": [
+    { "id": "idea", "lane": "customer", "col": 0, "type": "external", "label": "Mô tả ý tưởng", "sublabel": "ngành · mục tiêu · màu · ngân sách", "sources": [{ "path": "lib/site-studio.ts", "line": 5, "end_line": 63 }] },
+    { "id": "validate", "lane": "api", "col": 1, "type": "security", "label": "Đăng nhập và validate", "sublabel": "owner · same-origin · Zod", "sources": [{ "path": "app/api/ai/site-studio/route.ts", "line": 12, "end_line": 26 }] },
+    { "id": "write", "lane": "ai", "col": 2, "type": "backend", "label": "Soạn nội dung JSON", "sublabel": "không sinh HTML / JS", "tag": "STUDIO_MODEL", "sources": [{ "path": "lib/site-studio-workflow.ts", "line": 139, "end_line": 160 }] },
+    { "id": "audit", "lane": "ai", "col": 3, "type": "security", "label": "Sửa và kiểm chứng", "sublabel": "rule check + lượt AI độc lập", "sources": [{ "path": "lib/site-studio-workflow.ts", "line": 56, "end_line": 81 }, { "path": "lib/site-studio-workflow.ts", "line": 161, "end_line": 199 }] },
+    { "id": "fallback", "lane": "render", "col": 3, "type": "security", "label": "Nội dung mẫu an toàn", "sublabel": "AI lỗi hoặc còn tuyên bố bịa", "sources": [{ "path": "lib/site-studio-workflow.ts", "line": 172, "end_line": 199 }] },
+    { "id": "recommend", "lane": "render", "col": 4, "type": "backend", "label": "Gợi ý hosting", "sublabel": "dùng logic tất định", "sources": [{ "path": "lib/site-studio-workflow.ts", "line": 201, "end_line": 223 }, { "path": "lib/site-studio.ts", "line": 84, "end_line": 86 }] },
+    { "id": "save", "lane": "api", "col": 4, "type": "database", "label": "Lưu project", "sublabel": "JSON mode 0600 + chủ sở hữu", "sources": [{ "path": "lib/site-studio-store.ts", "line": 31, "end_line": 46 }, { "path": "lib/site-studio-store.ts", "line": 112, "end_line": 158 }] },
+    { "id": "preview", "lane": "delivery", "col": 5, "type": "frontend", "label": "Preview tương tác", "sublabel": "responsive · reduced motion", "sources": [{ "path": "lib/site-studio.ts", "line": 236, "end_line": 313 }, { "path": "lib/site-studio.ts", "line": 358, "end_line": 434 }] },
+    { "id": "zip", "lane": "render", "col": 5, "type": "cloud", "label": "Tải ZIP", "sublabel": "HTML + vendor cục bộ", "sources": [{ "path": "app/api/ai/site-studio/[id]/download/route.ts", "line": 13, "end_line": 71 }] },
+    { "id": "revision", "lane": "customer", "col": 5, "type": "external", "label": "Chat để chỉnh", "sublabel": "copy · màu · giọng văn", "sources": [{ "path": "app/api/ai/site-studio/[id]/route.ts", "line": 136, "end_line": 237 }] },
+    { "id": "github", "lane": "publish", "col": 5, "type": "cloud", "label": "Repo GitHub riêng", "sublabel": "chỉ khi quản trị viên bật", "sources": [{ "path": "lib/site-studio-store.ts", "line": 132, "end_line": 158 }, { "path": "lib/site-studio-store.ts", "line": 168, "end_line": 186 }] }
+  ],
+  "edges": [
+    { "id": "ideaValidate", "from": "idea", "to": "validate", "label": "brief", "variant": "emphasis" },
+    { "id": "validateWrite", "from": "validate", "to": "write", "label": "dữ liệu hợp lệ", "variant": "security" },
+    { "id": "writeAudit", "from": "write", "to": "audit", "label": "nội dung có cấu trúc" },
+    { "id": "auditFallback", "from": "audit", "to": "fallback", "label": "không được hỗ trợ", "variant": "security", "role": "error" },
+    { "id": "auditRecommend", "from": "audit", "to": "recommend", "label": "đạt kiểm tra", "variant": "emphasis" },
+    { "id": "fallbackRecommend", "from": "fallback", "to": "recommend", "label": "vẫn tiếp tục" },
+    { "id": "recommendSave", "from": "recommend", "to": "save", "label": "brief + top gói" },
+    { "id": "savePreview", "from": "save", "to": "preview", "label": "link riêng", "variant": "emphasis" },
+    { "id": "saveGithub", "from": "save", "to": "github", "label": "nếu đã bật", "variant": "dashed", "role": "branch" },
+    { "id": "previewZip", "from": "preview", "to": "zip", "label": "tải mã nguồn" },
+    { "id": "previewRevision", "from": "preview", "to": "revision", "label": "yêu cầu sửa", "variant": "dashed", "role": "branch" },
+    { "id": "revisionWrite", "from": "revision", "to": "write", "label": "vòng chỉnh tiếp", "variant": "dashed", "role": "return" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "AI không chạy mã tự sinh", "items": ["Model chỉ trả JSON nội dung theo schema", "HTML, CSS, Three.js và chuyển động do renderer HOSTORA kiểm soát"] },
+    { "dot": "rose", "title": "Không bịa thông tin doanh nghiệp", "items": ["Bản nháp qua rule check và lượt audit độc lập", "Nếu còn sai hoặc model lỗi, dùng nội dung mẫu an toàn"] },
+    { "dot": "cyan", "title": "Bàn giao có chủ sở hữu", "items": ["Chỉ tài khoản tạo project mới được sửa và tải ZIP", "Đồng bộ GitHub là tùy chọn; link HOSTORA và ZIP vẫn hoạt động khi GitHub lỗi"] }
+  ]
+}

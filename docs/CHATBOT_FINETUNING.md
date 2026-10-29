@@ -31,6 +31,13 @@ pnpm ai:train:chatbot:v7:status
 được xem xét sau khi holdout, bộ đo long-context và kiểm tra thủ công đạt yêu
 cầu. Trạng thái runtime hiện không được suy ra từ việc train đang chạy.
 
+Đánh giá local ngày 29/10 đã hoàn tất 146/146 request và schema. V7 đạt
+145/146 ngôn ngữ phổ thông, 146/146 không bịa số thương mại, 145/146 có bước
+tiếp theo, 146/146 đúng hình thức hữu ích và 132/146 định tuyến đúng. Trên cùng
+tập này, v6 đạt 134/146 định tuyến đúng và 146/146 ở bốn chỉ số còn lại. Vì v7
+không cải thiện định tuyến và trượt một ca ngôn ngữ/bước tiếp theo, quyết định
+là `keep_as_candidate`; không promote.
+
 ## Đợt `chatbot-v6` ngày 27/10/2026
 
 Đã chuẩn bị 655 mẫu học và 142 ca kiểm tra, gồm 18 ca mới chỉ ở tập kiểm
@@ -46,6 +53,13 @@ xuất/nạp model ứng viên và so sánh trên holdout với v5 và model 9B.
 bước tự đổi model đang phục vụ. Kết quả chất lượng chỉ có giá trị sau khi
 `training/output-chatbot-v6/evaluation.json` được ghi và các lỗi được xem lại.
 
+Đánh giá local đã hoàn tất 142/142 request và schema. V6 đạt 142/142 ngôn ngữ
+phổ thông, không bịa số thương mại, có bước tiếp theo và hình thức hữu ích;
+134/142 ca định tuyến đúng. Riêng 18 tình huống mới chỉ có ở holdout, định
+tuyến đúng 14/18. Kết quả đủ điều kiện review thủ công nhưng vẫn là
+`candidate_only`; artifact đánh giá và model nặng ở thư mục output bị Git
+ignore, còn dataset/config/script tái lập được đưa lên GitHub.
+
 Bộ đo v5 ban đầu chỉ nhận vài động từ ra lệnh nên bỏ sót câu kiểu “cần kiểm
 tra” hoặc “nên thử”. Khi chấm lại **cùng 124 câu trả lời đã lưu** bằng bộ đo
 mở rộng, chỉ số bước tiếp theo là 121/124 thay cho 62/124. Đây là sửa bộ đo,
@@ -58,15 +72,15 @@ train, export GGUF, import Ollama, đánh giá, unload và tổng kết. Bằng 
 bộ nằm tại `training/runs/chatbot-v5/` và `training/output-chatbot-v5/`; hai thư
 mục chứa artifact lớn nên bị Git ignore.
 
-| Thuộc tính       | Kết quả đã quan sát                                                                                            |
-| ---------------- | -------------------------------------------------------------------------------------------------------------- |
-| Base             | `unsloth/Qwen3.5-4B`                                                                                           |
-| Dữ liệu          | 543 train, 124 holdout; file có SHA-256 trong manifest                                                         |
-| Huấn luyện       | 6 epoch, 1.086 optimizer step, loss 0,3769166, VRAM đỉnh 9,72 GB                                               |
-| Reload/export    | Adapter nạp lại được; GGUF Q8 4.610.580.288 byte                                                               |
-| Holdout kỹ thuật | 124/124 HTTP thành công và 124/124 đúng schema                                                                 |
-| Rubric ban đầu  | 124/124 ngôn ngữ phổ thông; 124/124 không bịa số thương mại; 119/124 định tuyến đúng; 62/124 bước tiếp theo theo bộ đo cũ |
-| Quyết định       | `candidate_only`; không tự động thay model runtime                                                             |
+| Thuộc tính       | Kết quả đã quan sát                                                                                                       |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Base             | `unsloth/Qwen3.5-4B`                                                                                                      |
+| Dữ liệu          | 543 train, 124 holdout; file có SHA-256 trong manifest                                                                    |
+| Huấn luyện       | 6 epoch, 1.086 optimizer step, loss 0,3769166, VRAM đỉnh 9,72 GB                                                          |
+| Reload/export    | Adapter nạp lại được; GGUF Q8 4.610.580.288 byte                                                                          |
+| Holdout kỹ thuật | 124/124 HTTP thành công và 124/124 đúng schema                                                                            |
+| Rubric ban đầu   | 124/124 ngôn ngữ phổ thông; 124/124 không bịa số thương mại; 119/124 định tuyến đúng; 62/124 bước tiếp theo theo bộ đo cũ |
+| Quyết định       | `candidate_only`; không tự động thay model runtime                                                                        |
 
 Năm lỗi định tuyến còn lại gồm tình huống chưa có website/sản phẩm, thanh toán,
 lưu lượng và quyền riêng tư. Bộ đo cũ chỉ nhận ra 50% câu có bước tiếp theo;

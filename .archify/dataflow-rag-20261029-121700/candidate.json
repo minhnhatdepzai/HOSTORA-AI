@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "Luồng RAG local của HOSTORA",
+    "output": "docs/architecture/hostora-rag-flow.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/minhnhatdepzai/HOSTORA-AI.git",
+      "provider": "github",
+      "link_mode": "web",
+      "revision": "1eb26b94ca0e237676f0488099c281c81a0ee6c1"
+    }
+  },
+  "stages": [
+    { "label": "Nguồn" },
+    { "label": "Chuẩn bị" },
+    { "label": "Truy xuất" },
+    { "label": "Grounding" },
+    { "label": "Trả lời" }
+  ],
+  "nodes": [
+    { "id": "knowledge", "type": "database", "label": "Knowledge JSON", "sublabel": "nội dung + URL + ngày xác minh", "stage": 0, "row": 0, "sources": [{ "path": "scripts/index-rag.mjs", "line": 11, "end_line": 13 }] },
+    { "id": "question", "type": "external", "label": "Câu hỏi khách", "sublabel": "đã che thông tin liên hệ", "stage": 0, "row": 2, "sources": [{ "path": "app/api/ai/chat/route.ts", "line": 62, "end_line": 78 }] },
+    { "id": "catalog", "type": "database", "label": "Catalog thương mại", "sublabel": "gói + giá + nguồn", "stage": 0, "row": 4, "sources": [{ "path": "app/api/ai/chat/route.ts", "line": 133, "end_line": 184 }] },
+    { "id": "indexer", "type": "backend", "label": "Lập chỉ mục", "sublabel": "qwen3-embedding:4b", "stage": 1, "row": 0, "sources": [{ "path": "scripts/index-rag.mjs", "line": 35, "end_line": 65 }] },
+    { "id": "expand", "type": "backend", "label": "Mở rộng truy vấn", "sublabel": "từ khóa tiếng Việt", "stage": 1, "row": 2, "sources": [{ "path": "lib/rag.ts", "line": 17, "end_line": 88 }] },
+    { "id": "index", "type": "database", "label": "RAG index", "sublabel": "vector + metadata", "stage": 2, "row": 0, "sources": [{ "path": "scripts/index-rag.mjs", "line": 50, "end_line": 65 }] },
+    { "id": "hybrid", "type": "backend", "label": "Xếp hạng hybrid", "sublabel": "cosine + BM25 + RRF", "stage": 2, "row": 2, "sources": [{ "path": "lib/rag.ts", "line": 122, "end_line": 175 }, { "path": "lib/rag.ts", "line": 198, "end_line": 269 }] },
+    { "id": "fallback", "type": "security", "label": "Fallback lexical", "sublabel": "index hoặc embedding lỗi", "stage": 2, "row": 4, "sources": [{ "path": "lib/rag.ts", "line": 270, "end_line": 287 }] },
+    { "id": "context", "type": "backend", "label": "Context có citation", "sublabel": "K · P · S", "stage": 3, "row": 2, "sources": [{ "path": "app/api/ai/chat/route.ts", "line": 185, "end_line": 224 }] },
+    { "id": "model", "type": "backend", "label": "Chatbot Ollama", "sublabel": "chỉ dùng context được cấp", "stage": 3, "row": 4, "sources": [{ "path": "lib/ollama.ts", "line": 203, "end_line": 224 }, { "path": "app/api/ai/chat/route.ts", "line": 225, "end_line": 236 }] },
+    { "id": "validate", "type": "security", "label": "Hậu kiểm citation", "sublabel": "chỉ ID nằm trong context", "stage": 4, "row": 2, "sources": [{ "path": "app/api/ai/chat/route.ts", "line": 247, "end_line": 300 }] },
+    { "id": "answer", "type": "frontend", "label": "Câu trả lời + nguồn", "sublabel": "text tiếng Việt + metadata", "stage": 4, "row": 4, "sources": [{ "path": "app/api/ai/chat/route.ts", "line": 307, "end_line": 343 }] }
+  ],
+  "flows": [
+    { "id": "knowledgeIndexer", "from": "knowledge", "to": "indexer", "label": "tài liệu đã xác minh", "variant": "dashed", "classification": "offline" },
+    { "id": "indexerIndex", "from": "indexer", "to": "index", "label": "embedding + metadata", "variant": "dashed", "classification": "offline" },
+    { "id": "questionExpand", "from": "question", "to": "expand", "label": "câu hỏi sạch", "variant": "security", "classification": "không PII" },
+    { "id": "expandHybrid", "from": "expand", "to": "hybrid", "label": "query mở rộng", "variant": "emphasis" },
+    { "id": "indexHybrid", "from": "index", "to": "hybrid", "label": "vector tài liệu" },
+    { "id": "hybridFallback", "from": "hybrid", "to": "fallback", "label": "không tương thích", "variant": "security" },
+    { "id": "hybridContext", "from": "hybrid", "to": "context", "label": "top tài liệu", "variant": "emphasis" },
+    { "id": "fallbackContext", "from": "fallback", "to": "context", "label": "top lexical" },
+    { "id": "catalogContext", "from": "catalog", "to": "context", "label": "gói và sản phẩm" },
+    { "id": "contextModel", "from": "context", "to": "model", "label": "prompt có rào chắn", "variant": "security" },
+    { "id": "modelValidate", "from": "model", "to": "validate", "label": "bản nháp trả lời", "variant": "emphasis" },
+    { "id": "contextValidate", "from": "context", "to": "validate", "label": "citation được phép", "variant": "security" },
+    { "id": "validateAnswer", "from": "validate", "to": "answer", "label": "text + nguồn", "variant": "emphasis" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "Hai pha tách biệt", "items": ["Pha offline biến knowledge.json thành vector index", "Pha runtime truy xuất rồi chèn nguồn vào prompt; không đổi trọng số model"] },
+    { "dot": "amber", "title": "Suy giảm có khai báo", "items": ["Sai model, sai tài liệu hoặc lỗi embedding sẽ chuyển sang BM25", "Header x-hostora-rag-mode cho biết hybrid hay lexical-fallback"] },
+    { "dot": "rose", "title": "Ranh giới trung thực", "items": ["Giá động luôn lấy từ catalog, không fine-tune vào model", "Citation hợp lệ chưa tự chứng minh câu trả lời được nguồn hỗ trợ"] }
+  ]
+}
