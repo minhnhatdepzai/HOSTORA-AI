@@ -328,10 +328,10 @@ export function buildPreviewHtml(
   <title>${escapeHtml(content.seoTitle)}</title>
   <meta name="description" content="${escapeHtml(content.seoDescription)}">
   <style>
-    :root{--accent:${idea.color};--accent-ink:${accentInk};--paper:${background};--ink:${ink};--night:#071c24;--line:#17333a22;--serif:${serif ? "Georgia,serif" : "Arial,sans-serif"}}
+    :root{--accent:${idea.color};--accent-ink:${accentInk};--paper:${background};--ink:${ink};--night:#071c24;--line:#17333a22;--sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;--serif:${serif ? "Georgia,serif" : "ui-serif,Georgia,serif"}}
     *{box-sizing:border-box}
     html{scroll-behavior:smooth}
-    body{margin:0;background:var(--night);color:var(--ink);font-family:Arial,sans-serif;overflow-x:hidden}
+    body{margin:0;background:var(--night);color:var(--ink);font-family:var(--sans);overflow-x:hidden}
     .ambient-stage{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.82}.ambient-stage canvas{width:100%;height:100%;display:block}.reading-progress{position:fixed;z-index:30;top:0;left:0;width:100%;height:3px;background:var(--accent);transform:scaleX(0);transform-origin:left;pointer-events:none}main,footer{position:relative;z-index:1}.section-word-wrap{display:inline-block;overflow:hidden;vertical-align:bottom;padding-bottom:.08em}.section-word{display:inline-block;will-change:transform,opacity}
     a,button,input{font:inherit}
     a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:4px}
