@@ -19,6 +19,7 @@ import {
 } from "@/lib/customer/auth";
 import { sameOrigin } from "@/lib/payments/admin-auth";
 import { parseRequestJson } from "@/lib/api-validation";
+import { getCustomerStore } from "@/lib/customer/store";
 
 const requestSchema = z
   .object({
@@ -70,6 +71,11 @@ export async function PATCH(
       updatedAt: new Date().toISOString(),
     });
     const synced = await publishStudioProjectUpdate(updated);
+    getCustomerStore().saveStudioPreferences(customer.id, {
+      style: parsed.data.style,
+      color: parsed.data.color,
+      writingTone: parsed.data.writingTone,
+    });
     return Response.json({
       idea: synced.idea,
       writingTone: synced.writingTone,
@@ -216,6 +222,9 @@ export async function POST(
       updatedAt: new Date().toISOString(),
     });
     const synced = await publishStudioProjectUpdate(updated);
+    getCustomerStore().saveStudioPreferences(customer.id, {
+      revisionHint: redactStudioContact(parsed.data.message),
+    });
     return Response.json({
       brief: synced.brief,
       updatedAt: synced.updatedAt,

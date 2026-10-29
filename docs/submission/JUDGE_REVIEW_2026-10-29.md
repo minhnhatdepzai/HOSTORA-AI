@@ -1,4 +1,73 @@
-# HOSTORA 2.0.9 — chấm lại với mục tiêu top 10/265
+# HOSTORA — chấm lại với mục tiêu top 10/265
+
+> **Addendum hiện hành — source 2.1.0, ngày 29/10/2026.** Phần bên dưới của tệp là báo cáo lịch sử cho bản 2.0.9. Addendum này thay thế các số liệu 2.0.9 khi đánh giá working tree hiện tại.
+
+## Kết luận hiện hành
+
+**Chưa có cơ sở để ghi 95/100 hoặc bảo đảm top 10/265.** Bằng chứng mới cho thấy phần nhớ tài khoản và nguồn riêng đã chắc hơn, nhưng chatbot v8 vẫn là **candidate**, chưa được promote vào runtime vì định tuyến đúng chỉ đạt 130/151 (86,09%) trên holdout và 10/18 (55,56%) ở ca paraphrase mới. Điểm mô phỏng 87/100 của bản đánh giá tổng hợp vẫn là mốc tham khảo hợp lý; không cộng điểm chỉ vì model có loss thấp hoặc train nhiều hơn.
+
+Top 10/265 là nhóm 3,77% đứng đầu. Không có bài của 264 đội còn lại nên không thể suy ra xác suất hay thứ hạng. Mục tiêu thực tế trước vòng chung kết là khóa một bản demo ổn định, chứng minh các ca biên và chuẩn bị phản biện; ưu tiên tiếp theo là intent routing/paraphrase, không tăng epoch mù.
+
+## Bằng chứng mới đã xác minh
+
+| Hạng mục | Kết quả | Giới hạn diễn giải |
+|---|---|---|
+| Unit/API | `pnpm test`: **233/233**, 52 file | Không thay thế E2E và usability độc lập |
+| Web build | `pnpm build`: đạt; standalone đã chuẩn bị | Có cảnh báo dependency động OpenTelemetry |
+| Type/lint | Web typecheck/lint và mobile typecheck/lint: đạt | Chạy trên máy phát triển hiện tại |
+| AI smoke | `pnpm ai:check`: đạt; 17.550 ms, Ollama local | Chỉ chứng minh đường gọi model/schema, không chứng minh câu trả lời đúng |
+| Account AI | 9/9 ca đạt; median 2.522 ms, p95 quan sát 3.617 ms | Một tài khoản, tuần tự, local; không phải p95 production |
+| Chatbot v8 holdout | 151/151 HTTP/schema; 151/151 ngôn ngữ, không bịa số, next step, helpful shape; **130/151 route đúng** | Route gate chưa đạt; chưa dùng làm runtime |
+| Chatbot v8 ca mới | 18/18 hình thức an toàn; **10/18 route đúng** | Bộ định hướng tìm lỗi, không đại diện toàn bộ người dùng |
+| Training v8 | 737 train, 151 holdout, 1.480 bước, loss 0,3587; GPU tối đa 9,97 GB | Loss không phải thước đo chất lượng tư vấn |
+| Android | APK `com.hostora.ai` 2.1.0/versionCode 22 cài đè bằng `adb install -r`; Mobile MCP mở được và thấy lịch sử cũ | Chỉ xác nhận thiết bị Redmi và persistence cục bộ; chưa là phát hành production |
+
+### Quyết định model
+
+`training/output-chatbot-v8/promotion.json` ghi `status: candidate`, `automatic_promotion: false`, `gate_passed: false`. Runtime tiếp tục dùng model đã cấu hình trong `.env.local`. Không thay đổi quyết định này chỉ để tăng điểm trình diễn.
+
+### Bộ nhớ và nguồn riêng
+
+Lịch sử chat, facts nhu cầu, nguồn riêng và sở thích Studio được lưu có giới hạn trong SQLite theo `customer_id`. Tin nhắn mới có quyền sửa facts cũ; giá, khuyến mại, availability, trạng thái thanh toán và PII không được đưa vào model memory/train. Đây là retrieval có schema, **không phải nhớ vô hạn**.
+
+Các ca cuối đạt 9/9 gồm: nhớ qua phiên, nhắc lại đủ ngân sách, sửa ngân sách mới thắng cũ, đọc đúng nguồn riêng, chống nguồn xung đột, bỏ qua prompt injection, từ chối đoán doanh thu, và giữ lịch sử. Bằng chứng máy đọc được ở `output/account-ai-quality/2026-10-29-final/results.json`.
+
+## Chấm lại theo rubric ở thời điểm hiện tại
+
+| Tiêu chí | Điểm mô phỏng | Nhận định |
+|---|---:|---|
+| Chức năng, đúng nghiệp vụ | 24/25 | Wizard, catalog, no-match, lead và luồng tài khoản đã có regression; chưa có quan sát người dùng thật |
+| Kỹ thuật, chất lượng mã | 19/20 | Schema, giới hạn body, quota, guardrail, build/typecheck/lint; chưa chứng minh edge/origin production |
+| AI, kiểm soát đầu ra | 12/15 | Account guardrail 9/9 và RAG/source grounding tốt; v8 route 86,09%, paraphrase 55,56%, nên chưa thể 14–15 |
+| Kiểm thử, xử lý lỗi | 14/15 | 233 unit và bằng chứng native; chưa có soak/mạng ngoài và Maestro driver bị chặn trên Redmi |
+| Làm chủ Vibe Coding, phản biện | 10/15 tạm tính | Có lịch sử lỗi/sửa và candidate gate; điểm thật phụ thuộc trình bày trực tiếp |
+| UI/UX | 5/5 trong phạm vi audit | Web/admin audit tự động trước đó đạt 12/12; cần TalkBack/usability độc lập |
+| Triển khai, bàn giao | 3/5 | APK local 2.1.0 đã cài đè; GitHub release công khai vẫn cần chốt artifact 2.1.0 đồng bộ |
+| **Tổng** | **87/100** | Mô phỏng có bằng chứng, không phải điểm ban tổ chức |
+
+## Sáu ca tối thiểu để bảo vệ trước giám khảo
+
+1. Nhu cầu shop đủ ngân sách → một gói chính và hai phương án thay thế.
+2. Ngân sách thấp hơn mọi gói → nói rõ không có gói đáp ứng, không gắn “phù hợp nhất” vô điều kiện.
+3. Lead hợp lệ cùng bản ghi hỏng → giữ lead tốt, từ chối bản ghi sai.
+4. Tính năng/catalog là `null` → hiển thị “chưa xác minh”, không đổi thành “không có”.
+5. Ollama/API lỗi → trả lỗi dễ hiểu, không dựng giá hoặc câu trả lời giả.
+6. Đăng nhập, reload và cài đè APK → lịch sử chat còn; dữ liệu mới có thể sửa facts cũ.
+
+Nên trình bày thêm hai ca v8 thất bại về định tuyến để chứng minh cách phản biện: một câu phủ định nhu cầu tên miền và một câu nói về chủ đề bán hàng nhưng không phải chức năng bán hàng. Không che các ca này bằng cách thêm đúng mẫu câu vào regex rồi tuyên bố hiểu ngôn ngữ tự nhiên.
+
+## Lộ trình nâng điểm có thể nghiệm thu
+
+1. Tạo bộ paraphrase/negation/mâu thuẫn độc lập tối thiểu 50 ca; chấm route bằng nhãn ngữ nghĩa, không chỉ schema.
+2. Sửa router theo mệnh đề và độ tin cậy; khi bằng chứng mâu thuẫn thì hỏi lại thay vì ghi đè kết quả model.
+3. Chạy lại holdout + ca mới; chỉ promote khi gate route đạt ngưỡng đã công bố và có review thủ công.
+4. Chốt release 2.1.0 gồm source, APK, video, checksum và README cùng một commit/tag; cài từ máy sạch/điện thoại ngoài mạng.
+5. Thử với 5–10 chủ shop, ghi thời gian hoàn thành, hiểu giá gia hạn/trả trước và các điểm hiểu nhầm.
+6. Diễn tập phản biện: prompt thật → lỗi thật → patch → test trước/sau → lý do giữ hoặc không promote model.
+
+Không nên dùng thêm fine-tune, GPU 100%, hiệu ứng UI hoặc số lượng tính năng để bù cho route sai, URL ngoài mạng chưa ổn định và thiếu usability evidence.
+
+---
 
 Ngày đánh giá: 29/10/2026, giờ Việt Nam. Dựa trên rubric 100 điểm người dùng cung cấp, mã nguồn hiện tại, kiểm thử chạy mới, phản hồi API thật và APK trên Redmi Note 8 Pro. Đây là điểm giả lập; không phải kết quả ban tổ chức. Báo cáo 72/100 ngày 28/10 phản ánh bản trước khi sửa.
 

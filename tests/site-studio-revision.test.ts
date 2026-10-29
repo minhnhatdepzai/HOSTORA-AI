@@ -8,6 +8,7 @@ const deps = vi.hoisted(() => ({
   saveStudioProject: vi.fn(),
   publishStudioProjectUpdate: vi.fn(),
   isStudioProjectOwner: vi.fn(() => true),
+  saveStudioPreferences: vi.fn(),
 }));
 
 vi.mock("@/lib/ollama", async (importOriginal) => {
@@ -18,6 +19,11 @@ vi.mock("@/lib/site-studio-workflow", () => ({
   auditSiteBrief: deps.auditSiteBrief,
 }));
 vi.mock("@/lib/site-studio-store", () => deps);
+vi.mock("@/lib/customer/store", () => ({
+  getCustomerStore: () => ({
+    saveStudioPreferences: deps.saveStudioPreferences,
+  }),
+}));
 vi.mock("@/lib/customer/auth", () => ({
   customerFromRequest: () => ({ id: "customer-1", email: "moc@example.com" }),
   requestUsesBearer: () => true,
@@ -86,6 +92,9 @@ test("customer revision is saved only after the content audit", async () => {
   expect(deps.saveStudioProject).toHaveBeenCalledWith(
     expect.objectContaining({ revisionCount: 1, brief: revised }),
   );
+  expect(deps.saveStudioPreferences).toHaveBeenCalledWith("customer-1", {
+    revisionHint: "Đổi tiêu đề ngắn hơn",
+  });
 });
 
 test("unsupported revision does not replace the saved website", async () => {

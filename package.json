@@ -26,6 +26,7 @@
     "package:submission": "node scripts/package-submission.mjs",
     "ai:check": "node --env-file-if-exists=.env.local scripts/check-local-ai.mjs",
     "ai:evaluate:advisor": "node scripts/evaluate-advisor.mjs",
+    "ai:evaluate:memory": "node scripts/evaluate-account-ai.mjs",
     "ai:load-test": "node scripts/benchmark-ai-load.mjs",
     "tunnel:cloudflare": "bash scripts/start-cloudflare-quick-tunnel.sh",
     "tunnel:cloudflare:stop": "bash scripts/stop-cloudflare-quick-tunnel.sh",
@@ -37,6 +38,8 @@
     "ai:train:chatbot:status": "bash scripts/chatbot-v6-finetune-status.sh",
     "ai:train:chatbot:v7": "bash scripts/start-chatbot-v7-finetune.sh",
     "ai:train:chatbot:v7:status": "bash scripts/chatbot-v7-finetune-status.sh",
+    "ai:train:chatbot:v8": "bash scripts/start-chatbot-v8-finetune.sh",
+    "ai:train:chatbot:v8:status": "HOSTORA_TRAIN_RUN=chatbot-v8 HOSTORA_TRAIN_UNIT=hostora-chatbot-v8-finetune.service bash scripts/dual-finetune-status.sh",
     "ai:train:studio": "bash scripts/start-studio-v3-finetune.sh",
     "ai:train:studio:status": "bash scripts/studio-v3-finetune-status.sh",
     "studio:feedback-report": "node scripts/report-site-studio-feedback.mjs",
@@ -73,6 +76,7 @@
     "stripe": "^23.0.1",
     "tailwind-merge": "^3.7.0",
     "three": "^0.186.1",
+    "unpdf": "2.0.0",
     "zod": "^4.6.7"
   },
   "devDependencies": {

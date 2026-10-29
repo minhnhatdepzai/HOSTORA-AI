@@ -60,7 +60,14 @@ async function requestJson<T>(
 }
 
 export async function postJson<T>(path: string, body: unknown): Promise<T> {
-  return requestJson<T>(path, { method: "POST", body, timeoutMs: path.startsWith("/api/ai/") ? 105000 : 12000 });
+  return requestJson<T>(path, {
+    method: "POST",
+    body,
+    timeoutMs:
+      path.startsWith("/api/ai/") || path === "/api/account/ai-sources"
+        ? 130000
+        : 12000,
+  });
 }
 
 export async function getJson<T>(path: string): Promise<T> {

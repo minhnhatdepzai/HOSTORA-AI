@@ -1,5 +1,7 @@
 # HOSTORA Android 2.1.0 — kiểm tra Redmi Note 8 Pro
 
+> **Cập nhật working tree cuối ngày 29/10/2026:** web test hiện là 233/233 trên 52 file; các số 197 test bên dưới là snapshot của lượt kiểm tra Android trước khi thêm account-memory/source guardrail. Không dùng số snapshot này để mô tả toàn bộ source hiện tại.
+
 Ngày kiểm tra: 29/10/2026. Thiết bị kết nối ADB qua USB: Redmi Note 8 Pro (`begonia`).
 
 ## Kết quả
@@ -17,7 +19,7 @@ Ngày kiểm tra: 29/10/2026. Thiết bị kết nối ADB qua USB: Redmi Note 8
 
 - `pnpm typecheck`: đạt.
 - `pnpm lint`: đạt.
-- `pnpm test`: 48 file, 197 test đạt.
+- `pnpm test`: snapshot Android trước đó 48 file, 197 test đạt; bản source hiện tại đã chạy lại 52 file, 233/233 test đạt.
 - `pnpm build`: đạt; standalone chứa 2 APK.
 - `pnpm ai:check`: structured output từ Ollama local đạt.
 - Playwright đúng môi trường SQLite kiểm thử: 47 đạt, 1 bỏ qua có chủ đích trên desktop/mobile; không có lượt lỗi.

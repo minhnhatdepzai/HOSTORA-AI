@@ -4,6 +4,9 @@ import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import type {
   CustomerAccount,
+  CustomerAiSource,
+  CustomerChatMessage,
+  CustomerStudioPreferences,
   AdminCustomerSupportCase,
   CustomerOrderSummary,
   CustomerSession,
@@ -102,6 +105,41 @@ export class CustomerStore {
         updated_at TEXT NOT NULL
       );
       CREATE INDEX IF NOT EXISTS customer_support_customer ON customer_support_cases(customer_id, created_at DESC);
+      CREATE TABLE IF NOT EXISTS customer_ai_memory (
+        customer_id TEXT PRIMARY KEY REFERENCES customer_accounts(id) ON DELETE CASCADE,
+        memory_json TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS customer_chat_messages (
+        id TEXT PRIMARY KEY,
+        customer_id TEXT NOT NULL REFERENCES customer_accounts(id) ON DELETE CASCADE,
+        conversation_id TEXT NOT NULL,
+        role TEXT NOT NULL CHECK(role IN ('user', 'assistant')),
+        content TEXT NOT NULL,
+        sources_json TEXT NOT NULL DEFAULT '[]',
+        created_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS customer_chat_customer_conversation ON customer_chat_messages(customer_id, conversation_id, created_at DESC);
+      CREATE TABLE IF NOT EXISTS customer_ai_sources (
+        id TEXT PRIMARY KEY,
+        customer_id TEXT NOT NULL REFERENCES customer_accounts(id) ON DELETE CASCADE,
+        title TEXT NOT NULL,
+        kind TEXT NOT NULL CHECK(kind IN ('pdf', 'docx', 'text', 'web', 'image')),
+        source_url TEXT,
+        content TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS customer_ai_sources_customer ON customer_ai_sources(customer_id, updated_at DESC);
+      CREATE TABLE IF NOT EXISTS customer_studio_preferences (
+        customer_id TEXT PRIMARY KEY REFERENCES customer_accounts(id) ON DELETE CASCADE,
+        style TEXT,
+        color TEXT,
+        writing_tone TEXT NOT NULL DEFAULT 'direct',
+        revision_hints_json TEXT NOT NULL DEFAULT '[]',
+        needs_work_reasons_json TEXT NOT NULL DEFAULT '[]',
+        updated_at TEXT NOT NULL
+      );
     `);
   }
 
@@ -167,6 +205,291 @@ export class CustomerStore {
 
   consumeRateLimit(key: string, limit: number, windowMs: number) {
     return this.consumeRateLimitDetailed(key, limit, windowMs).allowed;
+  }
+
+  getAiMemory(customerId: string): unknown | null {
+    const row = this.db
+      .prepare(
+        "SELECT memory_json FROM customer_ai_memory WHERE customer_id = ?",
+      )
+      .get(customerId) as { memory_json: string } | undefined;
+    if (!row) return null;
+    try {
+      return JSON.parse(row.memory_json) as unknown;
+    } catch {
+      return null;
+    }
+  }
+
+  saveAiMemory(customerId: string, memory: unknown) {
+    const now = new Date().toISOString();
+    this.db
+      .prepare(
+        `INSERT INTO customer_ai_memory (customer_id, memory_json, updated_at)
+         VALUES (?, ?, ?)
+         ON CONFLICT(customer_id) DO UPDATE SET memory_json = excluded.memory_json, updated_at = excluded.updated_at`,
+      )
+      .run(customerId, JSON.stringify(memory), now);
+  }
+
+  latestConversationId(customerId: string) {
+    const row = this.db
+      .prepare(
+        `SELECT conversation_id FROM customer_chat_messages
+         WHERE customer_id = ? ORDER BY created_at DESC LIMIT 1`,
+      )
+      .get(customerId) as { conversation_id: string } | undefined;
+    return row?.conversation_id ?? null;
+  }
+
+  appendChatMessage(input: {
+    id?: string;
+    customerId: string;
+    conversationId: string;
+    role: CustomerChatMessage["role"];
+    content: string;
+    sources?: unknown[];
+  }) {
+    const id = input.id ?? randomUUID();
+    const createdAt = new Date().toISOString();
+    this.db
+      .prepare(
+        `INSERT OR IGNORE INTO customer_chat_messages
+         (id, customer_id, conversation_id, role, content, sources_json, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .run(
+        id,
+        input.customerId,
+        input.conversationId,
+        input.role,
+        input.content.slice(0, 8_000),
+        JSON.stringify(input.sources ?? []),
+        createdAt,
+      );
+    return id;
+  }
+
+  listChatMessages(
+    customerId: string,
+    conversationId: string,
+    limit = 100,
+  ): CustomerChatMessage[] {
+    const safeLimit = Math.min(200, Math.max(1, Math.floor(limit)));
+    const rows = this.db
+      .prepare(
+        `SELECT id, conversation_id, role, content, sources_json, created_at
+         FROM customer_chat_messages
+         WHERE customer_id = ? AND conversation_id = ?
+         ORDER BY created_at DESC LIMIT ?`,
+      )
+      .all(customerId, conversationId, safeLimit) as Array<{
+      id: string;
+      conversation_id: string;
+      role: CustomerChatMessage["role"];
+      content: string;
+      sources_json: string;
+      created_at: string;
+    }>;
+    return rows.reverse().map((row) => {
+      let sources: unknown[] = [];
+      try {
+        const parsed = JSON.parse(row.sources_json) as unknown;
+        if (Array.isArray(parsed)) sources = parsed.slice(0, 20);
+      } catch {}
+      return {
+        id: row.id,
+        conversationId: row.conversation_id,
+        role: row.role,
+        content: row.content,
+        sources,
+        createdAt: row.created_at,
+      };
+    });
+  }
+
+  clearAiHistory(customerId: string, clearMemory = false) {
+    this.db.exec("BEGIN IMMEDIATE");
+    try {
+      this.db
+        .prepare("DELETE FROM customer_chat_messages WHERE customer_id = ?")
+        .run(customerId);
+      if (clearMemory) {
+        this.db
+          .prepare("DELETE FROM customer_ai_memory WHERE customer_id = ?")
+          .run(customerId);
+      }
+      this.db.exec("COMMIT");
+    } catch (error) {
+      this.db.exec("ROLLBACK");
+      throw error;
+    }
+  }
+
+  createAiSource(
+    customerId: string,
+    input: {
+      title: string;
+      kind: CustomerAiSource["kind"];
+      sourceUrl?: string | null;
+      content: string;
+    },
+  ): CustomerAiSource {
+    const id = randomUUID();
+    const now = new Date().toISOString();
+    this.db
+      .prepare(
+        `INSERT INTO customer_ai_sources
+         (id, customer_id, title, kind, source_url, content, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .run(
+        id,
+        customerId,
+        input.title.trim().slice(0, 160),
+        input.kind,
+        input.sourceUrl ?? null,
+        input.content.slice(0, 80_000),
+        now,
+        now,
+      );
+    return {
+      id,
+      title: input.title.trim().slice(0, 160),
+      kind: input.kind,
+      sourceUrl: input.sourceUrl ?? null,
+      content: input.content.slice(0, 80_000),
+      createdAt: now,
+      updatedAt: now,
+    };
+  }
+
+  listAiSources(customerId: string): CustomerAiSource[] {
+    return (
+      this.db
+        .prepare(
+          `SELECT id, title, kind, source_url, content, created_at, updated_at
+           FROM customer_ai_sources WHERE customer_id = ?
+           ORDER BY updated_at DESC LIMIT 30`,
+        )
+        .all(customerId) as Array<{
+        id: string;
+        title: string;
+        kind: CustomerAiSource["kind"];
+        source_url: string | null;
+        content: string;
+        created_at: string;
+        updated_at: string;
+      }>
+    ).map((row) => ({
+      id: row.id,
+      title: row.title,
+      kind: row.kind,
+      sourceUrl: row.source_url,
+      content: row.content,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    }));
+  }
+
+  deleteAiSource(customerId: string, id: string) {
+    return (
+      this.db
+        .prepare(
+          "DELETE FROM customer_ai_sources WHERE customer_id = ? AND id = ?",
+        )
+        .run(customerId, id).changes > 0
+    );
+  }
+
+  getStudioPreferences(customerId: string): CustomerStudioPreferences {
+    const row = this.db
+      .prepare(
+        `SELECT style, color, writing_tone, revision_hints_json,
+                needs_work_reasons_json, updated_at
+         FROM customer_studio_preferences WHERE customer_id = ?`,
+      )
+      .get(customerId) as
+      | {
+          style: CustomerStudioPreferences["style"];
+          color: string | null;
+          writing_tone: CustomerStudioPreferences["writingTone"];
+          revision_hints_json: string;
+          needs_work_reasons_json: string;
+          updated_at: string;
+        }
+      | undefined;
+    if (!row)
+      return {
+        style: null,
+        color: null,
+        writingTone: "direct",
+        revisionHints: [],
+        needsWorkReasons: [],
+        updatedAt: null,
+      };
+    const array = <T>(value: string): T[] => {
+      try {
+        const parsed = JSON.parse(value) as unknown;
+        return Array.isArray(parsed) ? (parsed as T[]) : [];
+      } catch {
+        return [];
+      }
+    };
+    return {
+      style: row.style,
+      color: row.color,
+      writingTone: row.writing_tone,
+      revisionHints: array<string>(row.revision_hints_json).slice(-8),
+      needsWorkReasons: array<
+        CustomerStudioPreferences["needsWorkReasons"][number]
+      >(row.needs_work_reasons_json).slice(-8),
+      updatedAt: row.updated_at,
+    };
+  }
+
+  saveStudioPreferences(
+    customerId: string,
+    input: Partial<
+      Pick<CustomerStudioPreferences, "style" | "color" | "writingTone">
+    > & {
+      revisionHint?: string;
+      needsWorkReason?: CustomerStudioPreferences["needsWorkReasons"][number];
+    },
+  ) {
+    const current = this.getStudioPreferences(customerId);
+    const revisionHints = input.revisionHint
+      ? [...current.revisionHints, input.revisionHint.trim().slice(0, 300)].slice(
+          -8,
+        )
+      : current.revisionHints;
+    const needsWorkReasons = input.needsWorkReason
+      ? [...current.needsWorkReasons, input.needsWorkReason].slice(-8)
+      : current.needsWorkReasons;
+    const now = new Date().toISOString();
+    this.db
+      .prepare(
+        `INSERT INTO customer_studio_preferences
+         (customer_id, style, color, writing_tone, revision_hints_json, needs_work_reasons_json, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(customer_id) DO UPDATE SET
+           style = excluded.style,
+           color = excluded.color,
+           writing_tone = excluded.writing_tone,
+           revision_hints_json = excluded.revision_hints_json,
+           needs_work_reasons_json = excluded.needs_work_reasons_json,
+           updated_at = excluded.updated_at`,
+      )
+      .run(
+        customerId,
+        input.style ?? current.style,
+        input.color ?? current.color,
+        input.writingTone ?? current.writingTone,
+        JSON.stringify(revisionHints),
+        JSON.stringify(needsWorkReasons),
+        now,
+      );
+    return this.getStudioPreferences(customerId);
   }
 
   createCustomer(input: {

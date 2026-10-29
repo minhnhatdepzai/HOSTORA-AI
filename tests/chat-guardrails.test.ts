@@ -7,7 +7,10 @@ import {
   unknownRenewalCostAnswer,
   websiteIdeaDiscoveryAnswer,
   customerJourneyAnswer,
+  memoryRecallAnswer,
+  unknownBusinessDataAnswer,
 } from "@/lib/chat-guardrails";
+import { EMPTY_CHAT_FACTS } from "@/lib/chat-memory";
 
 const sources = [
   {
@@ -118,4 +121,29 @@ test("refund guidance does not invent a completion time", () => {
   );
   expect(result?.answer).toContain("không thể hứa chính xác");
   expect(result?.answer).not.toMatch(/\b\d+\s*(giờ|ngày)\b/i);
+});
+
+test("memory recall includes the stored budget instead of relying on model wording", () => {
+  const result = memoryRecallAnswer("Hãy nhắc lại loại website và ngân sách tôi vừa nói", {
+    facts: {
+      ...EMPTY_CHAT_FACTS,
+      websiteType: "blog",
+      monthlyVisits: 2_000,
+      monthlyBudget: 120_000,
+      needsDomain: false,
+    },
+    summary: "",
+    unresolved: [],
+  });
+  expect(result).toContain("blog");
+  expect(result).toContain("120.000đ/tháng");
+});
+
+test("missing business revenue is stated as unavailable", () => {
+  const result = unknownBusinessDataAnswer(
+    "Doanh thu năm ngoái của Mộc An chính xác là bao nhiêu?",
+    true,
+  );
+  expect(result?.answer).toContain("chưa có dữ liệu doanh thu chính xác");
+  expect(result?.answer).toContain("[U*]");
 });

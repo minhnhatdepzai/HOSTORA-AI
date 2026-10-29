@@ -259,6 +259,11 @@ def build_real_stages(
             for key in ("train_file", "holdout_file"):
                 if not (ROOT / config[key]).exists():
                     raise RuntimeError(f"missing dataset: {config[key]}")
+            modelfile = ROOT / f"Modelfile.{config['name']}"
+            if not modelfile.is_file():
+                raise RuntimeError(
+                    f"missing Ollama Modelfile for candidate: {modelfile.name}"
+                )
         runner.run(
             [
                 python,

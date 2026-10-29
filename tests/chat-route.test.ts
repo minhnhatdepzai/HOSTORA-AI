@@ -41,7 +41,8 @@ test("chat uses remembered requirements when the newest message says the old bud
 
   expect(response.status).toBe(200);
   const answer = await response.text();
-  expect(answer).toContain("Dựa trên nhu cầu");
+  expect(answer).toContain("Theo thông tin bạn đã nói trước đó");
+  expect(answer).toContain("Ngân sách: 500.000đ/tháng");
   expect(answer).not.toContain("cho mình biết: website");
 });
 

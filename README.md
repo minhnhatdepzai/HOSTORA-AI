@@ -4,12 +4,12 @@ HOSTORA AI là nền tảng local-first giúp chủ shop và doanh nghiệp Vi�
 
 AI của HOSTORA chạy cục bộ qua Ollama. AI chỉ đọc, giải thích và soạn nội dung; giá, xếp hạng gói, voucher, trạng thái đơn và kết quả thanh toán vẫn do mã nguồn tất định kiểm soát. Dữ liệu thiếu phải được ghi là “Chưa có dữ liệu” hoặc “Chưa xác minh”, không được để mô hình tự điền.
 
-> Trạng thái ngày 29/10/2026: source web, admin và Android 2.1.0 đã qua typecheck, lint, build production, 220 unit test, 47 E2E desktop/mobile, audit 12/12 trạng thái và AI smoke test local. APK 2.1.0 (versionCode 22) đã được cài đè và mở trên Redmi Note 8 Pro. Đây là bằng chứng local; Cloudflare production, Stripe/VNPay thật, SMTP tên miền, URL production ổn định và nghiên cứu người dùng vẫn chưa được xác nhận.
+> Trạng thái ngày 29/10/2026: source web, admin và Android 2.1.0 đã qua typecheck, lint, build production, 233 unit test, 47 E2E desktop/mobile, audit 12/12 trạng thái và AI smoke test local. APK 2.1.0 (versionCode 22) đã được cài đè và mở trên Redmi Note 8 Pro. Đây là bằng chứng local; Cloudflare production, Stripe/VNPay thật, SMTP tên miền, URL production ổn định và nghiên cứu người dùng vẫn chưa được xác nhận.
 
 | Phần đã kiểm tra | Kết quả gần nhất                                                                                       |
 | ---------------- | ------------------------------------------------------------------------------------------------------ |
 | Web + admin      | Build production thành công; 47 E2E pass, 1 ca mobile chủ động skip                                    |
-| Logic và API     | 220/220 unit test pass trên 51 file; body lớn, CAPTCHA, replay và webhook có test hồi quy             |
+| Logic và API     | 233/233 unit test pass trên 52 file; body lớn, quota AI, CAPTCHA, replay và webhook có test hồi quy    |
 | AI local         | Ollama chat, chatbot, Studio và embedding trả inference thật; không dùng cloud fallback                |
 | Android          | `com.hostora.ai` 2.1.0, versionCode 22; cài bằng `adb install -r`, giữ dữ liệu app                     |
 | Bảo mật ứng dụng | CSP/header, body stream limit, quota + `Retry-After`, Turnstile thích ứng; cần bật Cloudflare thật     |
@@ -34,7 +34,7 @@ Khách không bị đưa sang website khác để xem sản phẩm. Toàn bộ h
 | Ứng dụng Android | Tư vấn bốn bước, trợ lý, sản phẩm, Studio, tài khoản, thông báo và đơn hàng | Gọi cùng API HOSTORA qua LAN/HTTPS               |
 | Web quản trị     | Catalog, hỗ trợ, doanh thu, yêu cầu mua, hóa đơn, thanh toán và hoàn tiền   | Cùng store catalog, tài khoản và SQLite đơn hàng |
 
-Yêu cầu mua và hóa đơn được lưu trong `data/runtime/payments.sqlite`, vì vậy website, app và `/admin/orders` nhìn thấy cùng một trạng thái. Riêng wizard tư vấn, lịch sử chat và danh sách lead cũ vẫn nằm trong trình duyệt bằng `localStorage`; phần này chưa phải hệ thống quản lý khách hàng nhiều nhân viên.
+Yêu cầu mua, hóa đơn, lịch sử trợ lý, bộ nhớ nhu cầu và nguồn kiến thức riêng của tài khoản được lưu trong `data/runtime/payments.sqlite`, vì vậy website và app có thể nối tiếp cùng một cuộc trò chuyện sau khi đăng nhập. Khách chưa đăng nhập vẫn giữ chat cục bộ trên thiết bị. Wizard tư vấn và danh sách lead cũ còn nằm trong trình duyệt bằng `localStorage`; phần này chưa phải hệ thống quản lý khách hàng nhiều nhân viên.
 
 ![Sơ đồ kiến trúc HOSTORA](docs/architecture/visual-review/hostora-system.light.png)
 
@@ -127,24 +127,29 @@ Khách có thể hủy hóa đơn chưa thanh toán hoặc gửi yêu cầu hoà
 flowchart LR
     A[Tin nhắn web/app] --> B[Zod + giới hạn kích thước]
     B --> C[Che email và số điện thoại]
-    C --> D{Guard tất định xử lý được?}
+    C --> M{Đã đăng nhập?}
+    M -- Có --> N[Tải bộ nhớ + lịch sử tài khoản]
+    M -- Không --> D
+    N --> D{Guard tất định xử lý được?}
     D -- Có --> E[Trả lời an toàn ngay]
-    D -- Không --> F[RAG + catalog có nguồn]
+    D -- Không --> F[RAG + catalog + nguồn riêng liên quan]
     F --> G[Ollama local, context 16K]
     G --> H[Lọc citation ngoài context]
     H --> I[Text tiếng Việt + nguồn + next action]
+    I --> L[(Lưu câu trả lời đã lọc theo tài khoản)]
     G -. timeout/lỗi .-> J[HTTP 503 dễ hiểu]
 ```
 
 1. Kiểm tra JSON, số lượng tin nhắn và chiều dài bằng Zod.
 2. Che email/số điện thoại trước khi truy xuất hoặc gọi mô hình; yêu cầu gửi PII vào model bị từ chối.
 3. Các trường hợp nhạy cảm được xử lý trước bằng quy tắc tất định: chưa có website, chưa đủ dữ kiện chọn gói, giá gia hạn chưa rõ, tên miền, DNS, structured data, thanh toán chưa cập nhật, email chưa tới và hoàn tiền.
-4. Nếu cần kiến thức, hệ thống truy xuất RAG và chọn tối đa 7 tài liệu cùng các mục catalog liên quan.
-5. Ollama local tạo câu trả lời với context 16K; không có cloud fallback.
-6. Citation được hậu kiểm, citation không nằm trong context bị loại bỏ; log chỉ ghi model, độ trễ, token và số nguồn, không ghi nội dung chat hay PII.
-7. Giao diện nhận câu trả lời tiếng Việt và hành động tiếp theo như mở Xưởng tạo website hoặc tải ảnh màn hình cho OCR.
+4. Khi đã đăng nhập, server nạp bộ nhớ nhu cầu có giới hạn và các lượt chat gần nhất; tin mới luôn có quyền sửa thông tin cũ. Bộ nhớ không chứa giá, khuyến mại hoặc trạng thái thanh toán.
+5. Nếu cần kiến thức, hệ thống truy xuất RAG, catalog và tối đa 4 đoạn liên quan từ nguồn riêng của chính tài khoản.
+6. Ollama local tạo câu trả lời với context 16K; không có cloud fallback.
+7. Citation được hậu kiểm, citation không nằm trong context bị loại bỏ; câu trả lời đã lọc mới được lưu. Log chỉ ghi model, độ trễ, token và số nguồn, không ghi nội dung chat hay PII.
+8. Giao diện nhận câu trả lời tiếng Việt và hành động tiếp theo như mở Xưởng tạo website hoặc tải ảnh màn hình cho OCR.
 
-OCR hành trình dùng `qwen3-vl:8b` local để đọc ảnh, xác định khách đang ở màn nào và hướng dẫn bước tiếp theo. Ảnh được giới hạn kích thước/định dạng, không lưu vào lịch sử chat; người dùng vẫn phải che số thẻ, CVC, OTP và mã truy cập.
+Khách đăng nhập có thể thêm PDF tối đa 50 trang, DOCX, TXT/Markdown, trang HTTP/HTTPS công khai và ảnh từ web hoặc app Android. File được giới hạn 8 MB, ảnh 5 MB, URL bị chặn private/local và tối đa 3 lần chuyển hướng. Văn bản được che email/số điện thoại trước khi lưu; nội dung nguồn luôn bị coi là dữ liệu không tin cậy và không được dùng để xác nhận giá/cấu hình nhà cung cấp. OCR hành trình dùng `qwen3-vl:8b` local để xác định khách đang ở màn nào; ảnh hành trình không lưu vào lịch sử chat và người dùng vẫn phải che số thẻ, CVC, OTP cùng mã truy cập.
 
 ## Luồng RAG local
 
@@ -231,15 +236,20 @@ AI không được sinh rồi thực thi mã HTML/JS tùy ý trong luồng produ
 
 Chatbot và Studio được train riêng bằng LoRA trên `unsloth/Qwen3.5-4B`; feedback không tự ghi thẳng vào trọng số đang phục vụ. Quy trình đúng là thu thập phản hồi đã ẩn danh → phân loại lỗi → duyệt dữ liệu → tạo train/holdout tách biệt → train → reload adapter → đánh giá → chỉ promote khi đạt ngưỡng.
 
+Trí nhớ xuyên phiên và việc Studio dùng lại sở thích chỉnh sửa là retrieval từ SQLite có giới hạn, không phải model tự học trực tiếp từ chat khách. Yêu cầu sửa mới luôn thắng sở thích cũ; giá, khuyến mại, tồn kho và dữ liệu cá nhân không được đưa vào bộ train.
+
 ### Kết quả đã xác minh
 
 | Ứng viên                   | Dữ liệu                                         | Kết quả holdout local                                                                                  | Quyết định                                                   |
 | -------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------ |
 | `hostora-chatbot:4b-q8-v6` | 655 train, 142 holdout                          | 142/142 HTTP, schema, ngôn ngữ phổ thông, không bịa số và có bước tiếp theo; 134/142 định tuyến đúng   | Đủ điều kiện review thủ công, **candidate only**             |
 | `hostora-chatbot:4b-q8-v7` | 671 train, 146 holdout, có hội thoại nhiều lượt | 146/146 HTTP/schema; 145/146 ngôn ngữ và bước tiếp theo; 132/146 định tuyến đúng                       | Kém v6 trên cùng tập v7 ở định tuyến; giữ **candidate only** |
+| `hostora-chatbot:4b-q8-v8` | 737 train, 151 holdout; 18 ca paraphrase mới    | 151/151 HTTP/schema; 151/151 hình thức an toàn; 130/151 holdout và 10/18 ca mới định tuyến đúng       | **Candidate**, chưa promote vì gate định tuyến chưa đạt     |
 | `hostora-studio:4b-q8-v3`  | 384 train, 24 holdout                           | 24/24 schema, không bịa số, không hype chung, bám thương hiệu, tách section và đủ chiều sâu theo bộ đo | Đủ điều kiện review thủ công, **candidate only**             |
 
 Các số trên là đánh giá tự động cục bộ, không phải chấm mù bởi khách hàng hay chuyên gia độc lập. Runtime hiện vẫn dùng model được cấu hình trong `.env.local`; train/eval không tự promote. Artifact adapter, checkpoint và GGUF 4–5 GB bị Git ignore. GitHub chỉ chứa dataset, config, script, Modelfile và tài liệu để tái lập.
+
+Đánh giá account AI cuối ngày 29/10/2026 đạt **9/9 ca** trên một tài khoản tuần tự: nhớ yêu cầu qua phiên, giữ ngân sách, cho phép thông tin mới sửa thông tin cũ, bám nguồn riêng và từ chối prompt injection/doanh thu chưa có dữ liệu. Median quan sát 2.522 ms, p95 quan sát 3.617 ms. Đây là bộ nhớ retrieval có giới hạn trong SQLite theo tài khoản, không phải model nhớ vô hạn và không phải p95 production.
 
 Xem [bằng chứng fine-tuning](docs/CHATBOT_FINETUNING.md), [rubric AI và chuyển đổi](docs/AI_EVALUATION.md) và `training/README.md`.
 
@@ -267,7 +277,7 @@ Fine-tuning không thay thế A/B test, phỏng vấn khách, kiểm tra convers
 - `.env*`, SQLite runtime, raw lead, trace PII, checkpoint và APK build không được commit.
 - Che PII trong văn bản tự do là best-effort, không phải bảo đảm tuyệt đối.
 
-Trước khi mở ra Internet cần thêm reverse proxy HTTPS, rate limit, backup mã hóa, giám sát, chính sách lưu dữ liệu, tài khoản người dùng/phân quyền và kiểm thử xâm nhập trên môi trường được phép.
+Trước khi mở ra Internet cần thêm reverse proxy HTTPS, rate limit/WAF ở lớp biên, backup mã hóa, giám sát, chính sách lưu dữ liệu và kiểm thử xâm nhập trên môi trường được phép. Quota trong ứng dụng chỉ bảo vệ tài nguyên inference/trích xuất, không thay thế chống DDoS của Cloudflare hoặc reverse proxy.
 
 ## Cài và chạy local
 

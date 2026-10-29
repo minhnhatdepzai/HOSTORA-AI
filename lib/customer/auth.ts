@@ -14,7 +14,7 @@ export function clearedCustomerSessionCookie(secure: boolean) {
 
 export function safeCustomerNextPath(value: string | null | undefined) {
   if (!value || !value.startsWith("/") || value.startsWith("//")) return "/account";
-  const allowed = ["/account", "/orders", "/website-studio"];
+  const allowed = ["/account", "/orders", "/website-studio", "/ai-assistant"];
   return allowed.some((prefix) => value === prefix || value.startsWith(`${prefix}/`))
     ? value
     : "/account";

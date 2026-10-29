@@ -10,6 +10,57 @@ type KnowledgeSource = {
   verifiedAt: string;
 };
 
+import type { ChatMemory } from "@/lib/chat-memory";
+
+function foldedQuestion(question: string) {
+  return question
+    .toLocaleLowerCase("vi")
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "");
+}
+
+/**
+ * Keep short memory-recall questions deterministic. The model still handles
+ * normal advice, but a request to repeat stored facts must not silently omit a
+ * field such as the monthly budget.
+ */
+export function memoryRecallAnswer(question: string, memory: ChatMemory) {
+  const folded = foldedQuestion(question);
+  if (!/(nhac lai|nho lai|vua noi|thong tin.*(luc nay|truoc)|ngan sach.*(vua|cu))/i.test(folded))
+    return null;
+  const facts = memory.facts;
+  const parts = [
+    facts.websiteType
+      ? `Loại website: ${facts.websiteType === "blog" ? "blog" : facts.websiteType === "store" ? "website bán hàng" : "website giới thiệu công ty"}.`
+      : null,
+    facts.monthlyVisits !== null
+      ? `Lượt truy cập dự kiến: ${facts.monthlyVisits.toLocaleString("vi-VN")}/tháng.`
+      : null,
+    facts.monthlyBudget !== null
+      ? `Ngân sách: ${facts.monthlyBudget.toLocaleString("vi-VN")}đ/tháng.`
+      : null,
+    facts.needsDomain === null
+      ? null
+      : `Tên miền: ${facts.needsDomain ? "cần mua" : "không cần mua thêm"}.`,
+  ].filter((part): part is string => Boolean(part));
+  if (!parts.length) return null;
+  return `Theo thông tin bạn đã nói trước đó: ${parts.join(" ")} Nếu có điểm nào thay đổi, bạn chỉ cần nói số mới để HOSTORA cập nhật.`;
+}
+
+/** Do not let a language model turn missing business metrics into an estimate. */
+export function unknownBusinessDataAnswer(question: string, hasCustomerSource = false) {
+  const folded = foldedQuestion(question);
+  if (!/(doanh thu|doanh so|loi nhuan|so lieu kinh doanh)/i.test(folded)) return null;
+  if (!/(chinh xac|bao nhieu|cu the|nam ngoai|thang nay|quy nay)/i.test(folded)) return null;
+  return {
+    answer:
+      "Mình chưa có dữ liệu doanh thu chính xác cho thông tin này" +
+      (hasCustomerSource ? " trong tài liệu bạn đã gửi [U*]." : ".") +
+      " Bạn cần cung cấp báo cáo hoặc số liệu đã xác minh; HOSTORA không tự ước đoán doanh thu từ loại website, lượt truy cập hay ngân sách.",
+    sources: [],
+  };
+}
+
 export function customerJourneyAnswer(question: string) {
   const folded = question
     .toLocaleLowerCase("vi")

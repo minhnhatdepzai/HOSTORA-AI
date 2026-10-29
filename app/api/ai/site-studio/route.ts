@@ -8,6 +8,7 @@ import {
   requestUsesBearer,
 } from "@/lib/customer/auth";
 import { sameOrigin } from "@/lib/payments/admin-auth";
+import { getCustomerStore } from "@/lib/customer/store";
 
 export async function POST(request: Request) {
   const customer = customerFromRequest(request);
@@ -22,8 +23,14 @@ export async function POST(request: Request) {
   if (parsed.response) return parsed.response;
   const startedAt = Date.now();
   try {
-    const result = await runSiteStudioWorkflow(parsed.data);
+    const store = getCustomerStore();
+    const preferences = store.getStudioPreferences(customer.id);
+    const result = await runSiteStudioWorkflow(parsed.data, preferences);
     const project = await createStudioProject(parsed.data, result, customer.id);
+    store.saveStudioPreferences(customer.id, {
+      style: parsed.data.style,
+      color: parsed.data.color,
+    });
     const requestedSessionId = request.headers.get("x-hostora-session");
     const sessionId =
       requestedSessionId &&

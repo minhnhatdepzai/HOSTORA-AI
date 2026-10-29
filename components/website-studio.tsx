@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -104,6 +104,7 @@ export function WebsiteStudio() {
   const [result, setResult] = useState<StudioResult | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const edited = useRef(false);
   const preview = useMemo(
     () => (result ? buildPreviewHtml(result.idea, result.brief) : ""),
     [result],
@@ -127,9 +128,32 @@ export function WebsiteStudio() {
 
   useEffect(() => {
     trackFunnelStep("studio_opened");
+    const controller = new AbortController();
+    void fetch("/api/account/ai-profile", {
+      cache: "no-store",
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok || edited.current) return;
+        const data = (await response.json()) as {
+          studio?: { style?: SiteIdea["style"] | null; color?: string | null };
+        };
+        const style = data.studio?.style;
+        const color = data.studio?.color;
+        if (edited.current) return;
+        setIdea((current) => ({
+          ...current,
+          ...(style ? { style } : {}),
+          ...(color && isHexColor(color) ? { color } : {}),
+        }));
+        if (color && isHexColor(color)) setColorDraft(color);
+      })
+      .catch(() => undefined);
+    return () => controller.abort();
   }, []);
 
   function update<Key extends keyof SiteIdea>(key: Key, value: SiteIdea[Key]) {
+    edited.current = true;
     setIdea((current) => ({ ...current, [key]: value }));
   }
 

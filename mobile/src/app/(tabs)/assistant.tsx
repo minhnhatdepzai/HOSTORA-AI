@@ -2,6 +2,8 @@ import { Pressable } from "@/components/pressable";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Feather } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
+import * as DocumentPicker from "expo-document-picker";
+import { File } from "expo-file-system";
 import { router } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -20,10 +22,13 @@ import Markdown from "react-native-markdown-display";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Brand, CinematicScrollView, Pill } from "@/components/ui";
 import { colors, radii } from "@/constants/theme";
-import { getApiBase } from "@/lib/api";
+import { deleteJson, getApiBase, getJson, postJson } from "@/lib/api";
+import { readCustomerSessionToken } from "@/lib/auth-session";
+import { useCustomerAuth } from "@/context/customer-auth-context";
 import { toCustomerLanguage } from "@/lib/customer-language";
 import {
   citedSources,
+  parseChatSources,
   readChatSources,
   type ChatSource,
 } from "@/lib/chat-sources";
@@ -60,7 +65,15 @@ function customerAnswer(content: string, sources: ChatSource[] = []) {
   );
 }
 
+function randomUuid() {
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (value) => {
+    const random = Math.floor(Math.random() * 16);
+    return (value === "x" ? random : (random & 0x3) | 0x8).toString(16);
+  });
+}
+
 export default function AssistantScreen() {
+  const { customer, hydrated: authHydrated } = useCustomerAuth();
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
@@ -71,17 +84,64 @@ export default function AssistantScreen() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [imageLoading, setImageLoading] = useState(false);
+  const [sourceLoading, setSourceLoading] = useState(false);
+  const [sourceCount, setSourceCount] = useState(0);
   const [memory, setMemory] = useState<MobileChatMemory | null>(null);
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [historyLoading, setHistoryLoading] = useState(true);
   const list = useRef<ScrollViewInstance>(null);
 
   useEffect(() => {
-    Promise.all([AsyncStorage.getItem(KEY), AsyncStorage.getItem(MEMORY_KEY)])
-      .then(([saved, savedMemory]) => {
+    if (!authHydrated) return;
+    let active = true;
+    async function hydrateHistory() {
+      setHistoryLoading(true);
+      try {
+        if (customer) {
+          const [history, sourceData] = await Promise.all([
+            getJson<{
+              conversationId: string | null;
+              messages: {
+                role: Message["role"];
+                content: string;
+                sources?: unknown[];
+              }[];
+              memory: MobileChatMemory | null;
+            }>("/api/account/chat-history"),
+            getJson<{ sources: { id: string }[] }>("/api/account/ai-sources"),
+          ]);
+          if (!active) return;
+          setSourceCount(sourceData.sources.length);
+          setConversationId(history.conversationId);
+          setMemory(history.memory);
+          if (history.messages.length)
+            setMessages(
+              history.messages.map((message) => ({
+                role: message.role,
+                content: message.content,
+                sources: parseChatSources(message.sources),
+              })),
+            );
+          return;
+        }
+        const [saved, savedMemory] = await Promise.all([
+          AsyncStorage.getItem(KEY),
+          AsyncStorage.getItem(MEMORY_KEY),
+        ]);
+        if (!active) return;
         if (saved) setMessages(JSON.parse(saved));
         if (savedMemory) setMemory(JSON.parse(savedMemory));
-      })
-      .catch(() => undefined);
-  }, []);
+      } catch {
+        // Keep the useful local greeting if history cannot be refreshed.
+      } finally {
+        if (active) setHistoryLoading(false);
+      }
+    }
+    void hydrateHistory();
+    return () => {
+      active = false;
+    };
+  }, [authHydrated, customer]);
 
   async function send(text = input) {
     const clean = text.trim();
@@ -98,17 +158,28 @@ export default function AssistantScreen() {
     try {
       const apiBase = await getApiBase();
       if (!apiBase) throw new Error("Chưa có kết nối tư vấn.");
+      const token = await readCustomerSessionToken();
       const response = await fetch(`${apiBase}/api/ai/chat`, {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: {
+          "content-type": "application/json",
+          "x-hostora-client": "mobile",
+          ...(token ? { authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({
           messages: recentChatMessages(next.map(({ role, content }) => ({ role, content }))),
           memory: nextMemory,
+          ...(conversationId ? { conversationId } : {}),
+          messageId: randomUuid(),
         }),
       });
       const answer = await response.text();
       if (!response.ok || !answer)
         throw new Error(answer || "Trợ lý chưa phản hồi.");
+      const nextConversationId = response.headers.get(
+        "x-hostora-conversation-id",
+      );
+      if (nextConversationId) setConversationId(nextConversationId);
       const completed: Message[] = [
         ...next,
         {
@@ -125,8 +196,10 @@ export default function AssistantScreen() {
         },
       ];
       setMessages(completed);
-      await AsyncStorage.setItem(KEY, JSON.stringify(completed));
-      await AsyncStorage.setItem(MEMORY_KEY, JSON.stringify(nextMemory));
+      if (!customer) {
+        await AsyncStorage.setItem(KEY, JSON.stringify(completed));
+        await AsyncStorage.setItem(MEMORY_KEY, JSON.stringify(nextMemory));
+      }
     } catch {
       const failed: Message[] = [
         ...next,
@@ -137,8 +210,10 @@ export default function AssistantScreen() {
         },
       ];
       setMessages(failed);
-      await AsyncStorage.setItem(KEY, JSON.stringify(failed));
-      await AsyncStorage.setItem(MEMORY_KEY, JSON.stringify(nextMemory));
+      if (!customer) {
+        await AsyncStorage.setItem(KEY, JSON.stringify(failed));
+        await AsyncStorage.setItem(MEMORY_KEY, JSON.stringify(nextMemory));
+      }
     } finally {
       setLoading(false);
       setTimeout(() => list.current?.scrollToEnd({ animated: true }), 80);
@@ -228,27 +303,112 @@ export default function AssistantScreen() {
     }
   }
 
+  async function addKnowledgeFile() {
+    if (loading || imageLoading || sourceLoading) return;
+    if (!customer) {
+      Alert.alert(
+        "Cần đăng nhập",
+        "Đăng nhập tài khoản HOSTORA để lưu tài liệu và dùng lại ở các lần tư vấn sau.",
+      );
+      return;
+    }
+    const result = await DocumentPicker.getDocumentAsync({
+      type: [
+        "application/pdf",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "text/plain",
+        "text/markdown",
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+      ],
+      copyToCacheDirectory: true,
+      multiple: false,
+    });
+    if (result.canceled) return;
+    const asset = result.assets[0];
+    const allowedMimeTypes = [
+      "application/pdf",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "text/plain",
+      "text/markdown",
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+    ] as const;
+    const mimeType = allowedMimeTypes.find((item) => item === asset.mimeType);
+    if (!mimeType) {
+      Alert.alert(
+        "Định dạng chưa hỗ trợ",
+        "Hãy chọn PDF, DOCX, TXT, Markdown, PNG, JPEG hoặc WebP.",
+      );
+      return;
+    }
+    const maxBytes = mimeType.startsWith("image/") ? 5 : 8;
+    if ((asset.size ?? 0) > maxBytes * 1024 * 1024) {
+      Alert.alert("File quá lớn", `HOSTORA chỉ nhận tối đa ${maxBytes} MB.`);
+      return;
+    }
+    setSourceLoading(true);
+    try {
+      const base64 = await new File(asset.uri).base64();
+      await postJson<{ source: { id: string } }>("/api/account/ai-sources", {
+        kind: "file",
+        filename: asset.name,
+        mimeType,
+        base64,
+      });
+      setSourceCount((current) => current + 1);
+      Alert.alert(
+        "Đã thêm tài liệu",
+        "HOSTORA sẽ dùng nguồn này cho câu hỏi tiếp theo khi nội dung liên quan.",
+      );
+    } catch (error) {
+      Alert.alert(
+        "Chưa thêm được tài liệu",
+        error instanceof Error ? error.message : "Kiểm tra kết nối rồi thử lại.",
+      );
+    } finally {
+      setSourceLoading(false);
+    }
+  }
+
+  async function performClear() {
+    if (customer)
+      await deleteJson<{ deleted: boolean }>("/api/account/chat-history");
+    const initial: Message[] = [
+      {
+        role: "assistant",
+        content: "Lịch sử đã được xóa. Bạn muốn tìm hiểu gì về lưu trữ?",
+      },
+    ];
+    setMessages(initial);
+    setConversationId(null);
+    if (!customer) {
+      setMemory(null);
+      await AsyncStorage.setItem(KEY, JSON.stringify(initial));
+      await AsyncStorage.removeItem(MEMORY_KEY);
+    }
+  }
+
   function clear() {
     Alert.alert(
       "Xóa lịch sử trò chuyện?",
-      "Thao tác này chỉ xóa dữ liệu trên thiết bị.",
+      customer
+        ? "Lịch sử sẽ được xóa khỏi tài khoản trên các thiết bị. Ghi nhớ nhu cầu vẫn được giữ."
+        : "Thao tác này chỉ xóa dữ liệu trên thiết bị.",
       [
         { text: "Hủy", style: "cancel" },
         {
           text: "Xóa",
           style: "destructive",
           onPress: () => {
-            const initial: Message[] = [
-              {
-                role: "assistant",
-                content:
-                  "Lịch sử đã được xóa. Bạn muốn tìm hiểu gì về lưu trữ?",
-              },
-            ];
-            setMessages(initial);
-            setMemory(null);
-            void AsyncStorage.setItem(KEY, JSON.stringify(initial));
-            void AsyncStorage.removeItem(MEMORY_KEY);
+            void performClear().catch(() =>
+                Alert.alert(
+                  "Chưa xóa được lịch sử",
+                  "Kiểm tra kết nối rồi thử lại.",
+                ),
+              );
           },
         },
       ],
@@ -281,7 +441,11 @@ export default function AssistantScreen() {
           <Text style={styles.kicker}>TRỢ LÝ HOSTORA</Text>
           <Text style={styles.title}>Hỏi về lưu trữ, xem rõ lựa chọn.</Text>
           <Text style={styles.copy}>
-            Câu trả lời dựa trên bảng giá và tài liệu đã được kiểm tra.
+            Câu trả lời dựa trên bảng giá và tài liệu đã được kiểm tra
+            {customer && sourceCount > 0
+              ? ` · ${sourceCount} nguồn của bạn`
+              : ""}
+            .
           </Text>
         </View>
 
@@ -387,6 +551,12 @@ export default function AssistantScreen() {
               </View>
             </View>
           ))}
+          {historyLoading ? (
+            <View style={styles.thinking} accessibilityLiveRegion="polite">
+              <ActivityIndicator color={colors.primary} size="small" />
+              <Text style={styles.thinkingText}>Đang mở lịch sử gần nhất…</Text>
+            </View>
+          ) : null}
           {loading ? (
             <View style={styles.thinking}>
               <ActivityIndicator color={colors.primary} size="small" />
@@ -417,13 +587,29 @@ export default function AssistantScreen() {
         ) : null}
         <View style={styles.composer}>
           <Pressable
-            disabled={loading || imageLoading}
+            disabled={loading || imageLoading || sourceLoading}
+            onPress={() => void addKnowledgeFile()}
+            accessibilityRole="button"
+            accessibilityLabel="Thêm PDF, Word, văn bản hoặc ảnh làm kiến thức"
+            style={[
+              styles.imageButton,
+              (loading || imageLoading || sourceLoading) && { opacity: 0.35 },
+            ]}
+          >
+            {sourceLoading ? (
+              <ActivityIndicator color={colors.primary} size="small" />
+            ) : (
+              <Feather name="paperclip" color={colors.primary} size={19} />
+            )}
+          </Pressable>
+          <Pressable
+            disabled={loading || imageLoading || sourceLoading}
             onPress={() => void inspectScreenshot()}
             accessibilityRole="button"
             accessibilityLabel="Gửi ảnh màn hình để được hướng dẫn"
             style={[
               styles.imageButton,
-              (loading || imageLoading) && { opacity: 0.35 },
+              (loading || imageLoading || sourceLoading) && { opacity: 0.35 },
             ]}
           >
             {imageLoading ? (
@@ -442,13 +628,15 @@ export default function AssistantScreen() {
             maxLength={2000}
           />
           <Pressable
-            disabled={!input.trim() || loading || imageLoading}
+            disabled={!input.trim() || loading || imageLoading || sourceLoading}
             onPress={() => void send()}
             accessibilityRole="button"
             accessibilityLabel="Gửi câu hỏi cho HOSTORA"
             style={[
               styles.send,
-              (!input.trim() || loading || imageLoading) && { opacity: 0.35 },
+              (!input.trim() || loading || imageLoading || sourceLoading) && {
+                opacity: 0.35,
+              },
             ]}
           >
             <Feather name="arrow-up" color="white" size={19} />

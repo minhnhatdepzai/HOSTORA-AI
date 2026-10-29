@@ -1,0 +1,12 @@
+{
+  "version": "chatbot-v8",
+  "created_at": "2026-10-29T13:45:16.599016+00:00",
+  "files": {
+    "chatbot_v8_train": "7f713f0807d709545c03f435b3c859bbb818984bf470ff441bf2f2f16a9a7ec4",
+    "chatbot_v8_holdout": "82383d5c31c2a005eb782390c5b48649933a5b660d0837bf32ff6b72b5ee18d6"
+  },
+  "counts": {
+    "chatbot_v8_train": 737,
+    "chatbot_v8_holdout": 151
+  }
+}

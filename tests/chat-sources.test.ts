@@ -1,5 +1,6 @@
 import { expect, test } from "vitest";
-import { citedSources, readChatSources } from "@/lib/chat-sources";
+import { citedSources, parseChatSources, readChatSources } from "@/lib/chat-sources";
+import { sanitizeCitations } from "@/lib/chat-citations";
 
 test("resolves only referenced, safe source links", () => {
   const header = encodeURIComponent(
@@ -30,4 +31,24 @@ test("resolves only referenced, safe source links", () => {
   ).toEqual(["K1"]);
   expect(sources).toHaveLength(2);
   expect(readChatSources("not-json")).toEqual([]);
+});
+
+test("accepts private account citations without exposing unsafe links", () => {
+  expect(
+    parseChatSources([
+      {
+        citation: "U1",
+        title: "Brief nội bộ",
+        sourceUrl: null,
+        verifiedAt: "Nguồn riêng của khách",
+        kind: "customer",
+      },
+    ]),
+  ).toHaveLength(1);
+});
+
+test("normalizes allowed private citations and removes invented citation tokens", () => {
+  expect(
+    sanitizeCitations("Thông tin từ brief (U1), không phải [U99] hay [P9].", new Set(["[U1]"])),
+  ).toBe("Thông tin từ brief [U1], không phải hay.");
 });

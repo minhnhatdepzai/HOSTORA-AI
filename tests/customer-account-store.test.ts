@@ -79,4 +79,68 @@ describe("customer account store", () => {
     customers.close();
     payments.close();
   });
+
+  it("persists AI memory, isolates chat and sources by account, then clears only the requested scope", () => {
+    const filename = databasePath();
+    let store = new CustomerStore(filename);
+    const first = store.createCustomer({
+      name: "Chủ thứ nhất",
+      email: "first@example.com",
+      passwordHash: "hash",
+    });
+    const second = store.createCustomer({
+      name: "Chủ thứ hai",
+      email: "second@example.com",
+      passwordHash: "hash",
+    });
+    const conversationId = crypto.randomUUID();
+    store.saveAiMemory(first.id, {
+      facts: { websiteType: "store", monthlyBudget: 300_000 },
+    });
+    store.appendChatMessage({
+      customerId: first.id,
+      conversationId,
+      role: "user",
+      content: "Tôi cần web bán hàng",
+    });
+    const source = store.createAiSource(first.id, {
+      title: "Giới thiệu doanh nghiệp",
+      kind: "text",
+      content: "Doanh nghiệp bán đồ gốm thủ công tại Việt Nam.",
+    });
+    store.saveStudioPreferences(first.id, {
+      style: "warm",
+      color: "#935f3d",
+      revisionHint: "Viết ngắn và bớt lặp ý.",
+      needsWorkReason: "copy",
+    });
+    store.close();
+
+    store = new CustomerStore(filename);
+    expect(store.getAiMemory(first.id)).toMatchObject({
+      facts: { websiteType: "store", monthlyBudget: 300_000 },
+    });
+    expect(store.latestConversationId(first.id)).toBe(conversationId);
+    expect(store.listChatMessages(first.id, conversationId)).toHaveLength(1);
+    expect(store.listChatMessages(second.id, conversationId)).toEqual([]);
+    expect(store.listAiSources(first.id)).toEqual([
+      expect.objectContaining({ id: source.id, title: "Giới thiệu doanh nghiệp" }),
+    ]);
+    expect(store.listAiSources(second.id)).toEqual([]);
+    expect(store.getStudioPreferences(first.id)).toMatchObject({
+      style: "warm",
+      color: "#935f3d",
+      revisionHints: ["Viết ngắn và bớt lặp ý."],
+      needsWorkReasons: ["copy"],
+    });
+
+    store.clearAiHistory(first.id, false);
+    expect(store.listChatMessages(first.id, conversationId)).toEqual([]);
+    expect(store.getAiMemory(first.id)).not.toBeNull();
+    store.clearAiHistory(first.id, true);
+    expect(store.getAiMemory(first.id)).toBeNull();
+    expect(store.deleteAiSource(second.id, source.id)).toBe(false);
+    expect(store.deleteAiSource(first.id, source.id)).toBe(true);
+    store.close();
+  });
 });

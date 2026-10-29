@@ -11,6 +11,7 @@ import {
   requestUsesBearer,
 } from "@/lib/customer/auth";
 import { sameOrigin } from "@/lib/payments/admin-auth";
+import { getCustomerStore } from "@/lib/customer/store";
 
 const feedbackSchema = z
   .object({
@@ -50,6 +51,10 @@ export async function POST(
       generationMode: event.generationMode,
       revisionCount: event.revisionCount,
     });
+    if (event.rating === "needs_work")
+      getCustomerStore().saveStudioPreferences(customer.id, {
+        needsWorkReason: event.reason,
+      });
     return Response.json({ saved: true });
   } catch {
     return Response.json(

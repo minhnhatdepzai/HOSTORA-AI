@@ -4,11 +4,26 @@ const deps = vi.hoisted(() => ({
   runSiteStudioWorkflow: vi.fn(),
   createStudioProject: vi.fn(),
   captureSiteStudioRun: vi.fn(),
+  getStudioPreferences: vi.fn(() => ({
+    style: null,
+    color: null,
+    writingTone: "direct",
+    revisionHints: [],
+    needsWorkReasons: [],
+    updatedAt: null,
+  })),
+  saveStudioPreferences: vi.fn(),
 }));
 
 vi.mock("@/lib/site-studio-workflow", () => deps);
 vi.mock("@/lib/site-studio-store", () => deps);
 vi.mock("@/lib/ai-observability", () => deps);
+vi.mock("@/lib/customer/store", () => ({
+  getCustomerStore: () => ({
+    getStudioPreferences: deps.getStudioPreferences,
+    saveStudioPreferences: deps.saveStudioPreferences,
+  }),
+}));
 vi.mock("@/lib/customer/auth", () => ({
   customerFromRequest: () => ({ id: "customer-1", email: "moc@example.com" }),
   requestUsesBearer: () => true,
@@ -67,5 +82,13 @@ describe("website studio generation API", () => {
       expect.any(Object),
       "customer-1",
     );
+    expect(deps.runSiteStudioWorkflow).toHaveBeenCalledWith(
+      expect.objectContaining({ brand: "Mộc Cafe" }),
+      expect.objectContaining({ writingTone: "direct" }),
+    );
+    expect(deps.saveStudioPreferences).toHaveBeenCalledWith("customer-1", {
+      style: "warm",
+      color: "#11695e",
+    });
   });
 });

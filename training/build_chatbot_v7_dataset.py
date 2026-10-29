@@ -141,7 +141,7 @@ def conversation_row(case_id: str, turns: list[tuple[str, str]], answer: str, ro
     }
 
 
-def build_all(output: Path = ROOT / "data") -> DatasetManifest:
+def build_rows() -> tuple[list[dict], list[dict]]:
     old_train, old_holdout = build_v6_rows()
     train = old_train
     holdout = old_holdout
@@ -152,6 +152,11 @@ def build_all(output: Path = ROOT / "data") -> DatasetManifest:
         train.append(conversation_row(f"v7-{case_id}-plain-{index}", variant, answer, route, "train"))
     for case_id, turns, answer, route in HOLDOUT:
         holdout.append(conversation_row(f"v7-{case_id}", turns, answer, route, "holdout"))
+    return train, holdout
+
+
+def build_all(output: Path = ROOT / "data") -> DatasetManifest:
+    train, holdout = build_rows()
 
     seen: set[str] = set()
     output.mkdir(parents=True, exist_ok=True)

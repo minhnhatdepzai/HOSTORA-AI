@@ -10,6 +10,7 @@ import {
   type SiteBrief,
   type SiteIdea,
 } from "@/lib/site-studio";
+import type { CustomerStudioPreferences } from "@/lib/customer/types";
 
 type Recommendation = {
   id: string;
@@ -131,13 +132,14 @@ const format = {
 
 const StudioState = Annotation.Root({
   idea: Annotation<SiteIdea>(),
+  preferences: Annotation<CustomerStudioPreferences | undefined>(),
   brief: Annotation<SiteBrief | undefined>(),
   generationMode: Annotation<GenerationMode | undefined>(),
   recommendations: Annotation<Recommendation[] | undefined>(),
 });
 
 const graph = new StateGraph(StudioState)
-  .addNode("write_copy", async ({ idea }) => {
+  .addNode("write_copy", async ({ idea, preferences }) => {
     try {
       let brief = await structuredChat(
         `<role>Bạn là biên tập viên website cho doanh nghiệp Việt Nam.</role>
@@ -150,7 +152,13 @@ const graph = new StateGraph(StudioState)
 5. CTA phải khớp mục tiêu. Ba điểm nổi bật phải nói về trải nghiệm khách hàng, không giả vờ là năng lực đã được chứng minh.
 6. Ưu tiên các trường story, offerings, customerAction nếu khách đã nhập. offerTitle/offerCopy nói rõ loại sản phẩm hoặc dịch vụ; audienceTitle/audienceCopy cho thấy ai sẽ thấy hữu ích; closingLine dẫn đến một bước phù hợp. Nếu đầu vào thiếu dữ liệu cụ thể, nêu rõ cần bổ sung thay vì bịa.
 7. Đừng tự thêm tính từ về không gian hoặc lợi ích như ấm cúng, ổn định, cân bằng. Đừng lặp lại cùng câu ở phần mở, giới thiệu và điểm nổi bật. Ví dụ đầu vào chỉ nói quán yên tĩnh thì không được viết quán ấm cúng hay giúp cuộc sống cân bằng.
-</rules>`,
+8. Gợi ý từ các lần sửa trước chỉ là sở thích về cách trình bày, không phải dữ kiện doanh nghiệp. Yêu cầu hiện tại luôn được ưu tiên; không đưa nội dung gợi ý cũ vào bài nếu khách không nói lại.
+</rules>
+<presentation_preferences>${JSON.stringify({
+          writingTone: preferences?.writingTone ?? "direct",
+          revisionHints: preferences?.revisionHints.slice(-5) ?? [],
+          priorNeedsWork: preferences?.needsWorkReasons.slice(-5) ?? [],
+        })}</presentation_preferences>`,
         redactStudioContact(JSON.stringify(idea)),
         siteBriefSchema,
         format,
@@ -223,8 +231,11 @@ const graph = new StateGraph(StudioState)
   .addEdge("recommend_hosting", END)
   .compile();
 
-export async function runSiteStudioWorkflow(idea: SiteIdea) {
-  const state = await graph.invoke({ idea });
+export async function runSiteStudioWorkflow(
+  idea: SiteIdea,
+  preferences?: CustomerStudioPreferences,
+) {
+  const state = await graph.invoke({ idea, preferences });
   const generationMode = state.generationMode ?? "template-fallback";
   return {
     brief: state.brief ?? buildFallbackBrief(idea),

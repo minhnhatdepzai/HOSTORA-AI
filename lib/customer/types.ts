@@ -51,3 +51,33 @@ export type CustomerSession = {
   token: string;
   expiresAt: string;
 };
+
+export type CustomerChatMessage = {
+  id: string;
+  conversationId: string;
+  role: "user" | "assistant";
+  content: string;
+  sources: unknown[];
+  createdAt: string;
+};
+
+export type CustomerAiSource = {
+  id: string;
+  title: string;
+  kind: "pdf" | "docx" | "text" | "web" | "image";
+  sourceUrl: string | null;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CustomerStudioPreferences = {
+  style: "editorial" | "bold" | "warm" | "minimal" | null;
+  color: string | null;
+  writingTone: "friendly" | "premium" | "direct";
+  revisionHints: string[];
+  needsWorkReasons: Array<
+    "visual" | "copy" | "navigation" | "business_fit" | "other"
+  >;
+  updatedAt: string | null;
+};
