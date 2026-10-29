@@ -12,3 +12,7 @@ export function getRoutedContentAccessibility(overlayVisible: boolean): {
         importantForAccessibility: "auto",
       };
 }
+
+export function shouldRenderRoutedContent(overlayVisible: boolean) {
+  return !overlayVisible;
+}

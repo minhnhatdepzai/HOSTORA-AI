@@ -26,7 +26,7 @@ import {
   ONBOARDING_STORAGE_KEY,
   shouldShowOnboarding,
 } from "@/lib/onboarding";
-import { getRoutedContentAccessibility } from "@/lib/app-accessibility";
+import { shouldRenderRoutedContent } from "@/lib/app-accessibility";
 
 void SplashScreen.preventAutoHideAsync();
 
@@ -71,7 +71,7 @@ export default function RootLayout() {
   if (!loaded || !onboardingReady || !motionReady) return null;
 
   const playingIntro = showIntro && !reduceMotion;
-  const routedContentAccessibility = getRoutedContentAccessibility(
+  const renderRoutedContent = shouldRenderRoutedContent(
     playingIntro || showOnboarding,
   );
 
@@ -93,7 +93,7 @@ export default function RootLayout() {
               style={showOnboarding || playingIntro ? "light" : "dark"}
               hidden={playingIntro}
             />
-            <View style={styles.routedContent} {...routedContentAccessibility}>
+            {renderRoutedContent ? (
               <Stack
                 screenOptions={{
                   headerShown: false,
@@ -117,7 +117,7 @@ export default function RootLayout() {
                 <Stack.Screen name="account-register" />
                 <Stack.Screen name="account-forgot" />
               </Stack>
-            </View>
+            ) : null}
             {playingIntro ? (
               <BrandFilm onFinish={() => setShowIntro(false)} />
             ) : showOnboarding ? (
@@ -134,6 +134,3 @@ export default function RootLayout() {
   );
 }
 
-const styles = StyleSheet.create({
-  routedContent: { flex: 1 },
-});

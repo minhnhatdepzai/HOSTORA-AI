@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { getRoutedContentAccessibility } from "../mobile/src/lib/app-accessibility";
+import {
+  getRoutedContentAccessibility,
+  shouldRenderRoutedContent,
+} from "../mobile/src/lib/app-accessibility";
 
 describe("mobile app overlay accessibility", () => {
   it("hides routed controls while a launch overlay is visible", () => {
@@ -14,5 +17,10 @@ describe("mobile app overlay accessibility", () => {
       accessibilityElementsHidden: false,
       importantForAccessibility: "auto",
     });
+  });
+
+  it("does not mount the native navigator behind a launch overlay", () => {
+    expect(shouldRenderRoutedContent(true)).toBe(false);
+    expect(shouldRenderRoutedContent(false)).toBe(true);
   });
 });
