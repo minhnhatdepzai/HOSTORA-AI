@@ -28,3 +28,45 @@ test("malformed JSON returns 400 rather than a stack trace", async () => {
   );
   expect(parsed.response?.status).toBe(400);
 });
+
+test("oversized JSON is rejected before schema parsing", async () => {
+  const parsed = await parseRequestJson(
+    new Request("http://localhost/api/recommend", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ note: "x".repeat(1024) }),
+    }),
+    z.object({ note: z.string() }),
+    128,
+  );
+  expect(parsed.response?.status).toBe(413);
+  expect(await parsed.response!.json()).toEqual({
+    error: "Yêu cầu vượt quá giới hạn cho phép.",
+  });
+});
+
+test("streamed JSON without Content-Length is stopped at the byte limit", async () => {
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      controller.enqueue(encoder.encode('{"note":"'));
+      controller.enqueue(encoder.encode("x".repeat(256)));
+      controller.enqueue(encoder.encode('"}'));
+      controller.close();
+    },
+  });
+  const request = new Request("http://localhost/api/recommend", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: stream,
+    duplex: "half",
+  } as RequestInit & { duplex: "half" });
+
+  const parsed = await parseRequestJson(
+    request,
+    z.object({ note: z.string() }),
+    64,
+  );
+
+  expect(parsed.response?.status).toBe(413);
+});

@@ -1,13 +1,16 @@
 import { validatePublicUrl } from "@/lib/ssrf";
+import { parseRequestJson, readLimitedText } from "@/lib/api-validation";
 import { z } from "zod";
 
 const get = (html: string, pattern: RegExp) =>
   html.match(pattern)?.[1]?.trim() ?? null;
+const requestSchema = z.object({ url: z.string().min(4).max(2048) });
+
 export async function POST(request: Request) {
   try {
-    const { url: raw } = z
-      .object({ url: z.string().min(4).max(2048) })
-      .parse(await request.json());
+    const parsed = await parseRequestJson(request, requestSchema, 16_384);
+    if (parsed.response) return parsed.response;
+    const { url: raw } = parsed.data;
     let url = await validatePublicUrl(raw);
     let response: Response | undefined;
     for (let redirect = 0; redirect < 3; redirect += 1) {
@@ -32,7 +35,9 @@ export async function POST(request: Request) {
         { error: "URL không trả nội dung HTML." },
         { status: 422 },
       );
-    const html = (await response.text()).slice(0, 1_000_000);
+    const html = await readLimitedText(response, 1_000_000, {
+      truncate: true,
+    });
     const title = get(html, /<title[^>]*>([^<]*)<\/title>/i);
     const description =
       get(

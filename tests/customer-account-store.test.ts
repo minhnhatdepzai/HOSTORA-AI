@@ -48,6 +48,13 @@ describe("customer account store", () => {
     expect(store.consumeRateLimit("login:minh@example.com", 2, 60_000)).toBe(true);
     expect(store.consumeRateLimit("login:minh@example.com", 2, 60_000)).toBe(true);
     expect(store.consumeRateLimit("login:minh@example.com", 2, 60_000)).toBe(false);
+    const detailed = store.consumeRateLimitDetailed("register:minh@example.com", 1, 60_000);
+    expect(detailed).toMatchObject({ allowed: true, attempts: 1, remaining: 0 });
+    expect(store.consumeRateLimitDetailed("register:minh@example.com", 1, 60_000)).toMatchObject({
+      allowed: false,
+      remaining: 0,
+      retryAfterSeconds: expect.any(Number),
+    });
     const support = store.createSupportCase(account.id, { subject: "Không mở được hóa đơn", category: "order", message: "Tôi đã nhập đúng mã nhưng chưa mở được hóa đơn." });
     expect(support.id).toMatch(/^HTR-[A-F0-9]{10}$/);
     expect(store.listSupportCases(account.id)).toEqual([expect.objectContaining({ id: support.id, status: "new" })]);

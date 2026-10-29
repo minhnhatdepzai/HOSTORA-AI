@@ -60,7 +60,8 @@ async function isolatedWeb(action) {
   try { process.loadEnvFile(join(root, '.env.local')); } catch { /* optional local configuration */ }
   const port = await new Promise((resolve, reject) => { const server = createServer(); server.on('error', reject); server.listen(0, '127.0.0.1', () => { const value = server.address().port; server.close(() => resolve(value)); }); });
   const runtime = mkdtempSync(join(tmpdir(), 'hostora-agent-'));
-  const env = { ...process.env, PORT: String(port), HOSTNAME: '127.0.0.1', HOSTORA_E2E_BASE_URL: `http://127.0.0.1:${port}`, HOSTORA_PAYMENTS_DB_PATH: join(runtime, 'payments.sqlite'), HOSTORA_CATALOG_DB_PATH: join(runtime, 'catalog.sqlite'), HOSTORA_ADMIN_SESSION_SECRET: randomBytes(32).toString('hex'), HOSTORA_PAYMENTS_MODE: 'demo', HOSTORA_SMTP_HOST: '', HOSTORA_SMTP_PASSWORD: '', LANGFUSE_PUBLIC_KEY: '', LANGFUSE_SECRET_KEY: '', HOSTORA_STUDIO_GITHUB_ENABLED: 'false', HOSTORA_AUDIT_OUTPUT: output };
+  const isolatedBaseUrl = `http://127.0.0.1:${port}`;
+  const env = { ...process.env, PORT: String(port), HOSTNAME: '127.0.0.1', HOSTORA_E2E_BASE_URL: isolatedBaseUrl, HOSTORA_PUBLIC_BASE_URL: isolatedBaseUrl, HOSTORA_TRUST_CLOUDFLARE_PROXY: 'false', HOSTORA_TRUST_PROXY: 'false', NEXT_PUBLIC_TURNSTILE_SITE_KEY: '', HOSTORA_TURNSTILE_SECRET_KEY: '', HOSTORA_TURNSTILE_HOSTNAMES: '', HOSTORA_PAYMENTS_DB_PATH: join(runtime, 'payments.sqlite'), HOSTORA_CATALOG_DB_PATH: join(runtime, 'catalog.sqlite'), HOSTORA_ADMIN_SESSION_SECRET: randomBytes(32).toString('hex'), HOSTORA_PAYMENTS_MODE: 'demo', HOSTORA_SMTP_HOST: '', HOSTORA_SMTP_PASSWORD: '', LANGFUSE_PUBLIC_KEY: '', LANGFUSE_SECRET_KEY: '', HOSTORA_STUDIO_GITHUB_ENABLED: 'false', HOSTORA_AUDIT_OUTPUT: output };
   mkdirSync(output, { recursive: true });
   const server = spawn(process.execPath, [join(root, '.next/standalone/server.js')], { cwd: root, env, stdio: ['ignore', 'inherit', 'inherit'] });
   let exited = false;

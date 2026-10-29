@@ -32,6 +32,28 @@ describe("quản trị thanh toán", () => {
     expect(sameOrigin(new Request(request.url, { headers: { host: "127.0.0.1:3100", origin: "http://evil.example" } }))).toBe(false);
   });
 
+  it("ưu tiên origin production đã cấu hình thay vì tin Host do client gửi", () => {
+    process.env.HOSTORA_PUBLIC_BASE_URL = "https://hostora.example";
+    const internal = new Request("http://127.0.0.1:3000/api/account/login", {
+      headers: {
+        host: "attacker-controlled.example",
+        origin: "https://hostora.example",
+      },
+    });
+    expect(sameOrigin(internal)).toBe(true);
+    expect(
+      sameOrigin(
+        new Request(internal.url, {
+          headers: {
+            host: "hostora.example",
+            origin: "https://evil.example",
+          },
+        }),
+      ),
+    ).toBe(false);
+    delete process.env.HOSTORA_PUBLIC_BASE_URL;
+  });
+
   it("đặt cookie cho toàn bộ trang quản trị và chỉ nhận đường dẫn nội bộ", () => {
     expect(adminSessionCookie("signed-token", false)).toContain("Path=/;");
     expect(adminSessionCookie("signed-token", false)).not.toContain("Path=/api/admin/payments");

@@ -18,6 +18,7 @@ import {
   requestUsesBearer,
 } from "@/lib/customer/auth";
 import { sameOrigin } from "@/lib/payments/admin-auth";
+import { parseRequestJson } from "@/lib/api-validation";
 
 const requestSchema = z
   .object({
@@ -54,12 +55,9 @@ export async function PATCH(
       { error: "Website này không thuộc tài khoản của bạn." },
       { status: 403 },
     );
-  const parsed = designSchema.safeParse(await request.json().catch(() => null));
-  if (!parsed.success)
-    return Response.json(
-      { error: "Lựa chọn giao diện chưa hợp lệ." },
-      { status: 400 },
-    );
+  const parsedRequest = await parseRequestJson(request, designSchema, 8_192);
+  if (parsedRequest.response) return parsedRequest.response;
+  const parsed = { data: parsedRequest.data };
   try {
     const updated = await saveStudioProject({
       ...project,
@@ -155,21 +153,9 @@ export async function POST(
       { status: 403 },
     );
 
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return Response.json(
-      { error: "Nội dung chỉnh sửa chưa đúng định dạng." },
-      { status: 400 },
-    );
-  }
-  const parsed = requestSchema.safeParse(body);
-  if (!parsed.success)
-    return Response.json(
-      { error: "Hãy nhập yêu cầu từ 3 đến 500 ký tự." },
-      { status: 400 },
-    );
+  const parsedRequest = await parseRequestJson(request, requestSchema, 8_192);
+  if (parsedRequest.response) return parsedRequest.response;
+  const parsed = { data: parsedRequest.data };
 
   try {
     let brief = await structuredChat(

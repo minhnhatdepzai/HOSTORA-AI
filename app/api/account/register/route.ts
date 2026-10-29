@@ -7,6 +7,7 @@ import {
 } from "@/lib/customer/auth";
 import { parseRequestJson } from "@/lib/api-validation";
 import { sameOrigin } from "@/lib/payments/admin-auth";
+import { protectPublicAuthAction } from "@/lib/security/abuse-protection";
 
 export const runtime = "nodejs";
 
@@ -17,11 +18,18 @@ export async function POST(request: Request) {
   const parsed = await parseRequestJson(request, customerRegisterSchema);
   if (parsed.response) return parsed.response;
   const store = getCustomerStore();
-  if (!store.consumeRateLimit(`register:${parsed.data.email}`, 4, 60 * 60 * 1000))
-    return Response.json(
-      { error: "Bạn đã thử đăng ký quá nhiều lần. Hãy quay lại sau." },
-      { status: 429 },
-    );
+  const abuseResponse = await protectPublicAuthAction({
+    action: "customer_register",
+    challengeAfter: 2,
+    identity: parsed.data.email,
+    limit: 4,
+    mobile,
+    request,
+    store,
+    token: parsed.data.turnstileToken,
+    windowMs: 60 * 60 * 1000,
+  });
+  if (abuseResponse) return abuseResponse;
   if (store.getCustomerWithPassword(parsed.data.email))
     return Response.json(
       { error: "Email này đã có tài khoản. Hãy đăng nhập hoặc đặt lại mật khẩu." },

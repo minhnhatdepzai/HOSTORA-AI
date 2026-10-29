@@ -4,8 +4,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ArrowRight, CheckCircle2, Eye, EyeOff, KeyRound } from "lucide-react";
+import { TurnstileChallenge } from "@/components/turnstile-challenge";
 
 type Mode = "login" | "register" | "forgot" | "reset";
+type TurnstileAction =
+  | "customer_login"
+  | "customer_register"
+  | "customer_forgot";
 
 const copy = {
   login: {
@@ -47,6 +52,10 @@ export function CustomerAuthForm({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [turnstileAction, setTurnstileAction] =
+    useState<TurnstileAction | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const [turnstileRevision, setTurnstileRevision] = useState(0);
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -60,22 +69,31 @@ export function CustomerAuthForm({
           ? "/api/account/reset-password"
           : `/api/account/${mode}`;
       const body = mode === "register"
-        ? { name, email, password }
+        ? { name, email, password, turnstileToken: turnstileToken || undefined }
         : mode === "forgot"
-          ? { email }
+          ? { email, turnstileToken: turnstileToken || undefined }
           : mode === "reset"
             ? { token: resetToken, password }
-            : { email, password };
+            : { email, password, turnstileToken: turnstileToken || undefined };
       const response = await fetch(endpoint, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify(body),
       });
       const output = (await response.json().catch(() => ({}))) as {
+        action?: TurnstileAction;
+        code?: string;
         error?: string;
         message?: string;
       };
-      if (!response.ok) throw new Error(output.error ?? "Chưa thể hoàn tất yêu cầu.");
+      if (!response.ok) {
+        if (output.code === "CAPTCHA_REQUIRED" && output.action) {
+          setTurnstileAction(output.action);
+          setTurnstileToken("");
+          setTurnstileRevision((value) => value + 1);
+        }
+        throw new Error(output.error ?? "Chưa thể hoàn tất yêu cầu.");
+      }
       if (mode === "forgot") {
         setMessage(output.message ?? "Hãy kiểm tra hộp thư của bạn.");
         return;
@@ -122,7 +140,15 @@ export function CustomerAuthForm({
             </label>
           ) : null}
           {error || tokenMissing ? <p className="customer-auth-error" role="alert">{tokenMissing ? "Liên kết đặt lại mật khẩu chưa có mã hợp lệ." : error}</p> : null}
-          <button className="customer-auth-submit" type="submit" disabled={busy || tokenMissing}>{busy ? "Đang xử lý…" : copy[mode].submit}<ArrowRight size={18} /></button>
+          {turnstileAction && process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ? (
+            <TurnstileChallenge
+              key={turnstileRevision}
+              action={turnstileAction}
+              onToken={setTurnstileToken}
+              siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
+            />
+          ) : null}
+          <button className="customer-auth-submit" type="submit" disabled={busy || tokenMissing || Boolean(turnstileAction && !turnstileToken)}>{busy ? "Đang xử lý…" : copy[mode].submit}<ArrowRight size={18} /></button>
         </form>
       )}
       <div className="customer-auth-links">

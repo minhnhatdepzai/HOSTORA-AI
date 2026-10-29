@@ -32,6 +32,20 @@ function vnpayRequest(input: Record<string, string>) {
 }
 
 describe("gateway callbacks", () => {
+  it("Stripe rejects an oversized raw webhook before signature verification", async () => {
+    const response = await stripeWebhook(
+      new Request(`${origin}/api/payments/stripe/webhook`, {
+        method: "POST",
+        headers: {
+          "content-length": "1048577",
+          "stripe-signature": "fixture",
+        },
+        body: "{}",
+      }),
+    );
+    expect(response.status).toBe(413);
+  });
+
   it("Stripe requires signed exact Checkout and deduplicates replay", async () => {
     const store = getPaymentStore();
     const invoice = store.createInvoice({ title: "Thiết lập website", amountVnd: 250000 });

@@ -7,6 +7,7 @@ import { hashCustomerPassword } from "@/lib/customer/password";
 import { customerResetSchema } from "@/lib/customer/schemas";
 import { getCustomerStore } from "@/lib/customer/store";
 import { sameOrigin } from "@/lib/payments/admin-auth";
+import { rateLimitResponse } from "@/lib/security/abuse-protection";
 
 export const runtime = "nodejs";
 
@@ -17,11 +18,12 @@ export async function POST(request: Request) {
   const parsed = await parseRequestJson(request, customerResetSchema);
   if (parsed.response) return parsed.response;
   const store = getCustomerStore();
-  if (!store.consumeRateLimit(`reset-token:${parsed.data.token}`, 6, 60 * 60 * 1000))
-    return Response.json(
-      { error: "Liên kết đã được thử quá nhiều lần." },
-      { status: 429 },
-    );
+  const budget = store.consumeRateLimitDetailed(
+    `reset-token:${parsed.data.token}`,
+    6,
+    60 * 60 * 1000,
+  );
+  if (!budget.allowed) return rateLimitResponse(budget.retryAfterSeconds);
   const passwordHash = await hashCustomerPassword(parsed.data.password);
   const customer = store.resetPassword(parsed.data.token, passwordHash);
   if (!customer)

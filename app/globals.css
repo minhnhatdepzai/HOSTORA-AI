@@ -57,6 +57,8 @@
 .customer-auth-success { display: flex; gap: .9rem; background: #e2f2ec; color: #11695e; padding: 1.2rem; }
 .customer-auth-success strong, .customer-auth-success p { display: block; margin: 0; }
 .customer-auth-success p { color: #365a55; margin-top: .25rem; line-height: 1.55; }
+.turnstile-challenge { display: grid; gap: .65rem; padding: .9rem; border: 1px solid #cad7d3; background: rgba(255,255,255,.76); }
+.turnstile-challenge > p:first-child { margin: 0; color: #365a55; font-size: .72rem; font-weight: 780; }
 .order-login-required a { display: inline-flex; align-items: center; gap: .4rem; color: #11695e; font-weight: 800; }
 .admin-support-page { min-height: 100vh; background: #f6f7f4; color: #132b38; padding: clamp(1.25rem, 4vw, 4rem); }
 .admin-support-header { width: min(100%, 1240px); margin: 0 auto; display: flex; justify-content: space-between; align-items: flex-end; gap: 2rem; padding-bottom: 2rem; border-bottom: 1px solid #ccd9d5; }

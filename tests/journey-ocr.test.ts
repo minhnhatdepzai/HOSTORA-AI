@@ -1,7 +1,29 @@
 import { describe, expect, it } from "vitest";
+import { POST as readJourneyScreenshot } from "@/app/api/ai/journey-ocr/route";
 import { imagePayloadSchema, journeyResultSchema, nextJourneyGuidance, sanitizeJourneyResult } from "@/lib/journey-ocr";
 
 describe("trợ lý đọc bước tiếp theo từ ảnh", () => {
+  it("dừng body stream vượt giới hạn kể cả khi không có Content-Length", async () => {
+    const chunk = new Uint8Array(4_000_000).fill(120);
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(chunk);
+        controller.enqueue(chunk);
+        controller.close();
+      },
+    });
+    const request = new Request("http://localhost/api/ai/journey-ocr", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: stream,
+      duplex: "half",
+    } as RequestInit & { duplex: "half" });
+
+    const response = await readJourneyScreenshot(request);
+
+    expect(response.status).toBe(413);
+  });
+
   it("chỉ nhận ảnh cục bộ đúng loại và giới hạn kích thước", () => {
     expect(imagePayloadSchema.parse({ mimeType: "image/png", base64: "aGVsbG8=" })).toEqual({
       mimeType: "image/png",

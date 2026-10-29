@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+const turnstileTokenSchema = z.string().max(2048).optional();
+
 export const customerPasswordSchema = z
   .string()
   .min(10, "Mật khẩu cần ít nhất 10 ký tự.")
@@ -12,6 +14,7 @@ export const customerRegisterSchema = z
     name: z.string().trim().min(2).max(100),
     email: z.string().trim().toLowerCase().email().max(160),
     password: customerPasswordSchema,
+    turnstileToken: turnstileTokenSchema,
   })
   .strict();
 
@@ -19,11 +22,15 @@ export const customerLoginSchema = z
   .object({
     email: z.string().trim().toLowerCase().email().max(160),
     password: z.string().min(1).max(128),
+    turnstileToken: turnstileTokenSchema,
   })
   .strict();
 
 export const customerForgotSchema = z
-  .object({ email: z.string().trim().toLowerCase().email().max(160) })
+  .object({
+    email: z.string().trim().toLowerCase().email().max(160),
+    turnstileToken: turnstileTokenSchema,
+  })
   .strict();
 
 export const customerResetSchema = z

@@ -10,6 +10,7 @@ import {
 } from "@/lib/customer/auth";
 import { parseRequestJson } from "@/lib/api-validation";
 import { sameOrigin } from "@/lib/payments/admin-auth";
+import { protectPublicAuthAction } from "@/lib/security/abuse-protection";
 
 export const runtime = "nodejs";
 
@@ -20,11 +21,18 @@ export async function POST(request: Request) {
   const parsed = await parseRequestJson(request, customerLoginSchema);
   if (parsed.response) return parsed.response;
   const store = getCustomerStore();
-  if (!store.consumeRateLimit(`login:${parsed.data.email}`, 12, 15 * 60 * 1000))
-    return Response.json(
-      { error: "Đăng nhập tạm khóa vì thử quá nhiều lần. Hãy đợi 15 phút." },
-      { status: 429 },
-    );
+  const abuseResponse = await protectPublicAuthAction({
+    action: "customer_login",
+    challengeAfter: 3,
+    identity: parsed.data.email,
+    limit: 12,
+    mobile,
+    request,
+    store,
+    token: parsed.data.turnstileToken,
+    windowMs: 15 * 60 * 1000,
+  });
+  if (abuseResponse) return abuseResponse;
   const row = store.getCustomerWithPassword(parsed.data.email);
   if (!row) {
     await consumeDummyPasswordCheck(parsed.data.password);

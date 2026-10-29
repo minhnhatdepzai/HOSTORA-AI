@@ -29,6 +29,15 @@ const tokenHash = (token: string) =>
   createHash("sha256").update(token).digest("hex");
 const normalizedEmail = (email: string) => email.trim().toLowerCase();
 
+export type RateLimitResult = {
+  allowed: boolean;
+  attempts: number;
+  limit: number;
+  remaining: number;
+  resetAt: number;
+  retryAfterSeconds: number;
+};
+
 function toCustomer(row: CustomerRow): CustomerAccount {
   return {
     id: row.id,
@@ -100,7 +109,11 @@ export class CustomerStore {
     this.db.close();
   }
 
-  consumeRateLimit(key: string, limit: number, windowMs: number) {
+  consumeRateLimitDetailed(
+    key: string,
+    limit: number,
+    windowMs: number,
+  ): RateLimitResult {
     const safeKey = createHash("sha256").update(key).digest("hex");
     const now = Date.now();
     const row = this.db
@@ -116,15 +129,44 @@ export class CustomerStore {
           "INSERT INTO customer_auth_limits (limit_key, attempts, window_started_at) VALUES (?, 1, ?) ON CONFLICT(limit_key) DO UPDATE SET attempts = 1, window_started_at = excluded.window_started_at",
         )
         .run(safeKey, new Date(now).toISOString());
-      return true;
+      return {
+        allowed: true,
+        attempts: 1,
+        limit,
+        remaining: Math.max(0, limit - 1),
+        resetAt: now + windowMs,
+        retryAfterSeconds: Math.ceil(windowMs / 1000),
+      };
     }
-    if (row.attempts >= limit) return false;
+    const resetAt = new Date(row.window_started_at).valueOf() + windowMs;
+    const retryAfterSeconds = Math.max(1, Math.ceil((resetAt - now) / 1000));
+    if (row.attempts >= limit)
+      return {
+        allowed: false,
+        attempts: row.attempts,
+        limit,
+        remaining: 0,
+        resetAt,
+        retryAfterSeconds,
+      };
     this.db
       .prepare(
         "UPDATE customer_auth_limits SET attempts = attempts + 1 WHERE limit_key = ?",
       )
       .run(safeKey);
-    return true;
+    const attempts = row.attempts + 1;
+    return {
+      allowed: true,
+      attempts,
+      limit,
+      remaining: Math.max(0, limit - attempts),
+      resetAt,
+      retryAfterSeconds,
+    };
+  }
+
+  consumeRateLimit(key: string, limit: number, windowMs: number) {
+    return this.consumeRateLimitDetailed(key, limit, windowMs).allowed;
   }
 
   createCustomer(input: {

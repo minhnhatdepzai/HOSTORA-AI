@@ -1,8 +1,8 @@
 import { ZodError, type ZodType } from "zod";
+import { readLimitedText } from "@/lib/api-validation";
 
 export async function parseSmallJson<T>(request: Request, schema: ZodType<T>, maxBytes = 4096): Promise<T> {
-  const body = await request.text();
-  if (Buffer.byteLength(body, "utf8") > maxBytes) throw new Error("Yêu cầu quá dài.");
+  const body = await readLimitedText(request, maxBytes);
   try {
     return schema.parse(JSON.parse(body));
   } catch (error) {

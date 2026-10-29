@@ -4,15 +4,16 @@ HOSTORA AI là nền tảng local-first giúp chủ shop và doanh nghiệp Vi�
 
 AI của HOSTORA chạy cục bộ qua Ollama. AI chỉ đọc, giải thích và soạn nội dung; giá, xếp hạng gói, voucher, trạng thái đơn và kết quả thanh toán vẫn do mã nguồn tất định kiểm soát. Dữ liệu thiếu phải được ghi là “Chưa có dữ liệu” hoặc “Chưa xác minh”, không được để mô hình tự điền.
 
-> Trạng thái ngày 29/10/2026: source web, admin và Android 2.1.0 đã qua typecheck, lint, build production, 198 unit test, 47 E2E desktop/mobile và AI smoke test local. APK 2.1.0 (versionCode 22) đã được cài đè và mở trên Redmi Note 8 Pro. Đây là bằng chứng local; Stripe/VNPay thật, SMTP tên miền, URL production ổn định và nghiên cứu người dùng vẫn chưa được xác nhận.
+> Trạng thái ngày 29/10/2026: source web, admin và Android 2.1.0 đã qua typecheck, lint, build production, 220 unit test, 47 E2E desktop/mobile, audit 12/12 trạng thái và AI smoke test local. APK 2.1.0 (versionCode 22) đã được cài đè và mở trên Redmi Note 8 Pro. Đây là bằng chứng local; Cloudflare production, Stripe/VNPay thật, SMTP tên miền, URL production ổn định và nghiên cứu người dùng vẫn chưa được xác nhận.
 
 | Phần đã kiểm tra | Kết quả gần nhất                                                                                       |
 | ---------------- | ------------------------------------------------------------------------------------------------------ |
 | Web + admin      | Build production thành công; 47 E2E pass, 1 ca mobile chủ động skip                                    |
-| Logic và API     | 198/198 unit test pass trên 48 file                                                                    |
+| Logic và API     | 220/220 unit test pass trên 51 file; body lớn, CAPTCHA, replay và webhook có test hồi quy             |
 | AI local         | Ollama chat, chatbot, Studio và embedding trả inference thật; không dùng cloud fallback                |
 | Android          | `com.hostora.ai` 2.1.0, versionCode 22; cài bằng `adb install -r`, giữ dữ liệu app                     |
-| Giới hạn còn mở  | Contrast/ARIA, độ ổn định timeout AI, endpoint public, payment/SMTP production và test người dùng thật |
+| Bảo mật ứng dụng | CSP/header, body stream limit, quota + `Retry-After`, Turnstile thích ứng; cần bật Cloudflare thật     |
+| Giới hạn còn mở  | Độ ổn định timeout AI, URL/Cloudflare production, payment/SMTP production và test người dùng thật      |
 
 ## HOSTORA bán gì?
 
@@ -365,6 +366,7 @@ docs/architecture/           Sơ đồ Archify tương tác
 - [Fine-tuning chatbot](docs/CHATBOT_FINETUNING.md)
 - [Đánh giá AI và phễu chuyển đổi](docs/AI_EVALUATION.md)
 - [Báo cáo bảo mật](docs/SECURITY_REVIEW.md)
+- [Hardening Cloudflare, Turnstile và chống abuse](docs/SECURITY_HARDENING_2026-10-29.md)
 - [Báo cáo QA](docs/QA_REPORT.md)
 - [Kịch bản demo](docs/DEMO_SCRIPT.md)
 - [Thiết lập môi trường](docs/ENVIRONMENT_SETUP.md)

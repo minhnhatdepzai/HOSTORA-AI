@@ -1,5 +1,6 @@
 import { imagePayloadSchema, journeyResultSchema, nextJourneyGuidance, sanitizeJourneyResult } from "@/lib/journey-ocr";
 import { structuredVision } from "@/lib/ollama";
+import { parseRequestJson } from "@/lib/api-validation";
 
 export const runtime = "nodejs";
 
@@ -16,11 +17,13 @@ const resultJsonSchema = {
 };
 
 export async function POST(request: Request) {
-  const length = Number(request.headers.get("content-length") ?? 0);
-  if (length > 7_100_000) return Response.json({ error: "Ảnh vượt quá giới hạn 5 MB." }, { status: 413 });
-  const body = await request.json().catch(() => null);
-  const parsed = imagePayloadSchema.safeParse(body);
-  if (!parsed.success) return Response.json({ error: "Chỉ nhận ảnh PNG, JPEG hoặc WebP tối đa 5 MB." }, { status: 400 });
+  const parsedRequest = await parseRequestJson(
+    request,
+    imagePayloadSchema,
+    7_100_000,
+  );
+  if (parsedRequest.response) return parsedRequest.response;
+  const parsed = { data: parsedRequest.data };
   try {
     const detected = await structuredVision(
       "Bạn là bộ phân loại màn hình cục bộ của HOSTORA. Chỉ xác định người dùng đang ở bước nào dựa trên giao diện nhìn thấy. Không đọc lại, không sao chép và không trả về số thẻ, CVC, OTP, email, số điện thoại, mã truy cập hoặc dữ liệu định danh. Không suy đoán giá, trạng thái giao dịch hay kết quả thanh toán. Nếu không chắc, chọn unknown.",

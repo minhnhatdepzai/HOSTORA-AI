@@ -1,11 +1,21 @@
 import { z } from "zod";
 import { adminConfigFromEnv, adminSessionCookie, issueAdminSession, sameOrigin } from "@/lib/payments/admin-auth";
 import { jsonError, noStoreJson, parseSmallJson } from "@/lib/payments/route-utils";
+import { getCustomerStore } from "@/lib/customer/store";
+import { protectRateLimitedAction } from "@/lib/security/abuse-protection";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   if (!sameOrigin(request)) return jsonError("Nguồn yêu cầu không hợp lệ.", 403);
+  const abuseResponse = protectRateLimitedAction({
+    action: "admin-password-login",
+    limit: 8,
+    request,
+    store: getCustomerStore(),
+    windowMs: 15 * 60 * 1000,
+  });
+  if (abuseResponse) return abuseResponse;
   try {
     const body = await parseSmallJson(request, z.object({ password: z.string().min(1).max(200) }));
     const token = issueAdminSession(body.password, adminConfigFromEnv());

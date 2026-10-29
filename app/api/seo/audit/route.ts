@@ -4,7 +4,13 @@ import { sanitizeCitations } from "@/lib/chat-citations";
 import { structuredChat } from "@/lib/ollama";
 import { retrieve } from "@/lib/rag";
 import { validatePublicUrl } from "@/lib/ssrf";
+import { parseRequestJson, readLimitedText } from "@/lib/api-validation";
 import { z } from "zod";
+
+const requestSchema = z.object({
+  url: z.string().min(4).max(2048),
+  keyword: z.string().trim().max(120).default(""),
+});
 
 const aiOutput = z.object({
   executiveSummary: z.string(),
@@ -48,7 +54,7 @@ async function fetchPublic(url: URL, maxBytes = 1_000_000) {
     }
     return {
       ok: response.ok,
-      text: (await response.text()).slice(0, maxBytes),
+      text: await readLimitedText(response, maxBytes, { truncate: true }),
       url: target,
       contentType: response.headers.get("content-type") ?? "",
     };
@@ -58,12 +64,9 @@ async function fetchPublic(url: URL, maxBytes = 1_000_000) {
 
 export async function POST(request: Request) {
   try {
-    const { url: raw, keyword } = z
-      .object({
-        url: z.string().min(4).max(2048),
-        keyword: z.string().trim().max(120).default(""),
-      })
-      .parse(await request.json());
+    const parsed = await parseRequestJson(request, requestSchema, 16_384);
+    if (parsed.response) return parsed.response;
+    const { url: raw, keyword } = parsed.data;
     const initial = await validatePublicUrl(raw);
     const page = await fetchPublic(initial);
     if (!page.ok || !page.contentType.includes("text/html"))

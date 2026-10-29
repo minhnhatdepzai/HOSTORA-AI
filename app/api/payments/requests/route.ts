@@ -10,6 +10,10 @@ import {
 } from "@/lib/customer/auth";
 import { getCustomerStore } from "@/lib/customer/store";
 import { sameOrigin } from "@/lib/payments/admin-auth";
+import {
+  readLimitedText,
+  RequestBodyTooLargeError,
+} from "@/lib/api-validation";
 
 export const runtime = "nodejs";
 
@@ -61,16 +65,28 @@ const fieldLabels: Record<string, string> = {
 };
 
 async function parsePurchaseRequest(request: Request) {
-  const body = await request.text();
-  if (Buffer.byteLength(body, "utf8") > 4096) {
-    return { error: "Thông tin gửi lên quá dài.", input: null } as const;
+  let body: string;
+  try {
+    body = await readLimitedText(request, 4096);
+  } catch (error) {
+    if (error instanceof RequestBodyTooLargeError)
+      return {
+        error: "Thông tin gửi lên quá dài.",
+        input: null,
+        status: 413,
+      } as const;
+    throw error;
   }
 
   let raw: unknown;
   try {
     raw = JSON.parse(body);
   } catch {
-    return { error: "Thông tin gửi lên không đúng định dạng.", input: null } as const;
+    return {
+      error: "Thông tin gửi lên không đúng định dạng.",
+      input: null,
+      status: 400,
+    } as const;
   }
 
   const parsed = requestSchema.safeParse(raw);
@@ -78,15 +94,19 @@ async function parsePurchaseRequest(request: Request) {
     const issue = parsed.error.issues[0];
     const path = issue?.path.map(String).join(".") ?? "";
     const label = fieldLabels[path] ?? "Thông tin bắt buộc";
-    return { error: `${label} chưa hợp lệ. Vui lòng kiểm tra lại.`, input: null } as const;
+    return {
+      error: `${label} chưa hợp lệ. Vui lòng kiểm tra lại.`,
+      input: null,
+      status: 400,
+    } as const;
   }
-  return { error: null, input: parsed.data } as const;
+  return { error: null, input: parsed.data, status: 200 } as const;
 }
 
 export async function POST(request: Request) {
   try {
     const parsed = await parsePurchaseRequest(request);
-    if (!parsed.input) return jsonError(parsed.error, 400);
+    if (!parsed.input) return jsonError(parsed.error, parsed.status);
     const input = parsed.input;
     const sessionToken = sessionTokenFromRequest(request);
     if (sessionToken && !requestUsesBearer(request) && !sameOrigin(request))

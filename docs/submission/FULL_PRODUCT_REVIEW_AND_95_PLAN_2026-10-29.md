@@ -4,27 +4,31 @@ Ngày đánh giá: 29/10/2026. Mục tiêu: Đề 01, rubric người dùng cung
 
 ## Kết luận chấm thử
 
-**Khoảng 83/100 theo bằng chứng hiện có.** Có nền tảng cạnh tranh, nhưng chưa chứng minh mức 95. Điểm này chấm cả sản phẩm một lần, không cộng ba bảng 100 điểm cho web/admin/app. Phần phản biện vẫn tạm tính vì chưa phỏng vấn người dự thi.
+**Khoảng 87/100 theo bằng chứng hiện có.** Sản phẩm đã mạnh hơn rõ rệt về accessibility, regression và hardening bảo mật, nhưng chưa chứng minh mức 95. Điểm này chấm cả sản phẩm một lần, không cộng ba bảng 100 điểm cho web/admin/app. Phần phản biện vẫn tạm tính vì chưa phỏng vấn người dự thi.
 
 95/100 là mục tiêu chất lượng và trình bày, không bảo đảm chung kết top 10/265: chưa có điểm hoặc sản phẩm của các đội khác. Để bảo vệ mức 95 cần kết quả ở máy/đường mạng độc lập, hành trình AI đáng tin cậy, usability có quan sát và phần phản biện thật.
 
 | Tiêu chí | Hiện tại, giả lập | Mục tiêu | Điều kiện tăng điểm |
 |---|---:|---:|---|
 | Chức năng, đúng nghiệp vụ | 24/25 | 24/25 | Giữ trọn 5 chức năng, phân biệt tiền trả trước/gia hạn và không có gói phù hợp; xác minh thêm giá/điều kiện trước nộp. |
-| Kỹ thuật, chất lượng mã | 18/20 | 19/20 | Build/cài lại tái lập từ cùng bản nguồn, cấu hình SDK/JDK rõ, giảm nhánh logic trùng và có kiểm chứng hợp đồng web/app. |
+| Kỹ thuật, chất lượng mã | 19/20 | 19/20 | Đã có build tái lập, stream body limit, header/CSP, quota/Turnstile và test; vẫn cần chứng minh edge/origin production. |
 | AI, kiểm soát đầu ra | 12/15 | 14/15 | Tập độc lập có paraphrase/phủ định/mâu thuẫn, đo cold/warm và nhiều lượt đồng thời; không có claim thương mại sai trong tập chấm. |
-| Kiểm thử, xử lý lỗi | 13/15 | 14/15 | Ca native lặp lại, lỗi mạng/model/storage/restart; báo cáo có actual/expected/evidence và không che ca lỗi/skip. |
+| Kiểm thử, xử lý lỗi | 14/15 | 14/15 | 220 unit, 47 E2E và 12 trạng thái UI đạt; vẫn thiếu load/stress và bộ native tự động do quyền Maestro. |
 | Làm chủ Vibe Coding, phản biện | 10/15 tạm tính | 14/15 | Bảo vệ kiến trúc và một chuỗi prompt thật → lỗi thật → test → quyết định sửa; trả lời câu hỏi trực tiếp. |
-| UI/UX | 3/5 | 5/5 | Xử lý findings contrast/ARIA, intro không để lộ control phía sau cho accessibility; giảm ma sát tìm gói trên app. |
+| UI/UX | 5/5 | 5/5 | Contrast/ARIA web-admin và overlay accessibility Android đã sửa; audit tự động xanh, vẫn cần TalkBack/usability độc lập. |
 | Triển khai, bàn giao | 3/5 | 5/5 | URL HTTPS hoạt động từ mạng ngoài, source/APK/video cùng phiên bản, cài máy khác theo README, có phương án demo dự phòng. |
-| **Tổng** | **83/100** | **95/100** | 12 điểm tăng có điều kiện; chưa được công nhận chỉ vì đã cài công cụ. |
+| **Tổng** | **87/100** | **95/100** | Còn 8 điểm phụ thuộc chủ yếu AI độc lập, phản biện thật và deployment/handoff production. |
 
 ## Kết quả mới trong lượt này
 
-- Web typecheck và lint đạt. Unit **198/198**, 48 file, đạt.
+- Web typecheck và lint đạt. Unit **220/220**, 51 file, đạt.
 - Production build mặc định đạt; có cảnh báo OpenTelemetry/Gradle deprecation được giữ trong log, không coi cảnh báo là test thất bại.
 - Mobile typecheck/lint đạt.
 - Toàn bộ E2E trên production SQLite cách ly: **47 đạt, 1 bỏ qua có chủ đích, 0 lỗi**. Đã chạy lại qua lệnh mới `test:e2e:isolated` và nhận cùng kết quả; ca skip là CRUD danh mục trên mobile vì desktop đã chạy.
+- Audit UI production cách ly đạt **12/12 trạng thái**, 0 axe finding và 0 page error ở desktop/mobile. Đây là kiểm tra tự động, không thay TalkBack/keyboard/usability thật.
+- Accessibility đã sửa: contrast/ARIA web-admin và Stack native không còn mount phía sau intro/onboarding. Android source vẫn qua typecheck/lint và bản 2.1.0/versionCode 22 trên Redmi không có crash/fatal trong lượt kiểm tra gần nhất.
+- Hardening mới: CSP/header, giới hạn body theo stream, quota `429 + Retry-After`, canonical origin, proxy trust opt-in và Turnstile thích ứng cho login/register/forgot. Stripe raw webhook, OCR lớn, replay/timeout/misconfiguration đều có test hồi quy.
+- `pnpm audit --prod` không báo advisory đã biết. Runtime production local trả đúng security headers và `413` cho JSON 20 KiB. Cloudflare WAF/origin lock production **chưa được bật hoặc xác minh** trong lượt này.
 - AI smoke thật đạt. Bộ advisor thật **24/25**: ca đầu HTTP 503 sau khoảng 90 giây; các ca sau hoàn tất. Trung vị quan sát khoảng 3,08 giây, p95 trong tập này khoảng 61,53 giây. Đây là tập nhỏ, tuần tự, không phải p95 production. Không được dùng con số 25/25 của lần trước thay thế.
 - Mobile MCP đã initialize, khám phá Redmi, đọc tree và chụp ảnh qua giao thức MCP thật. Luồng native từ cold launch/intro → trang chủ → bốn bước → kết quả **đạt**, có bảng giá tải được và ảnh từng bước. Test không gửi lead hoặc thanh toán.
 - Kết nối app ban đầu không tải catalog: app đã trỏ `127.0.0.1:3000` nhưng không có ADB reverse. Đã tạo `adb reverse tcp:3000 tcp:3000` và xác nhận màn Kết nối dịch vụ “SẴN SÀNG”. Đây là cấu hình phát triển USB, không chứng minh truy cập Internet.
@@ -40,38 +44,36 @@ Các E2E admin dùng phiên ký kiểm thử và SMTP tắt; chúng chứng minh
 
 Điểm tốt: CTA tư vấn dễ thấy; wizard, top 3, bảng so sánh và lead đi được trong E2E; trạng thái ngân sách thấp không còn giả vờ chọn gói phù hợp. Giá quy đổi tháng và khoản trả trước được nói rõ. Trang kết quả không có vi phạm axe trong trạng thái đã quét.
 
-Khoảng trống: hero thương hiệu lớn hơn phần giải thích cụ thể về hosting/domain; cần kiểm chứng người không rành kỹ thuật hiểu ngay bước tiếp theo. Một số chữ nhỏ trên nền xanh nhạt chưa đủ tương phản; wizard có chữ mô tả khoảng 4,41:1 so với ngưỡng 4,5:1. Đừng sửa bằng cách bỏ hết màu thương hiệu: chỉnh token chữ/nền và đo lại.
+Khoảng trống: hero thương hiệu vẫn lớn hơn phần giải thích cụ thể về hosting/domain; cần quan sát người không rành kỹ thuật để biết họ có hiểu ngay bước tiếp theo. Audit tự động hiện không còn finding contrast, nhưng không chứng minh nội dung dễ hiểu hoặc thao tác bàn phím/TalkBack hoàn chỉnh.
 
 ### Web admin
 
 Điểm tốt: có cổng đăng nhập, dashboard, doanh thu, danh mục, đơn hàng và hỗ trợ. E2E xác nhận tạo/xuất bản/lưu trữ dịch vụ với dữ liệu test cách ly; không bỏ xác thực để làm test xanh. Screenshot desktop/mobile không tràn ngang toàn trang.
 
-Khoảng trống đã xác minh: `.admin-revenue-chart` đặt `aria-label` trên div chưa có role phù hợp. Các mô tả, nhãn nhỏ và chữ trong biểu đồ cần chỉnh tương phản. Axe báo 126 node contrast trên admin ở mỗi viewport; nhiều node là chữ/glyph lặp trong một vùng, **không đồng nghĩa 126 lỗi nghiệp vụ độc lập**. Cần sửa theo token/component rồi quét lại, không sửa từng glyph.
-
-Khoảng trống vận hành: chưa có bằng chứng OTP email end-to-end, restore backup trên máy độc lập, thao tác của hai nhân viên hoặc bộ dữ liệu đủ lớn để đánh giá lọc/phân trang. Không bắt buộc thêm dashboard hay 3D mới để đạt điểm; ưu tiên những tác vụ vận hành có thể trình diễn chắc chắn.
+Các lỗi đã sửa: biểu đồ doanh thu có semantics phù hợp, token chữ/nền đủ tương phản trong 12 trạng thái đã quét; lượt audit mới không còn axe finding. Khoảng trống vận hành vẫn là OTP email end-to-end, restore backup trên máy độc lập, thao tác của hai nhân viên và dữ liệu đủ lớn để đánh giá lọc/phân trang.
 
 ### Android
 
 Điểm tốt: package đang cài đúng 2.1.0/versionCode 22, UI native có vùng an toàn, có màn chọn cấu hình USB và xử lý lỗi catalog. Mobile MCP đã đi đủ bốn bước đến kết quả trên máy thật, không suy diễn từ browser mobile.
 
-Khoảng trống: intro 7 giây vẫn để cây accessibility của trang chủ phía sau xuất hiện; các probe đầu tiên có thể tìm thấy CTA trong tree khi intro còn che màn hình. Đây là lý do cần xử lý visibility/modal accessibility, không chỉ tăng thời gian chờ test. Màn kết quả có khối cảnh báo dài đẩy lựa chọn/giá xuống thấp. Cần giữ thông tin tiền trả trước nhưng rút gọn một câu chính, cho mở chi tiết.
+Overlay accessibility đã được sửa bằng cách không mount native Stack khi intro/onboarding đang hiển thị. Cảnh báo chi phí trên kết quả cũng được rút gọn theo tầng thông tin. Vẫn cần TalkBack, font lớn, offline/restart, background/resume và kiểm thử native tự động lặp lại khi Redmi cho phép Maestro driver.
 
 Kết nối backend là điểm dễ hỏng khi đem thi: USB reverse mất sau ngắt thiết bị; URL Quick Tunnel không phải địa chỉ cố định. App cần trạng thái kết nối dễ hiểu, retry và hướng dẫn thao tác phù hợp người dùng. Chưa thử đầy đủ TalkBack, font lớn, offline sau restart, đa thiết bị, đổi mạng hoặc vòng đời background/resume.
 
 ## Audit accessibility tự động mới
 
-Quét 6 route × 2 viewport (1440×900 và 390×844), reduced motion, browser thật, chờ dashboard hết loading. Không có page error hoặc tràn ngang toàn trang ở các trạng thái này.
+Quét 6 route × 2 viewport (1440×900 và 390×844), reduced motion, browser thật, chờ dashboard hết loading. **Cả 12 trạng thái có 0 axe finding và 0 page error**; không có tràn ngang toàn trang trong tập đã quét.
 
 | Route | Findings chính |
 |---|---|
-| `/` | Contrast: 12 node desktop, 15 node mobile |
-| `/consultation` | Contrast: 1 node mỗi viewport |
-| `/recommendations` | Không có vi phạm axe trong trạng thái đã quét |
-| `/admin` | 1 node ARIA và 126 node contrast mỗi viewport |
-| `/admin/orders` | Không có vi phạm axe trong trạng thái đã quét |
-| `/admin/support` | Contrast: 2 node mỗi viewport |
+| `/` | 0 finding, 0 page error |
+| `/consultation` | 0 finding, 0 page error |
+| `/recommendations` | 0 finding, 0 page error |
+| `/admin` | 0 finding, 0 page error |
+| `/admin/orders` | 0 finding, 0 page error |
+| `/admin/support` | 0 finding, 0 page error |
 
-Ví dụ nguồn: chữ `#687c76` trên nền `#b5efd2` ở một nhãn tải app chỉ đạt khoảng 3,43:1; text thông thường cần 4,5:1. Axe không chứng minh WCAG toàn diện; còn cần keyboard, focus, screen reader và gesture/target size trên thiết bị thật. Các finding style của Impeccable chỉ là heuristic, không tự động trừ điểm nếu không kiểm chứng ảnh/ngữ cảnh.
+Axe không chứng minh WCAG toàn diện; còn cần keyboard, focus, screen reader và gesture/target size trên thiết bị thật. Kết quả xanh chỉ áp dụng đúng route, dữ liệu và viewport đã ghi.
 
 ## Bàn giao và URL
 
@@ -85,8 +87,8 @@ URL Quick Tunnel ghi trong tài liệu (`consultation-directory-budgets-plus.try
 |---|---|---|---|
 | P0 | Chốt nguồn, APK, link tải, video, SHA cùng version; ổn định endpoint | Cài máy khác/điện thoại 4G, mở web/admin và gọi AI đúng luồng, đúng artifact | Bàn giao +2 |
 | P0 | Đo và xử lý timeout AI | Tách cold/warm, timeout/retry/queue dễ hiểu; chạy tập độc lập nhiều lượt, ghi cả lỗi | AI +2, test +1 |
-| P1 | Sửa contrast/ARIA/intro accessibility và rút gọn cảnh báo app | Quét lại axe, keyboard, TalkBack/font lớn, ảnh desktop/mobile/native sau sửa | UI/UX +2 |
-| P1 | Kiểm thử native lặp lại và trạng thái lỗi | Luồng thường, không đủ ngân sách, API lỗi, input sai, restart giữ dữ liệu, update APK giữ dữ liệu | Test +1 đã gộp, kỹ thuật +1 |
+| P1 | Kiểm thử native lặp lại và trạng thái lỗi | TalkBack/font lớn; luồng thường, API lỗi, input sai, restart giữ dữ liệu và update APK | Củng cố UI/test, không tự cộng thêm điểm |
+| P1 | Bật Cloudflare production đúng cách | Proxy DNS, WAF/rate limit, Turnstile key, origin lock; gọi trực tiếp IP origin phải thất bại | Chứng minh kỹ thuật/deployment, không gọi là chống DDoS tuyệt đối |
 | P1 | Chuẩn bị phản biện từ công việc thật | 3 ví dụ prompt → lỗi → test → sửa, giải thích scoring/nguồn/null/local-first; diễn tập có người hỏi | Phản biện +4 |
 | P2 | Quan sát 5–10 chủ shop | Tỷ lệ đi hết luồng, thời gian, mức hiểu gia hạn/trả trước, ghi cả hiểu nhầm | Củng cố nghiệp vụ/UI/AI, không tự cộng thêm ngoài rubric |
 
@@ -113,15 +115,15 @@ pnpm test:mobile:e2e
 pnpm android:update
 ```
 
-`audit:ui` hiện exit 1 vì những finding thật ở trên; đó không phải kết quả pass. `test:mobile:e2e` chưa pass do quyền thiết bị. Các công cụ/skill mới cần lượt hoặc phiên Codex mới để xuất hiện trong catalog MCP/skill; CLI dùng được ngay. Chưa tự triển khai, push hay phát hành bài nộp.
+`audit:ui` hiện đạt 12/12 trạng thái. `test:mobile:e2e` chưa pass do quyền cài driver trên Redmi; Mobile MCP đã hoàn tất luồng native thay thế. Chưa tự triển khai Cloudflare production, push hoặc phát hành bài nộp.
 
 ## Ảnh và bước đã xác nhận
 
-1. **Web khách — luồng tư vấn hoạt động**, cần cải thiện tương phản và ưu tiên giải thích giá trị.
+1. **Web khách — luồng tư vấn hoạt động**, tương phản tự động đã đạt; bước tiếp theo là ưu tiên giải thích giá trị và kiểm chứng với người dùng thật.
 
 ![Web khách](../../output/playwright/agent-2026-10-29T04-46-46-048Z/desktop-home.png)
 
-2. **Admin desktop — dữ liệu test đã tải**, cổng quyền được giữ, cần chỉnh contrast/ARIA.
+2. **Admin desktop — dữ liệu test đã tải**, cổng quyền được giữ; contrast/ARIA đã sửa và audit tự động không còn finding.
 
 ![Admin desktop](../../output/playwright/agent-2026-10-29T04-46-46-048Z/desktop-admin.png)
 
@@ -129,17 +131,17 @@ pnpm android:update
 
 ![Admin mobile](../../output/playwright/agent-2026-10-29T04-46-46-048Z/mobile-admin.png)
 
-4. **Android native — đủ bốn bước và tải được đề xuất** sau khi thiết lập USB; còn vấn đề độ dài cảnh báo.
+4. **Android native — đủ bốn bước và tải được đề xuất** sau khi thiết lập USB; cảnh báo dài và lớp route phía sau overlay đã được khắc phục.
 
 ![Android kết quả](../../output/playwright/mobile-mcp-2026-10-29T04-58-19-016Z/result.png)
 
 ## Bằng chứng máy đọc được
 
-- [198 unit, build, E2E và AI](../../output/playwright/full-review-tooling/).
+- [220 unit, build và AI](../../output/playwright/full-review-tooling/) cùng log chạy mới trong terminal.
 - [Kết quả AI 24/25](../../output/playwright/full-review-tooling/ai/results.json), [tóm tắt thời gian](../../output/playwright/full-review-tooling/ai/summary.json).
-- [Audit 12 trạng thái web/admin](../../output/playwright/agent-2026-10-29T04-46-46-048Z/ui-audit.json).
+- [Audit 12 trạng thái web/admin mới](../../output/playwright/agent-2026-10-29T12-38-50-888Z/ui-audit.json).
 - [Native flow đã pass](../../output/playwright/mobile-mcp-2026-10-29T04-58-19-016Z/result.json).
 - [URL public trong lượt này](../../output/playwright/full-review-tooling/public-check.json).
 - [Maestro đang bị chặn](../../output/playwright/full-review-tooling/maestro-blocker.log).
 
-Giới hạn: chưa so sánh 264 đối thủ, chưa chấm thuyết trình thật, chưa audit bảo mật toàn repo hay transaction Stripe/VNPay merchant thật, chưa load-test các gói hosting, chưa có usability độc lập. Bộ công cụ chuẩn bị cho những công việc tiếp theo; việc cài xong không tự chứng minh các tiêu chí đó đã đạt.
+Giới hạn: chưa so sánh 264 đối thủ, chưa chấm thuyết trình thật, chưa pentest độc lập hay xác minh Cloudflare production, chưa chạy transaction Stripe/VNPay merchant thật, chưa load/stress test và chưa có usability độc lập. 87/100 là mô phỏng có bằng chứng, không phải kết quả ban tổ chức.

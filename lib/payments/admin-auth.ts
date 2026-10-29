@@ -82,8 +82,23 @@ export function sameOrigin(request: Request): boolean {
   try {
     const parsed = new URL(origin);
     const requestUrl = new URL(request.url);
+    const canonical = process.env.HOSTORA_PUBLIC_BASE_URL
+      ? new URL(process.env.HOSTORA_PUBLIC_BASE_URL)
+      : null;
+    if (canonical)
+      return (
+        parsed.origin === canonical.origin &&
+        !parsed.username &&
+        !parsed.password
+      );
     const host = request.headers.get("host") ?? requestUrl.host;
-    const protocol = request.headers.get("x-forwarded-proto") ?? requestUrl.protocol.replace(":", "");
+    const trustedProxy =
+      process.env.HOSTORA_TRUST_CLOUDFLARE_PROXY === "true" ||
+      process.env.HOSTORA_TRUST_PROXY === "true";
+    const protocol = trustedProxy
+      ? request.headers.get("x-forwarded-proto") ??
+        requestUrl.protocol.replace(":", "")
+      : requestUrl.protocol.replace(":", "");
     return parsed.host === host && parsed.protocol === `${protocol}:` && !parsed.username && !parsed.password;
   } catch {
     return false;

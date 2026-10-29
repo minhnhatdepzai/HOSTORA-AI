@@ -1,6 +1,7 @@
 import { getPaymentStore } from "@/lib/payments/store";
 import { stripeClient, stripeConfigFromEnv, verifiedStripeCheckout } from "@/lib/payments/stripe";
 import { notifyInvoiceStatusChanged, scheduleOrderEmail } from "@/lib/payments/email";
+import { readLimitedText, RequestBodyTooLargeError } from "@/lib/api-validation";
 
 export const runtime = "nodejs";
 
@@ -11,8 +12,11 @@ export async function POST(request: Request) {
   if (!signature) return new Response("Thiếu chữ ký Stripe.", { status: 400 });
   let event;
   try {
-    event = stripeClient(config).webhooks.constructEvent(await request.text(), signature, config.webhookSecret);
-  } catch {
+    const rawBody = await readLimitedText(request, 1_048_576);
+    event = stripeClient(config).webhooks.constructEvent(rawBody, signature, config.webhookSecret);
+  } catch (error) {
+    if (error instanceof RequestBodyTooLargeError)
+      return new Response("Payload Stripe vượt quá giới hạn.", { status: 413 });
     return new Response("Chữ ký Stripe không hợp lệ.", { status: 400 });
   }
   const store = getPaymentStore();

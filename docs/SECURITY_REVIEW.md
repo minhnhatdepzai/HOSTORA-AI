@@ -1,5 +1,13 @@
 # Báo cáo kiểm tra bảo mật HOSTORA
 
+## Hardening ứng dụng và Cloudflare — 2026-10-29
+
+- Báo cáo hiện hành: [SECURITY_HARDENING_2026-10-29.md](SECURITY_HARDENING_2026-10-29.md).
+- Đã triển khai security headers/CSP, giới hạn body theo stream, quota SQLite cho auth nhạy cảm, `429` + `Retry-After`, canonical origin, proxy trust opt-in và Turnstile thích ứng được xác minh phía server.
+- `pnpm audit --prod` không báo advisory đã biết tại thời điểm chạy; 220/220 unit, 47/47 E2E thực thi đạt (1 ca mobile skip có chủ đích), audit giao diện 12/12 trạng thái không có axe finding/page error.
+- Runtime local production đã trả CSP, `nosniff`, `DENY`, Referrer/Permissions/CORP; body 20 KiB tới `/api/recommend` trả `413`.
+- Đây chưa phải bằng chứng Cloudflare production hoặc chống DDoS tuyệt đối. Vẫn cần proxy/WAF/rate-limit ở edge, khóa origin và kiểm tra từ mạng ngoài.
+
 ## Strix source scan — 2026-10-26
 
 - Công cụ: Strix 1.7.0, checkout `usestrix/strix` tại commit `200a501`.
