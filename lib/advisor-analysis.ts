@@ -23,19 +23,28 @@ function commerceIntent(text: string) {
     .replace(deniedCommerce, " ")
     .replace(/(?:không|chưa)\s+(?:(?:cần|muốn|dùng|sử dụng)\s+)?(?:giỏ hàng|đặt hàng|nhận đơn|thanh toán(?:\s+online)?)/gi, " ");
   const contentTopic = /(?:blog|bài viết|trang tin)[^.!?;\n]{0,80}(?:viết về|chia sẻ|kinh nghiệm|hướng dẫn|chỉ đăng)|(?:viết về|chia sẻ|kinh nghiệm|hướng dẫn|chỉ đăng)[^.!?;\n]{0,80}(?:blog|bài viết|trang tin)/i.test(normalized);
+  // Selling a product in the real world does not imply that the website
+  // itself needs checkout. The website-only clause wins when it explicitly
+  // limits the site to a menu, introduction or contact request.
+  const websiteOnly =
+    /(?:website|trang web|trang)[^.!?;\n]{0,120}(?:chỉ|chủ yếu)[^.!?;\n]{0,100}(?:xem|đọc|giới thiệu|gửi yêu cầu|liên hệ)/i.test(normalized) &&
+    /(?:không|chưa)\s+(?:có|dùng|cần)\s+(?:giỏ hàng|thanh toán|đặt hàng|nhận đơn)/i.test(normalized);
   const transactionFeature = /(?:bán hàng|bán sản phẩm|kinh doanh|nhận đơn|đặt hàng|thanh toán)\s+(?:trên|qua)\s+(?:web|website|trang)|giỏ hàng|woocommerce|shop online|cửa hàng trực tuyến/i.test(affirmativeText);
   const onlineSale = /bán\s+[^.!?;\n]{0,40}\bonline\b/i.test(affirmativeText);
-  const directSales = transactionFeature || (onlineSale && !(contentTopic && noSales));
+  const directSales = !websiteOnly && (transactionFeature || (onlineSale && !(contentTopic && noSales)));
   const genericSales = /bán hàng|giỏ hàng|đặt hàng|shop|cửa hàng/i.test(affirmativeText);
-  return { noSales, directSales, contentTopic, genericSales };
+  return { noSales: noSales || websiteOnly, directSales, contentTopic, genericSales, websiteOnly };
 }
 
 export function reconcileAnalysis(text: string, result: z.infer<typeof analysisSchema>) {
   const value = { ...result };
-  const { noSales, directSales, contentTopic, genericSales } = commerceIntent(text);
+  const { noSales, directSales, contentTopic, genericSales, websiteOnly } = commerceIntent(text);
   const company = /giới thiệu|công ty|doanh nghiệp/i.test(text);
   const blog = /blog|bài viết|trang tin/i.test(text);
-  if (noSales && !directSales) {
+  if (websiteOnly) {
+    value.ecommerce = false;
+    value.websiteType = company ? "company" : blog ? "blog" : "company";
+  } else if (noSales && !directSales) {
     value.ecommerce = false;
     value.websiteType = company ? "company" : blog ? "blog" : "unknown";
   } else if (directSales || (!contentTopic && genericSales)) {
@@ -67,6 +76,11 @@ export function reconcileAnalysis(text: string, result: z.infer<typeof analysisS
 
   if (value.monthlyVisits !== null && (!Number.isInteger(value.monthlyVisits) || value.monthlyVisits < 1 || value.monthlyVisits > 100000000)) value.monthlyVisits = null;
   if (value.monthlyBudget !== null && (!Number.isInteger(value.monthlyBudget) || value.monthlyBudget < 10000 || value.monthlyBudget > 100000000)) value.monthlyBudget = null;
+  // Numbers inside instruction-like clauses are not customer facts. This is
+  // deliberately conservative: when a prompt asks the model to invent or
+  // assume a budget, ask again instead of letting that number affect pricing.
+  const budgetInstruction = /(?:bỏ qua|bo qua|tự điền|tu dien|giả sử|gia su|hãy báo|hay bao|đừng hỏi|dung hoi|không cần hỏi lại|khong can hoi lai)[^.!?;\n]{0,140}(?:ngân sách|ngan sach)\s*[:=]?\s*\d|(?:ngân sách|ngan sach)\s*[:=]?\s*\d[^.!?;\n]{0,140}(?:bỏ qua|bo qua|tự điền|tu dien|giả sử|gia su|hãy báo|hay bao|đừng hỏi|dung hoi|không cần hỏi lại|khong can hoi lai)/i;
+  if (budgetInstruction.test(text)) value.monthlyBudget = null;
   const fields = [
     [value.websiteType === "unknown", "Loại website", "Bạn muốn làm website bán hàng, giới thiệu hay blog?"],
     [value.monthlyVisits === null, "Lượt truy cập mỗi tháng", "Bạn dự kiến có khoảng bao nhiêu lượt truy cập mỗi tháng?"],

@@ -15,6 +15,9 @@ import {
   structuredDataPenaltyAnswer,
   unknownRenewalCostAnswer,
   memoryRecallAnswer,
+  budgetCorrectionAnswer,
+  cdnVsHostingAnswer,
+  customerSourceBusinessAnswer,
   unknownBusinessDataAnswer,
   websiteIdeaDiscoveryAnswer,
 } from "@/lib/chat-guardrails";
@@ -154,6 +157,8 @@ export async function POST(request: Request) {
         )
       : recentChatMessages(inputMessages as ChatMemoryMessage[]);
   const latest = messages.at(-1)?.content ?? "";
+  const correctedBudget = budgetCorrectionAnswer(latest, memory);
+  if (correctedBudget) return respondText(correctedBudget);
   const recalled = memoryRecallAnswer(latest, memory);
   if (recalled) return respondText(recalled);
   if (asksToPutContactInfoInModel(latest))
@@ -199,6 +204,7 @@ export async function POST(request: Request) {
     domainAvailabilityAnswer,
     structuredDataPenaltyAnswer,
     dnsMigrationAnswer,
+    cdnVsHostingAnswer,
   ]) {
     const result = guard(latest);
     if (result) return respondText(result.answer, result.sources);
@@ -298,6 +304,16 @@ export async function POST(request: Request) {
   );
   if (unknownBusinessData)
     return respondText(unknownBusinessData.answer, unknownBusinessData.sources);
+  const customerSourceAnswer = customerSourceBusinessAnswer(
+    latest,
+    customerSources.map((source, index) => ({
+      citation: `U${index + 1}`,
+      title: source.title,
+      content: source.content,
+    })),
+  );
+  if (customerSourceAnswer)
+    return respondText(customerSourceAnswer.answer, customerSourceAnswer.sources);
   const guarded = robotsPrivacyAnswer(latest, knowledgeContext);
   if (guarded) return respondText(guarded.answer, guarded.sources);
   const system = `<role>Bạn là HOSTORA, cố vấn chọn dịch vụ website và cải thiện khả năng được tìm thấy trên Google cho chủ kinh doanh Việt Nam.</role>

@@ -12,6 +12,24 @@ type KnowledgeSource = {
 
 import type { ChatMemory } from "@/lib/chat-memory";
 
+function parseBudgetAmount(raw: string, unit = "") {
+  const normalized = raw.replace(/\s/g, "").replace(/[.,]/g, "");
+  const value = Number(normalized);
+  if (!Number.isFinite(value) || value <= 0) return null;
+  const foldedUnit = unit.toLocaleLowerCase("vi");
+  return Math.round(value * (foldedUnit === "triệu" || foldedUnit === "trieu" ? 1_000_000 : ["k", "nghìn", "nghin", "ngàn", "ngan"].includes(foldedUnit) ? 1_000 : 1));
+}
+
+/** Confirm an explicit budget correction with the exact amount the server stored. */
+export function budgetCorrectionAnswer(question: string, memory: ChatMemory) {
+  if (!/(sửa|đổi|cập nhật|dùng|thay).{0,30}ngân sách/i.test(question)) return null;
+  const match = question.match(/(?:ngân sách|budget)[^\d]{0,30}(\d[\d.,]*)\s*(triệu|trieu|k|nghìn|nghin|ngàn|ngan|đ|d|vnd)?/i);
+  if (!match) return null;
+  const parsed = parseBudgetAmount(match[1], match[2] ?? "");
+  if (parsed === null || memory.facts.monthlyBudget !== parsed) return null;
+  return `Mình đã cập nhật ngân sách thành ${parsed.toLocaleString("vi-VN")}đ/tháng và sẽ dùng mức này cho các tư vấn tiếp theo.`;
+}
+
 function foldedQuestion(question: string) {
   return question
     .toLocaleLowerCase("vi")
@@ -152,8 +170,42 @@ export function domainAvailabilityAnswer(question: string) {
   if (!domain || !pricing) return null;
   return {
     answer:
-      "Tôi không thể xác nhận tên miền còn trống hay giá đăng ký hôm nay nếu chưa kiểm tra trực tiếp. HOSTORA sẽ xác minh tình trạng tên miền, giá và thời hạn trước khi tạo hóa đơn; dữ liệu trong ứng dụng luôn có ngày kiểm tra rõ ràng. [K1] [K2]",
+      "Tôi không thể xác nhận trực tiếp trạng thái tên miền hoặc mức phí hiện tại nếu chưa kiểm tra. HOSTORA sẽ xác minh tên miền, giá và thời hạn trước khi tạo hóa đơn; dữ liệu trong ứng dụng luôn có ngày kiểm tra rõ ràng. [K1] [K2]",
     sources: [domain, pricing],
+  };
+}
+
+export function customerSourceBusinessAnswer(
+  question: string,
+  sources: Array<{ citation: string; content: string; title?: string }>,
+) {
+  if (
+    !/(?:(?:tài liệu|nguồn)\s+riêng|tài liệu\s+(?:doanh nghiệp|công ty)\s+của tôi)/i.test(question) ||
+    !/(bán gì|sản phẩm gì|giới thiệu sản phẩm gì|phục vụ nhóm khách|đối tượng khách)/i.test(question)
+  )
+    return null;
+  const source = sources.find((item) => item.content.length > 20);
+  if (!source) return null;
+  const safeSentence = source.content
+    .split(/(?<=[.!?])\s+/u)
+    .filter((sentence) => !/(bỏ qua|tự điền|giả sử|prompt|quy tắc)/i.test(sentence))
+    .slice(0, 2)
+    .join(" ")
+    .trim();
+  if (!safeSentence) return null;
+  return {
+    answer: `Theo tài liệu riêng của bạn: ${safeSentence} [${source.citation}]`,
+    sources: [],
+  };
+}
+
+export function cdnVsHostingAnswer(question: string) {
+  if (!/\bCDN\b/i.test(question) || !/hosting/i.test(question) || !/(thay thế|thay the|thay cho)/i.test(question)) return null;
+  const source = knowledgeSource("ssl-cdn-backup", "K1");
+  return {
+    answer:
+      "CDN không thay thế hosting. Hosting lưu và chạy website; CDN phân phối bản sao nội dung tĩnh gần người truy cập để giảm thời gian chờ. Hai thành phần bổ trợ nhau, còn giá và khả năng phục vụ nhiều khách cùng lúc cần được kiểm tra theo cấu hình và tải thực tế." + (source ? " [K1]" : ""),
+    sources: source ? [source] : [],
   };
 }
 

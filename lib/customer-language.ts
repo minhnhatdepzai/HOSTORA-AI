@@ -40,7 +40,7 @@ const replacements: readonly (readonly [RegExp, string])[] = [
   [/\bcache\b/gi, "cách lưu nội dung tạm thời"],
   [/\bdatabase\b/gi, "kho dữ liệu"],
   [/\bquery\b/gi, "thao tác tìm dữ liệu"],
-  [/\bCDN\b/g, "dịch vụ tăng tốc"],
+  [/\bCDN\b/g, "CDN (dịch vụ tăng tốc)"],
   [/\bSSL\b/g, "kết nối an toàn"],
   [/\bHTML\b/g, "nội dung trang"],
   [/\bCPU\b/g, "khả năng xử lý"],

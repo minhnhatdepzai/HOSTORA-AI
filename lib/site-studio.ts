@@ -85,13 +85,33 @@ export function recommendedPlansForIdea(idea: SiteIdea) {
   return recommendPlans(requirementsFromIdea(idea));
 }
 
+const instructionLikeSentence = /(?:bỏ qua|bo qua|ignore|disregard|tự điền|tu dien|giả sử|gia su|hãy\s+(?:khẳng định|nói|báo)|hay\s+(?:khang dinh|noi|bao)|prompt injection|system prompt|quy tắc|quy tac)/i;
+
+/** Keep fallback copy grounded when the local model is unavailable. */
+export function sanitizeFallbackText(value: string | undefined, fallback = "") {
+  const cleaned = (value ?? "")
+    .split(/(?<=[.!?])\s+/u)
+    .map((part) => part.trim())
+    .filter((part) => part && !instructionLikeSentence.test(part))
+    .join(" ")
+    .replace(/\s+/gu, " ")
+    .trim();
+  return cleaned || fallback;
+}
+
 export function buildFallbackBrief(idea: SiteIdea): SiteBrief {
-  const summary = idea.idea.trim().slice(0, 200).trimEnd();
-  const audience = idea.audience.trim();
-  const sentences = idea.idea.trim().split(/(?<=[.!?])\s+/u).map((part) => part.trim()).filter(Boolean);
-  const storyDetail = (idea.story?.trim().length ?? 0) >= 12 ? idea.story?.trim() : undefined;
-  const offeringDetail = (idea.offerings?.trim().length ?? 0) >= 3 ? idea.offerings?.trim() : undefined;
-  const actionDetail = (idea.customerAction?.trim().length ?? 0) >= 8 ? idea.customerAction?.trim() : undefined;
+  const summary = sanitizeFallbackText(idea.idea, `Tìm hiểu ${idea.brand}.`).slice(0, 200).trimEnd();
+  const audience = sanitizeFallbackText(idea.audience, "người quan tâm");
+  const sentences = sanitizeFallbackText(idea.idea)
+    .split(/(?<=[.!?])\s+/u)
+    .map((part) => part.trim())
+    .filter(Boolean);
+  const storyDetailText = sanitizeFallbackText(idea.story);
+  const offeringDetailText = sanitizeFallbackText(idea.offerings);
+  const actionDetailText = sanitizeFallbackText(idea.customerAction);
+  const storyDetail = storyDetailText.length >= 12 ? storyDetailText : undefined;
+  const offeringDetail = offeringDetailText.length >= 3 ? offeringDetailText : undefined;
+  const actionDetail = actionDetailText.length >= 8 ? actionDetailText : undefined;
   const story = (storyDetail || sentences[0] || summary).slice(0, 210);
   const offering = (offeringDetail || sentences[1] || `Tìm hiểu điều ${idea.brand} đang giới thiệu.`).slice(0, 210);
   const action = (actionDetail || sentences[2] || `Xem nội dung trước khi ${goalLabels[idea.goal]}.`).slice(0, 210);
@@ -136,6 +156,30 @@ export function buildFallbackBrief(idea: SiteIdea): SiteBrief {
     seoTitle: `${idea.brand.slice(0, 38)} | ${businessLabels[idea.business]}`,
     seoDescription: `${idea.brand} dành cho ${audience}: ${summary}`.slice(0, 160),
   };
+}
+
+/** Apply the narrow, unambiguous copy edits without asking the content audit to
+ * judge an existing sentence as a new business claim. */
+export function applySimpleStudioCopyRevision(current: SiteBrief, request: string) {
+  const next = { ...current, features: current.features.map((feature) => ({ ...feature })) };
+  let changed = false;
+  if (/(?:đổi|sửa|viết lại).{0,24}(?:tiêu đề|headline)/i.test(request) && /ngắn hơn|ngắn gọn/i.test(request)) {
+    const words = current.headline.trim().split(/\s+/u);
+    const shortened = words.length > 5 ? words.slice(0, 5).join(" ") : current.headline;
+    if (shortened.length >= 6 && shortened !== current.headline) {
+      next.headline = shortened;
+      changed = true;
+    }
+  }
+  const cta = request.match(/(?:cta|nút|lời kêu gọi)\s+(?:thành|là)\s+['“]?([^'”\".!?\n]{2,28})['”\"]?/i);
+  if (cta) {
+    const label = cta[1].trim();
+    if (label.length >= 2) {
+      next.ctaLabel = label;
+      changed = true;
+    }
+  }
+  return changed ? next : null;
 }
 
 /** Fast, conservative checks; human review is still required before publishing. */

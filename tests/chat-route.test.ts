@@ -46,6 +46,30 @@ test("chat uses remembered requirements when the newest message says the old bud
   expect(answer).not.toContain("cho mình biết: website");
 });
 
+test("chat confirms the new budget after an explicit correction", async () => {
+  const response = await POST(new Request("http://127.0.0.1:3000/api/ai/chat", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      messages: [{ role: "user", content: "Sửa ngân sách thành 300 nghìn mỗi tháng. Từ bây giờ dùng số mới." }],
+      memory: {
+        facts: {
+          websiteType: "blog",
+          ecommerce: false,
+          monthlyVisits: 3000,
+          monthlyBudget: 500000,
+          upfrontBudget: null,
+          needsDomain: false,
+        },
+        summary: "",
+        unresolved: [],
+      },
+    }),
+  }));
+  expect(response.status).toBe(200);
+  expect(await response.text()).toContain("300.000đ/tháng");
+});
+
 test("chat rejects malformed memory instead of forwarding it to the model", async () => {
   const response = await POST(new Request("http://127.0.0.1:3000/api/ai/chat", {
     method: "POST",
