@@ -16,6 +16,7 @@ cam kết không bao giờ xảy ra lỗi trong mọi môi trường.
 | UI/axe audit | **12/12 trạng thái**, 0 accessibility findings, 0 page errors |
 | Thanh toán demo | Pass trên desktop/mobile; không thu tiền thật |
 | Thanh toán gateway sandbox | Callback Stripe/VNPay ký đúng, số tiền đúng, replay được chống trong unit test |
+| Android qua ADB Wi-Fi | Redmi Note 8 Pro `192.168.100.26:34763`, `com.hostora.ai` 2.1.0/versionCode 22; Mobile MCP consultation pass, logcat không có FATAL/AndroidRuntime |
 | AI load test local | concurrency 1/2/4: 0 lỗi, 0 timeout; throughput bão hòa khoảng 0,348 req/s |
 
 Bằng chứng:
@@ -46,9 +47,10 @@ Bằng chứng:
 
 ## Chưa thể xác minh
 
-- Không có Android device được ADB cấp quyền ở lượt này; `agent:doctor` và
-  `test:mobile:mcp` bị block vì thiếu thiết bị. Không dùng browser mobile để
-  tuyên bố APK đã pass.
+- Maestro chưa chạy được vì Redmi chặn cài driver với
+  `INSTALL_FAILED_USER_RESTRICTED: Install canceled by user`; Mobile MCP đã
+  chạy được native consultation qua ADB Wi-Fi. Không dùng browser mobile để
+  thay thế bằng chứng APK.
 - Chưa chạy giao dịch merchant Stripe/VNPay sandbox thật vì chưa có khóa thử
   nghiệm; callback và chữ ký được kiểm thử bằng fixture.
 - Load test là local tuần tự/đồng thời nhẹ trên một máy, không phải SLA hoặc
