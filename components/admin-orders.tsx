@@ -567,6 +567,36 @@ export function AdminOrders() {
               Người cài đặt chưa bật cách đăng nhập cho khu vực này. Hãy nhờ họ
               thiết lập nhận mã qua thư điện tử hoặc cấp mật khẩu quản trị.
             </p>
+            <ol className="admin-access-steps">
+              <li>
+                <span>01</span>
+                <div>
+                  <strong>Chọn cách xác minh</strong>
+                  <small>Email nhận mã hoặc mật khẩu quản trị.</small>
+                </div>
+              </li>
+              <li>
+                <span>02</span>
+                <div>
+                  <strong>Lưu cấu hình bảo mật</strong>
+                  <small>
+                    Không đưa mật khẩu hoặc khóa bí mật vào mã nguồn.
+                  </small>
+                </div>
+              </li>
+              <li>
+                <span>03</span>
+                <div>
+                  <strong>Quay lại kiểm tra</strong>
+                  <small>
+                    Đăng nhập và xác nhận đúng quyền truy cập dữ liệu đơn.
+                  </small>
+                </div>
+              </li>
+            </ol>
+            <Link className="admin-access-back" href="/admin">
+              <ArrowLeft size={16} /> Về trung tâm quản trị
+            </Link>
           </section>
         ) : !authenticated ? (
           <section className="admin-access-card">

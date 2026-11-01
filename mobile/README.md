@@ -4,15 +4,14 @@
 
 ## Tải và cài APK
 
-- APK hiện tại 2.1.0 arm64: `releases/HOSTORA-AI-2.1.0-arm64.apk`. Bản này đã cài đè và mở ổn định trên Redmi Note 8 Pro ngày 29/10; có intro cinematic 7 giây và WebView sân khấu 3D.
-- APK 2.0.9 trong tài liệu bàn giao là bản đánh giá lịch sử; không dùng làm link tải mặc định nữa.
-- Bản dùng để đánh giá: [HOSTORA AI 2.0.9 prerelease cập nhật trên GitHub](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/tag/v2.0.9-review-20261029-r2); bản ổn định cũ là v1.5.0.
-- Checksum APK cục bộ: `releases/SHA256SUMS.txt`.
+- APK hiện tại 2.2.0 arm64: [tải từ GitHub Release](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-2.2.0-arm64.apk). Bản này đã cài đè, chạy bộ TC01–TC09 và mở ổn định trên Redmi Note 8 Pro ngày 01/11/2026.
+- Checksum SHA-256: `53e2e3005c0004856213c0019e3a994b7b5265f87e38285678d2bd7250b56cee`.
+- APK 2.1.0 trở về trước là bằng chứng lịch sử; không dùng làm link tải mặc định nữa.
 
 Cài bằng ADB:
 
 ```bash
-adb install -r releases/HOSTORA-AI-2.1.0-arm64.apk
+adb install -r releases/HOSTORA-AI-2.2.0-arm64.apk
 ```
 
 Android có thể yêu cầu cho phép “Cài ứng dụng không rõ nguồn gốc” nếu mở APK từ trình quản lý file.
@@ -66,6 +65,8 @@ Bản 2.0.9 ghi rõ gói được ưu tiên mới đáp ứng ngân sách lưu t
 
 Bản 2.1.0 bổ sung intro cinematic 7 giây (H → HOSTORA → mascot), phát video cục bộ không cần mạng, nút bỏ qua, và sân khấu 3D có poster fallback khi thiết bị không hỗ trợ WebView/WebGL. Đã kiểm tra trực tiếp trên Redmi Note 8 Pro qua ADB; app sống ổn sau intro và về đúng Trang chủ.
 
+Bản 2.2.0 làm intro chỉ phát ở lần mở đầu tiên, thêm chuyển cảnh theo tiến độ, haptic và reduced-motion thống nhất, chống chuyển bước khi input chưa hợp lệ, trạng thái catalog dự phòng và chế độ trình diễn cho giám khảo. Bộ kiểm tra showcase đạt 20/20; TC01–TC09 đạt trên APK cài thật.
+
 ## Phát triển và build
 
 ```bash
@@ -81,4 +82,4 @@ APK sinh tại `android/app/build/outputs/apk/release/app-release.apk`. Android 
 
 ## Trạng thái ký
 
-APK 2.1.0 dùng chữ ký debug cục bộ; package `com.hostora.ai`, versionCode 22, min SDK 24, target SDK 36. Checksum SHA-256 nằm ở `releases/HOSTORA-AI-2.1.0-arm64.apk.sha256`. APK **chưa phải bản ký production cho Google Play**. Trước khi phát hành công khai cần tạo keystore production và bảo quản ngoài Git.
+APK 2.2.0 dùng chữ ký debug cục bộ; package `com.hostora.ai`, versionCode 23, min SDK 24, target SDK 36. Checksum SHA-256 nằm ở `releases/HOSTORA-AI-2.2.0-arm64.apk.sha256`. APK **chưa phải bản ký production cho Google Play**. Trước khi phát hành qua store cần tạo keystore production và bảo quản ngoài Git.

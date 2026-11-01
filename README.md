@@ -1,293 +1,83 @@
 # HOSTORA AI
 
-HOSTORA AI là nền tảng local-first giúp chủ shop và doanh nghiệp Việt Nam đi từ một nhu cầu còn mơ hồ đến website, hạ tầng và đơn hàng có thể theo dõi. Khách khám phá dịch vụ, nhờ AI làm rõ nhu cầu, tạo website mẫu, so sánh hosting, gửi yêu cầu mua và quản lý tài khoản trên web hoặc Android. Người vận hành dùng web admin để quản lý catalog, hỗ trợ, báo giá, hóa đơn, thanh toán và doanh thu trên cùng dữ liệu.
+HOSTORA AI giúp chủ shop và doanh nghiệp Việt Nam đi từ một nhu cầu còn mơ hồ đến phương án website, hosting và đơn hàng có thể theo dõi. Người dùng mô tả bằng tiếng Việt, kiểm tra dữ kiện AI đã hiểu, so sánh gói, tạo website mẫu và gửi yêu cầu mua trên web hoặc Android. Người vận hành dùng web admin để quản lý catalog, hỗ trợ, báo giá, hóa đơn, thanh toán và doanh thu.
 
-AI của HOSTORA chạy cục bộ qua Ollama. AI chỉ đọc, giải thích và soạn nội dung; giá, xếp hạng gói, voucher, trạng thái đơn và kết quả thanh toán vẫn do mã nguồn tất định kiểm soát. Dữ liệu thiếu phải được ghi là “Chưa có dữ liệu” hoặc “Chưa xác minh”, không được để mô hình tự điền.
+AI chạy local qua Ollama. AI chỉ trích xuất, giải thích và soạn nội dung; giá, thứ tự gói, voucher và trạng thái giao dịch do mã TypeScript/SQLite tất định kiểm soát. HOSTORA không dùng cloud AI fallback và không đưa PII vào model.
 
-> Trạng thái ngày 29/10/2026: source web, admin và Android 2.1.0 đã qua typecheck, lint, build production, 233 unit test, 47 E2E desktop/mobile, audit 12/12 trạng thái và AI smoke test local. APK 2.1.0 (versionCode 22) đã được cài đè và mở trên Redmi Note 8 Pro. Đây là bằng chứng local; Cloudflare production, Stripe/VNPay thật, SMTP tên miền, URL production ổn định và nghiên cứu người dùng vẫn chưa được xác nhận.
+## Truy cập nhanh
 
-| Phần đã kiểm tra | Kết quả gần nhất                                                                                       |
-| ---------------- | ------------------------------------------------------------------------------------------------------ |
-| Web + admin      | Build production thành công; 47 E2E pass, 1 ca mobile chủ động skip                                    |
-| Logic và API     | 233/233 unit test pass trên 52 file; body lớn, quota AI, CAPTCHA, replay và webhook có test hồi quy    |
-| AI local         | Ollama chat, chatbot, Studio và embedding trả inference thật; không dùng cloud fallback                |
-| Android          | `com.hostora.ai` 2.1.0, versionCode 22; cài bằng `adb install -r`, giữ dữ liệu app                     |
-| Bảo mật ứng dụng | CSP/header, body stream limit, quota + `Retry-After`, Turnstile thích ứng; cần bật Cloudflare thật     |
-| Giới hạn còn mở  | Độ ổn định timeout AI, URL/Cloudflare production, payment/SMTP production và test người dùng thật      |
+| Nội dung               | Liên kết                                                                                                                       | Trạng thái                                                         |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------ |
+| Web khách hàng         | [Mở HOSTORA](https://originally-mean-liberal-measurements.trycloudflare.com/)                                                  | HTTPS demo đang chạy, kiểm tra 01/11/2026                          |
+| Web quản trị           | [Mở trang admin](https://originally-mean-liberal-measurements.trycloudflare.com/admin)                                         | Chuyển tới cổng đăng nhập admin                                    |
+| APK Android mới nhất   | [Tải HOSTORA AI 2.2.0 arm64](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-2.2.0-arm64.apk) | Android arm64, package `com.hostora.ai`                            |
+| SHA-256 APK            | [Tải checksum](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-2.2.0-arm64.apk.sha256)        | `53e2e3005c0004856213c0019e3a994b7b5265f87e38285678d2bd7250b56cee` |
+| Minh chứng 9 ca mobile | [Tải báo cáo HTML](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA_MOBILE_9_CASES.html)          | TC01–TC09 đạt trên APK 2.2.0                                       |
+| Source                 | [GitHub repository](https://github.com/minhnhatdepzai/HOSTORA-AI)                                                              | Nhánh `main`                                                       |
 
-## HOSTORA bán gì?
+> URL `trycloudflare.com` là Quick Tunnel phục vụ vòng loại, mở được từ Internet khi máy demo và tunnel đang chạy nhưng có thể đổi sau khi tunnel khởi động lại. Link APK trên GitHub Release là link tải ổn định. Một URL web cố định cần named tunnel và tên miền Cloudflare riêng.
 
-Danh mục hiện có 29 sản phẩm từ 9 nhà cung cấp và 13 gói hosting được chấm điểm riêng, gồm:
+## Trạng thái bản 2.2.0
 
-- hosting dùng chung, WordPress, cloud, VPS và hosting cho website bán hàng;
-- tên miền, SSL, email doanh nghiệp và bộ công cụ làm việc;
-- công cụ tạo website và tự động hóa;
-- dịch vụ của HOSTORA hoặc sản phẩm đối tác do HOSTORA tiếp nhận yêu cầu, xác nhận giá và phát hành hóa đơn.
+| Phần đã kiểm tra    | Kết quả gần nhất                                                                                          |
+| ------------------- | --------------------------------------------------------------------------------------------------------- |
+| Web + admin         | Typecheck, lint và production build đạt                                                                   |
+| Logic/API           | 263/263 test đạt trên 53 file                                                                             |
+| AI local            | Ollama chat, Studio, embedding và smoke test chạy thật qua loopback; không dùng cloud fallback            |
+| Android             | `com.hostora.ai` 2.2.0, versionCode 23; cài đè bằng `adb install -r` và giữ dữ liệu trên Redmi Note 8 Pro |
+| Bộ giám khảo mobile | 20/20 kiểm tra showcase và TC01–TC09 đều đạt                                                              |
+| APK                 | 58.179.685 byte; SHA-256 như bảng trên                                                                    |
 
-Khách không bị đưa sang website khác để xem sản phẩm. Toàn bộ hành trình khám phá, tư vấn, gửi yêu cầu, xem hóa đơn và theo dõi trạng thái nằm trong HOSTORA. Khi dùng cổng thanh toán thật, Stripe hoặc VNPay sẽ mở trang nhập thông tin bảo mật của chính cổng, sau đó đưa khách trở lại HOSTORA.
+Intro cinematic chỉ phát ở lần mở đầu tiên; người dùng có thể bỏ qua và app ghi nhớ lựa chọn. App có chuyển cảnh theo tiến độ, phản hồi chạm/haptic, tôn trọng reduced motion, luồng tư vấn bốn bước, ba gói đề xuất, danh mục dịch vụ và chế độ trình diễn cho giám khảo.
 
-## Ba bề mặt, một hệ thống
+## HOSTORA bán gì và mua như thế nào?
 
-| Bề mặt           | Vai trò                                                                     | Dữ liệu dùng chung                               |
-| ---------------- | --------------------------------------------------------------------------- | ------------------------------------------------ |
-| Website Next.js  | Catalog, tài khoản, tư vấn AI, Studio, sổ tay, yêu cầu mua và tra cứu đơn   | API AI, catalog, project và SQLite local         |
-| Ứng dụng Android | Tư vấn bốn bước, trợ lý, sản phẩm, Studio, tài khoản, thông báo và đơn hàng | Gọi cùng API HOSTORA qua LAN/HTTPS               |
-| Web quản trị     | Catalog, hỗ trợ, doanh thu, yêu cầu mua, hóa đơn, thanh toán và hoàn tiền   | Cùng store catalog, tài khoản và SQLite đơn hàng |
+Danh mục gồm hosting dùng chung, WordPress, cloud, VPS, tên miền, SSL, email doanh nghiệp, công cụ tạo website và các dịch vụ vận hành website. Luồng chính:
 
-Yêu cầu mua, hóa đơn, lịch sử trợ lý, bộ nhớ nhu cầu và nguồn kiến thức riêng của tài khoản được lưu trong `data/runtime/payments.sqlite`, vì vậy website và app có thể nối tiếp cùng một cuộc trò chuyện sau khi đăng nhập. Khách chưa đăng nhập vẫn giữ chat cục bộ trên thiết bị. Wizard tư vấn và danh sách lead cũ còn nằm trong trình duyệt bằng `localStorage`; phần này chưa phải hệ thống quản lý khách hàng nhiều nhân viên.
+1. Khách kể nhu cầu bằng tiếng Việt hoặc điền form bốn bước.
+2. Code tính chi phí và xếp hạng; AI giải thích lý do bằng lời dễ hiểu.
+3. Khách so sánh một gói chính và tối đa hai phương án thay thế.
+4. Khách gửi yêu cầu mua; HOSTORA xác nhận nhà cung cấp, kỳ hạn và giá cuối.
+5. Admin phát hành hóa đơn; thanh toán thật chỉ hoàn tất sau webhook/IPN hợp lệ.
 
-![Sơ đồ kiến trúc HOSTORA](docs/architecture/visual-review/hostora-system.light.png)
+Giá “từ” không tự trở thành số tiền phải thu. Dữ liệu chưa có được hiển thị “Chưa xác minh”, không để AI tự điền. Chế độ thanh toán mặc định là demo và không thu tiền thật.
 
-Các sơ đồ tương tác được sinh từ source tại commit `1eb26b9` và đã qua kiểm tra schema, liên kết mã nguồn, layout và trình duyệt:
+## Ba bề mặt, một backend
 
-- [Kiến trúc tổng thể](docs/architecture/hostora-system.html)
-- [Luồng sản phẩm và đơn hàng](docs/architecture/hostora-product-flow.html)
-- [Luồng RAG local](docs/architecture/hostora-rag-flow.html)
-- [Luồng AI Website Studio](docs/architecture/hostora-site-studio-flow.html)
+| Bề mặt                    | Vai trò                                                                      |
+| ------------------------- | ---------------------------------------------------------------------------- |
+| Website Next.js           | Catalog, tư vấn AI, Website Studio, tài khoản, yêu cầu mua và tra cứu đơn    |
+| Android Expo/React Native | Tư vấn, sản phẩm, kết quả gợi ý, Studio, cài đặt backend và chế độ giám khảo |
+| Web admin                 | Catalog, hỗ trợ, yêu cầu mua, báo giá, hóa đơn, thanh toán và doanh thu      |
 
-Kiến trúc hoạt động theo nguyên tắc **ba giao diện, một backend**. Mọi input đi qua xác thực/schema trước khi tới logic domain hoặc AI. Giá, xếp hạng và trạng thái giao dịch do TypeScript/SQLite quyết định; RAG và Ollama chỉ cung cấp ngữ cảnh, nội dung và lời giải thích. Stripe, VNPay, SMTP và GitHub là nhánh tùy chọn, không phải điều kiện để chạy local.
+Kiến trúc giữ ranh giới rõ ràng:
 
-## Luồng sản phẩm và mua hàng
+- `app/api/ai/*`: gọi Ollama local, kiểm tra input/output bằng schema;
+- `lib/recommendation.ts`, `lib/pricing.ts`, `lib/scenario.ts`: quyết định số học tất định;
+- `data/hosting-catalog.ts`: dữ liệu hosting có nguồn và ngày xác minh;
+- `data/knowledge.json`, `data/rag-index.json`: RAG local;
+- `lib/payments/*`: SQLite, email, Stripe/VNPay và đối soát;
+- `mobile/`: app Android dùng chung API HOSTORA.
 
-```mermaid
-flowchart LR
-    A[Khách xem dịch vụ] --> B[Nhập nhu cầu]
-    B --> C[Code xếp hạng và tính chi phí]
-    C --> D[AI giải thích kết quả]
-    D --> E[Khách gửi yêu cầu mua]
-    E --> F[(SQLite: yêu cầu mới)]
-    F --> G[Admin kiểm tra và chốt giá]
-    G --> H[Phát hành hóa đơn + mã truy cập]
-    H --> I[Stripe hoặc VNPay]
-    I --> J{Webhook/IPN hợp lệ?}
-    J -- Có --> K[(Cập nhật paid/refund)]
-    J -- Không --> L[Giữ trạng thái chờ đối soát]
-    K --> M[Email + tài khoản khách]
-```
+Xem [sơ đồ hệ thống](docs/architecture/hostora-system.html), [luồng sản phẩm](docs/architecture/hostora-product-flow.html), [luồng RAG](docs/architecture/hostora-rag-flow.html) và [luồng Website Studio](docs/architecture/hostora-site-studio-flow.html).
 
-Luồng này tách rõ ba quyền quyết định: khách mô tả nhu cầu, code chọn phương án theo dữ liệu, còn quản trị viên chốt điều kiện thương mại. Cổng thanh toán chỉ đổi trạng thái sau khi bằng chứng giao dịch khớp; trang quay về không đủ quyền đánh dấu đã trả.
+## Chạy local
 
-### 1. Khám phá và làm rõ nhu cầu
+### Yêu cầu
 
-Khách xem nhanh dịch vụ trên website/app hoặc mô tả bằng lời. HOSTORA hỏi các thông tin có ảnh hưởng thật đến lựa chọn: loại website, khách hàng mục tiêu, lượng truy cập dự kiến, ngân sách, tình trạng website, tên miền, email, backup và mục tiêu tìm kiếm.
+- Node.js 22 trở lên;
+- pnpm 12.15.0;
+- Ollama chạy trên chính máy HOSTORA;
+- khoảng trống phù hợp để tải model local.
 
-Nếu khách chưa có website, chatbot không ép mua hosting. Nó hướng khách tới **Xưởng tạo website**, đợi khách tạo bản xem trước rồi dùng mục tiêu/chức năng của website đó để tư vấn tiếp.
-
-### 2. So sánh và gợi ý gói
-
-`lib/recommendation.ts`, `lib/pricing.ts` và `lib/scenario.ts` tính điểm, tổng chi phí và kịch bản bằng mã nguồn. AI chỉ giải thích kết quả theo tiếng Việt dễ hiểu. Luồng chuẩn trả một lựa chọn chính và tối đa hai lựa chọn thay thế, đồng thời nêu:
-
-- giá kỳ đầu, kỳ hạn và giá gia hạn nếu đã được xác minh;
-- lý do phù hợp với nhu cầu;
-- giới hạn, chi phí còn thiếu hoặc điều cần thử tải;
-- nguồn và ngày đối chiếu dữ liệu.
-
-HOSTORA không cam kết chịu tải chỉ từ “lượt truy cập mỗi tháng”, không tự xác nhận tên miền còn trống và không suy đoán giá gia hạn khi catalog để `null`.
-
-### 3. Gửi yêu cầu mua
-
-Khách điền email, thông tin doanh nghiệp, sản phẩm/dịch vụ chính, khu vực phục vụ, mục tiêu website/SEO, lượng khách, ngân sách và cách tư vấn mong muốn. Khách có thể:
-
-- chọn thời điểm tư vấn qua email, điện thoại hoặc video;
-- chọn AI tư vấn trước;
-- nhập voucher nếu có;
-- hủy yêu cầu bằng mã riêng.
-
-Hệ thống kiểm tra giới hạn mọi trường bằng Zod, tạo mã `HSR-*`, lưu vào SQLite và gửi email xác nhận cho khách nếu SMTP đã sẵn sàng.
-
-### 4. Quản trị chốt giá và tạo hóa đơn
-
-Tại `/admin/orders`, quản trị viên đăng nhập bằng mã một lần gửi qua email quản trị hoặc mật khẩu dự phòng. Màn hình có tìm kiếm, bộ lọc trạng thái, cổng thanh toán, loại dịch vụ, khoảng ngày, sắp xếp và phân trang; không cần kéo qua hàng nghìn đơn.
-
-Quản trị viên kiểm tra nhà cung cấp, kỳ hạn, thuế, điều kiện và tổng tiền rồi tạo hóa đơn `HST-*`. Khách nhận email chứa mã đơn và liên kết tra cứu riêng. Giá trong hóa đơn được lấy từ SQLite; AI không có quyền sửa.
-
-### 5. Thanh toán và bảo chứng trạng thái
-
-Khách mở `/orders` hoặc màn **Đơn hàng** trong app, nhập mã đơn và mã truy cập, rồi chọn Stripe hoặc VNPay.
-
-- Stripe chỉ ghi nhận đã trả khi webhook/đối soát khớp mã hóa đơn, số tiền, tiền tệ và PaymentIntent.
-- VNPay chỉ ghi nhận đã trả khi IPN hoặc kết quả đối soát có chữ ký HMAC hợp lệ, đúng mã đơn và đúng số tiền.
-- Trang quay về sau thanh toán không tự đánh dấu thành công.
-- Callback lặp được xử lý theo hướng idempotent, không phát voucher hay ghi tiền hai lần.
-- Chế độ `demo` chỉ phục vụ kiểm thử nội bộ và không thu tiền; chế độ `sandbox` cần khóa thử nghiệm riêng của HOSTORA.
-
-Sau khi cổng xác nhận đơn từ 1.000.000đ, hệ thống phát voucher 100.000đ cho đơn tiếp theo từ 1.000.000đ, có hiệu lực 30 ngày và chỉ dùng một lần.
-
-### 6. Email, hủy và hoàn tiền
-
-Hệ thống gửi email cho khách khi nhận yêu cầu, phát hành hóa đơn và khi trạng thái thanh toán/hủy/hoàn tiền thay đổi. Email có bản HTML, bản văn bản thuần, mã tham chiếu, nút xem đơn và hướng dẫn bảo vệ mã truy cập. Để thư không vào Spam, tên miền gửi phải có SPF, DKIM và DMARC; giao diện email đẹp không thay thế xác thực DNS.
-
-Khách có thể hủy hóa đơn chưa thanh toán hoặc gửi yêu cầu hoàn sau khi đã trả. Quản trị viên duyệt/từ chối tại `/admin/orders`. Stripe/VNPay chỉ chuyển đơn sang **Đã hoàn tiền** sau khi phản hồi cổng được kiểm chứng; timeout giữ trạng thái chờ đối soát để tránh hoàn hai lần. Dịch vụ số không có luồng vận chuyển/trả hàng vật lý.
-
-## Luồng AI tư vấn
-
-`POST /api/ai/chat` xử lý theo thứ tự sau:
-
-```mermaid
-flowchart LR
-    A[Tin nhắn web/app] --> B[Zod + giới hạn kích thước]
-    B --> C[Che email và số điện thoại]
-    C --> M{Đã đăng nhập?}
-    M -- Có --> N[Tải bộ nhớ + lịch sử tài khoản]
-    M -- Không --> D
-    N --> D{Guard tất định xử lý được?}
-    D -- Có --> E[Trả lời an toàn ngay]
-    D -- Không --> F[RAG + catalog + nguồn riêng liên quan]
-    F --> G[Ollama local, context 16K]
-    G --> H[Lọc citation ngoài context]
-    H --> I[Text tiếng Việt + nguồn + next action]
-    I --> L[(Lưu câu trả lời đã lọc theo tài khoản)]
-    G -. timeout/lỗi .-> J[HTTP 503 dễ hiểu]
-```
-
-1. Kiểm tra JSON, số lượng tin nhắn và chiều dài bằng Zod.
-2. Che email/số điện thoại trước khi truy xuất hoặc gọi mô hình; yêu cầu gửi PII vào model bị từ chối.
-3. Các trường hợp nhạy cảm được xử lý trước bằng quy tắc tất định: chưa có website, chưa đủ dữ kiện chọn gói, giá gia hạn chưa rõ, tên miền, DNS, structured data, thanh toán chưa cập nhật, email chưa tới và hoàn tiền.
-4. Khi đã đăng nhập, server nạp bộ nhớ nhu cầu có giới hạn và các lượt chat gần nhất; tin mới luôn có quyền sửa thông tin cũ. Bộ nhớ không chứa giá, khuyến mại hoặc trạng thái thanh toán.
-5. Nếu cần kiến thức, hệ thống truy xuất RAG, catalog và tối đa 4 đoạn liên quan từ nguồn riêng của chính tài khoản.
-6. Ollama local tạo câu trả lời với context 16K; không có cloud fallback.
-7. Citation được hậu kiểm, citation không nằm trong context bị loại bỏ; câu trả lời đã lọc mới được lưu. Log chỉ ghi model, độ trễ, token và số nguồn, không ghi nội dung chat hay PII.
-8. Giao diện nhận câu trả lời tiếng Việt và hành động tiếp theo như mở Xưởng tạo website hoặc tải ảnh màn hình cho OCR.
-
-Khách đăng nhập có thể thêm PDF tối đa 50 trang, DOCX, TXT/Markdown, trang HTTP/HTTPS công khai và ảnh từ web hoặc app Android. File được giới hạn 8 MB, ảnh 5 MB, URL bị chặn private/local và tối đa 3 lần chuyển hướng. Văn bản được che email/số điện thoại trước khi lưu; nội dung nguồn luôn bị coi là dữ liệu không tin cậy và không được dùng để xác nhận giá/cấu hình nhà cung cấp. OCR hành trình dùng `qwen3-vl:8b` local để xác định khách đang ở màn nào; ảnh hành trình không lưu vào lịch sử chat và người dùng vẫn phải che số thẻ, CVC, OTP cùng mã truy cập.
-
-## Luồng RAG local
-
-Nguồn kiến thức nằm tại `data/knowledge.json`; index embedding được tạo ở `data/rag-index.json`. Hiện kho có 36 tài liệu. RAG gồm một pha lập chỉ mục và một pha truy xuất lúc khách hỏi:
-
-```mermaid
-flowchart TB
-    subgraph OFFLINE[Pha 1 · tạo chỉ mục]
-        K[data/knowledge.json<br/>36 tài liệu có URL và ngày xác minh]
-        K --> V[qwen3-embedding:4b]
-        V --> IDX[(data/rag-index.json<br/>vector + metadata)]
-    end
-
-    subgraph ONLINE[Pha 2 · trả lời]
-        Q[Câu hỏi đã che PII] --> X[Mở rộng từ khóa tiếng Việt]
-        X --> BM[BM25 lexical]
-        X --> QE[Embedding câu hỏi]
-        IDX --> COS[Cosine similarity]
-        QE --> COS
-        BM --> RRF[RRF<br/>65% semantic + 35% lexical]
-        COS --> RRF
-        RRF --> DIV[Đa dạng hóa URL/chủ đề]
-        DIV --> CTX[Top tài liệu + catalog<br/>citation K/P/S]
-        CTX --> LLM[Ollama local]
-        LLM --> CHECK[Hậu kiểm citation]
-        CHECK --> ANS[Câu trả lời + nguồn]
-        IDX -. sai model/nội dung .-> FALLBACK[BM25 fallback]
-        QE -. embedding lỗi .-> FALLBACK
-        FALLBACK --> CTX
-    end
-```
-
-Pha lập chỉ mục gọi embedding theo lô và ghi vector cạnh metadata của từng tài liệu. Khi khách hỏi, HOSTORA chạy BM25 và vector song song, hợp nhất thứ hạng bằng RRF, rồi giảm việc nhiều kết quả trùng URL/chủ đề. Top tài liệu, gói hosting và sản phẩm được gắn citation trước khi đưa vào model. Sau khi model trả lời, citation không nằm trong context bị loại bỏ.
-
-Nếu Ollama embedding chưa chạy hoặc index không khớp model/nội dung hiện tại, retriever chuyển sang BM25 và báo mode `lexical-fallback` thay vì giả vờ đã tìm bằng vector. Nội dung RAG được xem là dữ liệu không tin cậy: mọi chỉ dẫn nằm trong tài liệu đều bị bỏ qua. Giá và tình trạng thương mại không được fine-tune vào trọng số; chúng luôn lấy từ catalog có nguồn.
-
-Tạo/làm mới và đánh giá index:
-
-```bash
-pnpm rag:index
-pnpm rag:evaluate
-pnpm rag:evaluate:live
-```
-
-`rag:evaluate` đo retrieval trên bộ câu hỏi nội bộ. Recall/MRR không chứng minh mọi câu trả lời trung thực; backlog đánh giá còn faithfulness, answer relevance, prompt injection và đánh giá bởi người dùng thật.
-
-## Luồng AI tạo website
-
-Website Studio nhận mô tả doanh nghiệp, khách hàng mục tiêu, hành động chính, phong cách, màu nhấn, mức truy cập và ngân sách. Luồng đang phục vụ được điều phối bằng LangGraph:
-
-```mermaid
-flowchart LR
-    A[Tài khoản khách + brief] --> B[Auth, same-origin, Zod]
-    B --> C[Che thông tin liên hệ]
-    C --> D[STUDIO_MODEL sinh JSON nội dung]
-    D --> E[Rule check tuyên bố không có căn cứ]
-    E --> F[AI audit độc lập]
-    F --> G{Đạt kiểm tra?}
-    G -- Không --> H[Nội dung mẫu an toàn]
-    G -- Có --> I[Brief đã kiểm chứng]
-    H --> J[Code gợi ý hosting]
-    I --> J
-    J --> K[Renderer HTML/CSS/JS kiểm soát]
-    K --> L[(Project local mode 0600)]
-    L --> M[Preview + ZIP + chat chỉnh sửa]
-    L -. đã bật .-> N[Repo GitHub riêng]
-```
-
-Model không được giao quyền sinh rồi thực thi mã. Nó chỉ soạn JSON nội dung; rule check và một lượt audit riêng loại tuyên bố ngoài brief. Khi AI lỗi hoặc bản nháp không đạt, luồng vẫn hoàn tất bằng template an toàn. Renderer thuộc HOSTORA chịu trách nhiệm về responsive, chuyển động, Three.js, accessibility và file ZIP.
-
-1. API kiểm tra brief bằng schema và giới hạn đầu vào.
-2. Email/số điện thoại bị che trước khi gửi vào model.
-3. `STUDIO_MODEL` chỉ sinh JSON nội dung: headline, subheadline, CTA, phần giới thiệu, ba điểm nổi bật và SEO title/description.
-4. Bộ kiểm tra từ khóa loại các tuyên bố không có trong brief.
-5. Một lần gọi AI độc lập kiểm chứng toàn bộ nội dung; nếu model lỗi hoặc bản nháp bịa dữ kiện, Studio dùng nội dung mẫu an toàn.
-6. Gợi ý hosting được tính tất định từ catalog, không để AI tự chọn giá hoặc gói.
-7. Renderer do HOSTORA kiểm soát tạo HTML/CSS/JS, responsive mobile/desktop, Three.js, GSAP, focus state và `prefers-reduced-motion`.
-8. Dự án được lưu cục bộ, trả link xem tương tác, link tải ZIP và khung chat sửa tiếp.
-9. Nếu `HOSTORA_STUDIO_GITHUB_ENABLED=true` và máy chủ đã `gh auth login`, hệ thống tạo repo GitHub riêng tư cho khách và tự commit/push sau mỗi lần sửa. Nếu GitHub lỗi, link HOSTORA và ZIP vẫn hoạt động.
-
-AI không được sinh rồi thực thi mã HTML/JS tùy ý trong luồng production. Bộ dữ liệu Studio có cả kế hoạch thiết kế có cấu trúc (bố cục, mật độ, kiểu chữ, vai trò màu nhấn, mức chuyển động và motif 3D), nhưng renderer vẫn là ranh giới an toàn cuối cùng.
-
-## Fine-tuning và vòng học từ phản hồi
-
-Chatbot và Studio được train riêng bằng LoRA trên `unsloth/Qwen3.5-4B`; feedback không tự ghi thẳng vào trọng số đang phục vụ. Quy trình đúng là thu thập phản hồi đã ẩn danh → phân loại lỗi → duyệt dữ liệu → tạo train/holdout tách biệt → train → reload adapter → đánh giá → chỉ promote khi đạt ngưỡng.
-
-Trí nhớ xuyên phiên và việc Studio dùng lại sở thích chỉnh sửa là retrieval từ SQLite có giới hạn, không phải model tự học trực tiếp từ chat khách. Yêu cầu sửa mới luôn thắng sở thích cũ; giá, khuyến mại, tồn kho và dữ liệu cá nhân không được đưa vào bộ train.
-
-### Kết quả đã xác minh
-
-| Ứng viên                   | Dữ liệu                                         | Kết quả holdout local                                                                                  | Quyết định                                                   |
-| -------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------ |
-| `hostora-chatbot:4b-q8-v6` | 655 train, 142 holdout                          | 142/142 HTTP, schema, ngôn ngữ phổ thông, không bịa số và có bước tiếp theo; 134/142 định tuyến đúng   | Đủ điều kiện review thủ công, **candidate only**             |
-| `hostora-chatbot:4b-q8-v7` | 671 train, 146 holdout, có hội thoại nhiều lượt | 146/146 HTTP/schema; 145/146 ngôn ngữ và bước tiếp theo; 132/146 định tuyến đúng                       | Kém v6 trên cùng tập v7 ở định tuyến; giữ **candidate only** |
-| `hostora-chatbot:4b-q8-v8` | 737 train, 151 holdout; 18 ca paraphrase mới    | 151/151 HTTP/schema; 151/151 hình thức an toàn; 130/151 holdout và 10/18 ca mới định tuyến đúng       | **Candidate**, chưa promote vì gate định tuyến chưa đạt     |
-| `hostora-studio:4b-q8-v3`  | 384 train, 24 holdout                           | 24/24 schema, không bịa số, không hype chung, bám thương hiệu, tách section và đủ chiều sâu theo bộ đo | Đủ điều kiện review thủ công, **candidate only**             |
-
-Các số trên là đánh giá tự động cục bộ, không phải chấm mù bởi khách hàng hay chuyên gia độc lập. Runtime hiện vẫn dùng model được cấu hình trong `.env.local`; train/eval không tự promote. Artifact adapter, checkpoint và GGUF 4–5 GB bị Git ignore. GitHub chỉ chứa dataset, config, script, Modelfile và tài liệu để tái lập.
-
-Đánh giá account AI cuối ngày 29/10/2026 đạt **9/9 ca** trên một tài khoản tuần tự: nhớ yêu cầu qua phiên, giữ ngân sách, cho phép thông tin mới sửa thông tin cũ, bám nguồn riêng và từ chối prompt injection/doanh thu chưa có dữ liệu. Median quan sát 2.522 ms, p95 quan sát 3.617 ms. Đây là bộ nhớ retrieval có giới hạn trong SQLite theo tài khoản, không phải model nhớ vô hạn và không phải p95 production.
-
-Xem [bằng chứng fine-tuning](docs/CHATBOT_FINETUNING.md), [rubric AI và chuyển đổi](docs/AI_EVALUATION.md) và `training/README.md`.
-
-## Langfuse và đo chuyển đổi
-
-Langfuse là tùy chọn và mặc định tắt. Chỉ bật khi đã có project riêng và kiểm chứng trace end-to-end. HOSTORA chỉ gửi metadata như tính năng, chế độ tạo, độ trễ, đánh giá hữu ích/cần sửa, lý do feedback và bước phễu ẩn danh; không gửi prompt, nội dung website, email, số điện thoại hoặc mã đơn.
-
-Bốn nhóm đánh giá ưu tiên:
-
-1. đúng dữ liệu giá và nguồn;
-2. an toàn, không bịa;
-3. hữu ích với nhu cầu thật;
-4. chuyển đổi từ xem demo → mở gói → gửi yêu cầu → bắt đầu thanh toán.
-
-Fine-tuning không thay thế A/B test, phỏng vấn khách, kiểm tra conversion thật và review thủ công.
-
-## Bảo mật và quyền riêng tư
-
-- Ollama mặc định chỉ ở `127.0.0.1`; không có cloud fallback.
-- API AI kiểm tra schema, giới hạn dữ liệu và không cấp shell/filesystem/network tool cho model.
-- Website Analyzer chặn SSRF trước khi tải HTML công khai.
-- Giá, khuyến mại, voucher và trạng thái đơn không nằm trong quyền quyết định của LLM.
-- Mã truy cập đơn được băm trong SQLite; trang quản trị có phiên đăng nhập, kiểm tra same-origin và giới hạn input.
-- Stripe webhook và VNPay IPN được kiểm chữ ký/số tiền trước khi đổi trạng thái.
-- `.env*`, SQLite runtime, raw lead, trace PII, checkpoint và APK build không được commit.
-- Che PII trong văn bản tự do là best-effort, không phải bảo đảm tuyệt đối.
-
-Trước khi mở ra Internet cần thêm reverse proxy HTTPS, rate limit/WAF ở lớp biên, backup mã hóa, giám sát, chính sách lưu dữ liệu và kiểm thử xâm nhập trên môi trường được phép. Quota trong ứng dụng chỉ bảo vệ tài nguyên inference/trích xuất, không thay thế chống DDoS của Cloudflare hoặc reverse proxy.
-
-## Cài và chạy local
-
-Yêu cầu Node.js 22+, pnpm và Ollama. Dùng model cục bộ, không cần khóa AI cloud.
+### Cài và chạy development
 
 ```bash
 git clone https://github.com/minhnhatdepzai/HOSTORA-AI.git
 cd HOSTORA-AI
 cp .env.example .env.local
-pnpm install
+corepack enable
+pnpm install --frozen-lockfile
 ollama pull qwen3.5:9b-q8_0
 ollama pull qwen3-embedding:4b
 ollama pull qwen3-vl:8b
@@ -296,9 +86,23 @@ pnpm ai:check
 pnpm dev
 ```
 
-Mở <http://127.0.0.1:3000>. Nếu điện thoại cùng Wi-Fi cần truy cập máy HOSTORA, chạy `pnpm dev:lan`, cấu hình server trong app bằng `http://<IP-máy-HOSTORA>:3000` và chỉ dùng trên mạng tin cậy.
+Mở <http://127.0.0.1:3000>. Các đường dẫn chính:
 
-Muốn kiểm tra bản production local: chạy `pnpm build` rồi `pnpm start`. Lệnh build chép JavaScript/CSS, ảnh và tối đa hai APK hiện có vào bản standalone, đồng thời loại dữ liệu đơn hàng và dự án khách khỏi thư mục build. Khi chép bản standalone sang máy khác, cấu hình `.env.local`/biến môi trường và dữ liệu vận hành riêng trên máy đó.
+- `/` — website khách hàng;
+- `/consultation` — tư vấn chọn gói;
+- `/website-studio` — tạo website mẫu;
+- `/admin` — web quản trị;
+- `/api/health` — health check;
+- `/downloads/android` — tải hoặc chuyển tới APK mới nhất.
+
+### Chạy production
+
+```bash
+pnpm build
+pnpm start
+```
+
+Server standalone dùng `PORT=3000` và `HOSTNAME=0.0.0.0` mặc định. Khi public ra Internet, đặt `HOSTORA_PUBLIC_BASE_URL` bằng origin HTTPS thật, dùng reverse proxy/WAF và cấu hình secret chỉ qua biến môi trường.
 
 ### Chạy bằng Docker
 
@@ -306,34 +110,72 @@ Muốn kiểm tra bản production local: chạy `pnpm build` rồi `pnpm start`
 ./scripts/docker-up.sh
 ```
 
-Máy có NVIDIA Container Toolkit dùng `./scripts/docker-up.sh --gpu`. Lần đầu cần tải model và sẽ tốn thời gian/dung lượng. Xem [hướng dẫn Docker](docs/DOCKER_DEPLOYMENT.md).
+Máy có NVIDIA Container Toolkit có thể dùng:
+
+```bash
+./scripts/docker-up.sh --gpu
+```
+
+Xem [hướng dẫn Docker](docs/DOCKER_DEPLOYMENT.md).
 
 ## Android
 
-- Bản arm64 local hiện tại: `mobile/releases/HOSTORA-AI-2.1.0-arm64.apk` (versionCode 22, đã cài và mở ổn định trên Redmi Note 8 Pro; checksum nằm cạnh APK).
-- Intro app 2.1.0: video cục bộ 7 giây, H → HOSTORA → mascot; có nút bỏ qua và tự chuyển về Trang chủ sau khi kết thúc.
-- Bản universal local: `mobile/releases/HOSTORA-AI-2.0.3-universal.apk`.
-- Khi web đang chạy: `/downloads/android` và `/downloads/android-universal`.
-- Source trên `main` là 2.1.0. APK public gần nhất vẫn là [HOSTORA 2.0.9 prerelease](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/tag/v2.0.9-review-20261029-r2); cần tạo release 2.1.0 riêng trước khi nói bản APK mới đã được phân phối công khai.
+### Cài APK phát hành
 
-APK build không được commit vào source vì kích thước lớn. Xem [hướng dẫn mobile](mobile/README.md), [audit giao diện](docs/MOBILE_UI_AUDIT.md) và `mobile/releases/SHA256SUMS.txt` trước khi phát hành.
+Tải APK ở bảng “Truy cập nhanh”, sau đó mở trên điện thoại Android arm64 hoặc cài bằng ADB:
 
-Bản đối chiếu tiêu chí, test và giới hạn bàn giao nằm ở [JUDGE_HANDOFF_2026-10-29.md](docs/submission/JUDGE_HANDOFF_2026-10-29.md). ZIP, APK, model weights, dữ liệu runtime và secret không nằm trong source Git; hãy dùng script đóng gói/release để tạo artifact từ commit cần bàn giao.
+```bash
+adb install -r HOSTORA-AI-2.2.0-arm64.apk
+```
 
-## Cấu hình tùy chọn
+`-r` cài đè và giữ dữ liệu app. APK 2.2.0 hiện dùng chữ ký debug cục bộ để chấm vòng loại, chưa phải bản ký production cho Google Play.
 
-Các biến mẫu nằm trong `.env.example`:
+### Chạy app với backend qua USB
 
-- `OLLAMA_*`: chat, chatbot, Studio, vision, embedding, context và timeout;
-- `HOSTORA_PAYMENTS_*`, `HOSTORA_STRIPE_*`, `HOSTORA_VNPAY_*`: SQLite và cổng thanh toán;
-- `HOSTORA_SMTP_*`, `HOSTORA_EMAIL_*`: email khách/quản trị;
+```bash
+pnpm dev
+adb reverse tcp:3000 tcp:3000
+```
+
+Trong app mở **Cài đặt → Kết nối local AI → USB localhost → Lưu và kiểm tra kết nối**.
+
+### Chạy qua Wi-Fi/LAN
+
+```bash
+pnpm dev:lan
+```
+
+Trong app nhập `http://<IP-máy-HOSTORA>:3000`. Điện thoại và máy chủ phải cùng mạng; chỉ mở cổng 3000 trên mạng tin cậy.
+
+### Build và cài lại APK
+
+```bash
+pnpm --dir mobile install --frozen-lockfile
+pnpm --dir mobile typecheck
+pnpm --dir mobile lint
+pnpm android:update
+```
+
+`pnpm android:update` build arm64, kiểm tra package/version rồi cài bằng `adb install -r` mà không xóa dữ liệu app. Xem thêm [README mobile](mobile/README.md).
+
+## Cấu hình
+
+Sao chép `.env.example` thành `.env.local`. Nhóm biến chính:
+
+- `OLLAMA_*`: model chat, Studio, embedding, context và timeout;
+- `HOSTORA_PAYMENTS_*`: SQLite và chế độ `demo`/`sandbox`;
+- `HOSTORA_STRIPE_*`, `HOSTORA_VNPAY_*`: cổng thanh toán tùy chọn;
+- `HOSTORA_SMTP_*`, `HOSTORA_EMAIL_*`: email khách và quản trị;
 - `HOSTORA_ADMIN_*`: phiên quản trị và mật khẩu dự phòng;
+- `HOSTORA_PUBLIC_BASE_URL`: origin HTTPS công khai;
 - `HOSTORA_STUDIO_GITHUB_*`: repo riêng cho website khách;
-- `LANGFUSE_*`: quan sát AI và phễu ẩn danh.
+- `LANGFUSE_*`: quan sát metadata AI đã ẩn danh, mặc định tắt.
 
-Không sao chép khóa của JAPANO hoặc dự án khác. HOSTORA phải dùng tài khoản merchant, email và GitHub credential riêng.
+Không commit `.env.local`, API key, token, cookie, SQLite runtime, dữ liệu khách hoặc trace chứa PII.
 
-## Kiểm tra trước khi bàn giao
+## Kiểm thử và minh chứng
+
+Chạy toàn bộ gate trước khi bàn giao:
 
 ```bash
 pnpm agent:doctor
@@ -341,84 +183,43 @@ pnpm agent:verify
 pnpm test:e2e:isolated
 pnpm audit:ui
 pnpm test:mobile:mcp
+pnpm test:mobile:judge
+pnpm report:mobile:judge
 ```
 
-`agent:verify` chạy typecheck/lint/test/build cho web, typecheck/lint cho app và `ai:check` bằng inference local thật. `test:e2e:isolated` dùng SQLite/session riêng; `audit:ui` chụp desktop/mobile và chạy axe; `test:mobile:mcp` đi luồng native trên điện thoại thật. HTTP 200, browser viewport hoặc APK build thành công không thay thế việc kiểm tra nội dung AI và luồng Android.
+Các tài liệu dành cho vòng loại:
 
-## Cấu trúc chính
+- [Báo cáo 9 ca mobile](docs/submission/HOSTORA_MOBILE_9_CASES.html);
+- [Ma trận kiểm thử Bảng A](docs/submission/TEST_MATRIX.md);
+- [Minh chứng 6 ca dạng HTML](docs/submission/MINH_CHUNG_6_CA.html) và [PDF](docs/submission/MINH_CHUNG_6_CA.pdf);
+- [Kịch bản video và demo vòng loại](docs/submission/KICH_BAN_VONG_LOAI_2026-11-01.md);
+- [Nguồn dữ liệu và ngày xác minh](docs/DATA_SOURCES.md);
+- [Kiến trúc AI](docs/AI_ARCHITECTURE.md);
+- [Báo cáo bảo mật](docs/SECURITY_REVIEW.md).
 
-```text
-app/                         Website, admin và API Next.js
-app/api/ai/                  Chat, OCR, RAG, phân tích và Website Studio
-app/api/payments/            Yêu cầu mua, hóa đơn, checkout và callback
-app/api/admin/payments/      Đăng nhập, lọc đơn, báo giá, hoàn/đối soát
-components/                  Giao diện web và trang quản trị
-mobile/                      Ứng dụng React Native / Expo Router
-data/hosting-catalog.ts      13 gói hosting có nguồn
-data/product-catalog.ts      29 sản phẩm/dịch vụ
-data/knowledge.json          36 tài liệu RAG có nguồn/ngày xác minh
-data/rag-index.json          Embedding index local
-lib/recommendation.ts        Chấm điểm gói tất định
-lib/pricing.ts               Tính chi phí tất định
-lib/rag.ts                   BM25, vector, RRF và fallback
-lib/site-studio-workflow.ts  LangGraph cho nội dung Studio
-lib/site-studio.ts           Renderer HTML/Three.js/GSAP được kiểm soát
-lib/payments/                Đơn hàng, email, Stripe và VNPay
-training/                    Dữ liệu, cấu hình, train/export/eval LoRA
-docs/architecture/           Sơ đồ Archify tương tác
-```
+HTTP 200, browser mobile viewport hoặc APK build thành công không thay thế kiểm thử luồng thật. Bằng chứng Android phải đến từ APK cài trên thiết bị; ca sự cố mô phỏng phải được ghi rõ là mô phỏng.
 
-## Tài liệu chi tiết
+## Giới hạn hiện tại
 
-- [Kiến trúc AI](docs/AI_ARCHITECTURE.md)
-- [Nguồn dữ liệu và ngày xác minh](docs/DATA_SOURCES.md)
-- [Thiết lập Stripe/VNPay và email](docs/PAYMENTS_SETUP.md)
-- [Fine-tuning chatbot](docs/CHATBOT_FINETUNING.md)
-- [Đánh giá AI và phễu chuyển đổi](docs/AI_EVALUATION.md)
-- [Báo cáo bảo mật](docs/SECURITY_REVIEW.md)
-- [Hardening Cloudflare, Turnstile và chống abuse](docs/SECURITY_HARDENING_2026-10-29.md)
-- [Load/stress test AI staging](docs/AI_LOAD_TEST_2026-10-29.md)
-- [Báo cáo QA](docs/QA_REPORT.md)
-- [Kịch bản demo](docs/DEMO_SCRIPT.md)
-- [Thiết lập môi trường](docs/ENVIRONMENT_SETUP.md)
-- [Đối chiếu tiêu chí và bằng chứng](docs/JUDGING_READINESS.md)
-- [SEO/GEO, llms.txt và nguồn tham khảo](docs/SEO_GEO_SOURCES.md)
+- Web public đang dùng Quick Tunnel, không có cam kết uptime và URL sẽ đổi nếu tunnel khởi động lại.
+- Chưa có giao dịch/hoàn tiền production đã kiểm chứng bằng tài khoản merchant HOSTORA; chế độ demo không thu tiền.
+- SMTP cần domain có SPF, DKIM và DMARC trước khi đánh giá khả năng vào Inbox.
+- APK chưa ký bằng production keystore và chưa phát hành qua Google Play.
+- Giá, ưu đãi và tình trạng tên miền thay đổi theo thời gian; phải kiểm tra lại nguồn trước khi bán.
+- Kết quả test local và tự chấm không bảo đảm thứ hạng cuộc thi hoặc tải production.
 
-## SEO và GEO
+## Cloudflare Quick Tunnel
 
-- `/robots.txt` cho phép Google và nhóm bot tìm kiếm AI đọc các trang công khai, đồng thời chặn `/admin`, `/api` và `/orders`.
-- `/sitemap.xml` liệt kê các trang bán hàng, tư vấn và sổ tay với thời điểm cập nhật hiện tại.
-- `/llms.txt` là bản tóm tắt chính thức cho trợ lý AI; `/llms-full.txt` có danh mục và sổ tay chi tiết, kèm ngày xác minh.
-- Trang chủ xuất JSON-LD cho `Organization`, `WebSite`, `SoftwareApplication`, `WebApplication` và `FAQPage`; manifest có shortcut cho tư vấn và Website Studio.
-- Website Analyzer kiểm tra thêm llms.txt và ngữ cảnh thực thể thương hiệu khi audit GEO.
-- Cloudflare có thể chèn robots riêng ở phía trước ứng dụng. Nếu muốn chatbot tìm kiếm trích dẫn HOSTORA, phải cho phép AI search bots trong AI Crawl Control của Cloudflare; kiểm tra lại `/robots.txt` public sau khi bật.
-
-## Giới hạn trung thực
-
-- Chưa có tài khoản merchant HOSTORA nên chưa có bằng chứng giao dịch/hoàn tiền thật từ Stripe hoặc VNPay.
-- Chưa có URL triển khai công khai ổn định; link LAN không phải link production.
-- Repo GitHub riêng cho khách chỉ hoạt động khi máy chủ đã kết nối GitHub và bật cấu hình.
-- SMTP hoạt động không bảo đảm vào Inbox nếu tên miền chưa có SPF/DKIM/DMARC và uy tín gửi.
-- `chatbot-v6`, `chatbot-v7` và `studio-v3` là ứng viên local, chưa được tự động promote.
-- Schema/HTTP pass không chứng minh câu trả lời đúng nguồn, website đẹp hay tăng doanh thu.
-- Trang quản trị lead cũ vẫn dùng dữ liệu trình duyệt; chỉ đơn hàng/hóa đơn dùng SQLite chung.
-- Giá, ưu đãi và tình trạng tên miền thay đổi theo thời gian; phải xác minh trước khi bán.
-- Năng lực chịu tải chỉ được kết luận sau benchmark workload thật trên máy triển khai.
-
-HOSTORA ưu tiên bằng chứng: phần đã có mã, đã test, đang là candidate và chưa sẵn sàng production phải luôn được ghi tách biệt.
-
-## URL public qua Cloudflare
-
-Khi cần cho giám khảo hoặc khách thử web ngoài mạng LAN, HOSTORA có lệnh mở Cloudflare Quick Tunnel:
+Khi cần tạo URL HTTPS mới từ web local:
 
 ```bash
 pnpm tunnel:cloudflare
 ```
 
-Lệnh kiểm tra `/api/health` rồi chuyển cổng web local 3000 thành URL HTTPS `https://*.trycloudflare.com`. Giữ cửa sổ lệnh chạy trong suốt thời gian demo; URL sẽ đổi sau khi tunnel dừng. Dừng bằng:
+Giữ tiến trình chạy trong suốt buổi demo. Dừng bằng:
 
 ```bash
 pnpm tunnel:cloudflare:stop
 ```
 
-Quick Tunnel phù hợp cho đánh giá tạm thời, không phải địa chỉ production cố định. Muốn URL cố định cần tạo tunnel có tên trong Cloudflare, trỏ DNS của tên miền HOSTORA vào tunnel và đặt `HOSTORA_PUBLIC_BASE_URL` cùng các URL callback thanh toán theo tên miền HTTPS đó. Không đưa token Cloudflare vào Git hoặc `.env.example`.
+Muốn URL cố định, cần tạo named tunnel trong tài khoản Cloudflare, trỏ DNS của tên miền riêng và cập nhật `HOSTORA_PUBLIC_BASE_URL` cùng callback thanh toán. Không đưa token Cloudflare vào Git.

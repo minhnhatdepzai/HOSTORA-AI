@@ -1,4 +1,5 @@
 import { Pressable } from "@/components/pressable";
+import { Reveal, Stagger } from "@/components/motion";
 import { Feather } from "@expo/vector-icons";
 import { useState } from "react";
 import {
@@ -171,121 +172,150 @@ export default function RecommendationsScreen() {
           </Text>
         </View>
         <View style={styles.content}>
-          {status === "offline" && <Button label="Thử tải lại" icon="refresh-cw" onPress={retry} />}
-          {status === "verified" && <Card style={{ gap: 10 }}>
-            <Text style={styles.formTitle}>{hasEligiblePlan ? "Có gói đáp ứng ngân sách lưu trữ" : "Chưa có gói đáp ứng ngân sách này"}</Text>
-            <Body>{disclosure?.summary}</Body>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityState={{ expanded: costDetailsOpen }}
-              onPress={() => setCostDetailsOpen((current) => !current)}
-              style={({ pressed }) => [
-                styles.disclosureToggle,
-                pressed && styles.disclosureTogglePressed,
-              ]}
-            >
-              <Text style={styles.disclosureToggleText}>
-                {costDetailsOpen ? "Thu gọn chi phí" : "Xem chi tiết chi phí"}
+          {status === "offline" && (
+            <Button label="Thử tải lại" icon="refresh-cw" onPress={retry} />
+          )}
+          {status === "verified" && (
+            <Card style={{ gap: 10 }}>
+              <Text style={styles.formTitle}>
+                {hasEligiblePlan
+                  ? "Có gói đáp ứng ngân sách lưu trữ"
+                  : "Chưa có gói đáp ứng ngân sách này"}
               </Text>
-              <Feather
-                name={costDetailsOpen ? "chevron-up" : "chevron-down"}
-                color={colors.primary}
-                size={17}
-              />
-            </Pressable>
-            {costDetailsOpen ? (
-              <View style={styles.disclosureDetails}>
-                {disclosure?.details.map((detail) => (
-                  <Text key={detail} style={styles.disclosureDetail}>
-                    {detail}
-                  </Text>
-                ))}
-                <Text style={styles.disclosureDetail}>
-                  Điểm chỉ hỗ trợ so sánh theo dữ liệu đã công bố, không bảo đảm hiệu năng.
+              <Body>{disclosure?.summary}</Body>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityState={{ expanded: costDetailsOpen }}
+                onPress={() => setCostDetailsOpen((current) => !current)}
+                style={({ pressed }) => [
+                  styles.disclosureToggle,
+                  pressed && styles.disclosureTogglePressed,
+                ]}
+              >
+                <Text style={styles.disclosureToggleText}>
+                  {costDetailsOpen ? "Thu gọn chi phí" : "Xem chi tiết chi phí"}
                 </Text>
-              </View>
-            ) : null}
-            <Button label="Sửa nhu cầu và ngân sách" variant="secondary" onPress={() => router.push("/(tabs)/consult")} />
-          </Card>}
-          {ranked.map((plan, index) => (
-            <Card
-              key={plan.id}
-              style={[styles.plan, index === 0 && styles.best]}
-            >
-              {index === 0 ? (
-                <View style={styles.bestRibbon}>
-                  <Text style={styles.bestRibbonText}>{plan.eligibility === "eligible" ? "ƯU TIÊN TRONG CÁC GÓI ĐÃ SO SÁNH" : "PHƯƠNG ÁN THAM KHẢO"}</Text>
-                </View>
-              ) : null}
-              <View style={[styles.planTop, index === 0 && { marginTop: 10 }]}>
-                <View>
-                  <Text style={styles.provider}>{plan.provider}</Text>
-                  <Text style={styles.planName}>{plan.name}</Text>
-                </View>
-                <View style={styles.score}>
-                  <Text style={styles.scoreText}>{plan.score}</Text>
-                  <Text style={styles.scoreSub}>/100</Text>
-                </View>
-              </View>
-              <View style={styles.priceRow}>
-                <Text style={styles.price}>{formatVnd(plan.promo)}</Text>
-                <Text style={styles.per}>/tháng</Text>
-              </View>
-              <Text style={styles.renewal}>
-                Giá ưu đãi áp dụng cho kỳ {plan.billingMonths} tháng; không phải
-                giá cho mọi kỳ.
-              </Text>
-              <Text style={styles.renewal}>
-                Trả trước {formatVnd(plan.upfrontVnd)} tiền hosting, chưa gồm thuế và dịch vụ bổ sung.
-              </Text>
-              <Text style={styles.renewal}>
-                Gia hạn:{" "}
-                {plan.renewal == null
-                  ? "Chưa xác minh"
-                  : `${formatVnd(plan.renewal)}/tháng`}
-              </Text>
-              <View style={styles.reasons}>
-                {plan.reasons.map((reason) => (
-                  <View key={reason} style={styles.reason}>
-                    <Feather name="check" color={colors.success} size={14} />
-                    <Text style={styles.reasonText}>{reason}</Text>
+                <Feather
+                  name={costDetailsOpen ? "chevron-up" : "chevron-down"}
+                  color={colors.primary}
+                  size={17}
+                />
+              </Pressable>
+              {costDetailsOpen ? (
+                <Reveal>
+                  <View style={styles.disclosureDetails}>
+                    {disclosure?.details.map((detail) => (
+                      <Text key={detail} style={styles.disclosureDetail}>
+                        {detail}
+                      </Text>
+                    ))}
+                    <Text style={styles.disclosureDetail}>
+                      Điểm chỉ hỗ trợ so sánh theo dữ liệu đã công bố, không bảo
+                      đảm hiệu năng.
+                    </Text>
                   </View>
-                ))}
-              </View>
-              <View style={styles.specRow}>
-                <Spec label="Lưu trữ" value={plan.storage} />
-                <Spec label="Sao lưu" value={plan.backup} />
-                <Spec label="Tăng tốc" value={plan.cdn} />
-              </View>
-              <View style={styles.caution}>
-                <Feather name="alert-circle" color={colors.warning} size={15} />
-                <Text style={styles.cautionText}>{plan.caution}</Text>
-              </View>
+                </Reveal>
+              ) : null}
               <Button
-                label={
-                  selectedPlan?.id === plan.id
-                    ? "Đang chọn gói này"
-                    : "Chọn gói này"
-                }
-                variant={selectedPlan?.id === plan.id ? "primary" : "secondary"}
-                icon="check-circle"
-                disabled={status === "loading"}
-                onPress={() => {
-                  setSelected(plan.id);
-                  setSaved(false);
-                }}
-              />
-              <Text style={styles.purchaseHint}>
-                Xem danh sách dịch vụ và gửi yêu cầu mua trong HOSTORA. Giá cuối
-                được xác nhận trước khi tạo hóa đơn.
-              </Text>
-              <Button
-                label="Mua qua HOSTORA"
-                icon="arrow-right"
-                variant={selectedPlan?.id === plan.id ? "mint" : "secondary"}
-                onPress={() => router.push("/(tabs)/products?category=hosting")}
+                label="Sửa nhu cầu và ngân sách"
+                variant="secondary"
+                onPress={() => router.push("/(tabs)/consult")}
               />
             </Card>
+          )}
+          {ranked.map((plan, index) => (
+            <Stagger key={plan.id} index={index}>
+              <Card style={[styles.plan, index === 0 && styles.best]}>
+                {index === 0 ? (
+                  <View style={styles.bestRibbon}>
+                    <Text style={styles.bestRibbonText}>
+                      {plan.eligibility === "eligible"
+                        ? "ƯU TIÊN TRONG CÁC GÓI ĐÃ SO SÁNH"
+                        : "PHƯƠNG ÁN THAM KHẢO"}
+                    </Text>
+                  </View>
+                ) : null}
+                <View
+                  style={[styles.planTop, index === 0 && { marginTop: 10 }]}
+                >
+                  <View>
+                    <Text style={styles.provider}>{plan.provider}</Text>
+                    <Text style={styles.planName}>{plan.name}</Text>
+                  </View>
+                  <View style={styles.score}>
+                    <Text style={styles.scoreText}>{plan.score}</Text>
+                    <Text style={styles.scoreSub}>/100</Text>
+                  </View>
+                </View>
+                <View style={styles.priceRow}>
+                  <Text style={styles.price}>{formatVnd(plan.promo)}</Text>
+                  <Text style={styles.per}>/tháng</Text>
+                </View>
+                <Text style={styles.renewal}>
+                  Giá ưu đãi áp dụng cho kỳ {plan.billingMonths} tháng; không
+                  phải giá cho mọi kỳ.
+                </Text>
+                <Text style={styles.renewal}>
+                  Trả trước {formatVnd(plan.upfrontVnd)} tiền hosting, chưa gồm
+                  thuế và dịch vụ bổ sung.
+                </Text>
+                <Text style={styles.renewal}>
+                  Gia hạn:{" "}
+                  {plan.renewal == null
+                    ? "Chưa xác minh"
+                    : `${formatVnd(plan.renewal)}/tháng`}
+                </Text>
+                <View style={styles.reasons}>
+                  {plan.reasons.map((reason) => (
+                    <View key={reason} style={styles.reason}>
+                      <Feather name="check" color={colors.success} size={14} />
+                      <Text style={styles.reasonText}>{reason}</Text>
+                    </View>
+                  ))}
+                </View>
+                <View style={styles.specRow}>
+                  <Spec label="Lưu trữ" value={plan.storage} />
+                  <Spec label="Sao lưu" value={plan.backup} />
+                  <Spec label="Tăng tốc" value={plan.cdn} />
+                </View>
+                <View style={styles.caution}>
+                  <Feather
+                    name="alert-circle"
+                    color={colors.warning}
+                    size={15}
+                  />
+                  <Text style={styles.cautionText}>{plan.caution}</Text>
+                </View>
+                <Button
+                  label={
+                    selectedPlan?.id === plan.id
+                      ? "Đang chọn gói này"
+                      : "Chọn gói này"
+                  }
+                  variant={
+                    selectedPlan?.id === plan.id ? "primary" : "secondary"
+                  }
+                  icon="check-circle"
+                  disabled={status === "loading"}
+                  onPress={() => {
+                    setSelected(plan.id);
+                    setSaved(false);
+                  }}
+                />
+                <Text style={styles.purchaseHint}>
+                  Xem danh sách dịch vụ và gửi yêu cầu mua trong HOSTORA. Giá
+                  cuối được xác nhận trước khi tạo hóa đơn.
+                </Text>
+                <Button
+                  label="Mua qua HOSTORA"
+                  icon="arrow-right"
+                  variant={selectedPlan?.id === plan.id ? "mint" : "secondary"}
+                  onPress={() =>
+                    router.push("/(tabs)/products?category=hosting")
+                  }
+                />
+              </Card>
+            </Stagger>
           ))}
 
           <ComparisonTable plans={ranked} />
@@ -338,7 +368,8 @@ export default function RecommendationsScreen() {
                   label="Lưu yêu cầu tư vấn"
                   icon="shield"
                   disabled={
-                    status !== "verified" || Boolean(normalizeContact({ name, phone }).error)
+                    status !== "verified" ||
+                    Boolean(normalizeContact({ name, phone }).error)
                   }
                   onPress={saveLead}
                 />
@@ -355,13 +386,12 @@ export default function RecommendationsScreen() {
           <Card dark style={{ gap: 14 }}>
             <View style={styles.explainTop}>
               <Feather name="zap" color={colors.mint} size={20} />
-              <Text style={styles.explainTitle}>
-                Vì sao có thứ tự này?
-              </Text>
+              <Text style={styles.explainTitle}>Vì sao có thứ tự này?</Text>
             </View>
             <Text style={styles.explainCopy}>
               HOSTORA giải thích từ nhu cầu của bạn và thông tin đã kiểm tra;
-              điểm so sánh không phải cam kết sức chịu tải. Chưa nhập tiền trả trước thì cần xác nhận trước khi mua.
+              điểm so sánh không phải cam kết sức chịu tải. Chưa nhập tiền trả
+              trước thì cần xác nhận trước khi mua.
             </Text>
             {explanation ? (
               <Text style={styles.explanation}>{explanation}</Text>

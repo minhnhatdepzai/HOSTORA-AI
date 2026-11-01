@@ -20,7 +20,7 @@ const releases = {
   },
 } as const;
 const defaultReleaseBaseUrl =
-  "https://github.com/minhnhatdepzai/HOSTORA-AI/releases/download/v2.0.9-review-20261029-r2";
+  "https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download";
 
 function remoteReleaseUrl(filename: string) {
   const base = process.env.HOSTORA_RELEASE_BASE_URL ?? defaultReleaseBaseUrl;
@@ -64,7 +64,9 @@ async function releaseResponse(variant: string, body: boolean) {
   } catch {
     if (release.published)
       return Response.redirect(remoteReleaseUrl(release.published), 307);
-    return new Response("Bản Android này chưa có trên máy chủ.", { status: 503 });
+    return new Response("Bản Android này chưa có trên máy chủ.", {
+      status: 503,
+    });
   }
 }
 

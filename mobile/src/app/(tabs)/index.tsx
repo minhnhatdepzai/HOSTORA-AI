@@ -35,9 +35,24 @@ const essentials = [
 ];
 
 const afterLaunch = [
-  { icon: "archive" as const, title: "Giữ bản sao dữ liệu", detail: "Chuẩn bị đường khôi phục khi cần", category: "backup" },
-  { icon: "activity" as const, title: "Biết khi web gián đoạn", detail: "Nhận cảnh báo để xử lý sớm", category: "monitoring" },
-  { icon: "shield" as const, title: "Bảo vệ và tăng tốc", detail: "Chọn lớp bảo vệ theo nhu cầu", category: "security" },
+  {
+    icon: "archive" as const,
+    title: "Giữ bản sao dữ liệu",
+    detail: "Chuẩn bị đường khôi phục khi cần",
+    category: "backup",
+  },
+  {
+    icon: "activity" as const,
+    title: "Biết khi web gián đoạn",
+    detail: "Nhận cảnh báo để xử lý sớm",
+    category: "monitoring",
+  },
+  {
+    icon: "shield" as const,
+    title: "Bảo vệ và tăng tốc",
+    detail: "Chọn lớp bảo vệ theo nhu cầu",
+    category: "security",
+  },
 ];
 
 export default function HomeScreen() {
@@ -76,6 +91,31 @@ export default function HomeScreen() {
           </Pressable>
         </View>
       </View>
+
+      <Reveal delay={40}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Mở hồ sơ vòng loại cho giám khảo"
+          accessibilityHint="Xem kịch bản demo, năm tính năng và chín ca kiểm thử"
+          onPress={() => router.push("/judge" as Href)}
+          style={({ pressed }) => [
+            styles.judgeBanner,
+            pressed && styles.judgeBannerPressed,
+          ]}
+        >
+          <View style={styles.judgeBadge}>
+            <Feather name="award" size={17} color={colors.mint} />
+          </View>
+          <View style={styles.judgeCopy}>
+            <Text style={styles.judgeEyebrow}>HỒ SƠ VÒNG LOẠI · BẢNG A</Text>
+            <Text style={styles.judgeTitle}>Mở chế độ trình bày</Text>
+            <Text style={styles.judgeMeta}>
+              Demo 2 phút · 5 tính năng · 9 ca kiểm thử
+            </Text>
+          </View>
+          <Feather name="arrow-up-right" size={20} color={colors.mint} />
+        </Pressable>
+      </Reveal>
 
       <Reveal delay={80} style={styles.hero}>
         <BrandStage />
@@ -149,7 +189,11 @@ export default function HomeScreen() {
                   <Text style={styles.essentialTitle}>{item.title}</Text>
                   <Text style={styles.essentialCopy}>{item.copy}</Text>
                 </View>
-                <Feather name="arrow-up-right" size={18} color={colors.primary} />
+                <Feather
+                  name="arrow-up-right"
+                  size={18}
+                  color={colors.primary}
+                />
               </Pressable>
             </ScrollReveal>
           ))}
@@ -159,7 +203,10 @@ export default function HomeScreen() {
           <View style={styles.sectionHeading}>
             <Text style={styles.kicker}>SAU KHI WEBSITE HOẠT ĐỘNG</Text>
             <Text style={styles.sectionTitle}>Giữ trang web vận hành tốt.</Text>
-            <Text style={styles.sectionCopy}>Chọn thêm khi cần. HOSTORA xác nhận phạm vi và báo giá trước khi tạo hóa đơn.</Text>
+            <Text style={styles.sectionCopy}>
+              Chọn thêm khi cần. HOSTORA xác nhận phạm vi và báo giá trước khi
+              tạo hóa đơn.
+            </Text>
           </View>
           <ScrollReveal animate={false} style={styles.afterLaunchList}>
             {afterLaunch.map((item, index) => (
@@ -178,13 +225,19 @@ export default function HomeScreen() {
                     pressed && styles.pressed,
                   ]}
                 >
-                  <Text style={styles.afterLaunchNumber}>{String(index + 1).padStart(2, "0")}</Text>
+                  <Text style={styles.afterLaunchNumber}>
+                    {String(index + 1).padStart(2, "0")}
+                  </Text>
                   <Feather name={item.icon} size={19} color={colors.primary} />
                   <View style={styles.afterLaunchText}>
                     <Text style={styles.afterLaunchTitle}>{item.title}</Text>
                     <Text style={styles.afterLaunchDetail}>{item.detail}</Text>
                   </View>
-                  <Feather name="arrow-up-right" size={18} color={colors.primary} />
+                  <Feather
+                    name="arrow-up-right"
+                    size={18}
+                    color={colors.primary}
+                  />
                 </Pressable>
               </ScrollReveal>
             ))}
@@ -223,15 +276,38 @@ export default function HomeScreen() {
         </ScrollReveal>
 
         <ScrollReveal>
-          <Pressable accessibilityRole="button" accessibilityLabel="Mở sổ tay làm website" onPress={() => router.push("/journal" as Href)} style={({ pressed }) => [styles.journalEntry, pressed && styles.pressed]}>
-            <View style={styles.journalEntryCopy}><Text style={styles.kicker}>SỔ TAY HOSTORA</Text><Text style={styles.sectionTitle}>Làm xong rồi, tiếp theo là gì?</Text><Text style={styles.sectionCopy}>Bốn bài đọc ngắn từ ý tưởng, chọn nơi lưu trữ đến ngày ra mắt và thêm AI.</Text><Text style={styles.journalEntryAction}>Mở sổ tay  →</Text></View><Feather name="book-open" size={25} color={colors.primary}/>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Mở sổ tay làm website"
+            onPress={() => router.push("/journal" as Href)}
+            style={({ pressed }) => [
+              styles.journalEntry,
+              pressed && styles.pressed,
+            ]}
+          >
+            <View style={styles.journalEntryCopy}>
+              <Text style={styles.kicker}>SỔ TAY HOSTORA</Text>
+              <Text style={styles.sectionTitle}>
+                Làm xong rồi, tiếp theo là gì?
+              </Text>
+              <Text style={styles.sectionCopy}>
+                Bốn bài đọc ngắn từ ý tưởng, chọn nơi lưu trữ đến ngày ra mắt và
+                thêm AI.
+              </Text>
+              <Text style={styles.journalEntryAction}>Mở sổ tay →</Text>
+            </View>
+            <Feather name="book-open" size={25} color={colors.primary} />
           </Pressable>
         </ScrollReveal>
 
         {top ? (
           <ScrollReveal style={styles.featured}>
             <View style={styles.featuredHeader}>
-              <Text style={styles.kicker}>{top.eligibility === "eligible" ? "GỢI Ý CHO BẠN" : "CHỈ THAM KHẢO · CHƯA ĐỦ ĐIỀU KIỆN"}</Text>
+              <Text style={styles.kicker}>
+                {top.eligibility === "eligible"
+                  ? "GỢI Ý CHO BẠN"
+                  : "CHỈ THAM KHẢO · CHƯA ĐỦ ĐIỀU KIỆN"}
+              </Text>
               <Text style={styles.featuredStatus}>
                 {status === "verified"
                   ? "Đã đối chiếu"
@@ -248,7 +324,8 @@ export default function HomeScreen() {
               <Text style={styles.featuredUnit}> / tháng</Text>
             </Text>
             <Text style={styles.featuredFine}>
-              Trả trước {formatVnd(top.upfrontVnd)} cho kỳ {top.billingMonths} tháng; cần xem giá gia hạn, thuế và phí tên miền trước khi mua.
+              Trả trước {formatVnd(top.upfrontVnd)} cho kỳ {top.billingMonths}{" "}
+              tháng; cần xem giá gia hạn, thuế và phí tên miền trước khi mua.
             </Text>
             <Button
               label="So sánh 3 gói"
@@ -284,13 +361,53 @@ function Step({
 const styles = StyleSheet.create({
   afterLaunch: { gap: 20 },
   afterLaunchList: { borderTopWidth: 1, borderTopColor: colors.line },
-  afterLaunchRow: { minHeight: 76, flexDirection: "row", alignItems: "center", gap: 10, borderBottomWidth: 1, borderBottomColor: colors.line },
-  afterLaunchNumber: { width: 24, color: colors.faint, fontFamily: "BeVietnamPro_700Bold", fontSize: 10 },
+  afterLaunchRow: {
+    minHeight: 76,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.line,
+  },
+  afterLaunchNumber: {
+    width: 24,
+    color: colors.faint,
+    fontFamily: "BeVietnamPro_700Bold",
+    fontSize: 10,
+  },
   afterLaunchText: { flex: 1 },
-  afterLaunchTitle: { color: colors.text, fontFamily: "BeVietnamPro_700Bold", fontSize: 13 },
-  afterLaunchDetail: { color: colors.muted, fontFamily: "BeVietnamPro_400Regular", fontSize: 10, marginTop: 3 },
-  journalEntry:{ marginHorizontal:16, marginTop:20, padding:22, borderWidth:1, borderColor:colors.line, borderLeftWidth:3, borderLeftColor:colors.primary, backgroundColor:colors.surface, flexDirection:"row", alignItems:"flex-start", gap:12, borderRadius:18 },
-  journalEntryCopy:{ flex:1 }, journalEntryAction:{ marginTop:12, color:colors.primary, fontFamily:"BeVietnamPro_700Bold", fontSize:13 },
+  afterLaunchTitle: {
+    color: colors.text,
+    fontFamily: "BeVietnamPro_700Bold",
+    fontSize: 13,
+  },
+  afterLaunchDetail: {
+    color: colors.muted,
+    fontFamily: "BeVietnamPro_400Regular",
+    fontSize: 10,
+    marginTop: 3,
+  },
+  journalEntry: {
+    marginHorizontal: 16,
+    marginTop: 20,
+    padding: 22,
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.primary,
+    backgroundColor: colors.surface,
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
+    borderRadius: 18,
+  },
+  journalEntryCopy: { flex: 1 },
+  journalEntryAction: {
+    marginTop: 12,
+    color: colors.primary,
+    fontFamily: "BeVietnamPro_700Bold",
+    fontSize: 13,
+  },
   topbar: {
     paddingHorizontal: 20,
     paddingTop: 12,
@@ -308,6 +425,47 @@ const styles = StyleSheet.create({
     borderColor: colors.line,
     alignItems: "center",
     justifyContent: "center",
+  },
+  judgeBanner: {
+    minHeight: 94,
+    marginHorizontal: 16,
+    marginBottom: 12,
+    paddingHorizontal: 16,
+    borderRadius: 22,
+    backgroundColor: colors.ink,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  judgeBannerPressed: { opacity: 0.86, transform: [{ scale: 0.985 }] },
+  judgeBadge: {
+    width: 44,
+    height: 44,
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: "#40574F",
+    backgroundColor: "#17332D",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  judgeCopy: { flex: 1 },
+  judgeEyebrow: {
+    color: colors.mint,
+    fontFamily: "BeVietnamPro_800ExtraBold",
+    fontSize: 8,
+    letterSpacing: 0.9,
+  },
+  judgeTitle: {
+    marginTop: 4,
+    color: "white",
+    fontFamily: "BeVietnamPro_800ExtraBold",
+    fontSize: 15,
+  },
+  judgeMeta: {
+    marginTop: 3,
+    color: "#AFC1BA",
+    fontFamily: "BeVietnamPro_500Medium",
+    fontSize: 9,
   },
   hero: {
     marginHorizontal: 16,

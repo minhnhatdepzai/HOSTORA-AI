@@ -50,7 +50,9 @@
     "audit:ui": "node scripts/agent-tooling.mjs audit",
     "test:mobile:e2e": "node scripts/agent-tooling.mjs android",
     "android:update": "node scripts/agent-tooling.mjs update",
-    "test:mobile:mcp": "node scripts/mobile-mcp-smoke.mjs"
+    "test:mobile:mcp": "node scripts/mobile-mcp-smoke.mjs",
+    "test:mobile:judge": "node scripts/mobile-judge-suite.mjs",
+    "report:mobile:judge": "node scripts/render-mobile-judge-report.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^6.0.0",

@@ -1,4 +1,5 @@
 import { Pressable } from "@/components/pressable";
+import { AnimatedProgress, Reveal, StepTransition } from "@/components/motion";
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { type PropsWithChildren, useState } from "react";
@@ -23,6 +24,8 @@ import { colors, radii } from "@/constants/theme";
 import { useApp } from "@/context/app-context";
 import { postJson } from "@/lib/api";
 import type { Requirements, WebsiteType } from "@/lib/catalog";
+import { canContinueConsult } from "@/lib/consult-guard";
+import { getStepDirection, progressForStep } from "@/lib/motion-spec";
 
 const websiteTypes: {
   value: WebsiteType;
@@ -58,6 +61,9 @@ export default function ConsultScreen() {
   const { requirements, setRequirements } = useApp();
   const [data, setData] = useState(requirements);
   const [step, setStep] = useState(0);
+  const [stepDirection, setStepDirection] = useState<"forward" | "backward">(
+    "forward",
+  );
   const [natural, setNatural] = useState(requirements.notes ?? "");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -103,6 +109,11 @@ export default function ConsultScreen() {
     router.push("/recommendations");
   }
 
+  function goToStep(next: number) {
+    setStepDirection(getStepDirection(step, next));
+    setStep(next);
+  }
+
   return (
     <Screen>
       <View style={styles.header}>
@@ -114,7 +125,9 @@ export default function ConsultScreen() {
       <View style={styles.intro}>
         <Eyebrow>Chọn dịch vụ cho trang web</Eyebrow>
         <Title style={styles.introTitle}>Chọn gói phù hợp</Title>
-        <Body style={styles.introBody}>Trả lời 4 câu ngắn để so sánh các gói trước khi mua.</Body>
+        <Body style={styles.introBody}>
+          Trả lời 4 câu ngắn để so sánh các gói trước khi mua.
+        </Body>
       </View>
 
       <View style={styles.progressTop}>
@@ -124,130 +137,162 @@ export default function ConsultScreen() {
         </Text>
       </View>
       <View style={styles.progress}>
-        <View style={[styles.progressFill, { width: `${(step + 1) * 25}%` }]} />
+        <AnimatedProgress progress={progressForStep(step, 4)} />
       </View>
 
       <Card style={styles.wizard}>
-        {step === 0 && (
-          <ChoiceStep
-            title="Bạn đang xây loại trang web nào?"
-            copy="Mỗi loại trang web sẽ có nhu cầu vận hành khác nhau."
-          >
-            {websiteTypes.map((item) => (
-              <Choice
-                key={item.value}
-                selected={data.websiteType === item.value}
-                icon={item.icon}
-                label={item.label}
-                copy={item.copy}
-                onPress={() =>
+        <StepTransition key={`consult-step-${step}`} direction={stepDirection}>
+          {step === 0 && (
+            <ChoiceStep
+              title="Bạn đang xây loại trang web nào?"
+              copy="Mỗi loại trang web sẽ có nhu cầu vận hành khác nhau."
+            >
+              {websiteTypes.map((item) => (
+                <Choice
+                  key={item.value}
+                  selected={data.websiteType === item.value}
+                  icon={item.icon}
+                  label={item.label}
+                  copy={item.copy}
+                  onPress={() =>
+                    update({
+                      websiteType: item.value,
+                      ecommerce: item.value === "store",
+                    })
+                  }
+                />
+              ))}
+            </ChoiceStep>
+          )}
+          {step === 1 && (
+            <ChoiceStep
+              title="Lượt truy cập mỗi tháng?"
+              copy="Các mức bên dưới để tham khảo. Bạn có thể nhập con số riêng."
+            >
+              <Text style={styles.optionLabel}>MỨC THAM KHẢO</Text>
+              <Text style={styles.bigValue}>
+                {data.monthlyVisits.toLocaleString("vi-VN")}
+              </Text>
+              <Text style={styles.unit}>LƯỢT / THÁNG</Text>
+              <View style={styles.chipGrid}>
+                {visits.map((value) => (
+                  <Chip
+                    key={value}
+                    selected={data.monthlyVisits === value}
+                    label={value.toLocaleString("vi-VN")}
+                    onPress={() => update({ monthlyVisits: value })}
+                  />
+                ))}
+              </View>
+              <Text style={styles.inputLabel}>Lượt truy cập riêng của bạn</Text>
+              <TextInput
+                accessibilityLabel="Lượt truy cập mỗi tháng, tự nhập"
+                keyboardType="number-pad"
+                maxLength={9}
+                value={data.monthlyVisits > 0 ? String(data.monthlyVisits) : ""}
+                onChangeText={(value) => {
+                  const digits = value.replace(/\D/g, "").slice(0, 9);
+                  update({ monthlyVisits: digits ? Number(digits) : 0 });
+                }}
+                placeholder="Ví dụ: 25000"
+                placeholderTextColor={colors.faint}
+                style={styles.customInput}
+              />
+              <Text style={styles.inputHint}>
+                Từ 1 đến 100.000.000 lượt/tháng.
+              </Text>
+            </ChoiceStep>
+          )}
+          {step === 2 && (
+            <ChoiceStep
+              title="Ngân sách vận hành?"
+              copy="Mức gợi ý có thể chọn nhanh; ngân sách của bạn không bị giới hạn ở các mức này."
+            >
+              <Text style={styles.optionLabel}>MỨC THAM KHẢO</Text>
+              <Text style={styles.bigValue}>
+                {data.monthlyBudget.toLocaleString("vi-VN")}đ
+              </Text>
+              <Text style={styles.unit}>VND / THÁNG</Text>
+              <View style={styles.chipGrid}>
+                {budgets.map((value) => (
+                  <Chip
+                    key={value}
+                    selected={data.monthlyBudget === value}
+                    label={`${value / 1000}K`}
+                    onPress={() => update({ monthlyBudget: value })}
+                  />
+                ))}
+              </View>
+              <Text style={styles.inputLabel}>
+                Ngân sách riêng mỗi tháng (VND)
+              </Text>
+              <TextInput
+                accessibilityLabel="Ngân sách mỗi tháng, tự nhập bằng đồng"
+                keyboardType="number-pad"
+                maxLength={9}
+                value={data.monthlyBudget > 0 ? String(data.monthlyBudget) : ""}
+                onChangeText={(value) => {
+                  const digits = value.replace(/\D/g, "").slice(0, 9);
+                  update({ monthlyBudget: digits ? Number(digits) : 0 });
+                }}
+                placeholder="Ví dụ: 450000"
+                placeholderTextColor={colors.faint}
+                style={styles.customInput}
+              />
+              <Text style={styles.inputHint}>
+                Từ 10.000đ đến 100.000.000đ/tháng.
+              </Text>
+              <Text style={styles.inputLabel}>
+                Số tiền có thể trả ban đầu (không bắt buộc)
+              </Text>
+              <TextInput
+                accessibilityLabel="Số tiền trả ban đầu"
+                keyboardType="number-pad"
+                maxLength={10}
+                value={
+                  data.upfrontBudget === undefined
+                    ? ""
+                    : String(data.upfrontBudget)
+                }
+                onChangeText={(value) =>
                   update({
-                    websiteType: item.value,
-                    ecommerce: item.value === "store",
+                    upfrontBudget: value
+                      ? Number(value.replace(/\D/g, ""))
+                      : undefined,
                   })
                 }
+                placeholder="Để trống nếu chưa quyết định"
+                placeholderTextColor={colors.faint}
+                style={styles.customInput}
               />
-            ))}
-          </ChoiceStep>
-        )}
-        {step === 1 && (
-          <ChoiceStep
-            title="Lượt truy cập mỗi tháng?"
-            copy="Các mức bên dưới để tham khảo. Bạn có thể nhập con số riêng."
-          >
-            <Text style={styles.optionLabel}>MỨC THAM KHẢO</Text>
-            <Text style={styles.bigValue}>
-              {data.monthlyVisits.toLocaleString("vi-VN")}
-            </Text>
-            <Text style={styles.unit}>LƯỢT / THÁNG</Text>
-            <View style={styles.chipGrid}>
-              {visits.map((value) => (
-                <Chip
-                  key={value}
-                  selected={data.monthlyVisits === value}
-                  label={value.toLocaleString("vi-VN")}
-                  onPress={() => update({ monthlyVisits: value })}
-                />
-              ))}
-            </View>
-            <Text style={styles.inputLabel}>Lượt truy cập riêng của bạn</Text>
-            <TextInput
-              accessibilityLabel="Lượt truy cập mỗi tháng, tự nhập"
-              keyboardType="number-pad"
-              maxLength={9}
-              value={data.monthlyVisits > 0 ? String(data.monthlyVisits) : ""}
-              onChangeText={(value) => {
-                const digits = value.replace(/\D/g, "").slice(0, 9);
-                update({ monthlyVisits: digits ? Number(digits) : 0 });
-              }}
-              placeholder="Ví dụ: 25000"
-              placeholderTextColor={colors.faint}
-              style={styles.customInput}
-            />
-            <Text style={styles.inputHint}>Từ 1 đến 100.000.000 lượt/tháng.</Text>
-          </ChoiceStep>
-        )}
-        {step === 2 && (
-          <ChoiceStep
-            title="Ngân sách vận hành?"
-            copy="Mức gợi ý có thể chọn nhanh; ngân sách của bạn không bị giới hạn ở các mức này."
-          >
-            <Text style={styles.optionLabel}>MỨC THAM KHẢO</Text>
-            <Text style={styles.bigValue}>
-              {data.monthlyBudget.toLocaleString("vi-VN")}đ
-            </Text>
-            <Text style={styles.unit}>VND / THÁNG</Text>
-            <View style={styles.chipGrid}>
-              {budgets.map((value) => (
-                <Chip
-                  key={value}
-                  selected={data.monthlyBudget === value}
-                  label={`${value / 1000}K`}
-                  onPress={() => update({ monthlyBudget: value })}
-                />
-              ))}
-            </View>
-            <Text style={styles.inputLabel}>Ngân sách riêng mỗi tháng (VND)</Text>
-            <TextInput
-              accessibilityLabel="Ngân sách mỗi tháng, tự nhập bằng đồng"
-              keyboardType="number-pad"
-              maxLength={9}
-              value={data.monthlyBudget > 0 ? String(data.monthlyBudget) : ""}
-              onChangeText={(value) => {
-                const digits = value.replace(/\D/g, "").slice(0, 9);
-                update({ monthlyBudget: digits ? Number(digits) : 0 });
-              }}
-              placeholder="Ví dụ: 450000"
-              placeholderTextColor={colors.faint}
-              style={styles.customInput}
-            />
-            <Text style={styles.inputHint}>Từ 10.000đ đến 100.000.000đ/tháng.</Text>
-            <Text style={styles.inputLabel}>Số tiền có thể trả ban đầu (không bắt buộc)</Text>
-            <TextInput accessibilityLabel="Số tiền trả ban đầu" keyboardType="number-pad" maxLength={10} value={data.upfrontBudget === undefined ? "" : String(data.upfrontBudget)} onChangeText={(value) => update({ upfrontBudget: value ? Number(value.replace(/\D/g, "")) : undefined })} placeholder="Để trống nếu chưa quyết định" placeholderTextColor={colors.faint} style={styles.customInput} />
-            <Text style={styles.inputHint}>Giá ưu đãi thường phải trả trước 12–48 tháng; chưa gồm thuế và phí tên miền.</Text>
-          </ChoiceStep>
-        )}
-        {step === 3 && (
-          <ChoiceStep
-            title="Bạn có cần tên miền?"
-            copy="Chỉ tính ưu đãi sau khi HOSTORA xác minh điều kiện."
-          >
-            <Choice
-              selected={data.needsDomain}
-              icon="check-circle"
-              label="Có, cần tên miền"
-              copy="Ưu tiên gói tặng tên miền năm đầu"
-              onPress={() => update({ needsDomain: true })}
-            />
-            <Choice
-              selected={!data.needsDomain}
-              icon="link"
-              label="Không, tôi đã có"
-              copy="Tập trung lưu trữ và chi phí gia hạn"
-              onPress={() => update({ needsDomain: false })}
-            />
-          </ChoiceStep>
-        )}
+              <Text style={styles.inputHint}>
+                Giá ưu đãi thường phải trả trước 12–48 tháng; chưa gồm thuế và
+                phí tên miền.
+              </Text>
+            </ChoiceStep>
+          )}
+          {step === 3 && (
+            <ChoiceStep
+              title="Bạn có cần tên miền?"
+              copy="Chỉ tính ưu đãi sau khi HOSTORA xác minh điều kiện."
+            >
+              <Choice
+                selected={data.needsDomain}
+                icon="check-circle"
+                label="Có, cần tên miền"
+                copy="Ưu tiên gói tặng tên miền năm đầu"
+                onPress={() => update({ needsDomain: true })}
+              />
+              <Choice
+                selected={!data.needsDomain}
+                icon="link"
+                label="Không, tôi đã có"
+                copy="Tập trung lưu trữ và chi phí gia hạn"
+                onPress={() => update({ needsDomain: false })}
+              />
+            </ChoiceStep>
+          )}
+        </StepTransition>
         <View style={styles.navigation}>
           {step > 0 ? (
             <View style={{ flex: 1 }}>
@@ -255,7 +300,7 @@ export default function ConsultScreen() {
                 label="Quay lại"
                 icon="arrow-left"
                 variant="secondary"
-                onPress={() => setStep(step - 1)}
+                onPress={() => goToStep(step - 1)}
               />
             </View>
           ) : (
@@ -265,11 +310,8 @@ export default function ConsultScreen() {
             {step < 3 ? (
               <Button
                 label="Tiếp tục"
-                disabled={
-                  (step === 1 && (!Number.isInteger(data.monthlyVisits) || data.monthlyVisits < 1 || data.monthlyVisits > 100000000)) ||
-                  (step === 2 && (!Number.isInteger(data.monthlyBudget) || data.monthlyBudget < 10000 || data.monthlyBudget > 100000000 || (data.upfrontBudget !== undefined && (!Number.isInteger(data.upfrontBudget) || data.upfrontBudget < 0 || data.upfrontBudget > 1000000000))))
-                }
-                onPress={() => setStep(step + 1)}
+                disabled={!canContinueConsult(step, data)}
+                onPress={() => goToStep(step + 1)}
               />
             ) : (
               <Button label="Xem đề xuất" icon="award" onPress={finish} />
@@ -285,37 +327,51 @@ export default function ConsultScreen() {
           onPress={() => setShowDescription((current) => !current)}
           style={styles.assistToggle}
         >
-          <View style={styles.assistIcon}><Feather name="message-square" color={colors.primary} size={18} /></View>
+          <View style={styles.assistIcon}>
+            <Feather name="message-square" color={colors.primary} size={18} />
+          </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.assistTitle}>Muốn mô tả bằng lời?</Text>
-            <Text style={styles.assistCopy}>HOSTORA có thể điền giúp 4 câu trên.</Text>
+            <Text style={styles.assistCopy}>
+              HOSTORA có thể điền giúp 4 câu trên.
+            </Text>
           </View>
-          <Feather name={showDescription ? "chevron-up" : "chevron-down"} color={colors.primary} size={19} />
+          <Feather
+            name={showDescription ? "chevron-up" : "chevron-down"}
+            color={colors.primary}
+            size={19}
+          />
         </Pressable>
         {showDescription ? (
-          <Card style={styles.aiCard} dark>
-            <Text style={styles.aiTitle}>Nói với HOSTORA</Text>
-            <TextInput
-              value={natural}
-              onChangeText={setNatural}
-              multiline
-              accessibilityLabel="Mô tả nhu cầu trang web"
-              placeholder="Ví dụ: Tôi bán mỹ phẩm online, khoảng 5.000 lượt truy cập, ngân sách 300 nghìn..."
-              placeholderTextColor="#A7B4C2"
-              style={styles.textarea}
-              textAlignVertical="top"
-            />
-            <Pressable
-              accessibilityRole="button"
-              disabled={natural.trim().length < 10 || loading}
-              onPress={analyze}
-              style={styles.aiButton}
-            >
-              {loading ? <ActivityIndicator color={colors.ink} size="small" /> : <Feather name="zap" color={colors.ink} size={16} />}
-              <Text style={styles.aiButtonText}>Tự điền giúp tôi</Text>
-            </Pressable>
-            {message ? <Text style={styles.message}>{message}</Text> : null}
-          </Card>
+          <Reveal style={styles.aiCard}>
+            <Card dark>
+              <Text style={styles.aiTitle}>Nói với HOSTORA</Text>
+              <TextInput
+                value={natural}
+                onChangeText={setNatural}
+                multiline
+                accessibilityLabel="Mô tả nhu cầu trang web"
+                placeholder="Ví dụ: Tôi bán mỹ phẩm online, khoảng 5.000 lượt truy cập, ngân sách 300 nghìn..."
+                placeholderTextColor="#A7B4C2"
+                style={styles.textarea}
+                textAlignVertical="top"
+              />
+              <Pressable
+                accessibilityRole="button"
+                disabled={natural.trim().length < 10 || loading}
+                onPress={analyze}
+                style={styles.aiButton}
+              >
+                {loading ? (
+                  <ActivityIndicator color={colors.ink} size="small" />
+                ) : (
+                  <Feather name="zap" color={colors.ink} size={16} />
+                )}
+                <Text style={styles.aiButtonText}>Tự điền giúp tôi</Text>
+              </Pressable>
+              {message ? <Text style={styles.message}>{message}</Text> : null}
+            </Card>
+          </Reveal>
         ) : null}
       </View>
     </Screen>
@@ -350,6 +406,9 @@ function Choice({
 }) {
   return (
     <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`${label}: ${copy}`}
+      accessibilityState={{ selected }}
       onPress={onPress}
       style={[styles.choice, selected && styles.choiceSelected]}
     >
@@ -386,6 +445,9 @@ function Chip({
 }) {
   return (
     <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ selected }}
       onPress={onPress}
       style={[styles.chip, selected && styles.chipSelected]}
     >
@@ -408,10 +470,36 @@ const styles = StyleSheet.create({
   introTitle: { marginTop: 6, fontSize: 28, lineHeight: 37 },
   introBody: { marginTop: 5, fontSize: 12, lineHeight: 19 },
   assistSection: { marginTop: 17, marginHorizontal: 18 },
-  assistToggle: { minHeight: 70, paddingHorizontal: 15, borderWidth: 1, borderColor: colors.line, borderRadius: 17, backgroundColor: "white", flexDirection: "row", alignItems: "center", gap: 12 },
-  assistIcon: { width: 39, height: 39, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: colors.primarySoft },
-  assistTitle: { color: colors.text, fontFamily: "BeVietnamPro_800ExtraBold", fontSize: 12 },
-  assistCopy: { color: colors.muted, fontFamily: "BeVietnamPro_400Regular", fontSize: 10, marginTop: 3 },
+  assistToggle: {
+    minHeight: 70,
+    paddingHorizontal: 15,
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: 17,
+    backgroundColor: "white",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  assistIcon: {
+    width: 39,
+    height: 39,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.primarySoft,
+  },
+  assistTitle: {
+    color: colors.text,
+    fontFamily: "BeVietnamPro_800ExtraBold",
+    fontSize: 12,
+  },
+  assistCopy: {
+    color: colors.muted,
+    fontFamily: "BeVietnamPro_400Regular",
+    fontSize: 10,
+    marginTop: 3,
+  },
   aiCard: { marginTop: 10 },
   aiTitle: {
     color: "white",
@@ -478,11 +566,6 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: colors.line,
     overflow: "hidden",
-  },
-  progressFill: {
-    height: "100%",
-    backgroundColor: colors.primary,
-    borderRadius: 4,
   },
   wizard: { marginHorizontal: 18, marginTop: 12 },
   question: {

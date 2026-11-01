@@ -1,4 +1,10 @@
-import { createContext, useContext, useState, type PropsWithChildren } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type PropsWithChildren,
+} from "react";
 import {
   Animated as NativeAnimated,
   Text,
@@ -9,7 +15,19 @@ import {
   type TextProps,
   type ViewStyle,
 } from "react-native";
-import Animated, { FadeInDown, ReduceMotion } from "react-native-reanimated";
+import Animated, {
+  Easing,
+  FadeInDown,
+  FadeInLeft,
+  FadeInRight,
+  FadeOutLeft,
+  FadeOutRight,
+  ReduceMotion,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
+import { getMotionProfile, getStaggerDelay } from "@/lib/motion-spec";
 
 export const MotionContext = createContext(false);
 export const useMotionPreference = () => useContext(MotionContext);
@@ -100,8 +118,83 @@ export function Reveal({
   if (reduced) return <View style={style}>{children}</View>;
   return (
     <Animated.View
-      entering={FadeInDown.duration(480)
+      entering={FadeInDown.duration(getMotionProfile(false).enterMs)
         .delay(delay)
+        .easing(Easing.out(Easing.cubic))
+        .reduceMotion(ReduceMotion.System)}
+      style={style}
+    >
+      {children}
+    </Animated.View>
+  );
+}
+
+export function StepTransition({
+  children,
+  direction,
+  style,
+}: PropsWithChildren<{
+  direction: "forward" | "backward";
+  style?: StyleProp<ViewStyle>;
+}>) {
+  const reduced = useMotionPreference();
+  if (reduced) return <View style={style}>{children}</View>;
+  const profile = getMotionProfile(false);
+  const entering = direction === "forward" ? FadeInRight : FadeInLeft;
+  const exiting = direction === "forward" ? FadeOutLeft : FadeOutRight;
+  return (
+    <Animated.View
+      entering={entering
+        .duration(profile.stepMs)
+        .easing(Easing.out(Easing.cubic))
+        .reduceMotion(ReduceMotion.System)}
+      exiting={exiting
+        .duration(Math.round(profile.stepMs * 0.72))
+        .easing(Easing.in(Easing.cubic))
+        .reduceMotion(ReduceMotion.System)}
+      style={style}
+    >
+      {children}
+    </Animated.View>
+  );
+}
+
+export function AnimatedProgress({ progress }: { progress: number }) {
+  const reduced = useMotionPreference();
+  const value = useSharedValue(Math.min(1, Math.max(0, progress)));
+  const profile = getMotionProfile(reduced);
+  useEffect(() => {
+    value.value = withTiming(Math.min(1, Math.max(0, progress)), {
+      duration: profile.stepMs,
+      easing: Easing.out(Easing.cubic),
+      reduceMotion: ReduceMotion.System,
+    });
+  }, [profile.stepMs, progress, value]);
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scaleX: value.value }],
+  }));
+  return (
+    <View style={motionStyles.progressTrack}>
+      <Animated.View style={[motionStyles.progressFill, animatedStyle]} />
+    </View>
+  );
+}
+
+export function Stagger({
+  children,
+  index,
+  style,
+}: PropsWithChildren<{
+  index: number;
+  style?: StyleProp<ViewStyle>;
+}>) {
+  const reduced = useMotionPreference();
+  if (reduced) return <View style={style}>{children}</View>;
+  return (
+    <Animated.View
+      entering={FadeInDown.duration(getMotionProfile(false).enterMs)
+        .delay(getStaggerDelay(index, false))
+        .easing(Easing.out(Easing.cubic))
         .reduceMotion(ReduceMotion.System)}
       style={style}
     >
@@ -201,3 +294,19 @@ export function RevealWords({
     </Text>
   );
 }
+
+const motionStyles = {
+  progressTrack: {
+    height: 6,
+    overflow: "hidden" as const,
+    borderRadius: 999,
+    backgroundColor: "#D7E2DE",
+  },
+  progressFill: {
+    width: "100%" as const,
+    height: "100%" as const,
+    borderRadius: 999,
+    backgroundColor: "#11695E",
+    transformOrigin: "left center" as const,
+  },
+};

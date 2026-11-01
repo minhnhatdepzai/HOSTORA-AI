@@ -27,6 +27,11 @@ import {
   shouldShowOnboarding,
 } from "@/lib/onboarding";
 import { shouldRenderRoutedContent } from "@/lib/app-accessibility";
+import {
+  INTRO_COMPLETED_STORAGE_KEY,
+  INTRO_COMPLETED_VALUE,
+  shouldShowIntro,
+} from "@/lib/intro";
 
 void SplashScreen.preventAutoHideAsync();
 
@@ -58,9 +63,20 @@ export default function RootLayout() {
   }, []);
 
   useEffect(() => {
-    AsyncStorage.getItem(ONBOARDING_STORAGE_KEY)
-      .then((value) => setShowOnboarding(shouldShowOnboarding(value)))
-      .catch(() => setShowOnboarding(true))
+    AsyncStorage.multiGet([ONBOARDING_STORAGE_KEY, INTRO_COMPLETED_STORAGE_KEY])
+      .then((entries) => {
+        const values = Object.fromEntries(entries);
+        setShowOnboarding(
+          shouldShowOnboarding(values[ONBOARDING_STORAGE_KEY] ?? null),
+        );
+        setShowIntro(
+          shouldShowIntro(values[INTRO_COMPLETED_STORAGE_KEY] ?? null),
+        );
+      })
+      .catch(() => {
+        setShowOnboarding(true);
+        setShowIntro(true);
+      })
       .finally(() => setOnboardingReady(true));
   }, []);
 
@@ -83,54 +99,63 @@ export default function RootLayout() {
     );
   }
 
+  function finishIntro() {
+    setShowIntro(false);
+    void AsyncStorage.setItem(
+      INTRO_COMPLETED_STORAGE_KEY,
+      INTRO_COMPLETED_VALUE,
+    );
+  }
+
   return (
     <SafeAreaProvider>
       <MotionContext.Provider value={reduceMotion}>
         <AppProvider>
           <CustomerAuthProvider>
-          <View style={{ flex: 1 }}>
-            <StatusBar
-              style={showOnboarding || playingIntro ? "light" : "dark"}
-              hidden={playingIntro}
-            />
-            {renderRoutedContent ? (
-              <Stack
-                screenOptions={{
-                  headerShown: false,
-                  contentStyle: { backgroundColor: colors.canvas },
-                  animation: reduceMotion ? "none" : "fade_from_bottom",
-                }}
-              >
-                <Stack.Screen name="(tabs)" />
-                <Stack.Screen name="recommendations" />
-                <Stack.Screen name="domain" />
-                <Stack.Screen name="analyzer" />
-                <Stack.Screen name="knowledge" />
-                <Stack.Screen name="journal" />
-                <Stack.Screen name="seo" />
-                <Stack.Screen name="readiness" />
-                <Stack.Screen name="settings" />
-                <Stack.Screen name="orders" />
-                <Stack.Screen name="studio" />
-                <Stack.Screen name="account" />
-                <Stack.Screen name="account-login" />
-                <Stack.Screen name="account-register" />
-                <Stack.Screen name="account-forgot" />
-              </Stack>
-            ) : null}
-            {playingIntro ? (
-              <BrandFilm onFinish={() => setShowIntro(false)} />
-            ) : showOnboarding ? (
-              <View style={StyleSheet.absoluteFill}>
-                <Onboarding onFinish={finishOnboarding} />
-              </View>
-            ) : null}
-            {!showOnboarding && !playingIntro ? <NotificationCenter /> : null}
-          </View>
+            <View style={{ flex: 1 }}>
+              <StatusBar
+                style={showOnboarding || playingIntro ? "light" : "dark"}
+                hidden={playingIntro}
+              />
+              {renderRoutedContent ? (
+                <Stack
+                  screenOptions={{
+                    headerShown: false,
+                    contentStyle: { backgroundColor: colors.canvas },
+                    animation: reduceMotion ? "none" : "slide_from_right",
+                    gestureEnabled: true,
+                  }}
+                >
+                  <Stack.Screen name="(tabs)" options={{ animation: "none" }} />
+                  <Stack.Screen name="recommendations" />
+                  <Stack.Screen name="judge" />
+                  <Stack.Screen name="domain" />
+                  <Stack.Screen name="analyzer" />
+                  <Stack.Screen name="knowledge" />
+                  <Stack.Screen name="journal" />
+                  <Stack.Screen name="seo" />
+                  <Stack.Screen name="readiness" />
+                  <Stack.Screen name="settings" />
+                  <Stack.Screen name="orders" />
+                  <Stack.Screen name="studio" />
+                  <Stack.Screen name="account" />
+                  <Stack.Screen name="account-login" />
+                  <Stack.Screen name="account-register" />
+                  <Stack.Screen name="account-forgot" />
+                </Stack>
+              ) : null}
+              {playingIntro ? (
+                <BrandFilm onFinish={finishIntro} />
+              ) : showOnboarding ? (
+                <View style={StyleSheet.absoluteFill}>
+                  <Onboarding onFinish={finishOnboarding} />
+                </View>
+              ) : null}
+              {!showOnboarding && !playingIntro ? <NotificationCenter /> : null}
+            </View>
           </CustomerAuthProvider>
         </AppProvider>
       </MotionContext.Provider>
     </SafeAreaProvider>
   );
 }
-

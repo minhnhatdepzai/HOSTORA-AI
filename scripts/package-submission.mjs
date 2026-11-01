@@ -1,13 +1,26 @@
 // Build a source handoff without local credentials, build output or model weights.
 import { execFile } from "node:child_process";
-import { readdir, rename, stat } from "node:fs/promises";
+import { readFile, readdir, rename, stat } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 
 const execFileAsync = promisify(execFile);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const output = path.join(root, "docs/submission/HOSTORA-source-2.0.9-2026-10-29.zip");
+const mobileConfig = JSON.parse(
+  await readFile(path.join(root, "mobile/app.json"), "utf8"),
+);
+const version = mobileConfig.expo.version;
+const releaseDate = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Asia/Ho_Chi_Minh",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+}).format(new Date());
+const output = path.join(
+  root,
+  `docs/submission/HOSTORA-source-${version}-${releaseDate}.zip`,
+);
 const roots = [
   "app",
   "components",
@@ -76,7 +89,12 @@ const forbiddenExtensions =
 const files = new Set();
 
 async function add(relative) {
-  if (relative === "docs/submission/HOSTORA-2.0.9-SHA256SUMS.txt") return;
+  if (
+    /^docs\/submission\/HOSTORA-(?:source-)?[^/]*SHA256SUMS\.txt$/i.test(
+      relative,
+    )
+  )
+    return;
   if (
     forbidden.test(relative) &&
     relative !== ".env.example" &&
@@ -84,7 +102,11 @@ async function add(relative) {
     !relative.endsWith("/.env.example")
   )
     return;
-  if (forbiddenExtensions.test(relative) && !relative.startsWith("mobile/assets/video/")) return;
+  if (
+    forbiddenExtensions.test(relative) &&
+    !relative.startsWith("mobile/assets/video/")
+  )
+    return;
   const full = path.join(root, relative);
   let info;
   try {

@@ -5,6 +5,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   Bot,
+  Compass,
   Download,
   Home,
   Menu,
@@ -32,6 +33,7 @@ const links = [
 const mobileLinks = [
   ["/", "Trang chủ", Home],
   ["/services", "Dịch vụ", Server],
+  ["/consultation", "Chọn gói", Compass],
   ["/website-studio", "Tạo trang", Sparkles],
   ["/orders", "Đơn hàng", ReceiptText],
 ] as const;
@@ -42,7 +44,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const headerRef = useRef<HTMLElement>(null);
   const menuRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
-    const update = () => headerRef.current?.classList.toggle("is-scrolled", window.scrollY > 16);
+    const update = () =>
+      headerRef.current?.classList.toggle("is-scrolled", window.scrollY > 16);
     update();
     window.addEventListener("scroll", update, { passive: true });
     return () => window.removeEventListener("scroll", update);
@@ -50,7 +53,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!open) return;
     const dismiss = (event: KeyboardEvent) => {
-      if (event.key === "Escape") { setOpen(false); menuRef.current?.focus(); }
+      if (event.key === "Escape") {
+        setOpen(false);
+        menuRef.current?.focus();
+      }
     };
     document.addEventListener("keydown", dismiss);
     return () => document.removeEventListener("keydown", dismiss);
@@ -59,7 +65,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const customerAuthFlow = pathname.startsWith("/account/");
   return (
     <>
-      <a href="#main-content" className="site-skip-link">Đến nội dung chính</a>
+      <a href="#main-content" className="site-skip-link">
+        Đến nội dung chính
+      </a>
       <header ref={headerRef} className="site-header">
         <div className="site-header-inner">
           <Link href="/" className="site-brand" onClick={() => setOpen(false)}>
@@ -76,21 +84,30 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </span>
           </Link>
           <nav className="site-desktop-nav" aria-label="Điều hướng chính">
-            {links.filter(([href]) => href !== "/account" && href !== "/downloads/android").map(([href, label]) => (
-              <Link
-                key={href}
-                href={href}
-                className={cn(
-                  "site-nav-link",
-                  pathname === href && "is-active",
-                )}
-              >
-                {label}
-              </Link>
-            ))}
+            {links
+              .filter(
+                ([href]) =>
+                  href !== "/account" && href !== "/downloads/android",
+              )
+              .map(([href, label]) => (
+                <Link
+                  key={href}
+                  href={href}
+                  className={cn(
+                    "site-nav-link",
+                    pathname === href && "is-active",
+                  )}
+                >
+                  {label}
+                </Link>
+              ))}
           </nav>
           <div className="site-header-actions">
-            <Link href="/account" className="site-account-link" aria-label="Mở tài khoản khách hàng">
+            <Link
+              href="/account"
+              className="site-account-link"
+              aria-label="Mở tài khoản khách hàng"
+            >
               <UserRound size={18} />
               <span>Tài khoản</span>
             </Link>
@@ -110,7 +127,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
         {open && (
-          <nav id="site-mobile-menu" className="site-mobile-nav" aria-label="Điều hướng di động">
+          <nav
+            id="site-mobile-menu"
+            className="site-mobile-nav"
+            aria-label="Điều hướng di động"
+          >
             {links.map(([href, label, Icon]) => (
               <Link
                 key={href}
@@ -128,54 +149,63 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </nav>
         )}
       </header>
-      <main id="main-content" tabIndex={-1} key={pathname} className="page-enter">
+      <main
+        id="main-content"
+        tabIndex={-1}
+        key={pathname}
+        className="page-enter"
+      >
         {children}
       </main>
-      {!customerAuthFlow && <footer className="site-footer">
-        <div className="site-footer-inner">
-          <div>
-            <strong>HOSTORA</strong>
-            <p>Hiểu dịch vụ. Biết chi phí. Chọn đúng.</p>
+      {!customerAuthFlow && (
+        <footer className="site-footer">
+          <div className="site-footer-inner">
+            <div>
+              <strong>HOSTORA</strong>
+              <p>Hiểu dịch vụ. Biết chi phí. Chọn đúng.</p>
+            </div>
+            <nav aria-label="Liên kết cuối trang">
+              <Link href="/website-studio">Tạo trang web với trợ lý</Link>
+              <Link href="/services">Dịch vụ</Link>
+              <Link href="/orders">Đơn hàng</Link>
+              <Link href="/account">Tài khoản khách hàng</Link>
+              <Link href="/knowledge">Kiến thức</Link>
+              <Link href="/journal">Sổ tay làm website</Link>
+              <Link href="/about">Câu chuyện HOSTORA</Link>
+              <Link href="/website-analyzer">Kiểm tra trang web</Link>
+              <Link href="/ai-assistant">Hỏi HOSTORA</Link>
+            </nav>
+            <small>
+              Trợ lý chạy trên máy HOSTORA. Giá đối tác là tham khảo tại ngày
+              kiểm tra.
+            </small>
           </div>
-          <nav aria-label="Liên kết cuối trang">
-            <Link href="/website-studio">Tạo trang web với trợ lý</Link>
-            <Link href="/services">Dịch vụ</Link>
-            <Link href="/orders">Đơn hàng</Link>
-            <Link href="/account">Tài khoản khách hàng</Link>
-            <Link href="/knowledge">Kiến thức</Link>
-            <Link href="/journal">Sổ tay làm website</Link>
-            <Link href="/about">Câu chuyện HOSTORA</Link>
-            <Link href="/website-analyzer">Kiểm tra trang web</Link>
-            <Link href="/ai-assistant">Hỏi HOSTORA</Link>
-          </nav>
-          <small>
-            Trợ lý chạy trên máy HOSTORA. Giá đối tác là tham khảo tại ngày kiểm
-            tra.
-          </small>
-        </div>
-      </footer>}
-      {!customerAuthFlow && <nav
-        className="site-mobile-dock"
-        aria-label="Điều hướng nhanh trên điện thoại"
-      >
-        {mobileLinks.map(([href, label, Icon]) => {
-          const active =
-            href === "/"
-              ? pathname === href
-              : pathname === href || pathname.startsWith(`${href}/`);
-          return (
-            <Link
-              key={href}
-              href={href}
-              className={cn("site-mobile-dock-link", active && "is-active")}
-              aria-current={active ? "page" : undefined}
-            >
-              <Icon size={19} strokeWidth={active ? 2.3 : 1.8} />
-              <span>{label}</span>
-            </Link>
-          );
-        })}
-      </nav>}
+        </footer>
+      )}
+      {!customerAuthFlow && (
+        <nav
+          className="site-mobile-dock"
+          aria-label="Điều hướng nhanh trên điện thoại"
+        >
+          {mobileLinks.map(([href, label, Icon]) => {
+            const active =
+              href === "/"
+                ? pathname === href
+                : pathname === href || pathname.startsWith(`${href}/`);
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={cn("site-mobile-dock-link", active && "is-active")}
+                aria-current={active ? "page" : undefined}
+              >
+                <Icon size={19} strokeWidth={active ? 2.3 : 1.8} />
+                <span>{label}</span>
+              </Link>
+            );
+          })}
+        </nav>
+      )}
     </>
   );
 }

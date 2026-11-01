@@ -9,6 +9,7 @@ playwright-report/
 .playwright-cli/
 .codex/
 output/
+.archify/
 .archify/**/hostora-*.html
 .archify/**/hostora-*.json
 .archify/**/hostora-*.png

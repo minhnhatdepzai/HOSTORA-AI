@@ -2,7 +2,7 @@
   "expo": {
     "name": "HOSTORA AI",
     "slug": "hostora-ai",
-    "version": "2.1.0",
+    "version": "2.2.0",
     "orientation": "portrait",
     "icon": "./assets/images/hostora-icon-source.png",
     "scheme": "hostora",
@@ -12,7 +12,7 @@
     },
     "android": {
       "package": "com.hostora.ai",
-      "versionCode": 22,
+      "versionCode": 23,
       "predictiveBackGestureEnabled": false,
       "blockedPermissions": [
         "android.permission.SYSTEM_ALERT_WINDOW",

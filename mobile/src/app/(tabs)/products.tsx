@@ -1,6 +1,7 @@
 import offlineProducts from "@/data/product-catalog.json";
 import { toCustomerLanguage } from "@/lib/customer-language";
 import { Pressable } from "@/components/pressable";
+import { Stagger } from "@/components/motion";
 import { Feather } from "@expo/vector-icons";
 import { useLocalSearchParams, useFocusEffect, router } from "expo-router";
 import { useCallback, useMemo, useRef, useState } from "react";
@@ -87,7 +88,10 @@ function ProductsContent({ initialCategory }: { initialCategory: string }) {
   const filtersRef = useRef<ScrollViewInstance>(null);
   const filterOffsets = useRef<Record<string, number>>({});
   const revealCategory = useCallback((id: string) => {
-    filtersRef.current?.scrollTo({ x: Math.max(0, (filterOffsets.current[id] ?? 0) - 16), animated: true });
+    filtersRef.current?.scrollTo({
+      x: Math.max(0, (filterOffsets.current[id] ?? 0) - 16),
+      animated: true,
+    });
   }, []);
   const [selected, setSelected] = useState<Product | null>(null);
   const [contactDraft, setContact] = useState<string | null>(null);
@@ -286,7 +290,10 @@ function ProductsContent({ initialCategory }: { initialCategory: string }) {
                 filterOffsets.current[item.id] = event.nativeEvent.layout.x;
                 if (category === item.id) revealCategory(item.id);
               }}
-              onPress={() => { setCategory(item.id); revealCategory(item.id); }}
+              onPress={() => {
+                setCategory(item.id);
+                revealCategory(item.id);
+              }}
               style={[
                 styles.filter,
                 category === item.id && styles.filterActive,
@@ -337,49 +344,53 @@ function ProductsContent({ initialCategory }: { initialCategory: string }) {
             Không có dịch vụ phù hợp. Thử từ khóa hoặc nhóm khác.
           </Text>
         ) : null}
-        {products.map((item) => (
-          <View key={item.id} style={styles.product}>
-            <View style={styles.productMeta}>
-              <Text style={styles.provider}>{item.provider}</Text>
-              <Text style={styles.category}>
-                {categories.find((entry) => entry.id === item.category)
-                  ?.label ?? item.category}
-              </Text>
-            </View>
-            <Text style={styles.name}>{item.name}</Text>
-            <Text style={styles.summary}>{toCustomerLanguage(item.summary)}</Text>
-            <View style={styles.priceBlock}>
-              <Text style={styles.priceLabel}>GIÁ THAM KHẢO</Text>
-              <Text style={styles.price}>
-                {item.priceFromVnd == null
-                  ? "Chưa có giá công bố"
-                  : `Từ ${formatVnd(item.priceFromVnd)}${item.billingUnit === "year" ? "/năm" : item.billingUnit === "month" ? "/tháng" : ""}`}
-              </Text>
-              {item.priceNote ? (
-                <Text style={styles.priceNote}>
-                  {toCustomerLanguage(item.priceNote)}
+        {products.map((item, index) => (
+          <Stagger key={item.id} index={Math.min(index, 4)}>
+            <View style={styles.product}>
+              <View style={styles.productMeta}>
+                <Text style={styles.provider}>{item.provider}</Text>
+                <Text style={styles.category}>
+                  {categories.find((entry) => entry.id === item.category)
+                    ?.label ?? item.category}
                 </Text>
-              ) : null}
+              </View>
+              <Text style={styles.name}>{item.name}</Text>
+              <Text style={styles.summary}>
+                {toCustomerLanguage(item.summary)}
+              </Text>
+              <View style={styles.priceBlock}>
+                <Text style={styles.priceLabel}>GIÁ THAM KHẢO</Text>
+                <Text style={styles.price}>
+                  {item.priceFromVnd == null
+                    ? "Chưa có giá công bố"
+                    : `Từ ${formatVnd(item.priceFromVnd)}${item.billingUnit === "year" ? "/năm" : item.billingUnit === "month" ? "/tháng" : ""}`}
+                </Text>
+                {item.priceNote ? (
+                  <Text style={styles.priceNote}>
+                    {toCustomerLanguage(item.priceNote)}
+                  </Text>
+                ) : null}
+              </View>
+              <Text style={styles.source}>
+                HOSTORA kiểm tra dữ liệu ngày {item.verifiedAt}
+              </Text>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Yêu cầu mua ${item.name} qua HOSTORA`}
+                onPress={() => {
+                  setSelected(item);
+                  setRequestResult(null);
+                }}
+                style={({ pressed }) => [
+                  styles.purchase,
+                  pressed && { opacity: 0.7 },
+                ]}
+              >
+                <Text style={styles.purchaseText}>Đặt mua qua HOSTORA</Text>
+                <Feather name="arrow-right" size={18} color="white" />
+              </Pressable>
             </View>
-            <Text style={styles.source}>
-              HOSTORA kiểm tra dữ liệu ngày {item.verifiedAt}
-            </Text>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={`Yêu cầu mua ${item.name} qua HOSTORA`}
-              onPress={() => {
-                setSelected(item);
-                setRequestResult(null);
-              }}
-              style={({ pressed }) => [
-                styles.purchase,
-                pressed && { opacity: 0.7 },
-              ]}
-            >
-              <Text style={styles.purchaseText}>Đặt mua qua HOSTORA</Text>
-              <Feather name="arrow-right" size={18} color="white" />
-            </Pressable>
-          </View>
+          </Stagger>
         ))}
         {data ? <Text style={styles.disclaimer}>{data.disclaimer}</Text> : null}
       </CinematicScrollView>

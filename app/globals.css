@@ -86,8 +86,11 @@
 .admin-support-case-action label { display: grid; gap: .4rem; color: #718286; font-size: .68rem; }
 .admin-support-case-action select { width: 100%; border: 1px solid #c4d1cd; background: white; padding: .65rem; color: #132b38; }
 .admin-support-case-action em { color: #11695e; font-size: .72rem; font-style: normal; font-weight: 800; }
-.admin-support-empty { padding: 5rem 1rem; text-align: center; color: #52666a; }
-.admin-support-empty h2 { color: #132b38; }
+.admin-support-empty { min-height: 20rem; padding: 4rem 1rem; display: grid; place-items: center; align-content: center; gap: .55rem; text-align: center; color: #52666a; }
+.admin-support-empty-icon { width: 3rem; height: 3rem; display: grid; place-items: center; margin-bottom: .45rem; border: 1px solid #c7d8d2; background: #e5f3ed; color: #11695e; }
+.admin-support-empty h2 { margin: 0; color: #132b38; }
+.admin-support-empty p { max-width: 34rem; margin: 0; line-height: 1.6; }
+.admin-support-empty button { min-height: 2.75rem; margin-top: .85rem; border: 1px solid #11695e; background: #11695e; color: #fff; padding: .7rem 1rem; font-weight: 800; cursor: pointer; }
 
 .customer-account-page { width: min(100% - 2rem, 1180px); margin: 0 auto; padding: clamp(2rem, 5vw, 5rem) 0 7rem; color: #102932; }
 .customer-account-hero { display: flex; justify-content: space-between; align-items: flex-end; gap: 2rem; padding: 0 0 2.5rem; border-bottom: 1px solid #cbd8d4; }
@@ -3177,7 +3180,7 @@ a:active {
     bottom: calc(8px + env(safe-area-inset-bottom, 0px));
     left: 10px;
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     border: 1px solid #d3e0db;
     background: rgb(250 252 249 / 96%);
     box-shadow: 0 10px 28px #07182720;
@@ -5964,6 +5967,13 @@ a:active {
 .admin-login {
   max-width: 450px;
 }
+.admin-access-steps { margin: 1.7rem 0 0; padding: 0; list-style: none; border-top: 1px solid #d7e2de; }
+.admin-access-steps li { min-height: 4.6rem; display: grid; grid-template-columns: 2.25rem 1fr; gap: .75rem; align-items: center; border-bottom: 1px solid #d7e2de; }
+.admin-access-steps li > span { color: #11695e; font: 800 .68rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.admin-access-steps strong, .admin-access-steps small { display: block; }
+.admin-access-steps strong { color: #132b38; font-size: .84rem; }
+.admin-access-steps small { margin-top: .22rem; color: #667a7d; font-size: .72rem; line-height: 1.45; }
+.admin-access-back { min-height: 2.8rem; display: inline-flex; align-items: center; gap: .5rem; margin-top: 1.35rem; color: #11695e; font-size: .78rem; font-weight: 800; }
 @media (max-width: 760px) {
   .order-hero-inner {
     min-height: auto;

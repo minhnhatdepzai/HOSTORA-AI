@@ -23,11 +23,14 @@ import {
 import { colors } from "@/constants/theme";
 import { DEFAULT_API_BASE, getApiBase, saveApiBase } from "@/lib/api";
 
+const USB_API_BASE = "http://127.0.0.1:3000";
+
 export default function SettingsScreen() {
   const [url, setUrl] = useState(DEFAULT_API_BASE);
   const [checking, setChecking] = useState(false);
   const [message, setMessage] = useState("");
   const [connected, setConnected] = useState(false);
+  const usbMode = url.trim() === USB_API_BASE;
 
   useEffect(() => {
     void getApiBase().then(setUrl);
@@ -43,10 +46,16 @@ export default function SettingsScreen() {
       const result = await response.json();
       if (!response.ok || !result.ok) throw new Error("Kết nối chưa sẵn sàng.");
       setConnected(true);
-      setMessage("Đã kết nối. Các tính năng tư vấn đã sẵn sàng.");
+      setMessage(
+        usbMode
+          ? "Đã kết nối qua cáp USB. Các tính năng tư vấn đã sẵn sàng."
+          : "Đã kết nối. Các tính năng tư vấn đã sẵn sàng.",
+      );
     } catch {
       setMessage(
-        "Chưa kết nối được. Hãy kiểm tra hai thiết bị đang cùng Wi‑Fi và thử lại.",
+        usbMode
+          ? "Chưa kết nối qua USB. Hãy giữ cáp cắm, bật máy HOSTORA và thiết lập chuyển tiếp cổng rồi thử lại."
+          : "Chưa kết nối được. Hãy kiểm tra hai thiết bị đang cùng Wi‑Fi và thử lại.",
       );
     } finally {
       setChecking(false);
@@ -105,12 +114,18 @@ export default function SettingsScreen() {
             />
             <View style={styles.presets}>
               <Preset
-                label="Địa chỉ đã cài sẵn"
+                icon="wifi"
+                label="Qua Wi‑Fi"
+                copy="Dùng khi hai thiết bị cùng mạng"
+                selected={!usbMode}
                 onPress={() => setUrl(DEFAULT_API_BASE)}
               />
               <Preset
-                label="Kết nối qua USB"
-                onPress={() => setUrl("http://127.0.0.1:3000")}
+                icon="smartphone"
+                label="Qua cáp USB"
+                copy="Ổn định khi đang cắm vào máy"
+                selected={usbMode}
+                onPress={() => setUrl(USB_API_BASE)}
               />
             </View>
             {checking ? (
@@ -192,14 +207,48 @@ function Help({
     </View>
   );
 }
-function Preset({ label, onPress }: { label: string; onPress: () => void }) {
+function Preset({
+  icon,
+  label,
+  copy,
+  selected,
+  onPress,
+}: {
+  icon: React.ComponentProps<typeof Feather>["name"];
+  label: string;
+  copy: string;
+  selected: boolean;
+  onPress: () => void;
+}) {
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityState={{ selected }}
       onPress={onPress}
-      style={({ pressed }) => [styles.preset, pressed && { opacity: 0.72 }]}
+      style={({ pressed }) => [
+        styles.preset,
+        selected && styles.presetSelected,
+        pressed && { opacity: 0.72 },
+      ]}
     >
-      <Text style={styles.presetText}>{label}</Text>
+      <View style={styles.presetHead}>
+        <Feather
+          name={icon}
+          size={16}
+          color={selected ? colors.ink : colors.mint}
+        />
+        <Text
+          style={[styles.presetText, selected && styles.presetTextSelected]}
+        >
+          {label}
+        </Text>
+        {selected ? (
+          <Feather name="check-circle" size={15} color={colors.ink} />
+        ) : null}
+      </View>
+      <Text style={[styles.presetCopy, selected && styles.presetCopySelected]}>
+        {copy}
+      </Text>
     </Pressable>
   );
 }
@@ -217,7 +266,7 @@ const styles = StyleSheet.create({
   label: {
     color: colors.mint,
     fontFamily: "BeVietnamPro_800ExtraBold",
-    fontSize: 8,
+    fontSize: 10,
     letterSpacing: 1.2,
   },
   input: {
@@ -229,24 +278,36 @@ const styles = StyleSheet.create({
     borderColor: "rgba(255,255,255,.12)",
     color: "white",
     fontFamily: "BeVietnamPro_600SemiBold",
-    fontSize: 12,
+    fontSize: 13,
   },
   presets: { flexDirection: "row", gap: 8 },
   preset: {
     flex: 1,
-    minHeight: 46,
-    alignItems: "center",
+    minHeight: 76,
     justifyContent: "center",
+    gap: 5,
+    paddingHorizontal: 11,
+    paddingVertical: 10,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: "rgba(184,243,214,.25)",
     backgroundColor: "rgba(184,243,214,.07)",
   },
+  presetSelected: { backgroundColor: colors.mint, borderColor: colors.mint },
+  presetHead: { flexDirection: "row", alignItems: "center", gap: 6 },
   presetText: {
     color: colors.mint,
     fontFamily: "BeVietnamPro_700Bold",
-    fontSize: 9,
+    fontSize: 11,
   },
+  presetTextSelected: { color: colors.ink },
+  presetCopy: {
+    color: "#AFC2BA",
+    fontFamily: "BeVietnamPro_400Regular",
+    fontSize: 9,
+    lineHeight: 14,
+  },
+  presetCopySelected: { color: "#31564D" },
   message: {
     flexDirection: "row",
     alignItems: "flex-start",
@@ -259,8 +320,8 @@ const styles = StyleSheet.create({
   messageText: {
     flex: 1,
     fontFamily: "BeVietnamPro_500Medium",
-    fontSize: 9,
-    lineHeight: 15,
+    fontSize: 11,
+    lineHeight: 17,
   },
   helpTitle: {
     color: colors.text,
@@ -289,8 +350,8 @@ const styles = StyleSheet.create({
   helpCopy: {
     color: colors.muted,
     fontFamily: "BeVietnamPro_400Regular",
-    fontSize: 9,
-    lineHeight: 16,
+    fontSize: 11,
+    lineHeight: 17,
     marginTop: 3,
   },
   privacy: {
@@ -303,7 +364,7 @@ const styles = StyleSheet.create({
     flex: 1,
     color: colors.primary,
     fontFamily: "BeVietnamPro_500Medium",
-    fontSize: 9,
-    lineHeight: 16,
+    fontSize: 11,
+    lineHeight: 17,
   },
 });
