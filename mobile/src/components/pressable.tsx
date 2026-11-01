@@ -3,7 +3,6 @@ import {
   Platform,
   Pressable as NativePressable,
   type PressableProps,
-  type PressableStateCallbackType,
   StyleSheet,
 } from "react-native";
 import Animated, {
@@ -17,6 +16,7 @@ import { useMotionPreference } from "./motion";
 import { getMotionProfile } from "@/lib/motion-spec";
 
 const AnimatedPressable = Animated.createAnimatedComponent(NativePressable);
+const neutralPressState = { pressed: false, hovered: false };
 
 /** Shared tap target: native layout, visual press feedback and a quiet haptic cue. */
 export function Pressable({
@@ -34,6 +34,8 @@ export function Pressable({
     opacity: 1 - pressed.value * 0.1,
     transform: [{ scale: 1 - pressed.value * (1 - profile.pressScale) }],
   }));
+  const baseStyle =
+    typeof style === "function" ? style(neutralPressState) : style;
   return (
     <AnimatedPressable
       {...props}
@@ -59,11 +61,7 @@ export function Pressable({
           void Haptics.selectionAsync().catch(() => {});
         onPress?.(event);
       }}
-      style={(state: PressableStateCallbackType) => [
-        typeof style === "function" ? style(state) : style,
-        feedbackStyle,
-        disabled && styles.disabled,
-      ]}
+      style={[baseStyle, feedbackStyle, disabled && styles.disabled]}
     />
   );
 }
