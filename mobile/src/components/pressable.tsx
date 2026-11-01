@@ -3,6 +3,7 @@ import {
   Platform,
   Pressable as NativePressable,
   type PressableProps,
+  type PressableStateCallbackType,
   StyleSheet,
 } from "react-native";
 import Animated, {
@@ -33,10 +34,6 @@ export function Pressable({
     opacity: 1 - pressed.value * 0.1,
     transform: [{ scale: 1 - pressed.value * (1 - profile.pressScale) }],
   }));
-  const baseStyle =
-    typeof style === "function"
-      ? style({ pressed: false, hovered: false })
-      : style;
   return (
     <AnimatedPressable
       {...props}
@@ -62,7 +59,11 @@ export function Pressable({
           void Haptics.selectionAsync().catch(() => {});
         onPress?.(event);
       }}
-      style={[baseStyle, feedbackStyle, disabled && styles.disabled]}
+      style={(state: PressableStateCallbackType) => [
+        typeof style === "function" ? style(state) : style,
+        feedbackStyle,
+        disabled && styles.disabled,
+      ]}
     />
   );
 }
