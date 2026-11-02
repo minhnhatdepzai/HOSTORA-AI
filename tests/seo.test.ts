@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { auditSeoHtml } from "@/lib/seo";
+import { auditSeoHtml, scoreSeoFindings } from "@/lib/seo";
 import { buildSeoAutomationPlan } from "@/lib/seo-automation";
 
 describe("SEO audit", () => {
@@ -50,5 +50,36 @@ describe("SEO audit", () => {
       { robots: false, sitemap: false },
     );
     expect(result.findings.some((item) => item.id === "llms-txt")).toBe(false);
+  });
+
+  it("scores Google SEO independently from GEO findings", () => {
+    expect(
+      scoreSeoFindings([
+        {
+          id: "title",
+          group: "content",
+          label: "Title",
+          status: "pass",
+          impact: "high",
+          detail: "Co title",
+        },
+        {
+          id: "description",
+          group: "content",
+          label: "Description",
+          status: "fail",
+          impact: "medium",
+          detail: "Thieu description",
+        },
+        {
+          id: "llms-txt",
+          group: "geo",
+          label: "LLMS",
+          status: "fail",
+          impact: "high",
+          detail: "Thieu llms.txt",
+        },
+      ]),
+    ).toBe(60);
   });
 });

@@ -7,6 +7,34 @@ export type SeoFinding = {
   detail: string;
 };
 
+const findingWeights = { high: 3, medium: 2, low: 1 } as const;
+
+function scoreFindings(findings: SeoFinding[]) {
+  const total = findings.reduce(
+    (sum, finding) => sum + findingWeights[finding.impact],
+    0,
+  );
+  if (total === 0) return 0;
+  const earned = findings.reduce(
+    (sum, finding) =>
+      sum +
+      findingWeights[finding.impact] *
+        (finding.status === "pass"
+          ? 1
+          : finding.status === "warning"
+            ? 0.5
+            : 0),
+    0,
+  );
+  return Math.round((earned / total) * 100);
+}
+
+export function scoreSeoFindings(findings: SeoFinding[]) {
+  return scoreFindings(
+    findings.filter((finding) => finding.group !== "geo"),
+  );
+}
+
 const capture = (html: string, pattern: RegExp) =>
   html.match(pattern)?.[1]?.trim() ?? null;
 const decode = (value: string | null) =>
@@ -266,22 +294,6 @@ export function auditSeoHtml(
       ),
     );
   }
-  const weights = { high: 3, medium: 2, low: 1 } as const;
-  const earned = findings.reduce(
-    (sum, finding) =>
-      sum +
-      weights[finding.impact] *
-        (finding.status === "pass"
-          ? 1
-          : finding.status === "warning"
-            ? 0.5
-            : 0),
-    0,
-  );
-  const total = findings.reduce(
-    (sum, finding) => sum + weights[finding.impact],
-    0,
-  );
   return {
     title,
     description,
@@ -293,7 +305,7 @@ export function auditSeoHtml(
     images: { total: images.length, withAlt: imagesWithAlt },
     links: { total: anchors.length, internal: internalLinks },
     structuredData: { blocks: jsonLdBlocks.length, types: [...schemaTypes] },
-    score: Math.round((earned / total) * 100),
+    score: scoreFindings(findings),
     findings,
   };
 }
