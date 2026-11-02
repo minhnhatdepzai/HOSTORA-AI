@@ -137,4 +137,3 @@ describe("SEO audit route", () => {
     expect(body).not.toHaveProperty("stack");
   });
 });
-

@@ -88,10 +88,32 @@ function parseRobots(text: string | null) {
   return groups;
 }
 
+function ruleMatchesRoot(pattern: string) {
+  if (!pattern) return false;
+  const anchored = pattern.endsWith("$");
+  const rawPattern = anchored ? pattern.slice(0, -1) : pattern;
+  const expression = rawPattern
+    .replace(/[.+?^${}()|[\]\\]/gu, "\\$&")
+    .replaceAll("*", ".*");
+  return new RegExp(`^${expression}${anchored ? "$" : ""}`, "u").test("/");
+}
+
+function ruleSpecificity(pattern: string) {
+  return pattern.replaceAll("*", "").replace(/\$$/u, "").length;
+}
+
 function rootIsBlocked(group: RobotsGroup) {
-  const rootIsAllowed = group.allow.includes("/");
-  const rootIsDisallowed = group.disallow.includes("/");
-  return rootIsDisallowed && !rootIsAllowed;
+  const matchingAllows = group.allow.filter(ruleMatchesRoot);
+  const matchingDisallows = group.disallow.filter(ruleMatchesRoot);
+  const longestAllow = Math.max(
+    -1,
+    ...matchingAllows.map(ruleSpecificity),
+  );
+  const longestDisallow = Math.max(
+    -1,
+    ...matchingDisallows.map(ruleSpecificity),
+  );
+  return longestDisallow > longestAllow;
 }
 
 function auditCrawlerAccess(robotsTxt: string | null): AiCrawlerAccess[] {
@@ -186,4 +208,3 @@ export function auditAiVisibility(
     documents: { llmsTxt: hasLlmsHeading, llmsFullTxt: hasLlmsFull },
   };
 }
-

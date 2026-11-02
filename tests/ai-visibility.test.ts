@@ -54,6 +54,20 @@ describe("AI visibility audit", () => {
     });
   });
 
+  it("treats a wildcard path that matches the root as blocked", () => {
+    const result = auditAiVisibility({
+      ...completeInput,
+      robotsTxt: "User-agent: *\nDisallow: /*",
+    });
+
+    expect(result.crawlers.every((item) => item.status === "blocked")).toBe(
+      true,
+    );
+    expect(
+      result.categories.find((item) => item.id === "crawlers")?.earned,
+    ).toBe(0);
+  });
+
   it("does not award full llms credit to content without a public link", () => {
     const result = auditAiVisibility({
       ...completeInput,
@@ -117,4 +131,3 @@ describe("AI visibility audit", () => {
     expect(result.score).toBe(100);
   });
 });
-

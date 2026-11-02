@@ -26,7 +26,7 @@ AI chạy local qua Ollama. AI chỉ trích xuất, giải thích và soạn n�
 | Phần đã kiểm tra    | Kết quả gần nhất                                                                                          |
 | ------------------- | --------------------------------------------------------------------------------------------------------- |
 | Web + admin         | Typecheck, lint và production build đạt                                                                   |
-| Logic/API           | 281/281 test đạt trên 57 file                                                                             |
+| Logic/API           | 282/282 test đạt trên 57 file                                                                             |
 | AI local            | Ollama chat, Studio, embedding và smoke test chạy thật qua loopback; không dùng cloud fallback            |
 | E2E + UI audit      | 55 lượt đạt, 1 mobile CRUD bỏ qua có chủ đích; 12 màn audit không có lỗi axe/page/overflow tự động      |
 | Android             | `com.hostora.ai` 2.2.0, versionCode 23; APK universal cài đè bằng `adb install -r` và giữ hội thoại trên emulator |
