@@ -14,7 +14,7 @@ AI chạy local qua Ollama. AI chỉ trích xuất, giải thích và soạn n�
 | APK Android mới nhất   | [Tải HOSTORA AI 2.2.0 universal](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-2.2.0-universal.apk) | 4 ABI, package `com.hostora.ai`                                |
 | SHA-256 APK            | [Tải checksum](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-2.2.0-universal.apk.sha256)    | `c1695598f8c57f6d4772ccc3512d4eeb03d243d5284f8b1b6dd56b99838fe0d3` |
 | Minh chứng 9 ca        | [Mở báo cáo](docs/submission/MINH_CHUNG_9_CA.html)                                                                              | 6 ca Bảng A + 3 ca hộp thư AI                                     |
-| Source ZIP mới nhất    | [Tải Source ZIP](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-source-2.2.0-r2-2026-11-02.zip) | README, tài liệu và cấu hình mẫu                                   |
+| Source ZIP mới nhất    | [Tải Source ZIP](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-source-2.2.0-r3-2026-11-02.zip) | README, tài liệu và cấu hình mẫu                                   |
 | Source                 | [GitHub repository](https://github.com/minhnhatdepzai/HOSTORA-AI)                                                              | Nhánh `main`                                                       |
 
 > URL `trycloudflare.com` là Quick Tunnel phục vụ vòng loại, mở được từ Internet khi máy demo và tunnel đang chạy nhưng có thể đổi sau khi tunnel khởi động lại. Link APK trên GitHub Release là link tải ổn định. Một URL web cố định cần named tunnel và tên miền Cloudflare riêng.
