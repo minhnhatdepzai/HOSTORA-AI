@@ -4,17 +4,17 @@
 
 ## Tải và cài APK
 
-- APK hiện tại 2.2.0 arm64: [tải từ GitHub Release](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-2.2.0-arm64.apk). Bản này đã cài đè, chạy bộ TC01–TC09 và mở ổn định trên Redmi Note 8 Pro ngày 01/11/2026.
-- Checksum SHA-256: `53e2e3005c0004856213c0019e3a994b7b5265f87e38285678d2bd7250b56cee`.
+- APK hiện tại 2.2.0 universal: [tải từ GitHub Release](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-2.2.0-universal.apk). Bản này chứa `arm64-v8a`, `armeabi-v7a`, `x86`, `x86_64`, đã cài đè, chạy bộ TC01–TC09 và mở ổn định trên Android thật/emulator. Link tên cũ [`arm64.apk`](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-2.2.0-arm64.apk) cũng phục vụ cùng binary universal để các biểu mẫu đã lưu không bị hỏng.
+- Checksum SHA-256: `c1695598f8c57f6d4772ccc3512d4eeb03d243d5284f8b1b6dd56b99838fe0d3`.
 - APK 2.1.0 trở về trước là bằng chứng lịch sử; không dùng làm link tải mặc định nữa.
 
 Cài bằng ADB:
 
 ```bash
-adb install -r releases/HOSTORA-AI-2.2.0-arm64.apk
+adb install -r HOSTORA-AI-2.2.0-universal.apk
 ```
 
-Android có thể yêu cầu cho phép “Cài ứng dụng không rõ nguồn gốc” nếu mở APK từ trình quản lý file.
+Android có thể yêu cầu cho phép “Cài ứng dụng không rõ nguồn gốc” nếu mở APK từ trình quản lý file. Bản hiện tại yêu cầu Android 7.0/API 24 trở lên; Android 6 trở xuống cần một ứng dụng legacy riêng vì Expo 58/React Native 0.88 không còn hỗ trợ.
 
 Nếu máy HOSTORA đang chạy `pnpm dev:lan`, mở `http://<IP-máy-HOSTORA>:3000/downloads/android` trên điện thoại để tải trực tiếp; bản universal ở `/downloads/android-universal`. Máy và điện thoại cần cùng mạng, cổng TCP 3000 phải truy cập được. IP LAN có thể đổi theo mạng.
 
@@ -82,4 +82,4 @@ APK sinh tại `android/app/build/outputs/apk/release/app-release.apk`. Android 
 
 ## Trạng thái ký
 
-APK 2.2.0 dùng chữ ký debug cục bộ; package `com.hostora.ai`, versionCode 23, min SDK 24, target SDK 36. Checksum SHA-256 nằm ở `releases/HOSTORA-AI-2.2.0-arm64.apk.sha256`. APK **chưa phải bản ký production cho Google Play**. Trước khi phát hành qua store cần tạo keystore production và bảo quản ngoài Git.
+APK 2.2.0 dùng chữ ký debug cục bộ; package `com.hostora.ai`, versionCode 23, min SDK 24, target SDK 36. Checksum SHA-256 của bản universal là `c1695598f8c57f6d4772ccc3512d4eeb03d243d5284f8b1b6dd56b99838fe0d3`. APK **chưa phải bản ký production cho Google Play**. Trước khi phát hành qua store cần tạo keystore production và bảo quản ngoài Git.

@@ -155,7 +155,11 @@ export default function HomePage() {
                   <ArrowRight size={18} /> Tư vấn chọn hosting
                 </a>
               </ClickSpark>
-              <Link className="commerce-text-link" href="/downloads/android">
+              <Link
+                className="commerce-text-link"
+                href="/downloads/android"
+                prefetch={false}
+              >
                 Tải ứng dụng Android <Download size={17} />
               </Link>
             </div>

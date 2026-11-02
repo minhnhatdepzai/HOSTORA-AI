@@ -111,7 +111,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <UserRound size={18} />
               <span>Tài khoản</span>
             </Link>
-            <Link href="/downloads/android" className="site-header-cta">
+            <Link
+              href="/downloads/android"
+              prefetch={false}
+              className="site-header-cta"
+            >
               Tải ứng dụng
             </Link>
             <button
@@ -136,6 +140,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <Link
                 key={href}
                 href={href}
+                prefetch={href === "/downloads/android" ? false : undefined}
                 onClick={() => setOpen(false)}
                 className={cn(
                   "site-mobile-link",

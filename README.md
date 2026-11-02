@@ -11,10 +11,11 @@ AI chạy local qua Ollama. AI chỉ trích xuất, giải thích và soạn n�
 | Web khách hàng         | [Mở HOSTORA](https://obtaining-dennis-excited-replacement.trycloudflare.com/)                                                   | HTTPS demo đang chạy, kiểm tra 02/11/2026                          |
 | Web quản trị           | [Mở trang admin](https://obtaining-dennis-excited-replacement.trycloudflare.com/admin)                                          | Chuyển tới cổng đăng nhập admin                                    |
 | Hộp thư AI của admin   | [Mở hộp thư hỗ trợ](https://obtaining-dennis-excited-replacement.trycloudflare.com/admin/support)                               | Cần phiên quản trị hợp lệ                                          |
-| APK Android mới nhất   | [Tải HOSTORA AI 2.2.0 universal](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-2.2.0-universal.apk) | 4 ABI, package `com.hostora.ai`                                |
+| APK Android mới nhất   | [Tải HOSTORA AI 2.2.0 universal](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-2.2.0-universal.apk) | Android 7.0+, 4 ABI, package `com.hostora.ai`                  |
+| Link APK cũ tương thích | [Tải qua tên `arm64.apk`](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-2.2.0-arm64.apk)           | Cùng binary universal; giữ link cũ không bị lỗi                   |
 | SHA-256 APK            | [Tải checksum](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-2.2.0-universal.apk.sha256)    | `c1695598f8c57f6d4772ccc3512d4eeb03d243d5284f8b1b6dd56b99838fe0d3` |
 | Minh chứng 9 ca        | [Mở báo cáo](docs/submission/MINH_CHUNG_9_CA.html)                                                                              | 6 ca Bảng A + 3 ca hộp thư AI                                     |
-| Source ZIP mới nhất    | [Tải Source ZIP](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-source-2.2.0-r3-2026-11-02.zip) | README, tài liệu và cấu hình mẫu                                   |
+| Source ZIP mới nhất    | [Tải Source ZIP](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-source-2.2.0-r4-2026-11-02.zip) | README, tài liệu và cấu hình mẫu                                   |
 | Source                 | [GitHub repository](https://github.com/minhnhatdepzai/HOSTORA-AI)                                                              | Nhánh `main`                                                       |
 
 > URL `trycloudflare.com` là Quick Tunnel phục vụ vòng loại, mở được từ Internet khi máy demo và tunnel đang chạy nhưng có thể đổi sau khi tunnel khởi động lại. Link APK trên GitHub Release là link tải ổn định. Một URL web cố định cần named tunnel và tên miền Cloudflare riêng.
@@ -126,13 +127,13 @@ Xem [hướng dẫn Docker](docs/DOCKER_DEPLOYMENT.md).
 
 ### Cài APK phát hành
 
-Tải APK ở bảng “Truy cập nhanh”, sau đó mở trên điện thoại Android arm64 hoặc cài bằng ADB:
+Tải APK universal ở bảng “Truy cập nhanh”, sau đó mở trên điện thoại Android 7.0 trở lên hoặc cài bằng ADB. File chứa `arm64-v8a`, `armeabi-v7a`, `x86` và `x86_64`, vì vậy dùng được cho điện thoại ARM 32/64-bit và máy ảo Android tương ứng:
 
 ```bash
 adb install -r HOSTORA-AI-2.2.0-universal.apk
 ```
 
-`-r` cài đè và giữ dữ liệu app. APK 2.2.0 hiện dùng chữ ký debug cục bộ để chấm vòng loại, chưa phải bản ký production cho Google Play.
+`-r` cài đè và giữ dữ liệu app. Android 6 trở xuống không được Expo 58/React Native 0.88 hỗ trợ; cần một ứng dụng legacy riêng nếu buộc phải chạy trên các máy đó. APK 2.2.0 hiện dùng chữ ký debug cục bộ để chấm vòng loại, chưa phải bản ký production cho Google Play.
 
 ### Chạy app với backend qua USB
 
