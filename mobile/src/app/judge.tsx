@@ -5,6 +5,7 @@ import { Reveal, Stagger } from "@/components/motion";
 import { Pressable } from "@/components/pressable";
 import { Brand, Button, Screen } from "@/components/ui";
 import { colors, radii } from "@/constants/theme";
+import { useIntroPlayback } from "@/context/intro-playback-context";
 import {
   judgeCases,
   judgeFeatures,
@@ -23,6 +24,8 @@ function time(second: number) {
 }
 
 export default function JudgeScreen() {
+  const { canReplayIntro, replayIntro } = useIntroPlayback();
+
   return (
     <Screen revealChildren={false}>
       <View style={styles.topbar}>
@@ -36,7 +39,7 @@ export default function JudgeScreen() {
         </Pressable>
         <Brand />
         <View style={styles.releaseBadge}>
-          <Text style={styles.releaseBadgeText}>V2.2</Text>
+          <Text style={styles.releaseBadgeText}>V2.2.1</Text>
         </View>
       </View>
 
@@ -57,12 +60,26 @@ export default function JudgeScreen() {
           <Metric value="02:00" label="KỊCH BẢN" />
           <Metric value="09" label="CA KIỂM THỬ" />
         </View>
-        <Button
-          label="Bắt đầu demo 2 phút"
-          icon="play"
-          variant="mint"
-          onPress={() => router.push("/(tabs)/consult" as Href)}
-        />
+        <View style={styles.heroActions}>
+          <Button
+            label="Bắt đầu demo 2 phút"
+            icon="play"
+            variant="mint"
+            onPress={() => router.push("/(tabs)/consult" as Href)}
+          />
+          <Button
+            label="Phát lại cinematic"
+            icon="film"
+            variant="secondary"
+            disabled={!canReplayIntro}
+            onPress={replayIntro}
+          />
+        </View>
+        {!canReplayIntro ? (
+          <Text style={styles.motionNotice}>
+            Tắt Giảm chuyển động trong Android để xem cinematic đầy đủ.
+          </Text>
+        ) : null}
       </Reveal>
 
       <View style={styles.section}>
@@ -230,6 +247,14 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderColor: "#314A49",
     flexDirection: "row",
+  },
+  heroActions: { gap: 10 },
+  motionNotice: {
+    marginTop: 10,
+    color: "#B8C8C2",
+    fontFamily: "BeVietnamPro_500Medium",
+    fontSize: 10,
+    lineHeight: 16,
   },
   metric: { flex: 1 },
   metricValue: {

@@ -6,7 +6,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 const INTRO_SOURCE = require("../../assets/video/hostora-intro.mp4");
 
-/** Plays once at launch, then hands control to the existing onboarding or home. */
+/** Plays the complete local brand film, then restores the screen underneath it. */
 export function BrandFilm({ onFinish }: { onFinish: () => void }) {
   const [firstFrame, setFirstFrame] = useState(false);
   const finished = useRef(false);
@@ -28,7 +28,7 @@ export function BrandFilm({ onFinish }: { onFinish: () => void }) {
       if (status === "error") finish();
     });
     // A damaged or unsupported video must never trap the user at launch.
-    const safetyTimer = setTimeout(finish, 11_000);
+    const safetyTimer = setTimeout(finish, 18_000);
     player.play();
     return () => {
       ended.remove();
@@ -63,7 +63,13 @@ export function BrandFilm({ onFinish }: { onFinish: () => void }) {
   );
 }
 
-const fill = { position: "absolute" as const, top: 0, right: 0, bottom: 0, left: 0 };
+const fill = {
+  position: "absolute" as const,
+  top: 0,
+  right: 0,
+  bottom: 0,
+  left: 0,
+};
 
 const styles = StyleSheet.create({
   screen: { ...fill, backgroundColor: "#080d10" },

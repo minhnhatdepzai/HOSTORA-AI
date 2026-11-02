@@ -34,6 +34,8 @@ const roots = [
   "docker",
   "mobile/src",
   "mobile/assets",
+  "mobile/brand-film",
+  "training",
 ];
 const explicit = [
   ".env.example",
@@ -104,7 +106,8 @@ async function add(relative) {
     return;
   if (
     forbiddenExtensions.test(relative) &&
-    !relative.startsWith("mobile/assets/video/")
+    !relative.startsWith("mobile/assets/video/") &&
+    relative !== "public/brand/hostora-intro.mp4"
   )
     return;
   const full = path.join(root, relative);

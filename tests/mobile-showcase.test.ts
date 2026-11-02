@@ -7,7 +7,7 @@ import {
   progressForStep,
 } from "@/mobile/src/lib/motion-spec";
 import { defaultRequirements } from "@/mobile/src/lib/catalog";
-import { INTRO_COMPLETED_VALUE, shouldShowIntro } from "@/mobile/src/lib/intro";
+import { shouldPlayIntroOnLaunch } from "@/mobile/src/lib/intro";
 import {
   judgeCases,
   judgeFeatures,
@@ -15,9 +15,9 @@ import {
 } from "@/mobile/src/lib/judge-showcase";
 
 describe("HOSTORA mobile motion contract", () => {
-  it("plays the cinematic intro once without blocking later cold launches", () => {
-    expect(shouldShowIntro(null)).toBe(true);
-    expect(shouldShowIntro(INTRO_COMPLETED_VALUE)).toBe(false);
+  it("plays the cinematic on every cold launch unless reduced motion is enabled", () => {
+    expect(shouldPlayIntroOnLaunch(false)).toBe(true);
+    expect(shouldPlayIntroOnLaunch(true)).toBe(false);
   });
 
   it("keeps tap feedback perceptible without feeling delayed", () => {

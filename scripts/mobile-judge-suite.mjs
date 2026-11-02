@@ -279,7 +279,7 @@ const cases = [
   ),
   resultFor(
     "TC09",
-    versionName === "2.2.0" && versionCode === "23" && settings.matched
+    versionName === "2.2.1" && versionCode === "24" && settings.matched
       ? "passed"
       : "failed",
     `Thiết bị đang chạy ${versionName} (${versionCode}); firstInstallTime ${firstInstallTime.trim()}, lastUpdateTime ${lastUpdateTime.trim()}; cấu hình USB vẫn xuất hiện sau adb install -r.`,
