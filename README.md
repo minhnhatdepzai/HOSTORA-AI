@@ -8,9 +8,9 @@ AI chạy local qua Ollama. AI chỉ trích xuất, giải thích và soạn n�
 
 | Nội dung               | Liên kết                                                                                                                       | Trạng thái                                                         |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------ |
-| Web khách hàng         | [Mở HOSTORA](https://obtaining-dennis-excited-replacement.trycloudflare.com/)                                                   | HTTPS demo đang chạy, kiểm tra 02/11/2026                          |
-| Web quản trị           | [Mở trang admin](https://obtaining-dennis-excited-replacement.trycloudflare.com/admin)                                          | Chuyển tới cổng đăng nhập admin                                    |
-| Hộp thư AI của admin   | [Mở hộp thư hỗ trợ](https://obtaining-dennis-excited-replacement.trycloudflare.com/admin/support)                               | Cần phiên quản trị hợp lệ                                          |
+| Web khách hàng         | [Mở HOSTORA](https://admin123-system-product-name.tailfeea7a.ts.net:8443/)                                                   | HTTPS ổn định qua Tailscale Funnel, kiểm tra 02/11/2026                          |
+| Web quản trị           | [Mở trang admin](https://admin123-system-product-name.tailfeea7a.ts.net:8443/admin)                                          | Chuyển tới cổng đăng nhập admin                                    |
+| Hộp thư AI của admin   | [Mở hộp thư hỗ trợ](https://admin123-system-product-name.tailfeea7a.ts.net:8443/admin/support)                               | Cần phiên quản trị hợp lệ                                          |
 | APK Android mới nhất   | [Tải HOSTORA AI 2.2.0 universal](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-2.2.0-universal.apk) | Android 7.0+, 4 ABI, package `com.hostora.ai`                  |
 | Link APK cũ tương thích | [Tải qua tên `arm64.apk`](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-2.2.0-arm64.apk)           | Cùng binary universal; giữ link cũ không bị lỗi                   |
 | SHA-256 APK            | [Tải checksum](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-2.2.0-universal.apk.sha256)    | `c1695598f8c57f6d4772ccc3512d4eeb03d243d5284f8b1b6dd56b99838fe0d3` |
@@ -18,7 +18,7 @@ AI chạy local qua Ollama. AI chỉ trích xuất, giải thích và soạn n�
 | Source ZIP mới nhất    | [Tải Source ZIP](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-source-2.2.0-r4-2026-11-02.zip) | README, tài liệu và cấu hình mẫu                                   |
 | Source                 | [GitHub repository](https://github.com/minhnhatdepzai/HOSTORA-AI)                                                              | Nhánh `main`                                                       |
 
-> URL `trycloudflare.com` là Quick Tunnel phục vụ vòng loại, mở được từ Internet khi máy demo và tunnel đang chạy nhưng có thể đổi sau khi tunnel khởi động lại. Link APK trên GitHub Release là link tải ổn định. Một URL web cố định cần named tunnel và tên miền Cloudflare riêng.
+> URL `*.ts.net:8443` là hostname HTTPS cố định của Tailscale Funnel và không cần mua tên miền. HOSTORA production cùng Funnel tự chạy lại trên máy demo; máy tắt hoặc mất mạng thì website vẫn offline. Link APK trên GitHub Release hoạt động độc lập với máy demo.
 
 ## Trạng thái bản 2.2.0
 
@@ -215,18 +215,19 @@ HTTP 200, browser mobile viewport hoặc APK build thành công không thay th�
 - Giá, ưu đãi và tình trạng tên miền thay đổi theo thời gian; phải kiểm tra lại nguồn trước khi bán.
 - Kết quả test local và tự chấm không bảo đảm thứ hạng cuộc thi hoặc tải production.
 
-## Cloudflare Quick Tunnel
+## URL HTTPS công khai
 
-Khi cần tạo URL HTTPS mới từ web local:
-
-```bash
-pnpm tunnel:cloudflare
-```
-
-Giữ tiến trình chạy trong suốt buổi demo. Dừng bằng:
+URL cố định hiện tại ánh xạ HTTPS cổng `8443` tới HOSTORA production tại `127.0.0.1:3200`. Kiểm tra trạng thái bằng:
 
 ```bash
-pnpm tunnel:cloudflare:stop
+systemctl --user status hostora-production.service
+tailscale funnel status
 ```
 
-Muốn URL cố định, cần tạo named tunnel trong tài khoản Cloudflare, trỏ DNS của tên miền riêng và cập nhật `HOSTORA_PUBLIC_BASE_URL` cùng callback thanh toán. Không đưa token Cloudflare vào Git.
+Khởi động lại web production khi cần:
+
+```bash
+systemctl --user restart hostora-production.service
+```
+
+Tailscale Funnel cổng `443` đang dành cho dự án JAPANO tại `127.0.0.1:4100`; không ghi đè cấu hình đó. Cloudflare Quick Tunnel vẫn chỉ là phương án dự phòng tạm thời. Không đưa token tunnel vào Git.
