@@ -9,14 +9,14 @@ export const dynamic = "force-dynamic";
 
 const releases = {
   android: {
-    local: `HOSTORA-AI-${mobileConfig.expo.version}-arm64.apk`,
-    published: `HOSTORA-AI-${mobileConfig.expo.version}-arm64.apk`,
+    local: `HOSTORA-AI-${mobileConfig.expo.version}-universal.apk`,
+    published: `HOSTORA-AI-${mobileConfig.expo.version}-universal.apk`,
     version: mobileConfig.expo.version,
   },
   "android-universal": {
-    local: "HOSTORA-AI-2.0.3-universal.apk",
-    published: null,
-    version: "2.0.3",
+    local: `HOSTORA-AI-${mobileConfig.expo.version}-universal.apk`,
+    published: `HOSTORA-AI-${mobileConfig.expo.version}-universal.apk`,
+    version: mobileConfig.expo.version,
   },
 } as const;
 const defaultReleaseBaseUrl =

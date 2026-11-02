@@ -62,7 +62,7 @@ test("landing offers the current Android APK", async ({
   });
   if (response.status() === 307) {
     expect(response.headers().location).toBe(
-      `https://github.com/minhnhatdepzai/HOSTORA-AI/releases/download/v2.0.9-review-20261029-r2/HOSTORA-AI-${mobileVersion}-arm64.apk`,
+      `https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-${mobileVersion}-universal.apk`,
     );
     return;
   }
@@ -71,7 +71,7 @@ test("landing offers the current Android APK", async ({
     "android.package-archive",
   );
   expect(response.headers()["content-disposition"]).toContain(
-    `HOSTORA-AI-${mobileVersion}-arm64.apk`,
+    `HOSTORA-AI-${mobileVersion}-universal.apk`,
   );
   expect(Number(response.headers()["content-length"])).toBeGreaterThan(
     30_000_000,

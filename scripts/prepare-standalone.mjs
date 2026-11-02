@@ -7,8 +7,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const standalone = path.join(root, ".next", "standalone");
 const mobileConfig = JSON.parse(await readFile(path.join(root, "mobile", "app.json"), "utf8"));
 const releases = [
-  `HOSTORA-AI-${mobileConfig.expo.version}-arm64.apk`,
-  "HOSTORA-AI-2.0.3-universal.apk",
+  `HOSTORA-AI-${mobileConfig.expo.version}-universal.apk`,
 ];
 
 await stat(path.join(standalone, "server.js"));
