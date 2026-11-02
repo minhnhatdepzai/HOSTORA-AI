@@ -63,6 +63,15 @@ async function fetchPublic(url: URL, maxBytes = 1_000_000) {
   return { ok: false, text: "", url: target, contentType: "" };
 }
 
+function unavailablePublic(url: string) {
+  return {
+    ok: false,
+    text: "",
+    url: new URL(url),
+    contentType: "",
+  };
+}
+
 export async function POST(request: Request) {
   try {
     const parsed = await parseRequestJson(request, requestSchema, 16_384);
@@ -79,16 +88,16 @@ export async function POST(request: Request) {
     const [robots, sitemap, llmsTxt, llmsFullTxt] = await Promise.all([
       validatePublicUrl(`${origin}/robots.txt`)
         .then((url) => fetchPublic(url, 200_000))
-        .catch(() => ({ ok: false })),
+        .catch(() => unavailablePublic(`${origin}/robots.txt`)),
       validatePublicUrl(`${origin}/sitemap.xml`)
         .then((url) => fetchPublic(url, 200_000))
-        .catch(() => ({ ok: false })),
+        .catch(() => unavailablePublic(`${origin}/sitemap.xml`)),
       validatePublicUrl(`${origin}/llms.txt`)
         .then((url) => fetchPublic(url, 200_000))
-        .catch(() => ({ ok: false })),
+        .catch(() => unavailablePublic(`${origin}/llms.txt`)),
       validatePublicUrl(`${origin}/llms-full.txt`)
         .then((url) => fetchPublic(url, 500_000))
-        .catch(() => ({ ok: false })),
+        .catch(() => unavailablePublic(`${origin}/llms-full.txt`)),
     ]);
     const audit = auditSeoHtml(page.text, page.url, {
       robots: robots.ok,
