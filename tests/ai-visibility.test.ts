@@ -106,5 +106,15 @@ describe("AI visibility audit", () => {
       },
     ]);
   });
+
+  it("reports llms-full availability without inflating the score", () => {
+    const result = auditAiVisibility({
+      ...completeInput,
+      llmsFullTxt: "# Example full\nhttps://example.com/services",
+    });
+
+    expect(result.documents).toEqual({ llmsTxt: true, llmsFullTxt: true });
+    expect(result.score).toBe(100);
+  });
 });
 

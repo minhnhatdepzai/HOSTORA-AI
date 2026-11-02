@@ -27,6 +27,7 @@ export type AiVisibilityCategory = {
 export type AiVisibilityInput = {
   robotsTxt: string | null;
   llmsTxt: string | null;
+  llmsFullTxt?: string | null;
   structuredData: { blocks: number; types: string[] };
   meta: {
     title: string | null;
@@ -42,6 +43,7 @@ export type AiVisibilityAudit = {
   score: number;
   categories: AiVisibilityCategory[];
   crawlers: AiCrawlerAccess[];
+  documents: { llmsTxt: boolean; llmsFullTxt: boolean };
 };
 
 type RobotsGroup = {
@@ -126,6 +128,9 @@ export function auditAiVisibility(
   const llms = input.llmsTxt?.trim() ?? "";
   const hasLlmsHeading = /^#{1,6}\s+\S/mu.test(llms);
   const hasLlmsLink = /https?:\/\/[^\s)]+/iu.test(llms);
+  const hasLlmsFull = /^#{1,6}\s+\S/mu.test(
+    input.llmsFullTxt?.trim() ?? "",
+  );
 
   const categories: AiVisibilityCategory[] = [
     {
@@ -178,6 +183,7 @@ export function auditAiVisibility(
     ),
     categories,
     crawlers,
+    documents: { llmsTxt: hasLlmsHeading, llmsFullTxt: hasLlmsFull },
   };
 }
 

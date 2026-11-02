@@ -1,4 +1,5 @@
-import { auditSeoHtml } from "@/lib/seo";
+import { auditAiVisibility } from "@/lib/ai-visibility";
+import { auditSeoHtml, scoreSeoFindings } from "@/lib/seo";
 import { buildSeoAutomationPlan } from "@/lib/seo-automation";
 import { sanitizeCitations } from "@/lib/chat-citations";
 import { structuredChat } from "@/lib/ollama";
@@ -75,7 +76,7 @@ export async function POST(request: Request) {
         { status: 422 },
       );
     const origin = page.url.origin;
-    const [robots, sitemap, llmsTxt] = await Promise.all([
+    const [robots, sitemap, llmsTxt, llmsFullTxt] = await Promise.all([
       validatePublicUrl(`${origin}/robots.txt`)
         .then((url) => fetchPublic(url, 200_000))
         .catch(() => ({ ok: false })),
@@ -85,26 +86,70 @@ export async function POST(request: Request) {
       validatePublicUrl(`${origin}/llms.txt`)
         .then((url) => fetchPublic(url, 200_000))
         .catch(() => ({ ok: false })),
+      validatePublicUrl(`${origin}/llms-full.txt`)
+        .then((url) => fetchPublic(url, 500_000))
+        .catch(() => ({ ok: false })),
     ]);
     const audit = auditSeoHtml(page.text, page.url, {
       robots: robots.ok,
       sitemap: sitemap.ok,
       llmsTxt: llmsTxt.ok,
     });
+    const seoScore = scoreSeoFindings(audit.findings);
+    const aiVisibility = auditAiVisibility({
+      robotsTxt: robots.ok ? robots.text : null,
+      llmsTxt: llmsTxt.ok ? llmsTxt.text : null,
+      llmsFullTxt: llmsFullTxt.ok ? llmsFullTxt.text : null,
+      structuredData: audit.structuredData,
+      meta: {
+        title: audit.title,
+        description: audit.description,
+        canonical: audit.canonical,
+        openGraph:
+          audit.findings.find((finding) => finding.id === "open-graph")
+            ?.status === "pass",
+        language:
+          audit.findings.find((finding) => finding.id === "language")
+            ?.status === "pass",
+      },
+      sitemap: sitemap.ok,
+    });
+    const overallScore = Math.round((seoScore + aiVisibility.score) / 2);
+    const blockedCrawlers = aiVisibility.crawlers.filter(
+      (crawler) => crawler.status === "blocked",
+    );
     const failed = audit.findings.filter(
       (finding) => finding.status !== "pass",
     );
-    const automationPlan = buildSeoAutomationPlan(audit.findings, {
-      keyword,
-      url: page.url,
-      title: audit.title,
-    });
+    const automationPlan = [
+      ...(blockedCrawlers.length
+        ? [
+            {
+              id: "ai-crawler-access",
+              priority: "P0" as const,
+              mode: "verify" as const,
+              title: "Quyền đọc website của trợ lý AI",
+              action: `Kiểm tra robots.txt vì đang chặn ${blockedCrawlers.map((crawler) => crawler.id).join(", ")}.`,
+              acceptance:
+                "Các bot muốn hỗ trợ được phép đọc trang công khai; bot không cần thiết vẫn có thể bị chặn có chủ đích.",
+              evidence: `${blockedCrawlers.length}/${aiVisibility.crawlers.length} bot đang bị chặn tại đường dẫn gốc.`,
+              draft: null,
+            },
+          ]
+        : []),
+      ...buildSeoAutomationPlan(audit.findings, {
+        keyword,
+        url: page.url,
+        title: audit.title,
+      }),
+    ];
+    const issueCount = failed.length + (blockedCrawlers.length ? 1 : 0);
     const sources = await retrieve(
       `SEO ${keyword} ${failed.map((finding) => finding.label).join(" ")}`,
       5,
     );
     let ai = {
-      executiveSummary: `Trang đạt ${audit.score}/100 theo các mục công khai đã kiểm tra; có ${failed.length} mục cần xem xét.`,
+      executiveSummary: `Trang đạt ${overallScore}/100 theo các mục công khai đã kiểm tra; có ${issueCount} nhóm việc cần xem xét.`,
       priorities: automationPlan.slice(0, 6).map((task) => task.action),
       contentIdeas: keyword
         ? [
@@ -119,7 +164,7 @@ export async function POST(request: Request) {
     try {
       const generated = await structuredChat(
         "Bạn là cố vấn giúp chủ kinh doanh cải thiện khả năng được tìm thấy trên Google. Chỉ dùng kết quả kiểm tra và nguồn được cung cấp. Viết tiếng Việt đơn giản, hướng vào lợi ích và hành động; không nhắc tên cơ chế nội bộ, mã lập trình hay thuật ngữ chuyên môn khi có thể nói bằng lời phổ thông. Không hứa hạng 1, không bịa lượng truy cập hay dữ liệu không được cung cấp. Không nêu thương hiệu hoặc công cụ chưa có trong nguồn. Mỗi ưu tiên có dữ kiện phải gắn [K1]...[K5]. Ý tưởng nội dung là bản nháp cần biên tập, không phải dữ kiện.",
-        `URL: ${page.url}\nTừ khóa mục tiêu: ${keyword || "chưa nhập"}\nAudit: ${JSON.stringify({ score: audit.score, findings: audit.findings })}\nNguồn:\n${sources.map((source, index) => `[K${index + 1}] ${source.title}: ${source.content}`).join("\n")}`,
+        `URL: ${page.url}\nTừ khóa mục tiêu: ${keyword || "chưa nhập"}\nAudit: ${JSON.stringify({ scores: { overall: overallScore, seo: seoScore, aiVisibility: aiVisibility.score }, findings: audit.findings, crawlers: aiVisibility.crawlers })}\nNguồn:\n${sources.map((source, index) => `[K${index + 1}] ${source.title}: ${source.content}`).join("\n")}`,
         aiOutput,
         aiFormat,
         "seo_audit",
@@ -132,7 +177,7 @@ export async function POST(request: Request) {
       ai = {
         // Nhận định về trạng thái hiện tại chỉ phản ánh kết quả audit code;
         // model được dùng cho ý tưởng sáng tạo, không được viết lại sự thật quét được.
-        executiveSummary: `Trang đạt ${audit.score}/100 theo các mục công khai đã kiểm tra; có ${failed.length} mục cần xem xét.`,
+        executiveSummary: `Trang đạt ${overallScore}/100 theo các mục công khai đã kiểm tra; có ${issueCount} nhóm việc cần xem xét.`,
         // Thứ tự sửa lỗi do audit code quyết định, không giao cho model.
         priorities: automationPlan.slice(0, 6).map((task) => task.action),
         contentIdeas: generated.contentIdeas.map(clean),
@@ -142,6 +187,15 @@ export async function POST(request: Request) {
       url: page.url.toString(),
       keyword: keyword || null,
       ...audit,
+      score: overallScore,
+      scores: {
+        overall: overallScore,
+        seo: seoScore,
+        aiVisibility: aiVisibility.score,
+      },
+      aiCrawlers: aiVisibility.crawlers,
+      aiCategories: aiVisibility.categories,
+      aiDocuments: aiVisibility.documents,
       ai,
       automationPlan,
       sources: sources.map(({ id, title, sourceUrl, verifiedAt }, index) => ({
