@@ -103,6 +103,12 @@ describe("customer account store", () => {
       role: "user",
       content: "Tôi cần web bán hàng",
     });
+    store.openAiConversation({ conversationId, customerId: first.id });
+    store.appendAiConversationMessage({
+      conversationId,
+      role: "user",
+      content: "Tôi cần web bán hàng",
+    });
     const source = store.createAiSource(first.id, {
       title: "Giới thiệu doanh nghiệp",
       kind: "text",
@@ -136,11 +142,100 @@ describe("customer account store", () => {
 
     store.clearAiHistory(first.id, false);
     expect(store.listChatMessages(first.id, conversationId)).toEqual([]);
+    expect(
+      store.getAiConversationForViewer({
+        conversationId,
+        customerId: first.id,
+      }),
+    ).toBeNull();
     expect(store.getAiMemory(first.id)).not.toBeNull();
     store.clearAiHistory(first.id, true);
     expect(store.getAiMemory(first.id)).toBeNull();
     expect(store.deleteAiSource(second.id, source.id)).toBe(false);
     expect(store.deleteAiSource(first.id, source.id)).toBe(true);
+    store.close();
+  });
+
+  it("keeps every AI conversation private while exposing the full redacted thread to admin", () => {
+    const store = new CustomerStore(databasePath());
+    const conversationId = crypto.randomUUID();
+    const opened = store.openAiConversation({ conversationId });
+
+    expect(opened.accessToken).toMatch(/^[A-Za-z0-9_-]{32,}$/);
+    store.appendAiConversationMessage({
+      id: crypto.randomUUID(),
+      conversationId,
+      role: "user",
+      content: "Câu hỏi ngoài phạm vi đã được ẩn thông tin liên hệ.",
+    });
+    store.appendAiConversationMessage({
+      id: crypto.randomUUID(),
+      conversationId,
+      role: "assistant",
+      content: "Mình đã chuyển câu hỏi này cho quản trị viên.",
+    });
+    store.escalateAiConversation(conversationId, "out_of_scope");
+
+    expect(
+      store.getAiConversationForViewer({
+        conversationId,
+        accessToken: "sai-token",
+      }),
+    ).toBeNull();
+    expect(
+      store.getAiConversationForViewer({
+        conversationId,
+        accessToken: opened.accessToken!,
+      }),
+    ).toMatchObject({
+      id: conversationId,
+      status: "escalated",
+      escalationReason: "out_of_scope",
+      messages: [
+        { role: "user" },
+        { role: "assistant" },
+      ],
+    });
+
+    const replied = store.replyToAiConversation(
+      conversationId,
+      "Quản trị viên đã trả lời trực tiếp cho khách.",
+    );
+    expect(replied).toMatchObject({ status: "answered" });
+    expect(replied?.messages.at(-1)).toMatchObject({
+      role: "admin",
+      content: "Quản trị viên đã trả lời trực tiếp cho khách.",
+    });
+    expect(store.listAllAiConversations()[0]).toMatchObject({
+      id: conversationId,
+      customerName: "Khách chưa đăng nhập",
+      status: "answered",
+    });
+    store.close();
+  });
+
+  it("links an authenticated AI escalation to the customer account", () => {
+    const store = new CustomerStore(databasePath());
+    const customer = store.createCustomer({
+      name: "Khách cần người thật",
+      email: "human@example.com",
+      passwordHash: "hash",
+    });
+    const conversationId = crypto.randomUUID();
+    const opened = store.openAiConversation({
+      conversationId,
+      customerId: customer.id,
+    });
+    expect(opened.accessToken).toBeNull();
+    expect(
+      store.getAiConversationForViewer({
+        conversationId,
+        customerId: customer.id,
+      }),
+    ).toMatchObject({ customerId: customer.id });
+    expect(
+      store.getAiConversationForViewer({ conversationId }),
+    ).toBeNull();
     store.close();
   });
 });

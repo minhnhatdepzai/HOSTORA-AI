@@ -4,9 +4,9 @@
 
 ## Kết luận kiểm tra
 
-- Bản phát hành mục tiêu là `v2.2.0`. Web typecheck, lint, 263/263 unit test, build, AI smoke và 25/25 ca tư vấn AI local đạt ngày 01/11. Playwright production cách ly đạt 47 ca, bỏ qua 1 ca có chủ đích; audit 12 trạng thái desktop/mobile có 0 lỗi trang, 0 phát hiện accessibility tự động và 0 tràn ngang.
+- Bản phát hành mục tiêu là `v2.2.0-r2`. Web typecheck, lint, 273/273 unit/integration, build và AI smoke đạt; Playwright production cách ly đạt 51 lượt, bỏ qua 1 lượt mobile CRUD có chủ đích. Audit 12 màn desktop/mobile có 0 lỗi accessibility tự động, 0 page error và 0 tràn ngang ngày 02/11/2026.
 - Ba câu tự nhiên mới về website giới thiệu bán hàng qua Zalo, blog viết về bán hàng và website bán quần áo có thanh toán được phân loại đúng trong một lượt gọi local. Mẫu nhỏ không đại diện mọi câu người dùng.
-- APK 2.2.0 (versionCode 23) đã cài đè, giữ dữ liệu và chạy TC01–TC09 trên Redmi Note 8 Pro ngày 01/11. Báo cáo HTML dành cho giám khảo nằm trong `HOSTORA_MOBILE_9_CASES.html`.
+- APK universal 2.2.0 (versionCode 23) đủ bốn ABI đã cài đè trên emulator, giữ nguyên hội thoại và phản hồi quản trị viên. Bộ TC01–TC09 trước đó trên Redmi Note 8 Pro nằm trong `HOSTORA_MOBILE_9_CASES.html`; ba ca hộp thư AI mới nằm trong `MINH_CHUNG_9_CA.html`.
 - GitHub Release 2.2.0 và Source ZIP phải dùng cùng commit. URL HTTPS Quick Tunnel hiện tại mở được nhưng không có cam kết uptime; video cũ 46 giây vẫn không đủ để nộp vì thiếu tiếng và chưa cho thấy thao tác lưu lead/FAQ.
 - Điểm tự mô phỏng trước đây khoảng 82–87/100; đây không phải điểm BTC hay xác suất vào top 10. Điểm phản biện, khả năng mở demo từ ngoài mạng và chất lượng bản nộp còn chưa được chấm độc lập.
 
@@ -39,7 +39,9 @@ Quay **một hành trình khách hàng trên web 2.2.0** để đủ năm tính 
 
 ## Demo trực tiếp và 5 phút hỏi đáp
 
-Nếu được demo trực tiếp, dùng cùng hành trình web trong khoảng 3–4 phút: **vấn đề của chủ shop → AI hiểu câu tự nhiên → xác nhận form → ba gói → bảng so sánh → chọn gói thứ hai và lưu lead → FAQ**. Dành thời gian còn lại cho một ca biên ngân sách `10.000đ/tháng`: hệ thống phải nói **chưa có gói đáp ứng**, chỉ đưa phương án tham khảo. Chuẩn bị sẵn một video quay đúng bản đã nộp để đối chiếu khi mạng/model chậm; nói rõ đó là bản ghi.
+Nếu được demo trực tiếp, dùng cùng hành trình web trong khoảng 3 phút: **vấn đề của chủ shop → AI hiểu câu tự nhiên → xác nhận form → ba gói → bảng so sánh → chọn gói thứ hai và lưu lead → FAQ**. Sau đó dùng khoảng 45 giây cho điểm khác biệt: hỏi “Ngày mai ở Hà Nội có mưa không?” → khách thấy **Đã chuyển quản trị viên** → mở `/admin/support` → trả lời → tab khách hoặc APK tự nhận dòng có nhãn **Quản trị viên HOSTORA**. Kết thúc bằng ca biên `10.000đ/tháng`: hệ thống phải nói **chưa có gói đáp ứng**, chỉ đưa phương án tham khảo.
+
+Thứ tự này giữ đúng năm tính năng của đề trước, rồi mới chứng minh năng lực vận hành AI. Không mở admin trước phần khách hàng: giám khảo cần hiểu vấn đề và giá trị sản phẩm trong 20 giây đầu.
 
 Các câu trả lời ngắn cho phản biện Bảng A:
 
@@ -47,14 +49,14 @@ Các câu trả lời ngắn cho phản biện Bảng A:
 2. **Vì sao không để AI chọn giá?** Giá, ưu đãi, kỳ hạn và tình trạng tên miền đổi theo nguồn; model có thể bịa. Trường chưa rõ để `null`/“Chưa xác minh”, nguồn và ngày đối chiếu nằm trong catalog.
 3. **Khi AI lỗi?** Form bốn bước vẫn dùng được; API trả lỗi dễ hiểu; không tạo lời giải thích hay giá giả. Demo bằng ca sự cố đã kiểm thử, không tắt server giữa phần demo chính.
 4. **Lead đi đâu?** Form theo đề lưu `localStorage` trên chính trình duyệt; chưa phải CRM hoặc yêu cầu đã được nhân viên nhận. Hệ thống tài khoản/đơn hàng là luồng mở rộng, trình bày tách biệt.
-5. **Đã kiểm thử ra sao?** Nêu 2 ca thường, 2 input sai, 2 ca biên có dữ liệu/kỳ vọng/kết quả; nói rõ Playwright mobile viewport không chứng minh APK và bộ test local chưa là khảo sát người dùng.
+5. **Đã kiểm thử ra sao?** Nêu 2 ca thường, 2 input sai, 2 ca biên và 3 ca hộp thư AI có dữ liệu/kỳ vọng/kết quả; nói rõ Playwright mobile viewport không chứng minh APK, SMTP mock không chứng minh email thật vào Inbox và bộ test local chưa là khảo sát người dùng.
 6. **Dùng AI để xây dựng sản phẩm ra sao?** Chọn một ví dụ có bằng chứng: thử câu phủ định “không cần mua kèm tên miền” → phát hiện sai → sửa hậu xử lý → thêm test hồi quy → chạy lại ca mới. Không dùng số loss fine-tune như bằng chứng chất lượng tư vấn; chatbot v8 chưa được promote.
 
 ## Việc phải chốt trước khi nộp
 
 1. **Khóa bản 2.2.0:** chỉ commit các file thuộc bản phát hành; lấy một commit/tag nhất quán. Chạy lại typecheck, lint, test, build, AI và E2E sau khi khóa.
 2. **Tạo đúng bộ 2.2.0:** dùng `pnpm package:submission`; tạo ZIP, checksum và link tải từ bản đã khóa. Giải nén ở thư mục sạch rồi thử hướng dẫn chạy từ ZIP, không dựa vào dependency/cache của repo làm việc.
-3. **Cập nhật hồ sơ:** README gốc mở đầu bằng Đề 01, bảng thi, 5 tính năng, công nghệ, lệnh chạy, AI thật/Mock, giới hạn và nguồn giá. Viết lại `AI_EVIDENCE.md` một trang, tối đa 5 trích đoạn thật. `TEST_MATRIX.md` và `MINH_CHUNG_6_CA.pdf` hiện ghi kết quả local ngày 01/11; sau khi khóa bản nộp, chạy lại sáu ca trên đúng Source ZIP cuối rồi cập nhật chúng theo artifact đó.
+3. **Cập nhật hồ sơ:** README gốc mở đầu bằng Đề 01, bảng thi, 5 tính năng, công nghệ, lệnh chạy, AI thật/Mock, giới hạn và nguồn giá. Giữ `AI_EVIDENCE.md` tối đa một trang và năm trích đoạn thật. `TEST_MATRIX.md`, `MINH_CHUNG_9_CA.html` và báo cáo APK phải cùng commit/artifact cuối.
 4. **Quay video mới 2.2.0** theo bảng thời gian trên; đủ năm thao tác thật, có tiếng hoặc phụ đề rõ. Video 2.0.9 hiện tại không đủ để dùng làm minh chứng vòng loại.
 5. **Link demo:** ưu tiên URL HTTPS ổn định hoặc xác nhận cổng chấm sẽ chạy từ source. Nếu dùng Quick Tunnel hiện tại, giữ máy/tunnel hoạt động và kiểm tra lại bằng 4G ngay trước khi nộp.
 6. **Nguồn giá:** rà website chính thức và ghi ngày mới trong `docs/DATA_SOURCES.md`; catalog hiện dựa trên snapshot 23/10. Nếu giá đã đổi, cập nhật dữ liệu và test lại; nếu chưa xác minh, ghi rõ giới hạn.

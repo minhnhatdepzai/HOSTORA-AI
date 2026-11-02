@@ -32,8 +32,10 @@ type Message = {
   sources?: ChatSource[];
   ragMode?: string;
   nextAction?: "create-site" | "upload-screen";
+  fromAdmin?: boolean;
 };
 type AccountState = "loading" | "authenticated" | "guest" | "error";
+type SupportStatus = "active" | "escalated" | "answered" | "resolved";
 type KnowledgeSource = {
   id: string;
   title: string;
@@ -47,6 +49,9 @@ const starters = [
 ];
 // Older local history may contain obsolete catalog claims; preserve it separately.
 const CHAT_KEY = "hostora:chat:v2";
+const CHAT_ID_KEY = "hostora:chat:conversation-id:v1";
+const CHAT_ACCESS_KEY = "hostora:chat:conversation-access:v1";
+const CHAT_STATUS_KEY = "hostora:chat:support-status:v1";
 
 export function AiAssistant() {
   const [messages, setMessages] = useState<Message[]>([
@@ -63,6 +68,8 @@ export function AiAssistant() {
   const [accountState, setAccountState] = useState<AccountState>("loading");
   const [historyLoading, setHistoryLoading] = useState(true);
   const [conversationId, setConversationId] = useState<string | null>(null);
+  const [conversationAccess, setConversationAccess] = useState<string | null>(null);
+  const [supportStatus, setSupportStatus] = useState<SupportStatus>("active");
   const [knowledgeSources, setKnowledgeSources] = useState<KnowledgeSource[]>([]);
   const [sourceBusy, setSourceBusy] = useState(false);
   const [sourceNotice, setSourceNotice] = useState("");
@@ -102,12 +109,15 @@ export function AiAssistant() {
               role: Message["role"];
               content: string;
               sources?: unknown[];
+              fromAdmin?: boolean;
             }>;
+            supportStatus?: SupportStatus;
           };
           const sourceData = (await sourcesResponse.json()) as {
             sources?: KnowledgeSource[];
           };
           setConversationId(history.conversationId ?? null);
+          setSupportStatus(history.supportStatus ?? "active");
           setKnowledgeSources(sourceData.sources ?? []);
           if (history.messages?.length)
             setMessages(
@@ -116,6 +126,7 @@ export function AiAssistant() {
                 role: message.role,
                 content: message.content,
                 sources: parseChatSources(message.sources),
+                fromAdmin: message.fromAdmin,
               })),
             );
         } else if (session.status === 401) {
@@ -123,6 +134,16 @@ export function AiAssistant() {
           try {
             const saved = JSON.parse(localStorage.getItem(CHAT_KEY) ?? "null");
             if (Array.isArray(saved) && saved.length) setMessages(saved);
+            setConversationId(localStorage.getItem(CHAT_ID_KEY));
+            setConversationAccess(localStorage.getItem(CHAT_ACCESS_KEY));
+            const savedStatus = localStorage.getItem(CHAT_STATUS_KEY);
+            if (
+              savedStatus === "active" ||
+              savedStatus === "escalated" ||
+              savedStatus === "answered" ||
+              savedStatus === "resolved"
+            )
+              setSupportStatus(savedStatus);
           } catch {}
         } else {
           throw new Error("Chưa kiểm tra được trạng thái đăng nhập.");
@@ -154,6 +175,69 @@ export function AiAssistant() {
       });
     }
   }, [messages, hydrated, accountState]);
+  useEffect(() => {
+    if (!hydrated || accountState !== "guest") return;
+    if (conversationId) localStorage.setItem(CHAT_ID_KEY, conversationId);
+    else localStorage.removeItem(CHAT_ID_KEY);
+    if (conversationAccess)
+      localStorage.setItem(CHAT_ACCESS_KEY, conversationAccess);
+    else localStorage.removeItem(CHAT_ACCESS_KEY);
+    localStorage.setItem(CHAT_STATUS_KEY, supportStatus);
+  }, [conversationAccess, conversationId, hydrated, accountState, supportStatus]);
+
+  useEffect(() => {
+    if (
+      !hydrated ||
+      !conversationId ||
+      (supportStatus !== "active" && supportStatus !== "escalated") ||
+      (accountState === "guest" && !conversationAccess)
+    )
+      return;
+    const controller = new AbortController();
+    const sync = async () => {
+      const response = await fetch(`/api/ai/conversations/${conversationId}`, {
+        cache: "no-store",
+        signal: controller.signal,
+        headers:
+          accountState === "guest" && conversationAccess
+            ? { "x-hostora-conversation-access": conversationAccess }
+            : {},
+      });
+      if (!response.ok) return;
+      const output = (await response.json()) as {
+        conversation: {
+          status: SupportStatus;
+          messages: Array<{
+            id: string;
+            role: "user" | "assistant" | "admin";
+            content: string;
+            sources?: unknown[];
+          }>;
+        };
+      };
+      setSupportStatus(output.conversation.status);
+      if (output.conversation.status === "active") return;
+      setMessages(
+        output.conversation.messages.map((message) => ({
+          id: message.id,
+          role: message.role === "user" ? "user" : "assistant",
+          content: message.content,
+          sources: parseChatSources(message.sources),
+          fromAdmin: message.role === "admin",
+        })),
+      );
+    };
+    void sync().catch(() => undefined);
+    const timer = window.setInterval(
+      () => void sync().catch(() => undefined),
+      10_000,
+    );
+    return () => {
+      controller.abort();
+      window.clearInterval(timer);
+    };
+  }, [accountState, conversationAccess, conversationId, hydrated, supportStatus]);
+
   async function send(text = input) {
     const value = text.trim();
     if (!value || busy) return;
@@ -166,7 +250,12 @@ export function AiAssistant() {
       const contextMessages = next.map(({ role, content }) => ({ role, content }));
       const res = await fetch("/api/ai/chat", {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: {
+          "content-type": "application/json",
+          ...(conversationAccess
+            ? { "x-hostora-conversation-access": conversationAccess }
+            : {}),
+        },
         body: JSON.stringify({
           messages: recentChatMessages(contextMessages),
           memory: buildConversationMemory(contextMessages),
@@ -182,6 +271,16 @@ export function AiAssistant() {
         "x-hostora-conversation-id",
       );
       if (responseConversationId) setConversationId(responseConversationId);
+      const responseAccess = res.headers.get("x-hostora-conversation-access");
+      if (responseAccess) setConversationAccess(responseAccess);
+      const responseSupportStatus = res.headers.get("x-hostora-support-status");
+      if (
+        responseSupportStatus === "active" ||
+        responseSupportStatus === "escalated" ||
+        responseSupportStatus === "answered" ||
+        responseSupportStatus === "resolved"
+      )
+        setSupportStatus(responseSupportStatus);
       const nextAction =
         nextActionHeader === "create-site" ||
         nextActionHeader === "upload-screen"
@@ -200,6 +299,7 @@ export function AiAssistant() {
         ]);
       }
     } catch (e) {
+      setInput(value);
       setMessages([
         ...next,
         {
@@ -422,8 +522,13 @@ export function AiAssistant() {
         if (!response.ok) throw new Error("Chưa xóa được lịch sử.");
       } else {
         localStorage.removeItem(CHAT_KEY);
+        localStorage.removeItem(CHAT_ID_KEY);
+        localStorage.removeItem(CHAT_ACCESS_KEY);
+        localStorage.removeItem(CHAT_STATUS_KEY);
       }
       setConversationId(null);
+      setConversationAccess(null);
+      setSupportStatus("active");
       setMessages([
         {
           role: "assistant",
@@ -620,6 +725,19 @@ export function AiAssistant() {
             khi tạo hóa đơn.
           </p>
         </div>
+        {supportStatus === "escalated" ? (
+          <div className="mx-4 mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950" role="status">
+            <p className="font-black">Đã chuyển cho quản trị viên</p>
+            <p className="mt-1 text-xs leading-5">
+              Bạn có thể đóng trang. HOSTORA đang lưu luồng đã ẩn thông tin liên hệ và sẽ tự hiện phản hồi tại đây.
+            </p>
+          </div>
+        ) : supportStatus === "answered" ? (
+          <div className="mx-4 mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-950" role="status">
+            <p className="font-black">Quản trị viên đã phản hồi</p>
+            <p className="mt-1 text-xs leading-5">Câu trả lời mới nhất đã được thêm vào cuối cuộc trò chuyện.</p>
+          </div>
+        ) : null}
         <div
           className="flex-1 space-y-5 overflow-y-auto p-5 sm:p-7"
           aria-busy={historyLoading || busy || ocrBusy}
@@ -650,6 +768,11 @@ export function AiAssistant() {
               <div
                 className={`max-w-[86%] rounded-2xl px-4 py-3 text-sm leading-7 ${m.role === "user" ? "bg-blue text-white" : "bg-slate-100 text-slate-800"}`}
               >
+                {m.fromAdmin ? (
+                  <p className="mb-2 text-[10px] font-black uppercase tracking-wider text-emerald-800">
+                    Quản trị viên HOSTORA
+                  </p>
+                ) : null}
                 {m.content ? (
                   <ReactMarkdown
                     remarkPlugins={[remarkGfm]}
@@ -779,6 +902,9 @@ export function AiAssistant() {
               <Send size={18} />
             </button>
           </div>
+          <p className="mt-2 text-center text-[10px] leading-4 text-slate-500">
+            Hội thoại được lưu để hỗ trợ; email và số điện thoại trong tin nhắn được ẩn trước khi lưu.
+          </p>
         </form>
       </section>
     </div>

@@ -4,6 +4,10 @@ import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import type {
   CustomerAccount,
+  AdminAiConversation,
+  AiConversation,
+  AiConversationMessage,
+  AiEscalationReason,
   CustomerAiSource,
   CustomerChatMessage,
   CustomerStudioPreferences,
@@ -120,6 +124,25 @@ export class CustomerStore {
         created_at TEXT NOT NULL
       );
       CREATE INDEX IF NOT EXISTS customer_chat_customer_conversation ON customer_chat_messages(customer_id, conversation_id, created_at DESC);
+      CREATE TABLE IF NOT EXISTS ai_conversations (
+        id TEXT PRIMARY KEY,
+        customer_id TEXT REFERENCES customer_accounts(id) ON DELETE SET NULL,
+        access_token_hash TEXT,
+        status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active', 'escalated', 'answered', 'resolved')),
+        escalation_reason TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS ai_conversations_status ON ai_conversations(status, updated_at DESC);
+      CREATE TABLE IF NOT EXISTS ai_conversation_messages (
+        id TEXT PRIMARY KEY,
+        conversation_id TEXT NOT NULL REFERENCES ai_conversations(id) ON DELETE CASCADE,
+        role TEXT NOT NULL CHECK(role IN ('user', 'assistant', 'admin')),
+        content TEXT NOT NULL,
+        sources_json TEXT NOT NULL DEFAULT '[]',
+        created_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS ai_conversation_messages_thread ON ai_conversation_messages(conversation_id, created_at ASC);
       CREATE TABLE IF NOT EXISTS customer_ai_sources (
         id TEXT PRIMARY KEY,
         customer_id TEXT NOT NULL REFERENCES customer_accounts(id) ON DELETE CASCADE,
@@ -314,6 +337,9 @@ export class CustomerStore {
       this.db
         .prepare("DELETE FROM customer_chat_messages WHERE customer_id = ?")
         .run(customerId);
+      this.db
+        .prepare("DELETE FROM ai_conversations WHERE customer_id = ?")
+        .run(customerId);
       if (clearMemory) {
         this.db
           .prepare("DELETE FROM customer_ai_memory WHERE customer_id = ?")
@@ -324,6 +350,237 @@ export class CustomerStore {
       this.db.exec("ROLLBACK");
       throw error;
     }
+  }
+
+  openAiConversation(input: {
+    conversationId: string;
+    customerId?: string | null;
+  }) {
+    const existing = this.db
+      .prepare("SELECT customer_id FROM ai_conversations WHERE id = ?")
+      .get(input.conversationId) as { customer_id: string | null } | undefined;
+    if (existing) {
+      return {
+        conversation: this.getAiConversation(input.conversationId),
+        accessToken: null as string | null,
+      };
+    }
+    const now = new Date().toISOString();
+    const accessToken = input.customerId
+      ? null
+      : randomBytes(24).toString("base64url");
+    this.db
+      .prepare(
+        `INSERT INTO ai_conversations
+         (id, customer_id, access_token_hash, status, created_at, updated_at)
+         VALUES (?, ?, ?, 'active', ?, ?)`,
+      )
+      .run(
+        input.conversationId,
+        input.customerId ?? null,
+        accessToken ? tokenHash(accessToken) : null,
+        now,
+        now,
+      );
+    return {
+      conversation: this.getAiConversation(input.conversationId),
+      accessToken,
+    };
+  }
+
+  appendAiConversationMessage(input: {
+    id?: string;
+    conversationId: string;
+    role: AiConversationMessage["role"];
+    content: string;
+    sources?: unknown[];
+  }) {
+    const id = input.id ?? randomUUID();
+    const now = new Date().toISOString();
+    this.db
+      .prepare(
+        `INSERT OR IGNORE INTO ai_conversation_messages
+         (id, conversation_id, role, content, sources_json, created_at)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+      )
+      .run(
+        id,
+        input.conversationId,
+        input.role,
+        input.content.slice(0, 8_000),
+        JSON.stringify(input.sources ?? []),
+        now,
+      );
+    this.db
+      .prepare(
+        input.role === "user"
+          ? `UPDATE ai_conversations
+             SET updated_at = ?,
+                 status = CASE WHEN status IN ('answered', 'resolved') THEN 'active' ELSE status END,
+                 escalation_reason = CASE WHEN status IN ('answered', 'resolved') THEN NULL ELSE escalation_reason END
+             WHERE id = ?`
+          : "UPDATE ai_conversations SET updated_at = ? WHERE id = ?",
+      )
+      .run(now, input.conversationId);
+    return id;
+  }
+
+  private aiConversationMessages(conversationId: string) {
+    return (
+      this.db
+        .prepare(
+          `SELECT id, conversation_id, role, content, sources_json, created_at
+           FROM ai_conversation_messages WHERE conversation_id = ?
+           ORDER BY created_at ASC, rowid ASC`,
+        )
+        .all(conversationId) as Array<{
+        id: string;
+        conversation_id: string;
+        role: AiConversationMessage["role"];
+        content: string;
+        sources_json: string;
+        created_at: string;
+      }>
+    ).map((row) => {
+      let sources: unknown[] = [];
+      try {
+        const parsed = JSON.parse(row.sources_json) as unknown;
+        if (Array.isArray(parsed)) sources = parsed.slice(0, 20);
+      } catch {}
+      return {
+        id: row.id,
+        conversationId: row.conversation_id,
+        role: row.role,
+        content: row.content,
+        sources,
+        createdAt: row.created_at,
+      };
+    });
+  }
+
+  private getAiConversation(conversationId: string): AiConversation | null {
+    const row = this.db
+      .prepare(
+        `SELECT id, customer_id, status, escalation_reason, created_at, updated_at
+         FROM ai_conversations WHERE id = ?`,
+      )
+      .get(conversationId) as
+      | {
+          id: string;
+          customer_id: string | null;
+          status: AiConversation["status"];
+          escalation_reason: AiEscalationReason | null;
+          created_at: string;
+          updated_at: string;
+        }
+      | undefined;
+    if (!row) return null;
+    return {
+      id: row.id,
+      customerId: row.customer_id,
+      status: row.status,
+      escalationReason: row.escalation_reason,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      messages: this.aiConversationMessages(row.id),
+    };
+  }
+
+  getAiConversationForViewer(input: {
+    conversationId: string;
+    customerId?: string | null;
+    accessToken?: string | null;
+  }) {
+    const row = this.db
+      .prepare(
+        "SELECT customer_id, access_token_hash FROM ai_conversations WHERE id = ?",
+      )
+      .get(input.conversationId) as
+      | { customer_id: string | null; access_token_hash: string | null }
+      | undefined;
+    if (!row) return null;
+    if (row.customer_id) {
+      if (!input.customerId || input.customerId !== row.customer_id) return null;
+    } else {
+      if (
+        !input.accessToken ||
+        !row.access_token_hash ||
+        tokenHash(input.accessToken) !== row.access_token_hash
+      )
+        return null;
+    }
+    return this.getAiConversation(input.conversationId);
+  }
+
+  escalateAiConversation(
+    conversationId: string,
+    reason: AiEscalationReason,
+  ) {
+    this.db
+      .prepare(
+        `UPDATE ai_conversations
+         SET status = 'escalated', escalation_reason = ?, updated_at = ?
+         WHERE id = ?`,
+      )
+      .run(reason, new Date().toISOString(), conversationId);
+    return this.getAiConversation(conversationId);
+  }
+
+  listAllAiConversations(): AdminAiConversation[] {
+    const rows = this.db
+      .prepare(
+        `SELECT c.id, c.customer_id, c.status, c.escalation_reason,
+                c.created_at, c.updated_at, a.name, a.email
+         FROM ai_conversations c
+         LEFT JOIN customer_accounts a ON a.id = c.customer_id
+         ORDER BY CASE c.status WHEN 'escalated' THEN 0 WHEN 'answered' THEN 1 WHEN 'active' THEN 2 ELSE 3 END,
+                  c.updated_at DESC`,
+      )
+      .all() as Array<{
+      id: string;
+      customer_id: string | null;
+      status: AiConversation["status"];
+      escalation_reason: AiEscalationReason | null;
+      created_at: string;
+      updated_at: string;
+      name: string | null;
+      email: string | null;
+    }>;
+    return rows.map((row) => ({
+      id: row.id,
+      customerId: row.customer_id,
+      status: row.status,
+      escalationReason: row.escalation_reason,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      customerName: row.name ?? "Khách chưa đăng nhập",
+      customerEmail: row.email,
+      messages: this.aiConversationMessages(row.id),
+    }));
+  }
+
+  replyToAiConversation(conversationId: string, content: string) {
+    const conversation = this.getAiConversation(conversationId);
+    if (!conversation) return null;
+    const messageId = this.appendAiConversationMessage({
+      conversationId,
+      role: "admin",
+      content: content.trim(),
+    });
+    if (conversation.customerId)
+      this.appendChatMessage({
+        id: messageId,
+        customerId: conversation.customerId,
+        conversationId,
+        role: "assistant",
+        content: content.trim(),
+      });
+    this.db
+      .prepare(
+        "UPDATE ai_conversations SET status = 'answered', updated_at = ? WHERE id = ?",
+      )
+      .run(new Date().toISOString(), conversationId);
+    return this.listAllAiConversations().find((item) => item.id === conversationId) ?? null;
   }
 
   createAiSource(

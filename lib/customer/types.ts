@@ -61,6 +61,36 @@ export type CustomerChatMessage = {
   createdAt: string;
 };
 
+export type AiEscalationReason =
+  | "out_of_scope"
+  | "insufficient_data"
+  | "assistant_unavailable"
+  | "human_requested";
+
+export type AiConversationMessage = {
+  id: string;
+  conversationId: string;
+  role: "user" | "assistant" | "admin";
+  content: string;
+  sources: unknown[];
+  createdAt: string;
+};
+
+export type AiConversation = {
+  id: string;
+  customerId: string | null;
+  status: "active" | "escalated" | "answered" | "resolved";
+  escalationReason: AiEscalationReason | null;
+  createdAt: string;
+  updatedAt: string;
+  messages: AiConversationMessage[];
+};
+
+export type AdminAiConversation = AiConversation & {
+  customerName: string;
+  customerEmail: string | null;
+};
+
 export type CustomerAiSource = {
   id: string;
   title: string;

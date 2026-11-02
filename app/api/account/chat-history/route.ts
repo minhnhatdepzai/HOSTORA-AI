@@ -18,13 +18,29 @@ export async function GET(request: Request) {
   if (requested && !conversationIdPattern.test(requested))
     return Response.json({ error: "Mã cuộc trò chuyện không hợp lệ." }, { status: 400 });
   const conversationId = requested ?? store.latestConversationId(customer.id);
+  const supportConversation = conversationId
+    ? store.getAiConversationForViewer({
+        conversationId,
+        customerId: customer.id,
+      })
+    : null;
+  const adminMessageIds = new Set(
+    supportConversation?.messages
+      .filter((message) => message.role === "admin")
+      .map((message) => message.id) ?? [],
+  );
   const messages = conversationId
-    ? store.listChatMessages(customer.id, conversationId, 120)
+    ? store.listChatMessages(customer.id, conversationId, 120).map((message) => ({
+        ...message,
+        fromAdmin: adminMessageIds.has(message.id),
+      }))
     : [];
+  const supportStatus = supportConversation?.status ?? "active";
   return Response.json(
     {
       conversationId,
       messages,
+      supportStatus,
       memory: normalizeChatMemory(store.getAiMemory(customer.id)),
     },
     { headers: { "cache-control": "no-store" } },

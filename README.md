@@ -1,6 +1,6 @@
 # HOSTORA AI
 
-HOSTORA AI giúp chủ shop và doanh nghiệp Việt Nam đi từ một nhu cầu còn mơ hồ đến phương án website, hosting và đơn hàng có thể theo dõi. Người dùng mô tả bằng tiếng Việt, kiểm tra dữ kiện AI đã hiểu, so sánh gói, tạo website mẫu và gửi yêu cầu mua trên web hoặc Android. Người vận hành dùng web admin để quản lý catalog, hỗ trợ, báo giá, hóa đơn, thanh toán và doanh thu.
+HOSTORA AI giúp chủ shop và doanh nghiệp Việt Nam đi từ một nhu cầu còn mơ hồ đến phương án website, hosting và đơn hàng có thể theo dõi. Người dùng mô tả bằng tiếng Việt, kiểm tra dữ kiện AI đã hiểu, so sánh gói, tạo website mẫu và gửi yêu cầu mua trên web hoặc Android. Mọi hội thoại AI được lưu sau khi ẩn email/số điện thoại; câu ngoài phạm vi hoặc chưa đủ dữ liệu được chuyển tới hộp thư admin để người thật trả lời ngay trong cuộc trò chuyện.
 
 AI chạy local qua Ollama. AI chỉ trích xuất, giải thích và soạn nội dung; giá, thứ tự gói, voucher và trạng thái giao dịch do mã TypeScript/SQLite tất định kiểm soát. HOSTORA không dùng cloud AI fallback và không đưa PII vào model.
 
@@ -8,11 +8,13 @@ AI chạy local qua Ollama. AI chỉ trích xuất, giải thích và soạn n�
 
 | Nội dung               | Liên kết                                                                                                                       | Trạng thái                                                         |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------ |
-| Web khách hàng         | [Mở HOSTORA](https://originally-mean-liberal-measurements.trycloudflare.com/)                                                  | HTTPS demo đang chạy, kiểm tra 01/11/2026                          |
-| Web quản trị           | [Mở trang admin](https://originally-mean-liberal-measurements.trycloudflare.com/admin)                                         | Chuyển tới cổng đăng nhập admin                                    |
-| APK Android mới nhất   | [Tải HOSTORA AI 2.2.0 arm64](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-2.2.0-arm64.apk) | Android arm64, package `com.hostora.ai`                            |
-| SHA-256 APK            | [Tải checksum](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-2.2.0-arm64.apk.sha256)        | `53e2e3005c0004856213c0019e3a994b7b5265f87e38285678d2bd7250b56cee` |
-| Minh chứng 9 ca mobile | [Tải báo cáo HTML](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA_MOBILE_9_CASES.html)          | TC01–TC09 đạt trên APK 2.2.0                                       |
+| Web khách hàng         | [Mở HOSTORA](https://obtaining-dennis-excited-replacement.trycloudflare.com/)                                                   | HTTPS demo đang chạy, kiểm tra 02/11/2026                          |
+| Web quản trị           | [Mở trang admin](https://obtaining-dennis-excited-replacement.trycloudflare.com/admin)                                          | Chuyển tới cổng đăng nhập admin                                    |
+| Hộp thư AI của admin   | [Mở hộp thư hỗ trợ](https://obtaining-dennis-excited-replacement.trycloudflare.com/admin/support)                               | Cần phiên quản trị hợp lệ                                          |
+| APK Android mới nhất   | [Tải HOSTORA AI 2.2.0 universal](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-2.2.0-universal.apk) | 4 ABI, package `com.hostora.ai`                                |
+| SHA-256 APK            | [Tải checksum](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-2.2.0-universal.apk.sha256)    | `c1695598f8c57f6d4772ccc3512d4eeb03d243d5284f8b1b6dd56b99838fe0d3` |
+| Minh chứng 9 ca        | [Mở báo cáo](docs/submission/MINH_CHUNG_9_CA.html)                                                                              | 6 ca Bảng A + 3 ca hộp thư AI                                     |
+| Source ZIP mới nhất    | [Tải Source ZIP](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-source-2.2.0-r2-2026-11-02.zip) | README, tài liệu và cấu hình mẫu                                   |
 | Source                 | [GitHub repository](https://github.com/minhnhatdepzai/HOSTORA-AI)                                                              | Nhánh `main`                                                       |
 
 > URL `trycloudflare.com` là Quick Tunnel phục vụ vòng loại, mở được từ Internet khi máy demo và tunnel đang chạy nhưng có thể đổi sau khi tunnel khởi động lại. Link APK trên GitHub Release là link tải ổn định. Một URL web cố định cần named tunnel và tên miền Cloudflare riêng.
@@ -22,11 +24,12 @@ AI chạy local qua Ollama. AI chỉ trích xuất, giải thích và soạn n�
 | Phần đã kiểm tra    | Kết quả gần nhất                                                                                          |
 | ------------------- | --------------------------------------------------------------------------------------------------------- |
 | Web + admin         | Typecheck, lint và production build đạt                                                                   |
-| Logic/API           | 263/263 test đạt trên 53 file                                                                             |
+| Logic/API           | 273/273 test đạt trên 55 file                                                                             |
 | AI local            | Ollama chat, Studio, embedding và smoke test chạy thật qua loopback; không dùng cloud fallback            |
-| Android             | `com.hostora.ai` 2.2.0, versionCode 23; cài đè bằng `adb install -r` và giữ dữ liệu trên Redmi Note 8 Pro |
+| E2E + UI audit      | 51 lượt đạt, 1 mobile CRUD bỏ qua có chủ đích; 12 màn audit không có lỗi axe/page/overflow tự động      |
+| Android             | `com.hostora.ai` 2.2.0, versionCode 23; APK universal cài đè bằng `adb install -r` và giữ hội thoại trên emulator |
 | Bộ giám khảo mobile | 20/20 kiểm tra showcase và TC01–TC09 đều đạt                                                              |
-| APK                 | 58.179.685 byte; SHA-256 như bảng trên                                                                    |
+| APK                 | 164.660.004 byte; đủ `arm64-v8a`, `armeabi-v7a`, `x86`, `x86_64`; SHA-256 như bảng trên                 |
 
 Intro cinematic chỉ phát ở lần mở đầu tiên; người dùng có thể bỏ qua và app ghi nhớ lựa chọn. App có chuyển cảnh theo tiến độ, phản hồi chạm/haptic, tôn trọng reduced motion, luồng tư vấn bốn bước, ba gói đề xuất, danh mục dịch vụ và chế độ trình diễn cho giám khảo.
 
@@ -48,11 +51,12 @@ Giá “từ” không tự trở thành số tiền phải thu. Dữ liệu ch�
 | ------------------------- | ---------------------------------------------------------------------------- |
 | Website Next.js           | Catalog, tư vấn AI, Website Studio, tài khoản, yêu cầu mua và tra cứu đơn    |
 | Android Expo/React Native | Tư vấn, sản phẩm, kết quả gợi ý, Studio, cài đặt backend và chế độ giám khảo |
-| Web admin                 | Catalog, hỗ trợ, yêu cầu mua, báo giá, hóa đơn, thanh toán và doanh thu      |
+| Web admin                 | Catalog, hộp thư AI, phản hồi khách, yêu cầu mua, hóa đơn và doanh thu       |
 
 Kiến trúc giữ ranh giới rõ ràng:
 
 - `app/api/ai/*`: gọi Ollama local, kiểm tra input/output bằng schema;
+- `app/api/admin/ai-conversations`: hộp thư quản trị, phân quyền và phản hồi người thật;
 - `lib/recommendation.ts`, `lib/pricing.ts`, `lib/scenario.ts`: quyết định số học tất định;
 - `data/hosting-catalog.ts`: dữ liệu hosting có nguồn và ngày xác minh;
 - `data/knowledge.json`, `data/rag-index.json`: RAG local;
@@ -125,7 +129,7 @@ Xem [hướng dẫn Docker](docs/DOCKER_DEPLOYMENT.md).
 Tải APK ở bảng “Truy cập nhanh”, sau đó mở trên điện thoại Android arm64 hoặc cài bằng ADB:
 
 ```bash
-adb install -r HOSTORA-AI-2.2.0-arm64.apk
+adb install -r HOSTORA-AI-2.2.0-universal.apk
 ```
 
 `-r` cài đè và giữ dữ liệu app. APK 2.2.0 hiện dùng chữ ký debug cục bộ để chấm vòng loại, chưa phải bản ký production cho Google Play.
@@ -190,6 +194,7 @@ pnpm report:mobile:judge
 Các tài liệu dành cho vòng loại:
 
 - [Báo cáo 9 ca mobile](docs/submission/HOSTORA_MOBILE_9_CASES.html);
+- [Minh chứng 9 ca cho giám khảo](docs/submission/MINH_CHUNG_9_CA.html);
 - [Ma trận kiểm thử Bảng A](docs/submission/TEST_MATRIX.md);
 - [Minh chứng 6 ca dạng HTML](docs/submission/MINH_CHUNG_6_CA.html) và [PDF](docs/submission/MINH_CHUNG_6_CA.pdf);
 - [Kịch bản video và demo vòng loại](docs/submission/KICH_BAN_VONG_LOAI_2026-11-01.md);
@@ -204,6 +209,7 @@ HTTP 200, browser mobile viewport hoặc APK build thành công không thay th�
 - Web public đang dùng Quick Tunnel, không có cam kết uptime và URL sẽ đổi nếu tunnel khởi động lại.
 - Chưa có giao dịch/hoàn tiền production đã kiểm chứng bằng tài khoản merchant HOSTORA; chế độ demo không thu tiền.
 - SMTP cần domain có SPF, DKIM và DMARC trước khi đánh giá khả năng vào Inbox.
+- Email chuyển hội thoại đã được kiểm thử bằng SMTP mock; chưa có bằng chứng độc lập email thật đã vào hộp thư quản trị.
 - APK chưa ký bằng production keystore và chưa phát hành qua Google Play.
 - Giá, ưu đãi và tình trạng tên miền thay đổi theo thời gian; phải kiểm tra lại nguồn trước khi bán.
 - Kết quả test local và tự chấm không bảo đảm thứ hạng cuộc thi hoặc tải production.

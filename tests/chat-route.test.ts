@@ -1,5 +1,6 @@
 import { expect, test } from "vitest";
 import { POST } from "@/app/api/ai/chat/route";
+import { getCustomerStore } from "@/lib/customer/store";
 
 test("chat routes a customer without a website to the builder before asking for hosting inputs", async () => {
   const response = await POST(new Request("http://127.0.0.1:3000/api/ai/chat", {
@@ -80,4 +81,42 @@ test("chat rejects malformed memory instead of forwarding it to the model", asyn
     }),
   }));
   expect(response.status).toBe(400);
+});
+
+test("chat saves a redacted guest thread and hands an unrelated question to admin", async () => {
+  const conversationId = crypto.randomUUID();
+  const response = await POST(
+    new Request("http://127.0.0.1:3000/api/ai/chat", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        conversationId,
+        messageId: crypto.randomUUID(),
+        messages: [
+          {
+            role: "user",
+            content: "Ngày mai ở Hà Nội có mưa không? Gọi tôi 0901234567.",
+          },
+        ],
+      }),
+    }),
+  );
+
+  expect(response.status).toBe(200);
+  expect(response.headers.get("x-hostora-conversation-id")).toBe(conversationId);
+  expect(response.headers.get("x-hostora-conversation-access")).toMatch(
+    /^[A-Za-z0-9_-]{32,}$/,
+  );
+  expect(response.headers.get("x-hostora-support-status")).toBe("escalated");
+  expect(await response.text()).toContain("quản trị viên");
+
+  const stored = getCustomerStore()
+    .listAllAiConversations()
+    .find((item) => item.id === conversationId);
+  expect(stored).toMatchObject({
+    status: "escalated",
+    escalationReason: "out_of_scope",
+  });
+  expect(stored?.messages[0].content).toContain("[đã ẩn số điện thoại]");
+  expect(JSON.stringify(stored)).not.toContain("0901234567");
 });

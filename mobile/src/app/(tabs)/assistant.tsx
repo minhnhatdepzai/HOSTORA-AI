@@ -44,10 +44,15 @@ type Message = {
   sources?: ChatSource[];
   ragMode?: string;
   nextAction?: "create-site" | "upload-screen";
+  fromAdmin?: boolean;
 };
+type SupportStatus = "active" | "escalated" | "answered" | "resolved";
 // A new key keeps customer-facing copy separate from conversations created by older builds.
 const KEY = "hostora:mobile:chat:v3";
 const MEMORY_KEY = "hostora:mobile:chat-memory:v1";
+const CONVERSATION_KEY = "hostora:mobile:conversation-id:v1";
+const CONVERSATION_ACCESS_KEY = "hostora:mobile:conversation-access:v1";
+const SUPPORT_STATUS_KEY = "hostora:mobile:support-status:v1";
 const starters = [
   "Tôi chưa có trang web, bắt đầu từ đâu?",
   "Cửa hàng mới nên chọn gói nào?",
@@ -88,6 +93,8 @@ export default function AssistantScreen() {
   const [sourceCount, setSourceCount] = useState(0);
   const [memory, setMemory] = useState<MobileChatMemory | null>(null);
   const [conversationId, setConversationId] = useState<string | null>(null);
+  const [conversationAccess, setConversationAccess] = useState<string | null>(null);
+  const [supportStatus, setSupportStatus] = useState<SupportStatus>("active");
   const [historyLoading, setHistoryLoading] = useState(true);
   const list = useRef<ScrollViewInstance>(null);
 
@@ -105,8 +112,10 @@ export default function AssistantScreen() {
                 role: Message["role"];
                 content: string;
                 sources?: unknown[];
+                fromAdmin?: boolean;
               }[];
               memory: MobileChatMemory | null;
+              supportStatus?: SupportStatus;
             }>("/api/account/chat-history"),
             getJson<{ sources: { id: string }[] }>("/api/account/ai-sources"),
           ]);
@@ -114,23 +123,37 @@ export default function AssistantScreen() {
           setSourceCount(sourceData.sources.length);
           setConversationId(history.conversationId);
           setMemory(history.memory);
+          setSupportStatus(history.supportStatus ?? "active");
           if (history.messages.length)
             setMessages(
               history.messages.map((message) => ({
                 role: message.role,
                 content: message.content,
                 sources: parseChatSources(message.sources),
+                fromAdmin: message.fromAdmin,
               })),
             );
           return;
         }
-        const [saved, savedMemory] = await Promise.all([
+        const [saved, savedMemory, savedConversationId, savedAccess, savedSupportStatus] = await Promise.all([
           AsyncStorage.getItem(KEY),
           AsyncStorage.getItem(MEMORY_KEY),
+          AsyncStorage.getItem(CONVERSATION_KEY),
+          AsyncStorage.getItem(CONVERSATION_ACCESS_KEY),
+          AsyncStorage.getItem(SUPPORT_STATUS_KEY),
         ]);
         if (!active) return;
         if (saved) setMessages(JSON.parse(saved));
         if (savedMemory) setMemory(JSON.parse(savedMemory));
+        if (savedConversationId) setConversationId(savedConversationId);
+        if (savedAccess) setConversationAccess(savedAccess);
+        if (
+          savedSupportStatus === "active" ||
+          savedSupportStatus === "escalated" ||
+          savedSupportStatus === "answered" ||
+          savedSupportStatus === "resolved"
+        )
+          setSupportStatus(savedSupportStatus);
       } catch {
         // Keep the useful local greeting if history cannot be refreshed.
       } finally {
@@ -142,6 +165,70 @@ export default function AssistantScreen() {
       active = false;
     };
   }, [authHydrated, customer]);
+
+  useEffect(() => {
+    if (
+      (supportStatus !== "active" && supportStatus !== "escalated") ||
+      !conversationId ||
+      (!customer && !conversationAccess)
+    )
+      return;
+    let active = true;
+    async function syncConversation() {
+      const apiBase = await getApiBase();
+      if (!apiBase) return;
+      const token = await readCustomerSessionToken();
+      const response = await fetch(
+        `${apiBase}/api/ai/conversations/${conversationId}`,
+        {
+          headers: {
+            "x-hostora-client": "mobile",
+            ...(token ? { authorization: `Bearer ${token}` } : {}),
+            ...(!token && conversationAccess
+              ? { "x-hostora-conversation-access": conversationAccess }
+              : {}),
+          },
+        },
+      );
+      if (!response.ok || !active) return;
+      const output = (await response.json()) as {
+        conversation: {
+          status: SupportStatus;
+          messages: Array<{
+            role: "user" | "assistant" | "admin";
+            content: string;
+            sources?: unknown[];
+          }>;
+        };
+      };
+      if (!active) return;
+      setSupportStatus(output.conversation.status);
+      if (output.conversation.status === "active") return;
+      const synced: Message[] = output.conversation.messages.map((message) => ({
+        role: message.role === "user" ? "user" : "assistant",
+        content: message.content,
+        sources: parseChatSources(message.sources),
+        fromAdmin: message.role === "admin",
+      }));
+      setMessages(synced);
+      if (!customer) {
+        await AsyncStorage.setItem(KEY, JSON.stringify(synced));
+        await AsyncStorage.setItem(
+          SUPPORT_STATUS_KEY,
+          output.conversation.status,
+        );
+      }
+    }
+    void syncConversation().catch(() => undefined);
+    const timer = setInterval(
+      () => void syncConversation().catch(() => undefined),
+      10_000,
+    );
+    return () => {
+      active = false;
+      clearInterval(timer);
+    };
+  }, [conversationAccess, conversationId, customer, supportStatus]);
 
   async function send(text = input) {
     const clean = text.trim();
@@ -165,6 +252,9 @@ export default function AssistantScreen() {
           "content-type": "application/json",
           "x-hostora-client": "mobile",
           ...(token ? { authorization: `Bearer ${token}` } : {}),
+          ...(!token && conversationAccess
+            ? { "x-hostora-conversation-access": conversationAccess }
+            : {}),
         },
         body: JSON.stringify({
           messages: recentChatMessages(next.map(({ role, content }) => ({ role, content }))),
@@ -179,7 +269,35 @@ export default function AssistantScreen() {
       const nextConversationId = response.headers.get(
         "x-hostora-conversation-id",
       );
-      if (nextConversationId) setConversationId(nextConversationId);
+      const nextConversationAccess = response.headers.get(
+        "x-hostora-conversation-access",
+      );
+      const nextSupportStatus = response.headers.get(
+        "x-hostora-support-status",
+      );
+      if (nextConversationId) {
+        setConversationId(nextConversationId);
+        if (!customer)
+          await AsyncStorage.setItem(CONVERSATION_KEY, nextConversationId);
+      }
+      if (nextConversationAccess) {
+        setConversationAccess(nextConversationAccess);
+        await AsyncStorage.setItem(
+          CONVERSATION_ACCESS_KEY,
+          nextConversationAccess,
+        );
+      }
+      if (
+        nextSupportStatus === "active" ||
+        nextSupportStatus === "escalated" ||
+        nextSupportStatus === "answered" ||
+        nextSupportStatus === "resolved"
+      )
+        {
+          setSupportStatus(nextSupportStatus);
+          if (!customer)
+            await AsyncStorage.setItem(SUPPORT_STATUS_KEY, nextSupportStatus);
+        }
       const completed: Message[] = [
         ...next,
         {
@@ -201,6 +319,7 @@ export default function AssistantScreen() {
         await AsyncStorage.setItem(MEMORY_KEY, JSON.stringify(nextMemory));
       }
     } catch {
+      setInput(clean);
       const failed: Message[] = [
         ...next,
         {
@@ -384,10 +503,15 @@ export default function AssistantScreen() {
     ];
     setMessages(initial);
     setConversationId(null);
+    setConversationAccess(null);
+    setSupportStatus("active");
     if (!customer) {
       setMemory(null);
       await AsyncStorage.setItem(KEY, JSON.stringify(initial));
       await AsyncStorage.removeItem(MEMORY_KEY);
+      await AsyncStorage.removeItem(CONVERSATION_KEY);
+      await AsyncStorage.removeItem(CONVERSATION_ACCESS_KEY);
+      await AsyncStorage.removeItem(SUPPORT_STATUS_KEY);
     }
   }
 
@@ -466,18 +590,35 @@ export default function AssistantScreen() {
               ]}
             >
               {message.role === "assistant" ? (
-                <View style={styles.aiAvatar}>
-                  <Feather name="zap" color={colors.mint} size={14} />
+                <View
+                  style={[
+                    styles.aiAvatar,
+                    message.fromAdmin && styles.adminAvatar,
+                  ]}
+                >
+                  <Feather
+                    name={message.fromAdmin ? "user-check" : "zap"}
+                    color={message.fromAdmin ? colors.primary : colors.mint}
+                    size={14}
+                  />
                 </View>
               ) : null}
               <View
                 style={[
                   styles.bubble,
-                  message.role === "user" ? styles.userBubble : styles.aiBubble,
+                  message.role === "user"
+                    ? styles.userBubble
+                    : [styles.aiBubble, message.fromAdmin && styles.adminBubble],
                 ]}
               >
                 {message.role === "assistant" ? (
                   <>
+                    {message.fromAdmin ? (
+                      <View style={styles.adminLabel}>
+                        <Feather name="message-circle" color={colors.primary} size={12} />
+                        <Text style={styles.adminLabelText}>QUẢN TRỊ VIÊN HOSTORA</Text>
+                      </View>
+                    ) : null}
                     <Markdown style={markdownStyles}>
                       {customerAnswer(message.content, message.sources)}
                     </Markdown>
@@ -567,6 +708,28 @@ export default function AssistantScreen() {
           ) : null}
         </CinematicScrollView>
 
+        {supportStatus === "escalated" ? (
+          <View style={styles.supportBanner} accessibilityLiveRegion="polite">
+            <View style={styles.supportBannerIcon}>
+              <Feather name="user-check" color={colors.warning} size={17} />
+            </View>
+            <View style={styles.supportBannerCopy}>
+              <Text style={styles.supportBannerTitle}>Đã chuyển quản trị viên</Text>
+              <Text style={styles.supportBannerText}>Bạn có thể đóng app; phản hồi sẽ tự xuất hiện tại đây.</Text>
+            </View>
+          </View>
+        ) : supportStatus === "answered" ? (
+          <View style={[styles.supportBanner, styles.supportBannerAnswered]} accessibilityLiveRegion="polite">
+            <View style={styles.supportBannerIcon}>
+              <Feather name="check" color={colors.primary} size={17} />
+            </View>
+            <View style={styles.supportBannerCopy}>
+              <Text style={styles.supportBannerTitle}>Quản trị viên đã phản hồi</Text>
+              <Text style={styles.supportBannerText}>Câu trả lời mới đã nằm ở cuối cuộc trò chuyện.</Text>
+            </View>
+          </View>
+        ) : null}
+
         {messages.length < 3 ? (
           <ScrollView
             horizontal
@@ -643,7 +806,7 @@ export default function AssistantScreen() {
           </Pressable>
         </View>
         <Text style={styles.privacy}>
-          Nội dung tư vấn được xử lý riêng tư · Dữ liệu do HOSTORA kiểm tra
+          Hội thoại được lưu để hỗ trợ · Email và số điện thoại được ẩn trước khi lưu
         </Text>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -709,12 +872,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  adminAvatar: {
+    backgroundColor: colors.primarySoft,
+    borderWidth: 1,
+    borderColor: "#A9D6C5",
+  },
   bubble: { borderRadius: 19, paddingHorizontal: 14, paddingVertical: 11 },
   aiBubble: {
     backgroundColor: "white",
     borderWidth: 1,
     borderColor: colors.line,
     borderBottomLeftRadius: 6,
+  },
+  adminBubble: {
+    backgroundColor: "#F5FBF8",
+    borderColor: "#A9D6C5",
   },
   userBubble: { backgroundColor: colors.primary, borderBottomRightRadius: 6 },
   messageText: {
@@ -763,6 +935,18 @@ const styles = StyleSheet.create({
     fontSize: 10,
     lineHeight: 17,
   },
+  adminLabel: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    marginBottom: 6,
+  },
+  adminLabelText: {
+    color: colors.primary,
+    fontFamily: "BeVietnamPro_800ExtraBold",
+    fontSize: 9,
+    letterSpacing: 0.65,
+  },
   thinking: {
     marginLeft: 38,
     alignSelf: "flex-start",
@@ -778,6 +962,44 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontFamily: "BeVietnamPro_600SemiBold",
     fontSize: 10,
+  },
+  supportBanner: {
+    marginHorizontal: 12,
+    marginBottom: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#E4C78E",
+    backgroundColor: "#FFF8E8",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  supportBannerAnswered: {
+    borderColor: "#A9D6C5",
+    backgroundColor: "#EDF8F3",
+  },
+  supportBannerIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 11,
+    backgroundColor: "white",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  supportBannerCopy: { flex: 1 },
+  supportBannerTitle: {
+    color: colors.ink,
+    fontFamily: "BeVietnamPro_800ExtraBold",
+    fontSize: 11,
+  },
+  supportBannerText: {
+    color: colors.muted,
+    fontFamily: "BeVietnamPro_400Regular",
+    fontSize: 10,
+    lineHeight: 15,
+    marginTop: 2,
   },
   startersScroll: { flexGrow: 0, maxHeight: 58 },
   starters: { gap: 7, paddingHorizontal: 16, paddingVertical: 7 },
@@ -836,7 +1058,7 @@ const styles = StyleSheet.create({
   privacy: {
     color: colors.faint,
     fontFamily: "BeVietnamPro_500Medium",
-    fontSize: 8,
+    fontSize: 9,
     textAlign: "center",
     paddingVertical: 7,
     paddingBottom: Platform.OS === "ios" ? 78 : 85,

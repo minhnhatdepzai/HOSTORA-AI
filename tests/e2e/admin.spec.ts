@@ -83,3 +83,55 @@ test("admin remains usable without horizontal overflow", async ({ page }) => {
   }
   await expect(page.getByRole("navigation").last()).toBeVisible();
 });
+
+test("support inbox keeps existing conversations and explains a failed refresh", async ({
+  page,
+}) => {
+  let failRefresh = false;
+  const conversation = {
+    id: "conversation-refresh-regression",
+    customerId: null,
+    customerName: "Khách chưa đăng nhập",
+    customerEmail: null,
+    status: "escalated",
+    escalationReason: "out_of_scope",
+    createdAt: "2026-11-01T08:00:00.000Z",
+    updatedAt: "2026-11-01T08:01:00.000Z",
+    messages: [
+      {
+        id: "message-refresh-regression",
+        conversationId: "conversation-refresh-regression",
+        role: "user",
+        content: "HOSTORA có bán vé máy bay không?",
+        sources: [],
+        createdAt: "2026-11-01T08:00:00.000Z",
+      },
+    ],
+  };
+
+  await page.route("**/api/admin/support", async (route) => {
+    if (failRefresh) return route.abort("internetdisconnected");
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({ cases: [] }),
+    });
+  });
+  await page.route("**/api/admin/ai-conversations", async (route) => {
+    if (failRefresh) return route.abort("internetdisconnected");
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({ conversations: [conversation] }),
+    });
+  });
+
+  await page.goto("/admin/support");
+  await expect(page.getByText("HOSTORA có bán vé máy bay không?")).toBeVisible();
+
+  failRefresh = true;
+  await page.getByRole("button", { name: "Tải lại" }).click();
+
+  await expect(page.getByRole("status")).toContainText(
+    "Chưa tải được hộp thư hỗ trợ.",
+  );
+  await expect(page.getByText("HOSTORA có bán vé máy bay không?")).toBeVisible();
+});

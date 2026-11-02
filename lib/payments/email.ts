@@ -2,7 +2,11 @@ import nodemailer from "nodemailer";
 import { after } from "next/server";
 import { z } from "zod";
 import type { CreatedInvoice, CreatedSaleRequest, Invoice, SaleRequest } from "./types";
-import type { CustomerAccount, CustomerSupportCase } from "@/lib/customer/types";
+import type {
+  AiEscalationReason,
+  CustomerAccount,
+  CustomerSupportCase,
+} from "@/lib/customer/types";
 
 const emailSchema = z.string().trim().email().max(160);
 const smtpSchema = z.object({
@@ -61,6 +65,7 @@ function publicBaseUrl() {
 
 const publicOrderUrl = () => new URL("/orders", publicBaseUrl()).toString();
 const aiUrl = () => new URL("/ai-assistant", publicBaseUrl()).toString();
+const adminSupportUrl = () => new URL("/admin/support", publicBaseUrl()).toString();
 const requestPortalUrl = (request: CreatedSaleRequest) => `${publicOrderUrl()}#requestId=${encodeURIComponent(request.id)}&requestCode=${encodeURIComponent(request.accessCode)}`;
 const invoicePortalUrl = (invoice: CreatedInvoice) => `${publicOrderUrl()}#invoiceId=${encodeURIComponent(invoice.id)}&accessCode=${encodeURIComponent(invoice.accessCode)}`;
 
@@ -274,6 +279,54 @@ export async function notifyCustomerSupportCreated(
           },
         ],
         reference: supportCase.id,
+      }),
+    },
+  ]);
+}
+
+const escalationReasonCopy: Record<AiEscalationReason, string> = {
+  out_of_scope: "Ngoài phạm vi HOSTORA",
+  insufficient_data: "Chưa đủ dữ liệu đã xác minh",
+  assistant_unavailable: "Trợ lý đang gián đoạn",
+  human_requested: "Khách yêu cầu gặp quản trị viên",
+};
+
+export async function notifyAdminAiEscalation(input: {
+  conversationId: string;
+  reason: AiEscalationReason;
+  latestQuestion: string;
+  customerLabel: string;
+}) {
+  const config = emailConfigFromEnv();
+  if (!config) return;
+  const reason = escalationReasonCopy[input.reason];
+  const url = adminSupportUrl();
+  const body =
+    rows([
+      ["Hội thoại", input.conversationId],
+      ["Khách", input.customerLabel],
+      ["Lý do chuyển", reason],
+    ]) +
+    notice(
+      "Câu hỏi gần nhất đã ẩn thông tin liên hệ",
+      input.latestQuestion.slice(0, 1_000),
+      "amber",
+    );
+  await safelySend("ai_conversation_escalated", input.conversationId, [
+    {
+      to: config.adminTo,
+      subject: `[HOSTORA] Hội thoại cần quản trị viên · ${reason}`,
+      reference: input.conversationId,
+      text: `Hội thoại ${input.conversationId} cần quản trị viên. Lý do: ${reason}. Khách: ${input.customerLabel}. Câu hỏi: ${input.latestQuestion.slice(0, 1_000)}. Trả lời tại ${url}`,
+      html: emailDocument({
+        preheader: `Hội thoại ${input.conversationId} đang chờ người trả lời`,
+        eyebrow: "HỘP THƯ AI CẦN HỖ TRỢ",
+        title: "Một khách hàng đang chờ quản trị viên",
+        intro:
+          "HOSTORA đã dừng trả lời tự động ở câu hỏi chưa đủ căn cứ và lưu toàn bộ luồng đã ẩn thông tin liên hệ để bạn tiếp tục.",
+        body,
+        actions: [{ label: "Mở hộp thư hỗ trợ", url }],
+        reference: input.conversationId,
       }),
     },
   ]);

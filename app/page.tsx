@@ -221,7 +221,7 @@ export default function HomePage() {
                 href="/downloads/android"
                 download
               >
-                <Download size={18} /> Tải HOSTORA 2.1.0
+                <Download size={18} /> Tải HOSTORA 2.2.0
               </a>
             </ClickSpark>
           </div>

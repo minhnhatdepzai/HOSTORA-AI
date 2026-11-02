@@ -94,6 +94,8 @@ describe("guarded customer flows", () => {
       role: "user",
       content: "Nội dung chỉ thuộc tài khoản chủ.",
     });
+    store.openAiConversation({ conversationId, customerId: owner.id });
+    store.escalateAiConversation(conversationId, "human_requested");
 
     const ownerHistory = await getChatHistory(
       new Request(`${origin}/api/account/chat-history`, {
@@ -104,9 +106,31 @@ describe("guarded customer flows", () => {
       }),
     );
     expect(ownerHistory.status).toBe(200);
-    expect((await ownerHistory.json()).messages).toEqual([
+    const ownerHistoryBody = await ownerHistory.json();
+    expect(ownerHistoryBody.supportStatus).toBe("escalated");
+    expect(ownerHistoryBody.messages).toEqual([
       expect.objectContaining({ content: "Nội dung chỉ thuộc tài khoản chủ." }),
     ]);
+
+    store.replyToAiConversation(
+      conversationId,
+      "Phản hồi riêng từ quản trị viên.",
+    );
+    const answeredHistory = await getChatHistory(
+      new Request(`${origin}/api/account/chat-history`, {
+        headers: {
+          "x-hostora-client": "mobile",
+          authorization: `Bearer ${ownerToken}`,
+        },
+      }),
+    );
+    const answeredHistoryBody = await answeredHistory.json();
+    expect(answeredHistoryBody.supportStatus).toBe("answered");
+    expect(answeredHistoryBody.messages.at(-1)).toMatchObject({
+      role: "assistant",
+      content: "Phản hồi riêng từ quản trị viên.",
+      fromAdmin: true,
+    });
 
     const otherHistory = await getChatHistory(
       new Request(`${origin}/api/account/chat-history`, {

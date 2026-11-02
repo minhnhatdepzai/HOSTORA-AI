@@ -1,7 +1,8 @@
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
+  Keyboard,
   Modal,
   Pressable,
   ScrollView,
@@ -30,10 +31,24 @@ export function NotificationCenter() {
     markNotificationRead,
   } = useApp();
   const [open, setOpen] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
   const latestUnread = useMemo(
     () => notifications.find((item) => !item.read),
     [notifications],
   );
+
+  useEffect(() => {
+    const shown = Keyboard.addListener("keyboardDidShow", () =>
+      setKeyboardVisible(true),
+    );
+    const hidden = Keyboard.addListener("keyboardDidHide", () =>
+      setKeyboardVisible(false),
+    );
+    return () => {
+      shown.remove();
+      hidden.remove();
+    };
+  }, []);
 
   function openNotification(id: string, route?: string) {
     markNotificationRead(id);
@@ -45,7 +60,7 @@ export function NotificationCenter() {
 
   return (
     <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
-      {latestUnread && !open ? (
+      {latestUnread && !open && !keyboardVisible ? (
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`${latestUnread.title}. Mở thông báo`}
@@ -68,19 +83,21 @@ export function NotificationCenter() {
         </Pressable>
       ) : null}
 
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={`Thông báo${unreadNotifications ? `, ${unreadNotifications} chưa đọc` : ""}`}
-        onPress={() => setOpen(true)}
-        style={[styles.bell, { bottom: floatingBottom }]}
-      >
-        <Feather name="bell" size={19} color="white" />
-        {unreadNotifications ? (
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>{Math.min(unreadNotifications, 9)}</Text>
-          </View>
-        ) : null}
-      </Pressable>
+      {!keyboardVisible ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Thông báo${unreadNotifications ? `, ${unreadNotifications} chưa đọc` : ""}`}
+          onPress={() => setOpen(true)}
+          style={[styles.bell, { bottom: floatingBottom }]}
+        >
+          <Feather name="bell" size={19} color="white" />
+          {unreadNotifications ? (
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>{Math.min(unreadNotifications, 9)}</Text>
+            </View>
+          ) : null}
+        </Pressable>
+      ) : null}
 
       <Modal
         visible={open}

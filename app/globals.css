@@ -91,6 +91,47 @@
 .admin-support-empty h2 { margin: 0; color: #132b38; }
 .admin-support-empty p { max-width: 34rem; margin: 0; line-height: 1.6; }
 .admin-support-empty button { min-height: 2.75rem; margin-top: .85rem; border: 1px solid #11695e; background: #11695e; color: #fff; padding: .7rem 1rem; font-weight: 800; cursor: pointer; }
+.admin-ai-inbox { width: min(100%, 1240px); margin: 2rem auto 3rem; }
+.admin-ai-inbox-heading { display: flex; align-items: end; justify-content: space-between; gap: 2rem; padding: 1.5rem 0; border-bottom: 1px solid #aebfba; }
+.admin-ai-inbox-heading > div > p, .admin-support-section-title > p { margin: 0 0 .45rem; color: #11695e; font-size: .68rem; font-weight: 850; letter-spacing: .16em; }
+.admin-ai-inbox-heading h2, .admin-support-section-title h2 { margin: 0; font-size: clamp(1.6rem, 3vw, 2.7rem); letter-spacing: -.035em; }
+.admin-ai-inbox-heading dl { display: flex; gap: .75rem; margin: 0; }
+.admin-ai-inbox-heading dl > div { min-width: 8.5rem; padding: 1rem; border: 1px solid #c9d8d3; background: #fff; }
+.admin-ai-inbox-heading dt { color: #526a67; font-size: .72rem; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
+.admin-ai-inbox-heading dd { margin: .35rem 0 0; color: #0d5e54; font-size: 1.8rem; font-weight: 900; }
+.admin-ai-conversation-list { display: grid; gap: 1rem; padding-top: 1rem; }
+.admin-ai-conversation-list > article { overflow: hidden; border: 1px solid #cbd8d4; background: #fff; box-shadow: 0 18px 45px rgba(19, 61, 52, .06); }
+.admin-ai-conversation-list > article > header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem 1.2rem; border-bottom: 1px solid #e2e9e6; background: #fbfcfa; }
+.admin-ai-customer { display: flex; align-items: center; gap: .75rem; min-width: 0; }
+.admin-ai-customer > span { width: 2.4rem; height: 2.4rem; display: grid; place-items: center; flex: 0 0 auto; border-radius: 50%; background: #dff1e9; color: #11695e; }
+.admin-ai-customer h3 { margin: 0; font-size: .95rem; }
+.admin-ai-customer p { margin: .15rem 0 0; color: #6a7b7c; font-size: .72rem; }
+.admin-ai-status { display: grid; justify-items: end; gap: .2rem; text-align: right; }
+.admin-ai-status strong { color: #52666a; font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; }
+.admin-ai-status span { color: #718286; font-size: .7rem; }
+.admin-ai-status.is-escalated strong { color: #a75b08; }
+.admin-ai-status.is-answered strong { color: #11695e; }
+.admin-ai-timeline { display: grid; gap: .7rem; max-height: 26rem; overflow: auto; padding: 1.2rem; background: #f7f9f7; }
+.admin-ai-timeline > div { width: min(82%, 44rem); padding: .85rem 1rem; border: 1px solid #dbe4e1; background: #fff; }
+.admin-ai-timeline > div.is-user { justify-self: end; border-color: #b8d6cd; background: #eaf5f1; }
+.admin-ai-timeline > div.is-admin { border-color: #b9cbc5; background: #102f38; color: #fff; }
+.admin-ai-role { display: flex; align-items: center; gap: .4rem; color: #56706a; font-size: .65rem; font-weight: 850; text-transform: uppercase; letter-spacing: .08em; }
+.admin-ai-timeline > div.is-admin .admin-ai-role { color: #a9e4cd; }
+.admin-ai-timeline p { margin: .45rem 0; line-height: 1.55; white-space: pre-wrap; }
+.admin-ai-timeline time { color: #7c8c89; font-size: .65rem; }
+.admin-ai-timeline > div.is-admin time { color: #a9bbb7; }
+.admin-ai-reply { padding: 1rem 1.2rem; border-top: 1px solid #e2e9e6; }
+.admin-ai-reply > label { display: block; margin-bottom: .45rem; color: #516864; font-size: .7rem; font-weight: 800; }
+.admin-ai-reply > div { display: grid; grid-template-columns: 1fr auto; align-items: stretch; gap: .7rem; }
+.admin-ai-reply textarea { min-height: 4.4rem; resize: vertical; border: 1px solid #b9cbc5; background: #fff; padding: .75rem; color: #132b38; font: inherit; line-height: 1.5; }
+.admin-ai-reply button { min-width: 10rem; display: inline-flex; align-items: center; justify-content: center; gap: .45rem; border: 1px solid #11695e; background: #11695e; color: white; padding: .75rem 1rem; font-weight: 800; cursor: pointer; }
+.admin-ai-reply button:disabled { cursor: not-allowed; opacity: .45; }
+.admin-ai-conversation-list > article > footer { display: flex; justify-content: space-between; gap: 1rem; padding: .65rem 1.2rem; border-top: 1px solid #edf1ef; color: #7a8987; font-size: .62rem; }
+.admin-ai-empty { min-height: 12rem; display: grid; place-items: center; align-content: center; gap: .5rem; border-bottom: 1px solid #cbd8d4; color: #60736f; text-align: center; }
+.admin-ai-empty h3, .admin-ai-empty p { margin: 0; }
+.admin-ai-spin { animation: admin-ai-spin 1s linear infinite; }
+.admin-support-section-title { width: min(100%, 1240px); margin: 3rem auto 1rem; }
+@keyframes admin-ai-spin { to { transform: rotate(360deg); } }
 
 .customer-account-page { width: min(100% - 2rem, 1180px); margin: 0 auto; padding: clamp(2rem, 5vw, 5rem) 0 7rem; color: #102932; }
 .customer-account-hero { display: flex; justify-content: space-between; align-items: flex-end; gap: 2rem; padding: 0 0 2.5rem; border-bottom: 1px solid #cbd8d4; }
@@ -148,6 +189,9 @@
   .customer-support-history { grid-column: 1; }
   .admin-support-header, .admin-support-tools { align-items: stretch; flex-direction: column; }
   .admin-support-list article { grid-template-columns: 1fr; }
+  .admin-ai-inbox-heading { align-items: stretch; flex-direction: column; }
+  .admin-ai-inbox-heading dl { width: 100%; }
+  .admin-ai-inbox-heading dl > div { flex: 1; min-width: 0; }
 }
 @media (max-width: 620px) {
   .customer-account-page { width: min(100% - 1.25rem, 1180px); padding-top: 1.4rem; }
@@ -157,6 +201,11 @@
   .customer-voucher-ticket { flex-direction: column; }
   .customer-voucher-ticket::after { display: none; }
   .customer-support-section { margin-inline: -.625rem; }
+  .admin-ai-conversation-list > article > header, .admin-ai-conversation-list > article > footer { align-items: flex-start; flex-direction: column; }
+  .admin-ai-status { justify-items: start; text-align: left; }
+  .admin-ai-timeline > div { width: 100%; }
+  .admin-ai-reply > div { grid-template-columns: 1fr; }
+  .admin-ai-reply button { min-height: 2.85rem; }
 }
 @media (prefers-reduced-motion: reduce) {
   .customer-auth-submit, .customer-support-section form > button { transition: none; }

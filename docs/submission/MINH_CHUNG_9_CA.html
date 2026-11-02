@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HOSTORA AI · Minh chứng 9 ca kiểm thử</title>
+  <style>
+    :root { color-scheme:light; --ink:#09212d; --green:#0d6b5f; --mint:#e6f4ef; --paper:#f4f6f3; --line:#c7d5d0; --muted:#587078; --amber:#a85f0b; }
+    * { box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body { margin:0; background:var(--paper); color:var(--ink); font:16px/1.6 "Be Vietnam Pro",Inter,system-ui,sans-serif; }
+    a { color:inherit; }
+    a:focus-visible { outline:3px solid #16a085; outline-offset:4px; }
+    header { background:var(--ink); color:#fff; }
+    .masthead { width:min(1180px,calc(100% - 40px)); margin:auto; padding:24px 0; display:flex; justify-content:space-between; gap:24px; align-items:center; }
+    .brand { font-size:14px; font-weight:900; letter-spacing:.16em; }
+    .brand span { color:#87e6c9; }
+    .edition { color:#b8ccc7; font-size:12px; text-align:right; }
+    main { width:min(1180px,calc(100% - 40px)); margin:auto; padding:54px 0 80px; }
+    .hero { display:grid; grid-template-columns:minmax(0,1.5fr) minmax(280px,.5fr); gap:50px; align-items:end; padding-bottom:36px; border-bottom:2px solid var(--ink); }
+    .eyebrow { margin:0 0 10px; color:var(--green); font-size:12px; font-weight:900; letter-spacing:.15em; }
+    h1 { max-width:760px; margin:0; font-size:clamp(38px,6vw,72px); line-height:1.02; letter-spacing:-.055em; }
+    .lead { max-width:720px; margin:22px 0 0; color:var(--muted); font-size:18px; }
+    .score { border-left:4px solid var(--green); padding-left:22px; }
+    .score strong { display:block; color:var(--green); font-size:58px; line-height:1; letter-spacing:-.06em; }
+    .score span { display:block; margin-top:8px; color:var(--muted); font-size:13px; }
+    .facts { display:grid; grid-template-columns:repeat(4,1fr); border-bottom:1px solid var(--line); }
+    .facts div { min-height:126px; padding:24px 18px 22px 0; border-right:1px solid var(--line); }
+    .facts div + div { padding-left:22px; }
+    .facts div:last-child { border-right:0; }
+    .facts strong { display:block; font-size:26px; line-height:1.1; }
+    .facts span { display:block; margin-top:8px; color:var(--muted); font-size:12px; }
+    .note { margin:30px 0 0; padding:16px 18px; border-left:4px solid var(--green); background:var(--mint); color:#234b47; font-size:14px; }
+    nav { display:flex; flex-wrap:wrap; gap:8px; margin:28px 0 48px; }
+    nav a { min-height:44px; display:inline-flex; align-items:center; border:1px solid var(--line); background:#fff; padding:8px 13px; text-decoration:none; font-size:12px; font-weight:800; }
+    .section-title { display:flex; justify-content:space-between; gap:20px; align-items:end; margin:54px 0 0; padding-bottom:14px; border-bottom:2px solid var(--ink); }
+    .section-title p { margin:0 0 5px; color:var(--green); font-size:12px; font-weight:900; letter-spacing:.14em; }
+    h2 { margin:0; font-size:clamp(25px,3vw,38px); letter-spacing:-.035em; line-height:1.15; }
+    .section-title span { color:var(--muted); font-size:12px; white-space:nowrap; }
+    .case { display:grid; grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr); gap:42px; padding:34px 0 40px; border-bottom:1px solid var(--line); scroll-margin-top:20px; }
+    .case-tag { display:flex; gap:9px; align-items:center; margin-bottom:15px; }
+    .id { color:var(--green); font-size:12px; font-weight:900; letter-spacing:.12em; }
+    .pass { border:1px solid #9bcfbe; background:#dbf0e8; color:#07594d; padding:2px 9px; font-size:12px; font-weight:900; }
+    .sim { border-color:#e0bd80; background:#fff1d5; color:#815409; }
+    h3 { margin:0; font-size:24px; line-height:1.25; letter-spacing:-.025em; }
+    dl { margin:22px 0 0; display:grid; gap:15px; }
+    dt { color:var(--muted); font-size:12px; font-weight:900; letter-spacing:.12em; text-transform:uppercase; }
+    dd { margin:2px 0 0; font-size:14px; }
+    dd.result { border-left:3px solid var(--green); padding-left:12px; color:#0b594f; font-weight:750; }
+    figure { margin:0; align-self:start; }
+    figure img { width:100%; max-height:500px; object-fit:contain; object-position:top; display:block; border:1px solid var(--line); background:#fff; }
+    figcaption { margin-top:8px; color:var(--muted); font-size:12px; }
+    .api-result { min-height:250px; display:grid; align-content:center; border:1px solid var(--line); background:#fff; padding:28px; }
+    .api-result b { color:#9a3f31; font-size:12px; letter-spacing:.1em; }
+    .api-result strong { display:block; margin:8px 0; font-size:24px; }
+    .api-result span { color:var(--muted); font-size:14px; }
+    .two-shots { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .two-shots img { height:430px; }
+    footer { margin-top:58px; padding-top:24px; border-top:2px solid var(--ink); color:var(--muted); font-size:13px; }
+    footer p { margin:7px 0; }
+    @media(max-width:800px) { .hero,.case { grid-template-columns:1fr; gap:24px; } .score { max-width:360px; } .facts { grid-template-columns:1fr 1fr; } .facts div:nth-child(2) { border-right:0; } .facts div:nth-child(n+3) { border-top:1px solid var(--line); } .case figure,.api-result { margin-top:4px; } }
+    @media(max-width:480px) { .masthead,main { width:min(100% - 28px,1180px); } .edition { display:none; } .facts { grid-template-columns:1fr; } .facts div,.facts div + div { padding:18px 0; border-right:0; border-top:1px solid var(--line); min-height:0; } .two-shots { grid-template-columns:1fr; } .two-shots img { height:auto; max-height:520px; } }
+    @media(prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
+    @media print { body { background:#fff; } nav { display:none; } main { width:100%; padding:24px; } .case { break-inside:avoid; } figure img { max-height:270px; } }
+  </style>
+</head>
+<body>
+  <header><div class="masthead"><div class="brand">HOSTORA <span>AI</span></div><div class="edition">HỒ SƠ VÒNG LOẠI · BẢNG A<br>01/11/2026 · BẢN 2.2.0</div></div></header>
+  <main>
+    <section class="hero">
+      <div><p class="eyebrow">BẰNG CHỨNG DÀNH CHO GIÁM KHẢO</p><h1>9 tình huống.<br>Kết quả nhìn thấy ngay.</h1><p class="lead">Sáu ca đúng cơ cấu Bảng A và ba ca bổ sung cho hộp thư AI: chuyển người thật, bảo vệ hội thoại và nhận phản hồi quản trị.</p></div>
+      <div class="score"><strong>9/9</strong><span>ca có dữ liệu, kỳ vọng và kết quả thực tế; không lấy HTTP 200 thay cho kiểm tra luồng.</span></div>
+    </section>
+    <div class="facts"><div><strong>02</strong><span>luồng bình thường</span></div><div><strong>02</strong><span>đầu vào không hợp lệ</span></div><div><strong>02</strong><span>ca biên / sự cố</span></div><div><strong>03</strong><span>bảo vệ và hỗ trợ AI</span></div></div>
+    <p class="note"><strong>Phân loại bằng chứng:</strong> ảnh web là Chromium production; ảnh Android là APK universal cài trên emulator bằng <code>adb install -r</code>; SMTP đã kiểm tra bằng máy chủ mock, chưa tuyên bố email thật đã vào Inbox.</p>
+    <nav aria-label="Đi tới từng ca"><a href="#N01">N01 · Chọn gói</a><a href="#N02">N02 · AI điền form</a><a href="#I01">I01 · Thiếu dữ liệu</a><a href="#I02">I02 · Chat rỗng</a><a href="#E01">E01 · Ngân sách thấp</a><a href="#E02">E02 · Mất bảng giá</a><a href="#S01">S01 · Chuyển admin</a><a href="#S02">S02 · Sai token</a><a href="#S03">S03 · Admin trả lời</a></nav>
+
+    <div class="section-title"><div><p>NHÓM 01</p><h2>Luồng bình thường</h2></div><span>2/2 đạt</span></div>
+    <section class="case" id="N01"><div><div class="case-tag"><span class="id">N01</span><span class="pass">ĐẠT</span></div><h3>Từ nhu cầu đến ba gói để so sánh</h3><dl><div><dt>Thao tác</dt><dd>Đi bốn bước tư vấn, xem ba gói, chọn gói thứ hai, lưu yêu cầu thử nghiệm và mở FAQ.</dd></div><div><dt>Cần thấy</dt><dd>Gói đã chọn được giữ đúng; năm tính năng nối thành một hành trình.</dd></div><div><dt>Kết quả</dt><dd class="result">Playwright desktop và mobile xác nhận ba gói, bảng so sánh, lead đúng lựa chọn và FAQ mở được.</dd></div></dl></div><figure><img src="evidence/N01-three-plans.png" alt="Ba gói HOSTORA được hiển thị sau bước tư vấn"><figcaption>Ba phương án, không biến mọi lựa chọn thành “phù hợp nhất”.</figcaption></figure></section>
+    <section class="case" id="N02"><div><div class="case-tag"><span class="id">N02</span><span class="pass">ĐẠT</span></div><h3>AI điền đúng dữ kiện khách đã nói</h3><dl><div><dt>Thao tác</dt><dd>Nhập nhu cầu bán mỹ phẩm, 5.000 lượt/tháng, 300.000đ/tháng và cần tên miền.</dd></div><div><dt>Cần thấy</dt><dd>Khách được kiểm tra và sửa dữ kiện trước khi nhận đề xuất.</dd></div><div><dt>Kết quả</dt><dd class="result">Form hiện đúng 5.000 lượt và 300.000đ; người dùng vẫn kiểm soát bốn bước.</dd></div></dl></div><figure><img src="evidence/N02-ai-filled-budget.png" alt="AI điền ngân sách 300.000 đồng vào form"><figcaption>Dữ kiện do AI trích xuất luôn đi qua màn xác nhận.</figcaption></figure></section>
+
+    <div class="section-title"><div><p>NHÓM 02</p><h2>Đầu vào không hợp lệ</h2></div><span>2/2 đạt</span></div>
+    <section class="case" id="I01"><div><div class="case-tag"><span class="id">I01</span><span class="pass">ĐẠT</span></div><h3>Yêu cầu đề xuất thiếu toàn bộ thông tin</h3><dl><div><dt>Thao tác</dt><dd>Gửi <code>POST /api/recommend</code> với dữ liệu rỗng.</dd></div><div><dt>Cần thấy</dt><dd>Không sinh gói hoặc stack trace; chỉ rõ trường cần bổ sung.</dd></div><div><dt>Kết quả</dt><dd class="result">HTTP 400 và thông báo tiếng Việt cho năm trường bắt buộc.</dd></div></dl></div><div class="api-result"><b>PHẢN HỒI THỰC TẾ · HTTP 400</b><strong>Dữ liệu nhập không hợp lệ.</strong><span>Cần bổ sung loại website, lượt truy cập, ngân sách, tên miền và nhu cầu bán hàng.</span></div></section>
+    <section class="case" id="I02"><div><div class="case-tag"><span class="id">I02</span><span class="pass">ĐẠT</span></div><h3>Cuộc trò chuyện không có tin nhắn</h3><dl><div><dt>Thao tác</dt><dd>Gửi <code>POST /api/ai/chat</code> với <code>messages: []</code>.</dd></div><div><dt>Cần thấy</dt><dd>Chặn trước khi gọi model local.</dd></div><div><dt>Kết quả</dt><dd class="result">HTTP 400; chỉ rõ danh sách tin nhắn không hợp lệ.</dd></div></dl></div><div class="api-result"><b>PHẢN HỒI THỰC TẾ · HTTP 400</b><strong>Dữ liệu nhập không hợp lệ.</strong><span>Không gọi Ollama cho một cuộc trò chuyện rỗng.</span></div></section>
+
+    <div class="section-title"><div><p>NHÓM 03</p><h2>Ca biên và sự cố</h2></div><span>2/2 đạt</span></div>
+    <section class="case" id="E01"><div><div class="case-tag"><span class="id">E01</span><span class="pass">ĐẠT</span></div><h3>Ngân sách thấp hơn mọi gói</h3><dl><div><dt>Thao tác</dt><dd>Nhập 10.000đ/tháng cho website bán hàng.</dd></div><div><dt>Cần thấy</dt><dd>Không gắn nhãn phù hợp cho phương án vượt ngân sách.</dd></div><div><dt>Kết quả</dt><dd class="result">Hiện “Chưa có gói đáp ứng ngân sách này”; các thẻ còn lại chỉ là tham khảo.</dd></div></dl></div><figure><img src="evidence/E01-no-match.png" alt="HOSTORA nói chưa có gói đáp ứng ngân sách thấp"><figcaption>Ca biên thương mại: nói không có kết quả còn hơn gợi ý sai.</figcaption></figure></section>
+    <section class="case" id="E02"><div><div class="case-tag"><span class="id">E02</span><span class="pass sim">ĐẠT · GIẢ LẬP</span></div><h3>Bảng giá tạm thời mất kết nối</h3><dl><div><dt>Thao tác</dt><dd>Giả lập API đề xuất trả lỗi 503.</dd></div><div><dt>Cần thấy</dt><dd>Không dùng giá dự phòng chưa xác minh; có cách thử lại.</dd></div><div><dt>Kết quả</dt><dd class="result">Thông báo “Chưa tải được bảng giá” và nút “Thử tải lại”.</dd></div></dl></div><figure><img src="evidence/E02-simulated-outage.png" alt="Màn lỗi bảng giá có nút thử lại"><figcaption>Sự cố mô phỏng có chủ đích, không được trình bày như sự cố production thật.</figcaption></figure></section>
+
+    <div class="section-title"><div><p>NHÓM 04 · BỔ SUNG</p><h2>Hộp thư AI và quản trị viên</h2></div><span>3/3 đạt</span></div>
+    <section class="case" id="S01"><div><div class="case-tag"><span class="id">S01</span><span class="pass">ĐẠT</span></div><h3>Câu hỏi ngoài HOSTORA được chuyển người thật</h3><dl><div><dt>Thao tác</dt><dd>Khách hỏi thời tiết và nhập số điện thoại thử nghiệm.</dd></div><div><dt>Cần thấy</dt><dd>Lưu hội thoại đã ẩn số; trạng thái chờ admin; lịch gửi email chỉ tạo một lần.</dd></div><div><dt>Kết quả</dt><dd class="result">Web và APK hiện “Đã chuyển quản trị viên”; database không còn số điện thoại gốc; SMTP mock nhận cảnh báo kèm link admin.</dd></div></dl></div><div class="two-shots"><figure><img src="../../output/playwright/ai-inbox-2026-11-01/guest-escalated-desktop.png" alt="Web báo câu hỏi đã chuyển quản trị viên"><figcaption>Web khách.</figcaption></figure><figure><img src="../../output/playwright/ai-inbox-2026-11-01/android-escalated.png" alt="APK Android báo đã chuyển quản trị viên"><figcaption>APK Android.</figcaption></figure></div></section>
+    <section class="case" id="S02"><div><div class="case-tag"><span class="id">S02</span><span class="pass">ĐẠT</span></div><h3>Người lạ không đọc được hội thoại khách ẩn danh</h3><dl><div><dt>Thao tác</dt><dd>Gọi API hội thoại bằng token sai, sau đó bằng token đúng.</dd></div><div><dt>Cần thấy</dt><dd>Token sai không làm lộ việc hội thoại có tồn tại; server chỉ lưu hash token.</dd></div><div><dt>Kết quả</dt><dd class="result">Token sai nhận 404; token đúng đọc được thread đã ẩn dữ liệu. Admin vẫn cần phiên ký hợp lệ và cùng origin.</dd></div></dl></div><div class="api-result"><b>KIỂM TRA QUYỀN TRUY CẬP</b><strong>Token sai → 404</strong><span>Không trả nội dung, tên khách, trạng thái hoặc dấu hiệu giúp dò mã hội thoại.</span></div></section>
+    <section class="case" id="S03"><div><div class="case-tag"><span class="id">S03</span><span class="pass">ĐẠT</span></div><h3>Admin trả lời, khách tự nhận lại trên web và APK</h3><dl><div><dt>Thao tác</dt><dd>Admin mở <code>/admin/support</code>, đọc timeline, gửi phản hồi; khách không tải lại thủ công.</dd></div><div><dt>Cần thấy</dt><dd>Web/app tự kiểm tra, giữ hội thoại và phân biệt rõ AI với quản trị viên.</dd></div><div><dt>Kết quả</dt><dd class="result">Phản hồi xuất hiện với nhãn “Quản trị viên HOSTORA”; trạng thái đổi thành “Đã phản hồi”. APK mới cài đè vẫn giữ thread cũ.</dd></div></dl></div><div class="two-shots"><figure><img src="../../output/playwright/ai-inbox-2026-11-01/admin-inbox-desktop.png" alt="Admin đọc và trả lời hội thoại AI"><figcaption>Hộp thư admin.</figcaption></figure><figure><img src="../../output/playwright/ai-inbox-2026-11-01/android-admin-reply-latest.png" alt="APK hiển thị phản hồi quản trị viên sau khi cài đè"><figcaption>APK universal sau cài đè.</figcaption></figure></div></section>
+
+    <footer><p><strong>Bản kiểm tra:</strong> HOSTORA 2.2.0, Android versionCode 23. Unit/integration: 273/273.</p><p><strong>Giới hạn:</strong> SMTP mới được xác minh bằng mock; chưa có bằng chứng độc lập thư thật đã vào Inbox. Quick Tunnel là URL demo tạm thời. Xem dữ liệu/kỳ vọng/lệnh chạy trong <a href="TEST_MATRIX.md">TEST_MATRIX.md</a>.</p></footer>
+  </main>
+</body>
+</html>

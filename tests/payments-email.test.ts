@@ -10,6 +10,7 @@ import {
   emailStatusFromEnv,
   notifyInvoiceCreated,
   notifyInvoiceStatusChanged,
+  notifyAdminAiEscalation,
   notifySaleRequestCancelled,
   notifySaleRequestCreated,
 } from "@/lib/payments/email";
@@ -150,5 +151,28 @@ describe("email đơn hàng HOSTORA", () => {
     await notifyInvoiceStatusChanged({ ...invoice, status: "paid" });
     const statusRecipients = sendMailMock.mock.calls.map(([message]) => (message as { to: string }).to);
     expect(statusRecipients).toEqual([invoice.customerEmail]);
+  });
+
+  it("gửi đúng một email cảnh báo hội thoại AI đã ẩn dữ liệu cho quản trị viên", async () => {
+    configureEmail();
+    await notifyAdminAiEscalation({
+      conversationId: "2f8af709-2f55-4aa0-bc02-d45ff4de5503",
+      reason: "out_of_scope",
+      latestQuestion: "Ngày mai có mưa không? [đã ẩn số điện thoại]",
+      customerLabel: "Khách chưa đăng nhập",
+    });
+
+    expect(sendMailMock).toHaveBeenCalledTimes(1);
+    const message = sendMailMock.mock.calls[0][0] as {
+      to: string;
+      subject: string;
+      text: string;
+      html: string;
+    };
+    expect(message.to).toBe("owner@example.com");
+    expect(message.subject).toContain("cần quản trị viên");
+    expect(message.html).toContain("/admin/support");
+    expect(message.text).toContain("Ngoài phạm vi HOSTORA");
+    expect(JSON.stringify(message)).not.toContain("app-password");
   });
 });

@@ -29,7 +29,13 @@ import { buildStudioProjectAdvice, studioProjectIdFromMessage } from "@/lib/chat
 import { getStudioProject } from "@/lib/site-studio-store";
 import { customerFromRequest } from "@/lib/customer/auth";
 import { getCustomerStore } from "@/lib/customer/store";
+import { evaluateAiEscalation } from "@/lib/ai-escalation";
 import { retrieveCustomerSources } from "@/lib/customer-ai-sources";
+import {
+  notifyAdminAiEscalation,
+  scheduleOrderEmail,
+} from "@/lib/payments/email";
+import type { AiEscalationReason } from "@/lib/customer/types";
 import {
   protectRateLimitedAction,
   rateLimitResponse,
@@ -100,11 +106,27 @@ export async function POST(request: Request) {
     if (limited) return limited;
   }
   const customerStore = customer ? store : null;
-  const conversationId = customer
-    ? (parsed.data.conversationId ??
-      customerStore?.latestConversationId(customer.id) ??
-      randomUUID())
-    : null;
+  const conversationId =
+    parsed.data.conversationId ??
+    (customer ? customerStore?.latestConversationId(customer.id) : null) ??
+    randomUUID();
+  const opened = store.openAiConversation({
+    conversationId,
+    customerId: customer?.id,
+  });
+  const conversationAccess = opened.accessToken;
+  if (!conversationAccess) {
+    const allowed = store.getAiConversationForViewer({
+      conversationId,
+      customerId: customer?.id,
+      accessToken: request.headers.get("x-hostora-conversation-access"),
+    });
+    if (!allowed)
+      return Response.json(
+        { error: "Không tìm thấy cuộc trò chuyện." },
+        { status: 404 },
+      );
+  }
   const inputMessages = parsed.data.messages.map((message) => ({
     ...message,
     content: redactContactInfo(message.content),
@@ -115,11 +137,18 @@ export async function POST(request: Request) {
       : parsed.data.memory,
     inputMessages as ChatMemoryMessage[],
   );
-  if (customer && customerStore && conversationId) {
+  const latestUser = [...inputMessages]
+    .reverse()
+    .find((message) => message.role === "user");
+  if (latestUser)
+    store.appendAiConversationMessage({
+      id: parsed.data.messageId,
+      conversationId,
+      role: "user",
+      content: latestUser.content,
+    });
+  if (customer && customerStore) {
     customerStore.saveAiMemory(customer.id, memory);
-    const latestUser = [...inputMessages]
-      .reverse()
-      .find((message) => message.role === "user");
     if (latestUser)
       customerStore.appendChatMessage({
         id: parsed.data.messageId,
@@ -129,13 +158,34 @@ export async function POST(request: Request) {
         content: latestUser.content,
       });
   }
+  const escalate = (reason: AiEscalationReason, question: string) => {
+    const current = store.openAiConversation({ conversationId }).conversation;
+    const shouldNotify = current?.status === "active";
+    store.escalateAiConversation(conversationId, reason);
+    if (shouldNotify)
+      scheduleOrderEmail(() =>
+        notifyAdminAiEscalation({
+          conversationId,
+          reason,
+          latestQuestion: question,
+          customerLabel: customer?.name ?? "Khách chưa đăng nhập",
+        }),
+      );
+  };
   const respondText = (
     answer: string,
     sources: unknown[] = [],
     nextAction?: "create-site" | "upload-screen",
+    escalationReason?: AiEscalationReason,
   ) => {
     const safeAnswer = toCustomerLanguage(answer);
-    if (customer && customerStore && conversationId)
+    store.appendAiConversationMessage({
+      conversationId,
+      role: "assistant",
+      content: safeAnswer,
+      sources,
+    });
+    if (customer && customerStore)
       customerStore.appendChatMessage({
         customerId: customer.id,
         conversationId,
@@ -143,9 +193,22 @@ export async function POST(request: Request) {
         content: safeAnswer,
         sources,
       });
+    const escalation = escalationReason
+      ? { reason: escalationReason }
+      : evaluateAiEscalation({
+          question: latestUser?.content ?? "",
+          answer: safeAnswer,
+        });
+    if (escalation)
+      escalate(escalation.reason, latestUser?.content ?? "");
     const response = textAnswer(safeAnswer, sources, nextAction);
-    if (conversationId)
-      response.headers.set("x-hostora-conversation-id", conversationId);
+    response.headers.set("x-hostora-conversation-id", conversationId);
+    if (conversationAccess)
+      response.headers.set("x-hostora-conversation-access", conversationAccess);
+    response.headers.set(
+      "x-hostora-support-status",
+      escalation ? "escalated" : (opened.conversation?.status ?? "active"),
+    );
     return response;
   };
   const messages =
@@ -157,6 +220,16 @@ export async function POST(request: Request) {
         )
       : recentChatMessages(inputMessages as ChatMemoryMessage[]);
   const latest = messages.at(-1)?.content ?? "";
+  const immediateEscalation = evaluateAiEscalation({ question: latest });
+  if (immediateEscalation)
+    return respondText(
+      immediateEscalation.reason === "human_requested"
+        ? "Mình đã chuyển cuộc trò chuyện này cho quản trị viên. Bạn có thể đóng ứng dụng; phản hồi của quản trị viên sẽ xuất hiện ngay trong cuộc trò chuyện này."
+        : "Câu hỏi này nằm ngoài phần thông tin HOSTORA có thể trả lời chắc chắn. Mình đã chuyển nguyên câu hỏi đã ẩn thông tin liên hệ cho quản trị viên; phản hồi sẽ xuất hiện ngay trong cuộc trò chuyện này.",
+      [],
+      undefined,
+      immediateEscalation.reason,
+    );
   const correctedBudget = budgetCorrectionAnswer(latest, memory);
   if (correctedBudget) return respondText(correctedBudget);
   const recalled = memoryRecallAnswer(latest, memory);
@@ -357,15 +430,19 @@ ${JSON.stringify({ summary: memory.summary, facts: memory.facts, unresolved: mem
       ...messages,
     ]);
   } catch {
-    return Response.json(
-      { error: "Trợ lý chưa sẵn sàng. Vui lòng kiểm tra kết nối rồi thử lại." },
-      { status: 503 },
+    return respondText(
+      "Trợ lý đang tạm gián đoạn nên mình đã chuyển câu hỏi cho quản trị viên. Bạn có thể đóng ứng dụng; phản hồi sẽ xuất hiện trong cuộc trò chuyện này.",
+      [],
+      undefined,
+      "assistant_unavailable",
     );
   }
   if (!upstream.body)
-    return Response.json(
-      { error: "Trợ lý chưa thể trả lời lúc này." },
-      { status: 502 },
+    return respondText(
+      "Trợ lý chưa thể hoàn tất câu trả lời nên mình đã chuyển câu hỏi cho quản trị viên. Phản hồi sẽ xuất hiện trong cuộc trò chuyện này.",
+      [],
+      undefined,
+      "assistant_unavailable",
     );
   const decoder = new TextDecoder();
   const encoder = new TextEncoder();
@@ -461,7 +538,13 @@ ${JSON.stringify({ summary: memory.summary, facts: memory.facts, unresolved: mem
             sanitizeCitations(bufferedAnswer, allowedCitations),
           );
           controller.enqueue(encoder.encode(finalAnswer));
-          if (customer && customerStore && conversationId)
+          store.appendAiConversationMessage({
+            conversationId,
+            role: "assistant",
+            content: finalAnswer,
+            sources: responseSources,
+          });
+          if (customer && customerStore)
             customerStore.appendChatMessage({
               customerId: customer.id,
               conversationId,
@@ -469,6 +552,11 @@ ${JSON.stringify({ summary: memory.summary, facts: memory.facts, unresolved: mem
               content: finalAnswer,
               sources: responseSources,
             });
+          const escalation = evaluateAiEscalation({
+            question: latest,
+            answer: finalAnswer,
+          });
+          if (escalation) escalate(escalation.reason, latest);
         }
         controller.close();
       } catch (error) {
@@ -484,6 +572,10 @@ ${JSON.stringify({ summary: memory.summary, facts: memory.facts, unresolved: mem
       ...(conversationId
         ? { "x-hostora-conversation-id": conversationId }
         : {}),
+      ...(conversationAccess
+        ? { "x-hostora-conversation-access": conversationAccess }
+        : {}),
+      "x-hostora-support-status": opened.conversation?.status ?? "active",
       "x-content-type-options": "nosniff",
     },
   });
