@@ -105,6 +105,7 @@ const auditResponse = {
 };
 
 test("shows an actionable SEO and AI visibility report", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
   let releaseResponse: (() => void) | undefined;
   await page.route("**/api/seo/audit", async (route) => {
     await new Promise<void>((resolve) => {
@@ -134,6 +135,14 @@ test("shows an actionable SEO and AI visibility report", async ({ page }) => {
   await expect(
     page.getByText("Đang đọc website và tài liệu công khai"),
   ).toBeVisible();
+  await expect
+    .poll(async () =>
+      page
+        .getByRole("button", { name: "Đang kiểm tra" })
+        .locator("svg")
+        .evaluate((element) => getComputedStyle(element).animationName),
+    )
+    .toBe("none");
 
   releaseResponse?.();
   const scores = page.getByRole("region", { name: "Ba điểm đánh giá" });
@@ -151,12 +160,31 @@ test("shows an actionable SEO and AI visibility report", async ({ page }) => {
   const crawlerTable = page.getByRole("table", {
     name: "Quyền truy cập của các bot AI",
   });
-  await expect(
-    crawlerTable.getByRole("row", { name: /GPTBot.*Cho phép/ }),
-  ).toBeVisible();
-  await expect(
-    crawlerTable.getByRole("row", { name: /ClaudeBot.*Đang chặn/ }),
-  ).toBeVisible();
+  if ((page.viewportSize()?.width ?? 0) < 640) {
+    const crawlerList = page.getByRole("list", {
+      name: "Quyền truy cập của các bot AI trên điện thoại",
+    });
+    const gptBot = crawlerList
+      .getByRole("listitem")
+      .filter({ hasText: "GPTBot" });
+    await expect(gptBot).toContainText("OpenAI");
+    await expect(gptBot).toContainText("Cho phép");
+    await expect(gptBot).toContainText("Quy tắc riêng");
+    const claudeBot = crawlerList
+      .getByRole("listitem")
+      .filter({ hasText: "ClaudeBot" });
+    await expect(claudeBot).toContainText("Anthropic");
+    await expect(claudeBot).toContainText("Đang chặn");
+    await expect(claudeBot).toContainText("Quy tắc chung");
+    await expect(crawlerTable).toBeHidden();
+  } else {
+    await expect(
+      crawlerTable.getByRole("row", { name: /GPTBot.*Cho phép/ }),
+    ).toBeVisible();
+    await expect(
+      crawlerTable.getByRole("row", { name: /ClaudeBot.*Đang chặn/ }),
+    ).toBeVisible();
+  }
   await expect(page.getByText("Tên trang trên Google")).toBeVisible();
   await expect(
     page.getByText("Viết FAQ trả lời câu hỏi chọn hosting doanh nghiệp."),

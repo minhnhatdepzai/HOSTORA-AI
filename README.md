@@ -11,6 +11,7 @@ AI chạy local qua Ollama. AI chỉ trích xuất, giải thích và soạn n�
 | Web khách hàng         | [Mở HOSTORA](https://admin123-system-product-name.tailfeea7a.ts.net:8443/)                                                   | HTTPS ổn định qua Tailscale Funnel, kiểm tra 02/11/2026                          |
 | Web quản trị           | [Mở trang admin](https://admin123-system-product-name.tailfeea7a.ts.net:8443/admin)                                          | Chuyển tới cổng đăng nhập admin                                    |
 | Hộp thư AI của admin   | [Mở hộp thư hỗ trợ](https://admin123-system-product-name.tailfeea7a.ts.net:8443/admin/support)                               | Cần phiên quản trị hợp lệ                                          |
+| Chấm SEO + AI visibility | [Mở công cụ kiểm tra](https://admin123-system-product-name.tailfeea7a.ts.net:8443/website-analyzer)                       | Tách điểm Google, AI crawler và kế hoạch sửa tất định              |
 | APK Android mới nhất   | [Tải HOSTORA AI 2.2.0 universal](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-2.2.0-universal.apk) | Android 7.0+, 4 ABI, package `com.hostora.ai`                  |
 | Link APK cũ tương thích | [Tải qua tên `arm64.apk`](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-2.2.0-arm64.apk)           | Cùng binary universal; giữ link cũ không bị lỗi                   |
 | SHA-256 APK            | [Tải checksum](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-2.2.0-universal.apk.sha256)    | `c1695598f8c57f6d4772ccc3512d4eeb03d243d5284f8b1b6dd56b99838fe0d3` |
@@ -25,14 +26,16 @@ AI chạy local qua Ollama. AI chỉ trích xuất, giải thích và soạn n�
 | Phần đã kiểm tra    | Kết quả gần nhất                                                                                          |
 | ------------------- | --------------------------------------------------------------------------------------------------------- |
 | Web + admin         | Typecheck, lint và production build đạt                                                                   |
-| Logic/API           | 273/273 test đạt trên 55 file                                                                             |
+| Logic/API           | 281/281 test đạt trên 57 file                                                                             |
 | AI local            | Ollama chat, Studio, embedding và smoke test chạy thật qua loopback; không dùng cloud fallback            |
-| E2E + UI audit      | 51 lượt đạt, 1 mobile CRUD bỏ qua có chủ đích; 12 màn audit không có lỗi axe/page/overflow tự động      |
+| E2E + UI audit      | 55 lượt đạt, 1 mobile CRUD bỏ qua có chủ đích; 12 màn audit không có lỗi axe/page/overflow tự động      |
 | Android             | `com.hostora.ai` 2.2.0, versionCode 23; APK universal cài đè bằng `adb install -r` và giữ hội thoại trên emulator |
 | Bộ giám khảo mobile | 20/20 kiểm tra showcase và TC01–TC09 đều đạt                                                              |
 | APK                 | 164.660.004 byte; đủ `arm64-v8a`, `armeabi-v7a`, `x86`, `x86_64`; SHA-256 như bảng trên                 |
 
 Intro cinematic chỉ phát ở lần mở đầu tiên; người dùng có thể bỏ qua và app ghi nhớ lựa chọn. App có chuyển cảnh theo tiến độ, phản hồi chạm/haptic, tôn trọng reduced motion, luồng tư vấn bốn bước, ba gói đề xuất, danh mục dịch vụ và chế độ trình diễn cho giám khảo.
+
+Trang **Chấm SEO + AI visibility** đọc tín hiệu công khai như metadata, sitemap, `robots.txt`, `llms.txt`, JSON-LD và quyền crawler của OpenAI/Anthropic/Perplexity. Điểm và việc ưu tiên do TypeScript tính tất định; Ollama local chỉ gợi ý ý tưởng nội dung và không thể nâng điểm. “Cho phép crawler” không đồng nghĩa ChatGPT hoặc Claude chắc chắn đề xuất website.
 
 ## HOSTORA bán gì và mua như thế nào?
 

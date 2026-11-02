@@ -313,7 +313,39 @@ function Report({ result }: { result: AuditResult }) {
             “Cho phép” chỉ nghĩa là bot có thể đọc trang công khai, không bảo
             đảm thương hiệu sẽ được đề xuất.
           </p>
-          <div className="mt-5 overflow-x-auto">
+          <div
+            className="mt-5 grid gap-2 sm:hidden"
+            role="list"
+            aria-label="Quyền truy cập của các bot AI trên điện thoại"
+          >
+            {result.aiCrawlers.map((crawler) => (
+              <article
+                className="rounded-xl border border-slate-200 p-3"
+                key={crawler.id}
+                role="listitem"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <strong className="min-w-0 text-sm [overflow-wrap:anywhere]">
+                    {crawler.id}
+                  </strong>
+                  <span
+                    className={`inline-flex shrink-0 items-center gap-1 text-xs font-black ${crawler.status === "allowed" ? "text-emerald-700" : "text-red-700"}`}
+                  >
+                    {crawler.status === "allowed" ? (
+                      <Check aria-hidden="true" size={14} />
+                    ) : (
+                      <ShieldAlert aria-hidden="true" size={14} />
+                    )}
+                    {crawler.status === "allowed" ? "Cho phép" : "Đang chặn"}
+                  </span>
+                </div>
+                <p className="mt-1 text-xs leading-5 text-slate-500">
+                  {crawler.vendor} · {viaLabels[crawler.via]}
+                </p>
+              </article>
+            ))}
+          </div>
+          <div className="mt-5 hidden overflow-x-auto sm:block">
             <table
               className="w-full min-w-[32rem] border-collapse text-left text-sm"
               aria-label="Quyền truy cập của các bot AI"
@@ -549,7 +581,7 @@ export function WebsiteAnalyzer() {
             {loading ? (
               <LoaderCircle
                 aria-hidden="true"
-                className="animate-spin"
+                className="animate-spin motion-reduce:animate-none"
                 size={17}
               />
             ) : (
@@ -586,7 +618,7 @@ export function WebsiteAnalyzer() {
             <div className="flex items-center gap-3">
               <LoaderCircle
                 aria-hidden="true"
-                className="animate-spin text-blue"
+                className="animate-spin text-blue motion-reduce:animate-none"
               />
               <div>
                 <h2 className="font-black">
@@ -600,7 +632,7 @@ export function WebsiteAnalyzer() {
             <div className="mt-8 grid gap-3 sm:grid-cols-3" aria-hidden="true">
               {[0, 1, 2].map((item) => (
                 <div
-                  className="h-40 animate-pulse rounded-2xl bg-slate-100"
+                  className="h-40 rounded-2xl bg-slate-100 motion-safe:animate-pulse"
                   key={item}
                 />
               ))}

@@ -8,14 +8,18 @@ Các repo dưới đây được clone dạng shallow vào `/home/admin123/Downl
 | [Lighthouse](https://github.com/GoogleChrome/lighthouse) | `772c9e2781f7db0c0c8ff79567ee84e0a57b1bf6` | tham khảo kiểm tra hiệu năng, accessibility và SEO | Apache-2.0 |
 | [llms-txt](https://github.com/AnswerDotAI/llms-txt) | `3700a0a624a4a004c6a246789b37f389940b1b58` | định dạng tài liệu cho trợ lý AI | Apache-2.0 |
 | [next-seo](https://github.com/garmeeh/next-seo) | `738ef7e774ee6216f6e90c26a3b5b99dd5d166b4` | đối chiếu metadata/JSON-LD cho Next.js | MIT |
+| [optifeed-radar](https://github.com/optifeed/optifeed-radar) | `2e0af8990de6914eefe4665bfe98f5d5c5e9e81b` | tham khảo danh sách crawler AI, quy tắc robots và cách công khai trọng số | MIT |
 
 ## Đã áp dụng vào HOSTORA
 
 - `/llms.txt`: bản tóm tắt có thể đọc nhanh, URL chính thức, quy tắc trả lời và nguồn dữ liệu.
 - `/llms-full.txt`: danh mục sản phẩm và sổ tay chi tiết, có ngày xác minh.
 - Trang chủ có `Organization`, `WebSite`, `SoftwareApplication`, `WebApplication` và `FAQPage` JSON-LD.
-- Audit SEO kiểm tra thêm `llms.txt` và ngữ cảnh thực thể thương hiệu khi audit một website có bật kiểm tra GEO.
+- Audit tách ba điểm tổng quan, SEO Google và AI visibility; trọng số và thứ tự sửa do code tất định kiểm soát.
+- Audit kiểm tra `llms.txt`, `llms-full.txt`, ngữ cảnh thực thể thương hiệu và quyền đọc của GPTBot, OAI-SearchBot, ClaudeBot, PerplexityBot cùng các crawler phổ biến khác.
 - Sitemap dùng thời điểm build hiện tại thay vì ngày cố định cũ.
+
+HOSTORA không chép nguyên mã hoặc thêm `optifeed-radar` vào dependency. Repo chỉ là nguồn đối chiếu; parser, SSRF guard, điểm và UI được triển khai theo kiến trúc local-first hiện có của HOSTORA.
 
 ## Việc cần bật trong Cloudflare
 
@@ -26,3 +30,5 @@ Trước khi đánh giá GEO ngoài mạng, vào **Cloudflare Dashboard → Secu
 ## Ranh giới dữ liệu
 
 GEO không phải cam kết được Google hoặc một chatbot xếp hạng. HOSTORA chỉ xuất bản nội dung đã có trong catalog, sổ tay và nguồn xác minh; giá, tình trạng và chính sách vẫn phải kiểm tra lại trước khi thanh toán.
+
+Trạng thái crawler chỉ chứng minh quy tắc công khai tại thời điểm quét cho phép hoặc chặn truy cập đường dẫn gốc. Nó không đo câu trả lời thật của ChatGPT/Claude, mức độ được trích dẫn, thứ hạng, traffic hay doanh thu.
