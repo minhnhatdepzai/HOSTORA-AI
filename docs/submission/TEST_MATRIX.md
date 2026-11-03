@@ -40,8 +40,9 @@
 
 ## Cách hiểu bằng chứng
 
+- **Mục chọn trên cổng thi:** `API / model AI thật`. Mock chỉ được dùng để cô lập dependency trong kiểm thử; sản phẩm không giả câu trả lời Mock thành AI thật.
 - **AI thật:** Ollama chạy trên loopback, structured output có schema. Không có cloud LLM fallback.
-- **Mock/dự phòng:** sự cố API hoặc Ollama được cô lập có chủ đích để xác nhận UI/logic lỗi; template và điểm tất định vẫn chạy.
+- **Dự phòng/test cô lập:** sự cố API hoặc Ollama được mô phỏng có chủ đích để xác nhận UI/logic lỗi; template và điểm tất định không được trình bày như câu trả lời AI.
 - **Browser mobile:** chỉ chứng minh responsive web, không thay thế APK.
 - **APK:** bằng chứng Android được ghi riêng; không uninstall hoặc xóa dữ liệu để làm test xanh.
 - **Điểm:** 20/20 ca đạt không đồng nghĩa 100 điểm hoặc bảo đảm top 10.
