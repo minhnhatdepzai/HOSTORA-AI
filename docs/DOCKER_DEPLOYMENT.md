@@ -2,11 +2,14 @@
 
 ## Phạm vi
 
-Stack Docker gồm Next.js web/API và Ollama local. Lead, wizard và lịch sử chat vẫn nằm trong `localStorage` của trình duyệt; Compose không tạo cloud database và không gửi prompt sang nhà cung cấp AI bên ngoài.
+Stack Docker gồm Next.js web/API, Ollama local và Mailpit chỉ dành cho email
+demo trên máy. SQLite, Website Studio và RAG index nằm trong volume
+`runtime_data`; model nằm trong `ollama_data`. Compose không tạo cloud database
+và không gửi prompt sang nhà cung cấp AI bên ngoài.
 
 Ollama và web dùng chung network namespace. Vì vậy web luôn gọi `http://127.0.0.1:11434`, đúng ranh giới local-first. Cổng Ollama trên host cũng chỉ bind `127.0.0.1`; cổng web mặc định là `3000` để điện thoại cùng Wi-Fi có thể truy cập.
 
-## Chạy nhanh trên CPU
+## Chạy nhanh trên CPU — macOS, Linux và Windows
 
 Yêu cầu Docker Engine và Docker Compose mới.
 
@@ -18,13 +21,36 @@ cd HOSTORA-AI
 ./scripts/docker-up.sh
 ```
 
+Lệnh trên dành cho macOS/Linux và tự tạo `.env.docker` với secret ngẫu nhiên.
+Mở <http://127.0.0.1:3000>. Để đăng nhập admin, bấm **Gửi mã qua email**
+rồi mở Mailpit tại <http://127.0.0.1:8025> để đọc mã OTP local.
+
+### Windows PowerShell
+
+Cài Docker Desktop, bật WSL 2 backend, sau đó chạy:
+
+```powershell
+git clone https://github.com/minhnhatdepzai/HOSTORA-AI.git
+Set-Location HOSTORA-AI
+Copy-Item .env.docker.example .env.docker
+$secret = ([guid]::NewGuid().ToString("N") + [guid]::NewGuid().ToString("N"))
+(Get-Content .env.docker).Replace("replace-with-64-hex-characters", $secret) | Set-Content .env.docker
+docker compose --env-file .env.docker up --build -d
+docker compose --env-file .env.docker ps
+```
+
+PowerShell cũng mở web tại <http://127.0.0.1:3000> và Mailpit tại
+<http://127.0.0.1:8025>. Không cần cài Node, pnpm, Python hay Ollama trên host.
+
 Theo dõi lần khởi tạo đầu:
 
 ```bash
 docker compose logs -f model-init web
 ```
 
-Model được lưu trong volume `hostora-ai_ollama_data`; RAG index nằm trong `hostora-ai_rag_data`. Những lần chạy sau sẽ tái sử dụng dữ liệu nếu model và knowledge chưa đổi.
+Model được lưu trong volume `hostora-ai_ollama_data`; SQLite, Website Studio và
+RAG index nằm trong `hostora-ai_runtime_data`. Những lần chạy sau sẽ tái sử dụng
+dữ liệu nếu model và knowledge chưa đổi.
 
 Kiểm tra:
 
@@ -32,6 +58,8 @@ Kiểm tra:
 curl http://127.0.0.1:3000/api/health
 docker compose ps
 ```
+
+Nếu dùng PowerShell/raw Compose, thêm `--env-file .env.docker` vào các lệnh.
 
 ## NVIDIA GPU
 
@@ -62,7 +90,7 @@ Không commit `.env.docker`. Khi đổi embedding model, xóa riêng RAG volume 
 ## Điện thoại Android cùng Wi-Fi
 
 1. Mở `http://<IP-máy-chạy-Docker>:3000` trên điện thoại để kiểm tra kết nối.
-2. Cài APK ở [GitHub Releases](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/tag/v1.5.0).
+2. Cài APK universal ở [GitHub Releases](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest).
 3. Trong app mở **Công cụ → Kết nối local AI**, nhập `http://<IP-máy>:3000`, lưu và kiểm tra kết nối.
 
 Nếu firewall của máy chủ chặn cổng 3000, chỉ mở cổng cho mạng LAN tin cậy. Không công khai thẳng Next.js/Ollama ra Internet; production cần reverse proxy, TLS, authentication và rate limiting.
@@ -84,7 +112,11 @@ docker compose down -v
 ## Giới hạn
 
 - Lần chạy đầu phải tải model, có thể tốn nhiều GB và phụ thuộc tốc độ mạng.
-- Chatbot LoRA riêng của máy demo không nằm trong repo public; clone mới dùng model nền được khai báo trong `.env.docker`.
+- Gói adapter fine-tuning nằm ở GitHub Release để tránh làm Git phình hàng
+  trăm MB. Docker mặc định dùng model nền đã công bố; việc đổi sang candidate
+  phải đọc `promotion.json`, import có chủ đích và chạy lại evaluation.
+- Mailpit chỉ là hộp thư local phục vụ demo OTP, không chứng minh email thật đã
+  vào Inbox và không được dùng làm SMTP production.
 - Nếu embedding tạm thời lỗi, app vẫn chạy với lexical RAG fallback và phải hiển thị đúng trạng thái đó.
 - APK phát hành trực tiếp hiện ký bằng debug certificate, chưa phải bản Google Play production.
 

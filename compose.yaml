@@ -1,6 +1,15 @@
 name: hostora-ai
 
 services:
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: "1"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "1"
+    ports:
+      - "127.0.0.1:${HOSTORA_MAILPIT_PORT:-8025}:8025"
+
   ollama:
     image: ollama/ollama:0.34.1
     restart: unless-stopped
@@ -43,6 +52,8 @@ services:
     depends_on:
       model-init:
         condition: service_completed_successfully
+      mailpit:
+        condition: service_started
     environment:
       OLLAMA_BASE_URL: http://127.0.0.1:11434
       OLLAMA_CHAT_MODEL: ${HOSTORA_CHAT_MODEL:-qwen3.5:9b-q8_0}
@@ -52,13 +63,25 @@ services:
       OLLAMA_TIMEOUT_MS: ${HOSTORA_TIMEOUT_MS:-90000}
       HOSTORA_MAX_AI_CONCURRENCY: ${HOSTORA_MAX_AI_CONCURRENCY:-1}
       HOSTORA_BUILD_RAG_INDEX: ${HOSTORA_BUILD_RAG_INDEX:-1}
-      RAG_INDEX_PATH: /app/runtime/rag-index.json
-      HOSTORA_RELEASE_BASE_URL: ${HOSTORA_RELEASE_BASE_URL:-https://github.com/minhnhatdepzai/HOSTORA-AI/releases/download/v2.0.9-review-20261029}
+      RAG_INDEX_PATH: /app/data/runtime/rag-index.json
+      HOSTORA_PAYMENTS_DB_PATH: /app/data/runtime/payments.sqlite
+      HOSTORA_CATALOG_DB_PATH: /app/data/runtime/catalog.sqlite
+      HOSTORA_PAYMENTS_MODE: demo
+      HOSTORA_PUBLIC_BASE_URL: ${HOSTORA_PUBLIC_BASE_URL:-http://127.0.0.1:3000}
+      HOSTORA_ADMIN_SESSION_SECRET: ${HOSTORA_ADMIN_SESSION_SECRET:?Set HOSTORA_ADMIN_SESSION_SECRET in .env.docker}
+      HOSTORA_SMTP_HOST: mailpit
+      HOSTORA_SMTP_PORT: "1025"
+      HOSTORA_SMTP_SECURE: "false"
+      HOSTORA_SMTP_USER: hostora
+      HOSTORA_SMTP_PASSWORD: local-mailpit-only
+      HOSTORA_EMAIL_FROM: HOSTORA Local <no-reply@hostora.local>
+      HOSTORA_ORDER_NOTIFICATION_EMAIL: admin@hostora.local
+      HOSTORA_RELEASE_BASE_URL: ${HOSTORA_RELEASE_BASE_URL:-https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download}
     volumes:
-      - rag_data:/app/runtime
+      - runtime_data:/app/data/runtime
     init: true
     restart: unless-stopped
 
 volumes:
   ollama_data:
-  rag_data:
+  runtime_data:

@@ -25,8 +25,8 @@ ENV PORT=3000
 
 RUN groupadd --system --gid 1001 nodejs \
   && useradd --system --uid 1001 --gid nodejs nextjs \
-  && mkdir -p /app/runtime \
-  && chown -R nextjs:nodejs /app/runtime
+  && mkdir -p /app/data/runtime \
+  && chown -R nextjs:nodejs /app/data/runtime
 
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
