@@ -15,8 +15,8 @@ AI chạy local qua Ollama. AI chỉ trích xuất, giải thích và soạn n�
 | APK Android mới nhất   | [Tải HOSTORA AI 2.2.2 universal](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-2.2.2-universal.apk) | Android 7.0+, 4 ABI, package `com.hostora.ai`                  |
 | Link APK tương thích biểu mẫu cũ | [Tải qua tên `arm64.apk`](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-2.2.2-arm64.apk)           | Cùng binary universal; không phải bản chỉ có ARM64                   |
 | SHA-256 APK            | [Tải checksum](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-2.2.2-universal.apk.sha256)    | `2d4c35ff43032cd8e33e51a3316e826bad84b455ac23fd79266ff17e28fc6e72` |
-| Minh chứng 20 ca       | [Mở báo cáo](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/MINH_CHUNG_20_CA.html)                       | 6 ca bắt buộc + 14 ca AI, admin, mobile và bàn giao                |
-| Source ZIP mới nhất    | [Tải Source ZIP](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-source-2.2.2-2026-11-03.zip) | Web, admin, app, README, tài liệu, training source và cấu hình mẫu |
+| Minh chứng 20 ca       | [Mở báo cáo](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/MINH_CHUNG_20_CA_2026-11-03.html)            | 6 ca bắt buộc + 14 ca AI, admin, mobile và bàn giao                |
+| Source ZIP mới nhất    | [Tải Source ZIP](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-source-2.2.2-2026-11-03-r2.zip) | Web, admin, app, README, tài liệu, training source và cấu hình mẫu |
 | Adapter fine-tuning    | [Tải gói fine-tuning 2.2.2](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-finetuning-2.2.2-2026-11-03.zip) | Hai LoRA adapter mới nhất và bằng chứng; không nhân bản base model |
 | Source                 | [GitHub repository](https://github.com/minhnhatdepzai/HOSTORA-AI)                                                              | Nhánh `main`                                                       |
 
@@ -239,12 +239,13 @@ HTTP 200, browser mobile viewport hoặc APK build thành công không thay th�
 
 HOSTORA là **một project duy nhất**: website khách hàng, web admin, Android và training source nằm chung một repository. Không cần nộp ba project rời. Bộ hồ sơ nên gồm:
 
-1. `HOSTORA-source-2.2.2-2026-11-03.zip` — file bắt buộc để giám khảo tải và chạy; chứa README, web/admin, app source, cinematic source/assets, test, training source/data/config và cấu hình mẫu. Không chứa secret, database thật hoặc model nền nhiều GB.
+1. `HOSTORA-source-2.2.2-2026-11-03-r2.zip` — file bắt buộc để giám khảo tải và chạy; chứa README, web/admin, app source, cinematic source/assets, bảng 20 ca, test, training source/data/config và cấu hình mẫu. Không chứa secret, database thật hoặc model nền nhiều GB.
 2. `HOSTORA-AI-2.2.2-universal.apk` — artifact cài nhanh trên Android 7.0+, kèm file `.sha256`. Tên `arm64.apk` trong release là alias của cùng APK universal để giữ tương thích với biểu mẫu cũ.
 3. `HOSTORA-finetuning-2.2.2-2026-11-03.zip` — tài liệu bổ sung, chứa adapter `chatbot-v8` và `studio-v3`, tokenizer/config, manifest, đánh giá và trạng thái train. Đây là candidate để tái lập/đánh giá; `promotion.json` là nguồn xác nhận trạng thái, không được hiểu là model đang chạy production.
 4. Video demo tối đa 02 phút — nộp link riêng trên cổng thi; mở trực tiếp APK/web và thể hiện đủ 05 tính năng.
 
 Các file checksum trong GitHub Release dùng để kiểm tra đúng artifact sau khi tải. Base model `unsloth/Qwen3.5-4B` không được sao chép vào gói fine-tuning; người chạy tải base model theo tài liệu rồi gắn LoRA adapter.
+Tên `HOSTORA-source-2.2.2-2026-11-03.zip` được giữ trong Release để tương thích với hồ sơ cũ; hồ sơ mới dùng bản `-r2.zip` ở trên.
 
 ## Giới hạn hiện tại
 
