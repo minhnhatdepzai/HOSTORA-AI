@@ -26,7 +26,7 @@ Bằng chứng:
 - AI load: `output/ai-load/2026-10-29-handoff/`
 - AI hard-case: `output/ai-hard-eval-2026-10-29-fixed2/summary.json`
 - Advisor 50/50: `output/advisor-quality/2026-10-29-hard-2x-fixed/summary.json`
-- Account memory/source 9/9: `output/account-ai-quality/2026-10-29-hard-repeat-fixed2/summary.json`
+- Account memory/source 9/9: `output/account-ai-quality/2026-10-29-final/results.json`
 
 ## Logic đã kiểm tra và chỉnh
 

@@ -137,7 +137,7 @@ Bằng chứng retest mới:
   median 2.965 ms, p95 quan sát 15.717 ms.
 - [Advisor 50/50](../../output/advisor-quality/2026-10-29-hard-2x-fixed/summary.json):
   median 3.009 ms, p95 quan sát 3.162 ms.
-- [Account memory/source 9/9](../../output/account-ai-quality/2026-10-29-hard-repeat-fixed2/summary.json):
+- [Account memory/source 9/9](../../output/account-ai-quality/2026-10-29-final/results.json):
   median 44 ms, p95 quan sát 3.305 ms.
 
 Đây vẫn là các yêu cầu tuần tự trên máy local; p95 trên không phải p95 production

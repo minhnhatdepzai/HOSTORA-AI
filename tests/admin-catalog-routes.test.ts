@@ -1,5 +1,4 @@
 import { beforeAll, describe, expect, it } from "vitest";
-import { POST as login } from "@/app/api/admin/payments/login/route";
 import {
   GET as listAdminProducts,
   POST as createAdminProduct,
@@ -9,6 +8,7 @@ import {
   PATCH as updateAdminProduct,
 } from "@/app/api/admin/catalog/products/[id]/route";
 import { GET as listPublicProducts } from "@/app/api/products/route";
+import { ADMIN_COOKIE, issueAdminSession } from "@/lib/payments/admin-auth";
 
 const origin = "http://127.0.0.1:3000";
 
@@ -26,6 +26,7 @@ function jsonRequest(path: string, body: unknown, cookie = "", method = "POST") 
 }
 
 beforeAll(() => {
+  delete process.env.HOSTORA_PUBLIC_BASE_URL;
   process.env.HOSTORA_CATALOG_DB_PATH = ":memory:";
   process.env.HOSTORA_ADMIN_PASSWORD = "test-admin-password-long-enough";
   process.env.HOSTORA_ADMIN_SESSION_SECRET = "test-admin-session-secret-long-enough";
@@ -40,12 +41,11 @@ describe("API quản lý dịch vụ", () => {
   });
 
   it("thêm, xuất bản, sửa giá và lưu trữ trên cùng API web/app", async () => {
-    const session = await login(
-      jsonRequest("/api/admin/payments/login", {
-        password: "test-admin-password-long-enough",
-      }),
-    );
-    const cookie = session.headers.get("set-cookie")?.split(";")[0] ?? "";
+    const token = issueAdminSession("test-admin-password-long-enough", {
+      password: "test-admin-password-long-enough",
+      secret: "test-admin-session-secret-long-enough",
+    });
+    const cookie = `${ADMIN_COOKIE}=${token}`;
     const id = "hostora-route-care";
 
     const created = await createAdminProduct(

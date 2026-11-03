@@ -89,6 +89,7 @@ export type AiConversation = {
 export type AdminAiConversation = AiConversation & {
   customerName: string;
   customerEmail: string | null;
+  isDemonstration: boolean;
 };
 
 export type CustomerAiSource = {

@@ -182,8 +182,7 @@ export class CustomerStore {
         "SELECT attempts, window_started_at FROM customer_auth_limits WHERE limit_key = ?",
       )
       .get(safeKey) as
-      | { attempts: number; window_started_at: string }
-      | undefined;
+      { attempts: number; window_started_at: string } | undefined;
     if (!row || now - new Date(row.window_started_at).valueOf() >= windowMs) {
       this.db
         .prepare(
@@ -500,7 +499,8 @@ export class CustomerStore {
       | undefined;
     if (!row) return null;
     if (row.customer_id) {
-      if (!input.customerId || input.customerId !== row.customer_id) return null;
+      if (!input.customerId || input.customerId !== row.customer_id)
+        return null;
     } else {
       if (
         !input.accessToken ||
@@ -512,10 +512,7 @@ export class CustomerStore {
     return this.getAiConversation(input.conversationId);
   }
 
-  escalateAiConversation(
-    conversationId: string,
-    reason: AiEscalationReason,
-  ) {
+  escalateAiConversation(conversationId: string, reason: AiEscalationReason) {
     this.db
       .prepare(
         `UPDATE ai_conversations
@@ -555,6 +552,7 @@ export class CustomerStore {
       updatedAt: row.updated_at,
       customerName: row.name ?? "Khách chưa đăng nhập",
       customerEmail: row.email,
+      isDemonstration: row.email?.endsWith("@demo.hostora.invalid") ?? false,
       messages: this.aiConversationMessages(row.id),
     }));
   }
@@ -580,7 +578,11 @@ export class CustomerStore {
         "UPDATE ai_conversations SET status = 'answered', updated_at = ? WHERE id = ?",
       )
       .run(new Date().toISOString(), conversationId);
-    return this.listAllAiConversations().find((item) => item.id === conversationId) ?? null;
+    return (
+      this.listAllAiConversations().find(
+        (item) => item.id === conversationId,
+      ) ?? null
+    );
   }
 
   createAiSource(
@@ -716,9 +718,10 @@ export class CustomerStore {
   ) {
     const current = this.getStudioPreferences(customerId);
     const revisionHints = input.revisionHint
-      ? [...current.revisionHints, input.revisionHint.trim().slice(0, 300)].slice(
-          -8,
-        )
+      ? [
+          ...current.revisionHints,
+          input.revisionHint.trim().slice(0, 300),
+        ].slice(-8)
       : current.revisionHints;
     const needsWorkReasons = input.needsWorkReason
       ? [...current.needsWorkReasons, input.needsWorkReason].slice(-8)
@@ -797,7 +800,12 @@ export class CustomerStore {
       .prepare(
         "UPDATE customer_accounts SET failed_logins = ?, locked_until = ?, updated_at = ? WHERE id = ?",
       )
-      .run(next >= 5 ? 0 : next, lockedUntil, new Date().toISOString(), customerId);
+      .run(
+        next >= 5 ? 0 : next,
+        lockedUntil,
+        new Date().toISOString(),
+        customerId,
+      );
   }
 
   clearLoginFailures(customerId: string) {
@@ -828,7 +836,8 @@ export class CustomerStore {
          JOIN customer_accounts a ON a.id = s.customer_id
          WHERE s.token_hash = ? AND s.expires_at > ?`,
       )
-      .get(tokenHash(token), new Date().toISOString()) as CustomerRow | undefined;
+      .get(tokenHash(token), new Date().toISOString()) as
+      CustomerRow | undefined;
     return row ? toCustomer(row) : null;
   }
 
@@ -865,8 +874,7 @@ export class CustomerStore {
           "SELECT customer_id FROM customer_password_resets WHERE token_hash = ? AND used_at IS NULL AND expires_at > ?",
         )
         .get(tokenHash(token), new Date().toISOString()) as
-        | { customer_id: string }
-        | undefined;
+        { customer_id: string } | undefined;
       if (!row) {
         this.db.exec("ROLLBACK");
         return null;
@@ -1075,5 +1083,7 @@ export class CustomerStore {
 
 let defaultStore: CustomerStore | undefined;
 export function getCustomerStore() {
-  return (defaultStore ??= new CustomerStore(process.env.HOSTORA_PAYMENTS_DB_PATH));
+  return (defaultStore ??= new CustomerStore(
+    process.env.HOSTORA_PAYMENTS_DB_PATH,
+  ));
 }

@@ -83,8 +83,7 @@ export function AdminSupportQueue() {
   }
   useEffect(() => {
     const timer = window.setTimeout(
-      () =>
-        void refresh().catch(() => setMessage(refreshErrorMessage)),
+      () => void refresh().catch(() => setMessage(refreshErrorMessage)),
       0,
     );
     return () => window.clearTimeout(timer);
@@ -233,7 +232,10 @@ export function AdminSupportQueue() {
           {message}
         </p>
       ) : null}
-      <section className="admin-ai-inbox" aria-labelledby="admin-ai-inbox-title">
+      <section
+        className="admin-ai-inbox"
+        aria-labelledby="admin-ai-inbox-title"
+      >
         <div className="admin-ai-inbox-heading">
           <div>
             <p>HỘP THƯ HỘI THOẠI AI</p>
@@ -243,7 +245,10 @@ export function AdminSupportQueue() {
             <div>
               <dt>Chờ trả lời</dt>
               <dd>
-                {conversations.filter((item) => item.status === "escalated").length}
+                {
+                  conversations.filter((item) => item.status === "escalated")
+                    .length
+                }
               </dd>
             </div>
             <div>
@@ -263,28 +268,54 @@ export function AdminSupportQueue() {
               <article key={conversation.id}>
                 <header>
                   <div className="admin-ai-customer">
-                    <span><UserRound size={17} /></span>
+                    <span>
+                      <UserRound size={17} />
+                    </span>
                     <div>
                       <h3>{conversation.customerName}</h3>
-                      <p>{conversation.customerEmail ?? "Khách chưa đăng nhập"}</p>
+                      <p>
+                        {conversation.customerEmail ?? "Khách chưa đăng nhập"}
+                      </p>
+                      {conversation.isDemonstration ? (
+                        <span className="admin-ai-demo-badge">
+                          Dữ liệu demo
+                        </span>
+                      ) : null}
                     </div>
                   </div>
                   <div className={`admin-ai-status is-${conversation.status}`}>
                     <strong>{aiStatusLabels[conversation.status]}</strong>
                     {conversation.escalationReason ? (
-                      <span>{escalationLabels[conversation.escalationReason]}</span>
+                      <span>
+                        {escalationLabels[conversation.escalationReason]}
+                      </span>
                     ) : null}
                   </div>
                 </header>
-                <div className="admin-ai-timeline" aria-label={`Hội thoại ${conversation.id}`}>
+                <div
+                  className="admin-ai-timeline"
+                  aria-label={`Hội thoại ${conversation.id}`}
+                >
                   {conversation.messages.map((item) => (
                     <div className={`is-${item.role}`} key={item.id}>
                       <span className="admin-ai-role">
-                        {item.role === "user" ? <UserRound size={14} /> : item.role === "assistant" ? <Bot size={14} /> : <MessageSquareReply size={14} />}
-                        {item.role === "user" ? "Khách" : item.role === "assistant" ? "AI HOSTORA" : "Quản trị viên"}
+                        {item.role === "user" ? (
+                          <UserRound size={14} />
+                        ) : item.role === "assistant" ? (
+                          <Bot size={14} />
+                        ) : (
+                          <MessageSquareReply size={14} />
+                        )}
+                        {item.role === "user"
+                          ? "Khách"
+                          : item.role === "assistant"
+                            ? "AI HOSTORA"
+                            : "Quản trị viên"}
                       </span>
                       <p>{item.content}</p>
-                      <time>{new Date(item.createdAt).toLocaleString("vi-VN")}</time>
+                      <time>
+                        {new Date(item.createdAt).toLocaleString("vi-VN")}
+                      </time>
                     </div>
                   ))}
                 </div>
@@ -295,7 +326,9 @@ export function AdminSupportQueue() {
                     void reply(conversation.id);
                   }}
                 >
-                  <label htmlFor={`reply-${conversation.id}`}>Phản hồi cho khách</label>
+                  <label htmlFor={`reply-${conversation.id}`}>
+                    Phản hồi cho khách
+                  </label>
                   <div>
                     <textarea
                       id={`reply-${conversation.id}`}
@@ -311,7 +344,10 @@ export function AdminSupportQueue() {
                     />
                     <button
                       type="submit"
-                      disabled={busy === conversation.id || !(replyDrafts[conversation.id] ?? "").trim()}
+                      disabled={
+                        busy === conversation.id ||
+                        !(replyDrafts[conversation.id] ?? "").trim()
+                      }
                     >
                       <Send size={16} />
                       {busy === conversation.id ? "Đang gửi…" : "Gửi phản hồi"}
@@ -320,7 +356,10 @@ export function AdminSupportQueue() {
                 </form>
                 <footer>
                   <span>{conversation.id}</span>
-                  <time>Cập nhật {new Date(conversation.updatedAt).toLocaleString("vi-VN")}</time>
+                  <time>
+                    Cập nhật{" "}
+                    {new Date(conversation.updatedAt).toLocaleString("vi-VN")}
+                  </time>
                 </footer>
               </article>
             ))}
@@ -329,7 +368,9 @@ export function AdminSupportQueue() {
           <div className="admin-ai-empty">
             <MessageSquareReply size={24} />
             <h3>Không có hội thoại phù hợp</h3>
-            <p>Hội thoại mới hoặc câu hỏi được AI chuyển sẽ xuất hiện tại đây.</p>
+            <p>
+              Hội thoại mới hoặc câu hỏi được AI chuyển sẽ xuất hiện tại đây.
+            </p>
           </div>
         )}
       </section>

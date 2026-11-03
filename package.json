@@ -44,6 +44,7 @@
     "ai:train:studio": "bash scripts/start-studio-v3-finetune.sh",
     "ai:train:studio:status": "bash scripts/studio-v3-finetune-status.sh",
     "studio:feedback-report": "node scripts/report-site-studio-feedback.mjs",
+    "demo:seed-customers": "node --env-file-if-exists=.env.local scripts/seed-demo-customers.mjs",
     "check": "pnpm typecheck && pnpm lint && pnpm test && pnpm build",
     "agent:doctor": "node scripts/agent-tooling.mjs doctor",
     "agent:verify": "node scripts/agent-tooling.mjs verify",
