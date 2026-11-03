@@ -103,7 +103,9 @@ git pull --ff-only
 ./scripts/docker-up.sh
 ```
 
-Lệnh sau xóa cả model và RAG index, chỉ dùng khi thực sự muốn tải lại từ đầu:
+Lệnh sau xóa **toàn bộ named volume**: model, RAG index, tài khoản, hội thoại,
+đơn hàng, Website Studio và dữ liệu SQLite khác. Chỉ dùng khi thực sự muốn reset
+trắng môi trường; không dùng chỉ để dừng hoặc cập nhật ứng dụng:
 
 ```bash
 docker compose down -v

@@ -1,5 +1,14 @@
 import { execFileSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -28,6 +37,7 @@ type ComposeConfig = {
 };
 
 const root = path.resolve(import.meta.dirname, "..");
+const verifierModulePath = "../scripts/verify-release-handoff.mjs";
 
 function composeConfig(files = ["compose.yaml"]): ComposeConfig {
   const args = ["compose"];
@@ -51,6 +61,22 @@ describe("portable release handoff", () => {
 
     expect(dockerignore).toMatch(/^\.worktrees\/?$/m);
     expect(dockerignore).toMatch(/^output\/?$/m);
+  });
+
+  it("keeps shell entrypoints LF-safe on Windows checkouts", () => {
+    const attributesPath = path.join(root, ".gitattributes");
+    const sourcePackager = readFileSync(
+      path.join(root, "scripts/package-submission.mjs"),
+      "utf8",
+    );
+    const dockerfile = readFileSync(path.join(root, "Dockerfile"), "utf8");
+
+    expect(existsSync(attributesPath)).toBe(true);
+    expect(readFileSync(attributesPath, "utf8")).toMatch(
+      /^\*\.sh text eol=lf$/m,
+    );
+    expect(sourcePackager).toContain('".gitattributes"');
+    expect(dockerfile).toContain("sed -i 's/\\r$//' docker/entrypoint.sh");
   });
 
   it("excludes local worktrees from the release lint gate", () => {
@@ -163,6 +189,74 @@ describe("portable release handoff", () => {
     expect(
       existsSync(path.join(root, "scripts/package-android-release.mjs")),
     ).toBe(true);
+  });
+
+  it("rejects secret and cross-platform traversal entries", async () => {
+    const { assertSafeEntries } = await import(verifierModulePath);
+    expect(typeof assertSafeEntries).toBe("function");
+    const unsafe = [
+      ".env.local",
+      "private.key",
+      "..\\outside\\model.json",
+      "C:\\outside\\model.json",
+      "\\\\server\\share\\model.json",
+    ];
+    for (const entry of unsafe) {
+      expect(() => assertSafeEntries([entry], "source")).toThrow();
+    }
+    expect(() =>
+      assertSafeEntries(
+        ["HOSTORA-finetuning-2.2.2/chatbot-v8/adapter/base.safetensors"],
+        "fine-tuning",
+      ),
+    ).toThrow();
+  });
+
+  it("verifies candidate promotions without ignored publisher files", async () => {
+    const temporary = mkdtempSync(path.join(tmpdir(), "hostora-clean-verify-"));
+    try {
+      const packageName = "HOSTORA-finetuning-2.2.2";
+      const packageRoot = path.join(temporary, packageName);
+      const promotion = JSON.stringify({
+        status: "candidate",
+        automatic_promotion: false,
+        gate_passed: false,
+      });
+      for (const candidate of ["chatbot-v8", "studio-v3"]) {
+        const directory = path.join(packageRoot, candidate);
+        mkdirSync(directory, { recursive: true });
+        writeFileSync(path.join(directory, "promotion.json"), promotion);
+      }
+      const files = ["chatbot-v8/promotion.json", "studio-v3/promotion.json"];
+      const manifest = files
+        .map((file) => {
+          const digest = createHash("sha256")
+            .update(readFileSync(path.join(packageRoot, file)))
+            .digest("hex");
+          return `${digest}  ${file}`;
+        })
+        .join("\n");
+      writeFileSync(path.join(packageRoot, "SHA256SUMS.txt"), `${manifest}\n`);
+      const archive = path.join(temporary, "candidate.zip");
+      execFileSync("zip", ["-q", "-r", archive, packageName], {
+        cwd: temporary,
+      });
+
+      const { verifyFineTuningContents } = await import(verifierModulePath);
+      await expect(verifyFineTuningContents(archive)).resolves.toBe(2);
+    } finally {
+      rmSync(temporary, { recursive: true, force: true });
+    }
+  });
+
+  it("warns that deleting Docker volumes removes application data", () => {
+    const documentation = readFileSync(
+      path.join(root, "docs/DOCKER_DEPLOYMENT.md"),
+      "utf8",
+    );
+    expect(documentation).toMatch(
+      /tài khoản, hội thoại,\s+đơn hàng, Website Studio/,
+    );
   });
 
   it("keeps release 2.2.2 aligned across config, native Android and docs", () => {

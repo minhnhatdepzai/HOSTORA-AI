@@ -34,6 +34,7 @@ const explicit = [
   ".env.example",
   ".env.docker.example",
   ".dockerignore",
+  ".gitattributes",
   ".gitignore",
   ".prettierignore",
   "AGENTS.md",
@@ -84,10 +85,8 @@ const forbiddenExtensions =
 const files = new Set();
 
 async function add(relative) {
-  if (/^docs\/submission\/HOSTORA-release-[^/]+\.json$/i.test(relative))
-    return;
-  if (/^docs\/submission\/HOSTORA-[^/]+\.zip\.sha256$/i.test(relative))
-    return;
+  if (/^docs\/submission\/HOSTORA-release-[^/]+\.json$/i.test(relative)) return;
+  if (/^docs\/submission\/HOSTORA-[^/]+\.zip\.sha256$/i.test(relative)) return;
   if (
     /^docs\/submission\/HOSTORA-(?:source-)?[^/]*SHA256SUMS\.txt$/i.test(
       relative,
@@ -132,11 +131,7 @@ await rename(temporary, output);
 const { checksumFile } = await writeExternalChecksum(output);
 const manifest = await writeReleaseAssetManifest(root, release, {
   source: output,
-  fineTuning: path.join(
-    root,
-    "docs/submission",
-    release.assets.fineTuning,
-  ),
+  fineTuning: path.join(root, "docs/submission", release.assets.fineTuning),
 });
 console.log(
   JSON.stringify({ output, checksumFile, manifest, files: selected.length }),

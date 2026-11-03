@@ -33,6 +33,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/data/knowledge.json ./data/knowledge.json
 COPY --from=builder --chown=nextjs:nodejs /app/scripts/index-rag.mjs ./scripts/index-rag.mjs
 COPY --from=builder --chown=nextjs:nodejs /app/docker/entrypoint.sh ./docker/entrypoint.sh
+RUN sed -i 's/\r$//' docker/entrypoint.sh
 
 USER nextjs
 EXPOSE 3000
