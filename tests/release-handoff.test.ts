@@ -53,6 +53,14 @@ describe("portable release handoff", () => {
     expect(dockerignore).toMatch(/^output\/?$/m);
   });
 
+  it("excludes local worktrees from the release lint gate", () => {
+    const eslintConfig = readFileSync(
+      path.join(root, "eslint.config.mjs"),
+      "utf8",
+    );
+    expect(eslintConfig).toContain('".worktrees/**"');
+  });
+
   it("keeps the CPU stack GPU-optional and Ollama loopback-only", () => {
     const config = composeConfig();
     const ollama = config.services.ollama;
@@ -112,6 +120,7 @@ describe("portable release handoff", () => {
   });
 
   it("derives every release asset name from the mobile version", async () => {
+    // @ts-expect-error Node release helpers are plain ESM scripts, not TS modules.
     const { getReleaseInfo } = await import("../scripts/release-assets.mjs");
     const info = await getReleaseInfo(root, "2026-11-03");
     const app = JSON.parse(
@@ -145,8 +154,42 @@ describe("portable release handoff", () => {
     expect(packageJson.scripts["release:verify"]).toBe(
       "node scripts/verify-release-handoff.mjs",
     );
+    expect(packageJson.scripts["package:android"]).toBe(
+      "node scripts/package-android-release.mjs",
+    );
     expect(
       existsSync(path.join(root, "scripts/verify-release-handoff.mjs")),
     ).toBe(true);
+    expect(
+      existsSync(path.join(root, "scripts/package-android-release.mjs")),
+    ).toBe(true);
+  });
+
+  it("keeps release 2.2.2 aligned across config, native Android and docs", () => {
+    const app = JSON.parse(
+      readFileSync(path.join(root, "mobile/app.json"), "utf8"),
+    ) as { expo: { version: string; android: { versionCode: number } } };
+    const mobilePackage = JSON.parse(
+      readFileSync(path.join(root, "mobile/package.json"), "utf8"),
+    ) as { version: string };
+    const nativeGradle = path.join(root, "mobile/android/app/build.gradle");
+    const readme = readFileSync(path.join(root, "README.md"), "utf8");
+    const mobileReadme = readFileSync(
+      path.join(root, "mobile/README.md"),
+      "utf8",
+    );
+
+    expect(app.expo.version).toBe("2.2.2");
+    expect(app.expo.android.versionCode).toBe(25);
+    expect(mobilePackage.version).toBe("2.2.2");
+    if (existsSync(nativeGradle)) {
+      const gradle = readFileSync(nativeGradle, "utf8");
+      expect(gradle).toContain("versionCode 25");
+      expect(gradle).toContain('versionName "2.2.2"');
+    }
+    expect(readme).toContain("HOSTORA-AI-2.2.2-universal.apk");
+    expect(readme).toContain("HOSTORA-source-2.2.2-2026-11-03.zip");
+    expect(readme).toContain("HOSTORA-finetuning-2.2.2-2026-11-03.zip");
+    expect(mobileReadme).toContain("HOSTORA-AI-2.2.2-universal.apk");
   });
 });

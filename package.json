@@ -25,6 +25,7 @@
     "rag:evaluate:live": "node scripts/evaluate-rag-live.mjs",
     "package:submission": "node scripts/package-submission.mjs",
     "package:finetuning": "node scripts/package-finetuning.mjs",
+    "package:android": "node scripts/package-android-release.mjs",
     "release:verify": "node scripts/verify-release-handoff.mjs",
     "ai:check": "node --env-file-if-exists=.env.local scripts/check-local-ai.mjs",
     "ai:evaluate:advisor": "node scripts/evaluate-advisor.mjs",

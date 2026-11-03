@@ -4,14 +4,14 @@
 
 ## Tải và cài APK
 
-- APK hiện tại 2.2.1 universal: [tải từ GitHub Release](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-2.2.1-universal.apk). Bản này chứa `arm64-v8a`, `armeabi-v7a`, `x86`, `x86_64`, đã cài đè và mở ổn định trên Android emulator. Link tên [`arm64.apk`](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-2.2.1-arm64.apk) phục vụ cùng binary universal để biểu mẫu cũ không bị hỏng.
-- Checksum SHA-256: xem tệp `HOSTORA-AI-2.2.1-universal.apk.sha256` trong GitHub Release mới nhất.
+- APK hiện tại 2.2.2 universal: [tải từ GitHub Release](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-2.2.2-universal.apk). Bản này chứa `arm64-v8a`, `armeabi-v7a`, `x86`, `x86_64`. Link tên [`arm64.apk`](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-2.2.2-arm64.apk) phục vụ cùng binary universal để biểu mẫu cũ không bị hỏng.
+- Checksum SHA-256: `2d4c35ff43032cd8e33e51a3316e826bad84b455ac23fd79266ff17e28fc6e72`; xem tệp `HOSTORA-AI-2.2.2-universal.apk.sha256` trong GitHub Release mới nhất.
 - APK 2.1.0 trở về trước là bằng chứng lịch sử; không dùng làm link tải mặc định nữa.
 
 Cài bằng ADB:
 
 ```bash
-adb install -r HOSTORA-AI-2.2.1-universal.apk
+adb install -r HOSTORA-AI-2.2.2-universal.apk
 ```
 
 Android có thể yêu cầu cho phép “Cài ứng dụng không rõ nguồn gốc” nếu mở APK từ trình quản lý file. Bản hiện tại yêu cầu Android 7.0/API 24 trở lên; Android 6 trở xuống cần một ứng dụng legacy riêng vì Expo 58/React Native 0.88 không còn hỗ trợ.
@@ -69,6 +69,8 @@ Bản 2.2.0 thêm chuyển cảnh theo tiến độ, haptic và reduced-motion t
 
 Bản 2.2.1 khôi phục toàn bộ hai chương cinematic: orbit/beam/logo/headline mở màn, sau đó H → HOSTORA → robot. Phim 12,4 giây là asset H.264 cục bộ, phát ở mọi cold-start, có nút Bỏ qua và nút phát lại trong Hồ sơ giám khảo; phát lại xong trở về đúng màn đang mở. Native splash, chuyển cảnh trang, haptic, Skia backdrop, sân khấu 3D web và admin đều được giữ nguyên.
 
+Bản 2.2.2 giữ nguyên toàn bộ cinematic 2.2.1 và bổ sung bộ bàn giao portable: Docker CPU mặc định cho Windows/macOS/Linux, Mailpit OTP local, Source ZIP và fine-tuning ZIP có checksum cùng verifier. Thay đổi phát hành không tự promote hai LoRA candidate vào runtime.
+
 ## Phát triển và build
 
 ```bash
@@ -84,4 +86,4 @@ APK sinh tại `android/app/build/outputs/apk/release/app-release.apk`. Android 
 
 ## Trạng thái ký
 
-APK 2.2.1 dùng chữ ký debug cục bộ; package `com.hostora.ai`, versionCode 24, min SDK 24, target SDK 36. APK **chưa phải bản ký production cho Google Play**. Trước khi phát hành qua store cần tạo keystore production và bảo quản ngoài Git.
+APK 2.2.2 dùng chữ ký debug cục bộ; package `com.hostora.ai`, versionCode 25, min SDK 24, target SDK 36. APK **chưa phải bản ký production cho Google Play**. Trước khi phát hành qua store cần tạo keystore production và bảo quản ngoài Git.
