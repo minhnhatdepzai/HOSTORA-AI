@@ -15,7 +15,7 @@ AI chạy local qua Ollama. AI chỉ trích xuất, giải thích và soạn n�
 | APK Android mới nhất   | [Tải HOSTORA AI 2.2.2 universal](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-2.2.2-universal.apk) | Android 7.0+, 4 ABI, package `com.hostora.ai`                  |
 | Link APK tương thích biểu mẫu cũ | [Tải qua tên `arm64.apk`](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-2.2.2-arm64.apk)           | Cùng binary universal; không phải bản chỉ có ARM64                   |
 | SHA-256 APK            | [Tải checksum](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-2.2.2-universal.apk.sha256)    | `2d4c35ff43032cd8e33e51a3316e826bad84b455ac23fd79266ff17e28fc6e72` |
-| Minh chứng 9 ca        | [Mở báo cáo](docs/submission/MINH_CHUNG_9_CA.html)                                                                              | 6 ca Bảng A + 3 ca hộp thư AI                                     |
+| Minh chứng 20 ca       | [Mở báo cáo](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/MINH_CHUNG_20_CA.html)                       | 6 ca bắt buộc + 14 ca AI, admin, mobile và bàn giao                |
 | Source ZIP mới nhất    | [Tải Source ZIP](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-source-2.2.2-2026-11-03.zip) | Web, admin, app, README, tài liệu, training source và cấu hình mẫu |
 | Adapter fine-tuning    | [Tải gói fine-tuning 2.2.2](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-finetuning-2.2.2-2026-11-03.zip) | Hai LoRA adapter mới nhất và bằng chứng; không nhân bản base model |
 | Source                 | [GitHub repository](https://github.com/minhnhatdepzai/HOSTORA-AI)                                                              | Nhánh `main`                                                       |
@@ -224,7 +224,8 @@ pnpm report:mobile:judge
 Các tài liệu dành cho vòng loại:
 
 - [Báo cáo 9 ca mobile](docs/submission/HOSTORA_MOBILE_9_CASES.html);
-- [Minh chứng 9 ca cho giám khảo](docs/submission/MINH_CHUNG_9_CA.html);
+- [Minh chứng 20 ca cho giám khảo](docs/submission/MINH_CHUNG_20_CA.html);
+- [Minh chứng 9 ca cũ](docs/submission/MINH_CHUNG_9_CA.html) để đối chiếu lịch sử;
 - [Ma trận kiểm thử Bảng A](docs/submission/TEST_MATRIX.md);
 - [Minh chứng 6 ca dạng HTML](docs/submission/MINH_CHUNG_6_CA.html) và [PDF](docs/submission/MINH_CHUNG_6_CA.pdf);
 - [Kịch bản video và demo vòng loại](docs/submission/KICH_BAN_VONG_LOAI_2026-11-01.md);

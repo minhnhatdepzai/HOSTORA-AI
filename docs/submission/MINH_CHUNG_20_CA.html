@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Bảng minh chứng 20 ca kiểm thử HOSTORA AI 2.2.2 cho vòng loại Vibe Coding 2026.">
+  <title>HOSTORA AI · Minh chứng 20 ca kiểm thử</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #09212d;
+      --green: #0d6b5f;
+      --green-dark: #07564d;
+      --mint: #e5f3ee;
+      --paper: #f4f6f3;
+      --white: #fff;
+      --line: #c7d5d0;
+      --muted: #536a72;
+      --amber: #8b570d;
+      --amber-bg: #fff0d1;
+      --blue: #165b83;
+      --blue-bg: #e8f2f8;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.62 Inter, "Be Vietnam Pro", system-ui, sans-serif; }
+    a { color: var(--green-dark); text-underline-offset: 3px; }
+    a:focus-visible { outline: 3px solid #16a085; outline-offset: 4px; }
+    header { background: var(--ink); color: var(--white); }
+    .masthead, main, footer { width: min(1180px, calc(100% - 40px)); margin-inline: auto; }
+    .masthead { min-height: 72px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+    .brand { font-size: 14px; font-weight: 900; letter-spacing: .16em; }
+    .brand span { color: #87e6c9; }
+    .edition { color: #bdd0cb; font-size: 12px; text-align: right; }
+    main { padding: 56px 0 72px; }
+    .hero { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(260px, .55fr); gap: 52px; align-items: end; padding-bottom: 38px; border-bottom: 2px solid var(--ink); }
+    .eyebrow { margin: 0 0 10px; color: var(--green); font-size: 12px; font-weight: 900; letter-spacing: .15em; }
+    h1 { max-width: 790px; margin: 0; font-size: clamp(40px, 6vw, 74px); line-height: 1; letter-spacing: -.055em; }
+    .lead { max-width: 760px; margin: 22px 0 0; color: var(--muted); font-size: 18px; }
+    .score { border-left: 4px solid #87e6c9; padding-left: 22px; }
+    .score strong { display: block; color: var(--green); font-size: 64px; line-height: 1; letter-spacing: -.06em; }
+    .score span { display: block; margin-top: 10px; color: var(--muted); font-size: 13px; }
+    .facts { display: grid; grid-template-columns: repeat(4, 1fr); border-bottom: 1px solid var(--line); }
+    .fact { min-height: 126px; padding: 24px 20px 22px 0; border-right: 1px solid var(--line); }
+    .fact + .fact { padding-left: 22px; }
+    .fact:last-child { border-right: 0; }
+    .fact strong { display: block; font-size: 26px; line-height: 1.1; }
+    .fact span { display: block; margin-top: 8px; color: var(--muted); font-size: 12px; }
+    .notice { margin: 28px 0 0; padding: 17px 19px; border-left: 4px solid var(--green); background: var(--mint); color: #234b47; }
+    .notice strong { color: var(--green-dark); }
+    nav { display: flex; flex-wrap: wrap; gap: 8px; margin: 28px 0 48px; }
+    nav a { min-height: 44px; display: inline-flex; align-items: center; border: 1px solid var(--line); background: var(--white); padding: 8px 13px; text-decoration: none; font-size: 12px; font-weight: 850; }
+    .section-head { display: flex; justify-content: space-between; gap: 24px; align-items: end; margin-top: 54px; padding-bottom: 14px; border-bottom: 2px solid var(--ink); }
+    .section-head p { margin: 0 0 5px; color: var(--green); font-size: 12px; font-weight: 900; letter-spacing: .14em; }
+    h2 { margin: 0; font-size: clamp(27px, 3vw, 40px); line-height: 1.15; letter-spacing: -.035em; }
+    .section-head > span { color: var(--muted); font-size: 12px; white-space: nowrap; }
+    .case-list { list-style: none; margin: 0; padding: 0; }
+    .case { display: grid; grid-template-columns: 92px minmax(200px, .72fr) minmax(0, 1.28fr); gap: 24px; padding: 28px 0 30px; border-bottom: 1px solid var(--line); scroll-margin-top: 20px; }
+    .case-id { color: var(--green); font: 900 12px/1.2 ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: .12em; }
+    .status { display: inline-block; margin-top: 9px; border: 1px solid #96c9b9; background: #d9eee6; color: #07594d; padding: 3px 8px; font-size: 12px; font-weight: 900; }
+    .sim { border-color: #dfbb77; background: var(--amber-bg); color: var(--amber); }
+    .local { border-color: #9bbfd4; background: var(--blue-bg); color: var(--blue); }
+    h3 { margin: 0; font-size: 21px; line-height: 1.3; letter-spacing: -.02em; }
+    .surface { margin: 9px 0 0; color: var(--muted); font-size: 12px; font-weight: 750; }
+    dl { margin: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+    dt { color: var(--muted); font-size: 12px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; }
+    dd { margin: 5px 0 0; font-size: 14px; }
+    dd.result { border-left: 3px solid var(--green); padding-left: 11px; color: #0b594f; font-weight: 720; }
+    code { padding: .08em .35em; background: #e6ece9; font: .9em ui-monospace, SFMono-Regular, Consolas, monospace; overflow-wrap: anywhere; }
+    .legend { display: flex; flex-wrap: wrap; gap: 18px; margin: 24px 0 0; color: var(--muted); font-size: 12px; }
+    .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; margin-right: 7px; border: 1px solid var(--line); vertical-align: -1px; }
+    .legend .real::before { background: #d9eee6; }
+    .legend .mocked::before { background: var(--amber-bg); }
+    .legend .local-ai::before { background: var(--blue-bg); }
+    .handoff { margin-top: 58px; padding: 28px; background: var(--ink); color: var(--white); display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 28px; align-items: center; }
+    .handoff h2 { font-size: 28px; }
+    .handoff p { margin: 10px 0 0; color: #bdd0cb; }
+    .handoff a { min-height: 48px; display: inline-flex; align-items: center; background: #87e6c9; color: var(--ink); padding: 10px 16px; font-weight: 900; text-decoration: none; }
+    footer { padding: 0 0 56px; color: var(--muted); font-size: 13px; }
+    footer p { margin: 7px 0; }
+    @media (max-width: 900px) {
+      .hero { grid-template-columns: 1fr; gap: 30px; }
+      .score { border-left-color: var(--green); }
+      .score strong { color: var(--green); }
+      .score span { color: var(--muted); }
+      .facts { grid-template-columns: repeat(2, 1fr); }
+      .fact:nth-child(2) { border-right: 0; }
+      .case { grid-template-columns: 70px minmax(0, 1fr); }
+      .case dl { grid-column: 2; }
+    }
+    @media (max-width: 620px) {
+      .masthead { align-items: flex-start; padding: 18px 0; }
+      .edition { max-width: 170px; }
+      main { padding-top: 38px; }
+      h1 { font-size: 42px; }
+      .lead { font-size: 16px; }
+      .facts { grid-template-columns: 1fr 1fr; }
+      .fact { min-height: 108px; padding: 18px 12px 16px 0; }
+      .fact + .fact { padding-left: 14px; }
+      .section-head { display: block; }
+      .section-head > span { display: block; margin-top: 8px; }
+      .case { display: block; padding: 26px 0 30px; }
+      .case-title { margin-top: 14px; }
+      dl { grid-template-columns: 1fr; gap: 14px; margin-top: 20px; }
+      .handoff { grid-template-columns: 1fr; padding: 24px; }
+      .handoff a { justify-content: center; }
+    }
+    @media print {
+      body { background: #fff; font-size: 12px; }
+      header { background: #fff; color: #000; border-bottom: 2px solid #000; }
+      .brand span, .score strong { color: #000; }
+      .edition, .score span { color: #333; }
+      main { width: 100%; padding: 24px 0; }
+      nav, .handoff { display: none; }
+      .hero { grid-template-columns: 1fr 180px; }
+      .case { break-inside: avoid; }
+      a { color: #000; text-decoration: none; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="masthead">
+      <div class="brand">HOSTORA <span>AI</span></div>
+      <div class="edition">Bảng A · Vòng loại Vibe Coding 2026<br>Phiên bản 2.2.2 · 03/11/2026</div>
+    </div>
+  </header>
+  <main>
+    <section class="hero" aria-labelledby="page-title">
+      <div>
+        <p class="eyebrow">HỒ SƠ KIỂM ĐỊNH ĐỌC TRONG 5 PHÚT</p>
+        <h1 id="page-title">20 ca kiểm thử, phân biệt rõ bằng chứng.</h1>
+        <p class="lead">Sáu ca bắt buộc của Bảng A được giữ nguyên. Mười bốn ca bổ sung kiểm tra AI local thật, dữ liệu sai, sự cố, bảo vệ hội thoại, Website Studio, SEO/AI visibility, Android và khả năng bàn giao.</p>
+      </div>
+      <div class="score" aria-label="20 trên 20 ca đạt">
+        <strong>20/20</strong>
+        <span>đạt theo bằng chứng được ghi ở từng ca; không quy đổi thành điểm chính thức của BTC</span>
+      </div>
+    </section>
+
+    <section class="facts" aria-label="Tóm tắt phạm vi kiểm thử">
+      <div class="fact"><strong>6</strong><span>ca tối thiểu: 2 bình thường, 2 đầu vào sai, 2 biên/sự cố</span></div>
+      <div class="fact"><strong>14</strong><span>ca bổ sung cho AI, admin, mobile, SEO và bàn giao</span></div>
+      <div class="fact"><strong>3 bề mặt</strong><span>web khách, web admin và APK Android</span></div>
+      <div class="fact"><strong>Local-first</strong><span>Ollama loopback; không có cloud LLM fallback</span></div>
+    </section>
+
+    <aside class="notice"><strong>Chế độ khai báo trên cổng thi:</strong> chọn “AI thật có Mock dự phòng”. “AI thật” là Ollama chạy local; phần dự phòng là kết quả tất định/template hoặc lỗi được mô phỏng có chủ đích. Giá và xếp hạng luôn do code tất định quyết định, không để model tự sửa.</aside>
+    <div class="legend" aria-label="Chú giải bằng chứng"><span class="real">Luồng thật / test thực thi</span><span class="local-ai">AI local thật</span><span class="mocked">Sự cố mô phỏng hoặc dependency được cô lập</span></div>
+
+    <nav aria-label="Đi đến nhóm kiểm thử">
+      <a href="#normal">01 · Bình thường</a>
+      <a href="#invalid">02 · Đầu vào sai</a>
+      <a href="#edge">03 · Biên và sự cố</a>
+      <a href="#ai-control">04 · AI và kiểm soát</a>
+      <a href="#delivery">05 · Mobile và bàn giao</a>
+    </nav>
+
+    <section id="normal">
+      <div class="section-head"><div><p>NHÓM 01</p><h2>Luồng bình thường</h2></div><span>4/4 đạt</span></div>
+      <ol class="case-list">
+        <li class="case" id="N01"><div><div class="case-id">N01</div><span class="status">ĐẠT</span></div><div class="case-title"><h3>Từ nhu cầu đến ba gói và yêu cầu mua</h3><p class="surface">Web desktop + mobile viewport</p></div><dl><div><dt>Thao tác</dt><dd>Đi bốn bước tư vấn, xem ba gói, so sánh, chọn gói thứ hai, lưu yêu cầu thử nghiệm và mở FAQ.</dd></div><div><dt>Kỳ vọng</dt><dd>Đủ năm tính năng; lựa chọn không bị đổi khi lưu.</dd></div><div><dt>Kết quả</dt><dd class="result">Playwright xác nhận ba gói, bảng so sánh, lead đúng lựa chọn và FAQ mở được.</dd></div></dl></li>
+        <li class="case" id="N02"><div><div class="case-id">N02</div><span class="status local">AI LOCAL</span></div><div class="case-title"><h3>AI điền đúng dữ kiện khách đã nói</h3><p class="surface">API AI + biểu mẫu tư vấn</p></div><dl><div><dt>Thao tác</dt><dd>Nhập website mỹ phẩm, 5.000 lượt/tháng, 300.000đ/tháng và cần tên miền.</dd></div><div><dt>Kỳ vọng</dt><dd>Trích xuất dữ kiện để khách kiểm tra trước khi đề xuất.</dd></div><div><dt>Kết quả</dt><dd class="result">AI điền đúng lượt truy cập và ngân sách; người dùng vẫn sửa được trước khi tiếp tục.</dd></div></dl></li>
+        <li class="case" id="N03"><div><div class="case-id">N03</div><span class="status">ĐẠT</span></div><div class="case-title"><h3>Admin trả lời, khách tự nhận phản hồi</h3><p class="surface">Web khách + Admin + APK</p></div><dl><div><dt>Thao tác</dt><dd>Admin mở hộp thư hỗ trợ và phản hồi một thread đang chờ.</dd></div><div><dt>Kỳ vọng</dt><dd>Khách nhận trả lời mà không phải tạo hội thoại mới.</dd></div><div><dt>Kết quả</dt><dd class="result">Polling cập nhật nhãn “Quản trị viên HOSTORA” và trạng thái “Đã phản hồi” trên web/app.</dd></div></dl></li>
+        <li class="case" id="N04"><div><div class="case-id">N04</div><span class="status">ĐẠT</span></div><div class="case-title"><h3>Website Studio tạo preview và gói tải về</h3><p class="surface">Website Studio + ZIP delivery</p></div><dl><div><dt>Thao tác</dt><dd>Tạo website từ brief hợp lệ rồi mở link preview và tải ZIP.</dd></div><div><dt>Kỳ vọng</dt><dd>Link khách ổn định; ZIP có trang dựng và hướng dẫn chạy.</dd></div><div><dt>Kết quả</dt><dd class="result"><a href="https://github.com/minhnhatdepzai/HOSTORA-AI/blob/main/tests/site-studio-delivery.test.ts">Test delivery</a> xác nhận nội dung ZIP và lỗi 404 rõ ràng khi ID sai.</dd></div></dl></li>
+      </ol>
+    </section>
+
+    <section id="invalid">
+      <div class="section-head"><div><p>NHÓM 02</p><h2>Đầu vào không hợp lệ</h2></div><span>4/4 đạt</span></div>
+      <ol class="case-list">
+        <li class="case" id="I01"><div><div class="case-id">I01</div><span class="status">ĐẠT</span></div><div class="case-title"><h3>Yêu cầu đề xuất thiếu toàn bộ thông tin</h3><p class="surface">POST /api/recommend</p></div><dl><div><dt>Dữ liệu</dt><dd><code>{}</code></dd></div><div><dt>Kỳ vọng</dt><dd>HTTP 400, chỉ rõ trường cần bổ sung, không lộ stack trace.</dd></div><div><dt>Kết quả</dt><dd class="result">Trả lỗi tiếng Việt cho năm trường bắt buộc; không sinh gói.</dd></div></dl></li>
+        <li class="case" id="I02"><div><div class="case-id">I02</div><span class="status">ĐẠT</span></div><div class="case-title"><h3>Cuộc trò chuyện không có tin nhắn</h3><p class="surface">POST /api/ai/chat</p></div><dl><div><dt>Dữ liệu</dt><dd><code>{ "messages": [] }</code></dd></div><div><dt>Kỳ vọng</dt><dd>Chặn trước khi gọi model local.</dd></div><div><dt>Kết quả</dt><dd class="result">HTTP 400 và thông báo danh sách tin nhắn không hợp lệ.</dd></div></dl></li>
+        <li class="case" id="I03"><div><div class="case-id">I03</div><span class="status">ĐẠT</span></div><div class="case-title"><h3>SEO Analyzer từ chối URL không an toàn</h3><p class="surface">POST /api/seo/audit</p></div><dl><div><dt>Dữ liệu</dt><dd><code>file:///etc/passwd</code></dd></div><div><dt>Kỳ vọng</dt><dd>Không đọc file máy chủ và không lộ stack trace.</dd></div><div><dt>Kết quả</dt><dd class="result"><a href="https://github.com/minhnhatdepzai/HOSTORA-AI/blob/main/tests/seo-audit-route.test.ts">Route test</a> nhận HTTP 400; response không có trường stack.</dd></div></dl></li>
+        <li class="case" id="I04"><div><div class="case-id">I04</div><span class="status">ĐẠT</span></div><div class="case-title"><h3>Ứng dụng chặn giới hạn trả trước sai</h3><p class="surface">APK · bước ngân sách</p></div><dl><div><dt>Dữ liệu</dt><dd>Số âm, chuỗi chữ hoặc giá trị vượt giới hạn; trường bỏ trống vẫn hợp lệ.</dd></div><div><dt>Kỳ vọng</dt><dd>Lỗi ngay cạnh trường; không làm hỏng wizard.</dd></div><div><dt>Kết quả</dt><dd class="result"><a href="https://github.com/minhnhatdepzai/HOSTORA-AI/blob/main/tests/mobile-showcase.test.ts">Mobile guard test</a> chặn dữ liệu sai và giữ đúng trường hợp chưa quyết định.</dd></div></dl></li>
+      </ol>
+    </section>
+
+    <section id="edge">
+      <div class="section-head"><div><p>NHÓM 03</p><h2>Ca biên và sự cố</h2></div><span>4/4 đạt</span></div>
+      <ol class="case-list">
+        <li class="case" id="E01"><div><div class="case-id">E01</div><span class="status">ĐẠT</span></div><div class="case-title"><h3>Ngân sách thấp hơn mọi gói</h3><p class="surface">Web + domain recommendation</p></div><dl><div><dt>Dữ liệu</dt><dd>10.000đ/tháng cho website bán hàng.</dd></div><div><dt>Kỳ vọng</dt><dd>Không gắn nhãn phù hợp cho gói vượt ngân sách.</dd></div><div><dt>Kết quả</dt><dd class="result">Hiện “Chưa có gói đáp ứng ngân sách này”; phương án khác chỉ là tham khảo.</dd></div></dl></li>
+        <li class="case" id="E02"><div><div class="case-id">E02</div><span class="status sim">MÔ PHỎNG</span></div><div class="case-title"><h3>Bảng giá tạm thời mất kết nối</h3><p class="surface">UI kết quả + API lỗi 503</p></div><dl><div><dt>Thao tác</dt><dd>Giả lập endpoint đề xuất trả lỗi 503.</dd></div><div><dt>Kỳ vọng</dt><dd>Không dùng giá cũ hoặc giá chưa xác minh; có cách thử lại.</dd></div><div><dt>Kết quả</dt><dd class="result">Hiện “Chưa tải được bảng giá” và nút “Thử tải lại”.</dd></div></dl></li>
+        <li class="case" id="E03"><div><div class="case-id">E03</div><span class="status">ĐẠT</span></div><div class="case-title"><h3>Giá gia hạn chưa biết không được tự bịa</h3><p class="surface">Recommendation + mobile disclosure</p></div><dl><div><dt>Dữ liệu</dt><dd>Gói có giá kỳ đầu nhưng <code>renewalPrice = null</code>.</dd></div><div><dt>Kỳ vọng</dt><dd>Không coi chi phí gia hạn là đã xác nhận.</dd></div><div><dt>Kết quả</dt><dd class="result">Gói không được đánh dấu đủ điều kiện theo chi phí gia hạn; UI ghi “Chưa có dữ liệu”.</dd></div></dl></li>
+        <li class="case" id="E04"><div><div class="case-id">E04</div><span class="status">ĐẠT</span></div><div class="case-title"><h3>Yêu cầu tên miền mâu thuẫn</h3><p class="surface">Advisor normalization</p></div><dl><div><dt>Dữ liệu</dt><dd>Khách vừa nói cần tên miền, vừa nói đã có tên miền.</dd></div><div><dt>Kỳ vọng</dt><dd>Không đoán một phía; hỏi lại đúng điểm mâu thuẫn.</dd></div><div><dt>Kết quả</dt><dd class="result"><a href="https://github.com/minhnhatdepzai/HOSTORA-AI/blob/main/tests/advisor-quality.test.ts">Advisor test</a> giữ trạng thái chưa quyết định và tạo câu hỏi làm rõ.</dd></div></dl></li>
+      </ol>
+    </section>
+
+    <section id="ai-control">
+      <div class="section-head"><div><p>NHÓM 04</p><h2>AI và kiểm soát đầu ra</h2></div><span>5/5 đạt</span></div>
+      <ol class="case-list">
+        <li class="case" id="A01"><div><div class="case-id">A01</div><span class="status local">AI LOCAL</span></div><div class="case-title"><h3>Inference thật qua Ollama loopback</h3><p class="surface">pnpm ai:check</p></div><dl><div><dt>Thao tác</dt><dd>Gọi model local bằng structured output đã giới hạn schema.</dd></div><div><dt>Kỳ vọng</dt><dd>Model phản hồi được; không gọi cloud LLM.</dd></div><div><dt>Kết quả</dt><dd class="result">AI smoke của bản phát hành đạt qua loopback; Docker chỉ bind Ollama ở <code>127.0.0.1</code>.</dd></div></dl></li>
+        <li class="case" id="A02"><div><div class="case-id">A02</div><span class="status">ĐẠT</span></div><div class="case-title"><h3>Ẩn PII trước khi lưu và chuyển admin</h3><p class="surface">Chat + SQLite + mail queue</p></div><dl><div><dt>Dữ liệu</dt><dd>Câu hỏi ngoài phạm vi kèm email và số điện thoại thử nghiệm.</dd></div><div><dt>Kỳ vọng</dt><dd>Không lưu PII gốc; chỉ tạo một lần chuyển người thật.</dd></div><div><dt>Kết quả</dt><dd class="result"><a href="https://github.com/minhnhatdepzai/HOSTORA-AI/blob/main/tests/chat-route.test.ts">Chat route test</a> xác nhận thread đã ẩn dữ liệu và trạng thái chờ admin.</dd></div></dl></li>
+        <li class="case" id="A03"><div><div class="case-id">A03</div><span class="status">ĐẠT</span></div><div class="case-title"><h3>Token sai không đọc được hội thoại khách</h3><p class="surface">Guest conversation API</p></div><dl><div><dt>Thao tác</dt><dd>Đọc cùng một thread bằng token sai rồi token đúng.</dd></div><div><dt>Kỳ vọng</dt><dd>Token sai không làm lộ thread có tồn tại.</dd></div><div><dt>Kết quả</dt><dd class="result"><a href="https://github.com/minhnhatdepzai/HOSTORA-AI/blob/main/tests/ai-conversation-routes.test.ts">Access test</a>: token sai nhận 404; token đúng mới đọc được nội dung đã ẩn PII.</dd></div></dl></li>
+        <li class="case" id="A04"><div><div class="case-id">A04</div><span class="status sim">DỰ PHÒNG</span></div><div class="case-title"><h3>SEO vẫn có điểm khi Ollama tạm offline</h3><p class="surface">SEO + AI visibility analyzer</p></div><dl><div><dt>Thao tác</dt><dd>Giả lập Ollama lỗi nhưng vẫn đọc HTML, robots, sitemap và llms.txt.</dd></div><div><dt>Kỳ vọng</dt><dd>Điểm tất định còn hoạt động; nội dung dự phòng được ghi rõ.</dd></div><div><dt>Kết quả</dt><dd class="result"><a href="https://github.com/minhnhatdepzai/HOSTORA-AI/blob/main/tests/seo-audit-route.test.ts">SEO route test</a> trả điểm SEO/AI riêng, 9 crawler và ưu tiên sửa mà không cần cloud fallback.</dd></div></dl></li>
+        <li class="case" id="A05"><div><div class="case-id">A05</div><span class="status sim">DỰ PHÒNG</span></div><div class="case-title"><h3>Studio loại lời hứa AI không có căn cứ</h3><p class="surface">Local AI + content audit</p></div><dl><div><dt>Dữ liệu</dt><dd>Draft chứa cam kết thương mại không có trong brief khách.</dd></div><div><dt>Kỳ vọng</dt><dd>Sửa hoặc chuyển template an toàn trước khi hiển thị.</dd></div><div><dt>Kết quả</dt><dd class="result"><a href="https://github.com/minhnhatdepzai/HOSTORA-AI/blob/main/tests/site-studio-workflow.test.ts">Workflow test</a> chặn claim, chạy repair/audit và chỉ nhận output đã grounded.</dd></div></dl></li>
+      </ol>
+    </section>
+
+    <section id="delivery">
+      <div class="section-head"><div><p>NHÓM 05</p><h2>Mobile, persistence và bàn giao</h2></div><span>3/3 đạt</span></div>
+      <ol class="case-list">
+        <li class="case" id="P01"><div><div class="case-id">P01</div><span class="status">ĐẠT</span></div><div class="case-title"><h3>Cinematic cold-start có lối thoát accessible</h3><p class="surface">APK Android</p></div><dl><div><dt>Thao tác</dt><dd>Mở app từ trạng thái dừng; kiểm tra cả chế độ giảm chuyển động.</dd></div><div><dt>Kỳ vọng</dt><dd>H → HOSTORA → mascot; có bỏ qua; reduced motion về trạng thái tĩnh.</dd></div><div><dt>Kết quả</dt><dd class="result"><a href="https://github.com/minhnhatdepzai/HOSTORA-AI/blob/main/tests/mobile-showcase.test.ts">Motion contract</a> đạt; bản 2.2.2 đã được quay cold-start trên Android.</dd></div></dl></li>
+        <li class="case" id="P02"><div><div class="case-id">P02</div><span class="status">ĐẠT</span></div><div class="case-title"><h3>Cài đè APK vẫn giữ hội thoại</h3><p class="surface">Android emulator · adb install -r</p></div><dl><div><dt>Thao tác</dt><dd>Cài đè APK universal 2.2.2, không uninstall và không xóa storage.</dd></div><div><dt>Kỳ vọng</dt><dd>App mở được; thread khách cũ còn nguyên.</dd></div><div><dt>Kết quả</dt><dd class="result">Package <code>com.hostora.ai</code> versionCode 25 chạy lại và hiển thị phản hồi admin trong thread đã có.</dd></div></dl></li>
+        <li class="case" id="P03"><div><div class="case-id">P03</div><span class="status">ĐẠT</span></div><div class="case-title"><h3>Gói phát hành chạy chéo nền tảng và không lộ secret</h3><p class="surface">Source ZIP + Docker + checksum</p></div><dl><div><dt>Thao tác</dt><dd>Kiểm tra tên asset, checksum trong/ngoài ZIP, đường dẫn, secret và Compose CPU/GPU.</dd></div><div><dt>Kỳ vọng</dt><dd>Windows/macOS/Linux chạy được; Ollama loopback; dữ liệu có volume.</dd></div><div><dt>Kết quả</dt><dd class="result"><a href="https://github.com/minhnhatdepzai/HOSTORA-AI/blob/main/tests/release-handoff.test.ts">13 release-handoff tests</a> đạt; CPU mặc định và NVIDIA là override riêng.</dd></div></dl></li>
+      </ol>
+    </section>
+
+    <section class="handoff" aria-label="Tải bộ hồ sơ">
+      <div><h2>Một project, đủ ba bề mặt.</h2><p>Source ZIP chứa web, admin, mobile, test, Docker, training source và README. APK, adapter candidate và checksum nằm trong GitHub Release.</p></div>
+      <a href="https://github.com/minhnhatdepzai/HOSTORA-AI/releases/tag/v2.2.2">Mở bộ phát hành 2.2.2</a>
+    </section>
+  </main>
+  <footer>
+    <p><strong>Giới hạn:</strong> Playwright mobile viewport không thay thế APK. Các nhãn “mô phỏng/dự phòng” là kiểm thử lỗi có chủ đích. Kết quả AI local là bộ kiểm tra có giới hạn, không phải chứng nhận đúng cho mọi câu hỏi.</p>
+    <p>Web công khai vẫn phụ thuộc máy demo, Internet và dịch vụ tunnel đang bật. Adapter <code>chatbot-v8</code> và <code>studio-v3</code> ở trạng thái candidate, không được trình bày như runtime production.</p>
+  </footer>
+</body>
+</html>
