@@ -1,27 +1,25 @@
 // Package only the two latest LoRA adapters and their evidence, never duplicated base weights.
 import { execFile } from "node:child_process";
-import { cp, mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { cp, mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
+import {
+  getReleaseInfo,
+  writeExternalChecksum,
+  writeInternalChecksumManifest,
+  writeReleaseAssetManifest,
+} from "./release-assets.mjs";
 
 const execFileAsync = promisify(execFile);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const artifactRoot = process.env.HOSTORA_FINETUNING_ARTIFACT_ROOT
   ? path.resolve(process.env.HOSTORA_FINETUNING_ARTIFACT_ROOT)
   : root;
-const config = JSON.parse(
-  await readFile(path.join(root, "mobile/app.json"), "utf8"),
-);
-const version = config.expo.version;
-const releaseDate = new Intl.DateTimeFormat("en-CA", {
-  timeZone: "Asia/Ho_Chi_Minh",
-  year: "numeric",
-  month: "2-digit",
-  day: "2-digit",
-}).format(new Date());
-const archiveName = `HOSTORA-finetuning-${version}-${releaseDate}.zip`;
+const release = await getReleaseInfo(root);
+const { version } = release;
+const archiveName = release.assets.fineTuning;
 const output = path.join(root, "docs/submission", archiveName);
 const temporary = await mkdtemp(path.join(tmpdir(), "hostora-finetuning-"));
 const packageRoot = path.join(temporary, `HOSTORA-finetuning-${version}`);
@@ -66,6 +64,7 @@ try {
       `Gói này chứa hai LoRA adapter mới nhất: chatbot-v8 và studio-v3, kèm config, manifest, đánh giá, trạng thái huấn luyện và tokenizer. Base model không được nhân bản vào ZIP; cả hai adapter khai báo base \`unsloth/Qwen3.5-4B\` trong \`adapter_config.json\`.\n\n` +
       `Đây là artifact tái lập/đánh giá, không phải bằng chứng rằng candidate đã được đưa vào production. Đọc \`promotion.json\` và tài liệu trong thư mục \`training/\` trước khi merge/export. Source ZIP của cùng release chứa toàn bộ script, dataset train/holdout, test và Modelfile.\n`,
   );
+  await writeInternalChecksumManifest(packageRoot);
   await rm(output, { force: true });
   await execFileAsync(
     "zip",
@@ -74,11 +73,14 @@ try {
       cwd: temporary,
     },
   );
-  const { stdout } = await execFileAsync("sha256sum", [output]);
-  const checksum = `${stdout.trim().split(/\s+/)[0]}  ${archiveName}\n`;
-  await writeFile(`${output}.sha256`, checksum);
+  const { checksumFile } = await writeExternalChecksum(output);
+  const manifest = await writeReleaseAssetManifest(root, release, {
+    source: path.join(root, "docs/submission", release.assets.source),
+    fineTuning: output,
+  });
   console.log(output);
-  console.log(`${output}.sha256`);
+  console.log(checksumFile);
+  console.log(manifest);
 } finally {
   await rm(temporary, { recursive: true, force: true });
 }

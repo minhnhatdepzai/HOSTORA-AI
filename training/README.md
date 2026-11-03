@@ -39,3 +39,22 @@ Việc import GGUF vào Ollama dùng `training/Modelfile.chatbot-v2`; xem README
 chính và tài liệu fine-tuning trước khi thay model đang phục vụ. Khi chạy
 `evaluate_chatbot.mjs`, endpoint app phải mở ở `127.0.0.1:3000`. Không lấy
 HTTP 200, loss train hoặc citation ID hợp lệ làm bằng chứng câu trả lời đúng.
+
+## Gói bàn giao fine-tuning
+
+Source Git chứa script, config, dataset train/holdout, test và manifest. Adapter
+được đưa vào GitHub Release vì hai file trọng số lớn không phù hợp với lịch sử
+Git; base model, GGUF và checkpoint optimizer không được đóng gói.
+
+```bash
+pnpm package:submission
+pnpm package:finetuning
+pnpm release:verify
+```
+
+Mỗi ZIP có file `.sha256` bên cạnh. Fine-tuning ZIP còn có
+`SHA256SUMS.txt` bên trong để kiểm tra từng file. Lệnh verify cũng đối chiếu hai
+`promotion.json` trong ZIP với artifact local và chỉ chấp nhận trạng thái
+`candidate`, `automatic_promotion: false`; việc đóng gói không tự đưa model vào
+runtime. Người nhận cần tải base `unsloth/Qwen3.5-4B` riêng theo giấy phép và
+đánh giá lại adapter trên máy đích trước khi promote.

@@ -1,26 +1,19 @@
 // Build a source handoff without local credentials, build output or model weights.
 import { execFile } from "node:child_process";
-import { readFile, readdir, rename, stat } from "node:fs/promises";
+import { readdir, rename, stat } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
+import {
+  getReleaseInfo,
+  writeExternalChecksum,
+  writeReleaseAssetManifest,
+} from "./release-assets.mjs";
 
 const execFileAsync = promisify(execFile);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const mobileConfig = JSON.parse(
-  await readFile(path.join(root, "mobile/app.json"), "utf8"),
-);
-const version = mobileConfig.expo.version;
-const releaseDate = new Intl.DateTimeFormat("en-CA", {
-  timeZone: "Asia/Ho_Chi_Minh",
-  year: "numeric",
-  month: "2-digit",
-  day: "2-digit",
-}).format(new Date());
-const output = path.join(
-  root,
-  `docs/submission/HOSTORA-source-${version}-${releaseDate}.zip`,
-);
+const release = await getReleaseInfo(root);
+const output = path.join(root, "docs/submission", release.assets.source);
 const roots = [
   "app",
   "components",
@@ -91,6 +84,10 @@ const forbiddenExtensions =
 const files = new Set();
 
 async function add(relative) {
+  if (/^docs\/submission\/HOSTORA-release-[^/]+\.json$/i.test(relative))
+    return;
+  if (/^docs\/submission\/HOSTORA-[^/]+\.zip\.sha256$/i.test(relative))
+    return;
   if (
     /^docs\/submission\/HOSTORA-(?:source-)?[^/]*SHA256SUMS\.txt$/i.test(
       relative,
@@ -132,4 +129,15 @@ if (selected.length < 100)
 const temporary = `${output}.tmp-${process.pid}.zip`;
 await execFileAsync("zip", ["-X", "-q", temporary, ...selected], { cwd: root });
 await rename(temporary, output);
-console.log(JSON.stringify({ output, files: selected.length }));
+const { checksumFile } = await writeExternalChecksum(output);
+const manifest = await writeReleaseAssetManifest(root, release, {
+  source: output,
+  fineTuning: path.join(
+    root,
+    "docs/submission",
+    release.assets.fineTuning,
+  ),
+});
+console.log(
+  JSON.stringify({ output, checksumFile, manifest, files: selected.length }),
+);

@@ -45,4 +45,6 @@ mobile/dist/
 mobile/releases/*.apk
 mobile/releases/*.apk.sha256
 docs/submission/*.zip
+docs/submission/*.zip.sha256
+docs/submission/HOSTORA-release-*.json
 docs/submission/*.mp4
