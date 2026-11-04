@@ -27,12 +27,12 @@ AI chạy local qua Ollama. AI chỉ trích xuất, giải thích và soạn n�
 | Phần đã kiểm tra    | Kết quả gần nhất                                                                                          |
 | ------------------- | --------------------------------------------------------------------------------------------------------- |
 | Web + admin         | Typecheck, lint và production build đạt                                                                   |
-| Logic/API           | 296/296 test đạt trên 58 file                                                                             |
+| Logic/API           | 309/309 test đạt                                                                                           |
 | AI local            | Ollama chat, Studio, embedding và smoke test chạy thật qua loopback; không dùng cloud fallback            |
 | E2E + UI audit      | 55 lượt đạt, 1 mobile CRUD bỏ qua có chủ đích; 12 màn audit không có lỗi axe/page/overflow tự động      |
 | Android             | `com.hostora.ai` 2.2.2, versionCode 25; APK universal cài đè bằng `adb install -r` và giữ hội thoại trên emulator |
 | Bộ giám khảo mobile | 20/20 kiểm tra showcase và TC01–TC09 đều đạt                                                              |
-| APK                 | 165.309.244 byte; đủ `arm64-v8a`, `armeabi-v7a`, `x86`, `x86_64`; SHA-256 như bảng trên                 |
+| APK                 | 165.321.992 byte; đủ `arm64-v8a`, `armeabi-v7a`, `x86`, `x86_64`; SHA-256 như bảng trên                 |
 
 Cinematic 12,4 giây phát ở mỗi cold-start và ghép đủ hai chương: orbit/beam/logo/headline, rồi H → HOSTORA → robot. Người dùng có thể bỏ qua hoặc phát lại từ Hồ sơ giám khảo; phát lại xong vẫn ở đúng màn đang mở. App giữ native splash, chuyển cảnh theo tiến độ, phản hồi chạm/haptic, Skia backdrop, sân khấu 3D và tôn trọng thiết lập Giảm chuyển động.
 
@@ -70,7 +70,135 @@ Kiến trúc giữ ranh giới rõ ràng:
 
 Xem [sơ đồ hệ thống](docs/architecture/hostora-system.html), [luồng sản phẩm](docs/architecture/hostora-product-flow.html), [luồng RAG](docs/architecture/hostora-rag-flow.html) và [luồng Website Studio](docs/architecture/hostora-site-studio-flow.html).
 
-## Chạy local
+## Hướng dẫn cho người chưa biết code — chạy bằng Docker
+
+Đây là cách dễ nhất để mở đầy đủ **web khách hàng, web admin, AI local và hộp
+thư OTP** trên Windows, macOS hoặc Linux. Bạn không cần cài Node.js, pnpm,
+Python hay Ollama riêng. Cần Internet trong lần chạy đầu để Docker tải image và
+hai model AI; quá trình này có thể lâu và tốn nhiều GB tùy tốc độ mạng. Nên để
+trống ít nhất 30 GB và dùng máy có từ 16 GB RAM; máy yếu hơn xem mục xử lý lỗi
+bên dưới.
+
+### Bước 1 — tải và giải nén Source ZIP
+
+1. Tải [HOSTORA Source ZIP mới nhất](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-source-2.2.2-2026-11-04.zip).
+2. Windows: bấm chuột phải file ZIP → **Extract All / Giải nén tất cả**.
+3. macOS: bấm đúp file ZIP. Linux: dùng trình quản lý file và chọn **Extract**.
+4. Mở thư mục vừa giải nén. Đúng thư mục project sẽ nhìn thấy `README.md`,
+   `compose.yaml`, thư mục `scripts` và thư mục `mobile`.
+
+### Bước 2 — cài Docker
+
+- Windows/macOS: cài [Docker Desktop](https://www.docker.com/products/docker-desktop/), mở ứng dụng và chờ trạng thái **Docker Engine is running**.
+- Linux: cài Docker Engine và Docker Compose plugin theo hướng dẫn của Docker,
+  rồi kiểm tra lệnh `docker compose version` chạy được.
+
+Sau khi cài Docker Desktop, nếu Terminal hoặc PowerShell đang mở thì đóng và mở
+lại một lần để hệ thống nhận lệnh `docker`.
+
+### Bước 3A — chạy trên Windows
+
+Trong File Explorer, mở đúng thư mục HOSTORA đã giải nén, bấm vào thanh địa chỉ,
+gõ `powershell` rồi nhấn Enter. Dán lần lượt cả khối lệnh này:
+
+```powershell
+Copy-Item .env.docker.example .env.docker
+$secret = ([guid]::NewGuid().ToString("N") + [guid]::NewGuid().ToString("N"))
+(Get-Content .env.docker).Replace("replace-with-64-hex-characters", $secret) | Set-Content -Encoding ascii .env.docker
+docker compose --env-file .env.docker up --build -d
+docker compose --env-file .env.docker ps
+```
+
+Không đóng Docker Desktop trong lúc dùng HOSTORA. Lần đầu, `model-init` sẽ tải
+`qwen3.5:9b-q8_0` và `qwen3-embedding:4b`; chưa thấy web ngay trong lúc tải là
+bình thường.
+
+### Bước 3B — chạy trên macOS hoặc Linux
+
+Mở Terminal tại đúng thư mục HOSTORA đã giải nén rồi chạy:
+
+```bash
+chmod +x scripts/docker-up.sh scripts/docker-down.sh
+./scripts/docker-up.sh
+```
+
+Script tự tạo `.env.docker` với secret ngẫu nhiên, build web, tải model và tạo
+RAG index. Không chia sẻ file `.env.docker` lên Internet.
+
+### Bước 4 — kiểm tra đã chạy thành công
+
+Mở các địa chỉ sau trên chính máy đang chạy Docker:
+
+| Cần mở | Địa chỉ | Dấu hiệu đúng |
+| --- | --- | --- |
+| Web khách hàng | <http://127.0.0.1:3000> | Hiện trang chủ HOSTORA |
+| Web admin | <http://127.0.0.1:3000/admin> | Hiện cổng đăng nhập quản trị |
+| Hộp thư OTP local | <http://127.0.0.1:8025> | Hiện giao diện Mailpit |
+| Kiểm tra backend | <http://127.0.0.1:3000/api/health> | Trả về trạng thái JSON |
+
+Đăng nhập admin theo luồng demo:
+
+1. Mở `/admin`, chọn **Gửi mã qua email**.
+2. Mở Mailpit ở cổng `8025`.
+3. Mở email HOSTORA mới nhất, lấy mã 6 số và nhập lại vào trang admin.
+
+Kiểm tra container bằng lệnh sau. `model-init` hiện **Exited (0)** sau khi tải
+xong là đúng, không phải lỗi; web và Ollama phải đang chạy/healthy.
+
+```bash
+docker compose --env-file .env.docker ps
+```
+
+### Lần sau mở máy, dừng và chạy lại
+
+Docker lưu model, RAG, tài khoản demo, hội thoại và SQLite trong named volume,
+vì vậy không phải tải lại mỗi lần. Sau khi khởi động máy, mở Docker Desktop rồi
+chạy trong thư mục HOSTORA:
+
+```bash
+docker compose --env-file .env.docker start
+```
+
+Nếu `start` báo chưa có container, dùng lại:
+
+```bash
+docker compose --env-file .env.docker up --build -d
+```
+
+Dừng tạm thời mà vẫn giữ toàn bộ dữ liệu:
+
+```bash
+docker compose --env-file .env.docker stop
+```
+
+Không dùng `docker compose down -v` để dừng thông thường: tùy chọn `-v` xóa model
+và toàn bộ dữ liệu runtime, khiến lần sau phải tải/tạo lại từ đầu.
+
+### Kết nối app Android với backend Docker
+
+1. Cài [APK universal 2.2.2](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-2.2.2-universal.apk).
+2. Điện thoại thật cùng Wi-Fi: trong app mở **Công cụ → Kết nối local AI**, nhập
+   `http://<IP-LAN-của-máy-tính>:3000`, lưu và kiểm tra kết nối.
+3. Android Emulator trên cùng máy: nhập thủ công `http://10.0.2.2:3000`.
+
+Nút preset **Máy ảo Android** trong app hiện dành cho dịch vụ production local
+ở cổng `3200`; khi chạy Docker mặc định ở cổng `3000`, phải nhập URL emulator
+thủ công như bước 3.
+
+### Lỗi thường gặp
+
+| Hiện tượng | Cách xử lý |
+| --- | --- |
+| `docker: command not found` | Mở Docker Desktop, đóng rồi mở lại Terminal/PowerShell; kiểm tra `docker compose version`. |
+| Docker báo không kết nối được Engine | Chờ Docker Desktop báo Engine đang chạy; trên Windows kiểm tra WSL 2 đã bật. |
+| Lần đầu chạy rất lâu | Xem tiến độ bằng `docker compose --env-file .env.docker logs -f model-init web`; chờ hai model tải xong. |
+| Cổng `3000` đang được dùng | Đổi `HOSTORA_PORT` và `HOSTORA_PUBLIC_BASE_URL` trong `.env.docker`, rồi chạy lại `up --build -d`. |
+| Máy thiếu RAM/dung lượng | Trong `.env.docker`, thử `HOSTORA_CHAT_MODEL=qwen3.5:4b-q4_K_M` và `HOSTORA_EMBED_MODEL=qwen3-embedding:0.6b`; phải kiểm tra lại chất lượng AI trước khi demo. |
+| App Android không kết nối | Mở URL backend bằng trình duyệt điện thoại trước; kiểm tra cùng Wi-Fi, firewall cổng 3000 và URL không dùng `127.0.0.1` trên điện thoại thật. |
+
+Hướng dẫn kỹ thuật sâu hơn nằm tại [docs/DOCKER_DEPLOYMENT.md](docs/DOCKER_DEPLOYMENT.md).
+
+## Chạy local cho lập trình viên
 
 ### Yêu cầu
 
@@ -113,38 +241,10 @@ pnpm start
 
 Server standalone dùng `PORT=3000` và `HOSTNAME=0.0.0.0` mặc định. Khi public ra Internet, đặt `HOSTORA_PUBLIC_BASE_URL` bằng origin HTTPS thật, dùng reverse proxy/WAF và cấu hình secret chỉ qua biến môi trường.
 
-### Chạy bằng Docker
+### Docker với NVIDIA GPU
 
-Docker là đường chạy nhanh nhất cho máy mới vì không cần cài Node, pnpm,
-Python hay Ollama trên host. Docker CPU chạy trên Windows, macOS và Linux; lần
-đầu cần Internet để tải image và model local.
-
-macOS/Linux:
-
-```bash
-git clone https://github.com/minhnhatdepzai/HOSTORA-AI.git
-cd HOSTORA-AI
-./scripts/docker-up.sh
-```
-
-Windows PowerShell:
-
-```powershell
-git clone https://github.com/minhnhatdepzai/HOSTORA-AI.git
-Set-Location HOSTORA-AI
-Copy-Item .env.docker.example .env.docker
-$secret = ([guid]::NewGuid().ToString("N") + [guid]::NewGuid().ToString("N"))
-(Get-Content .env.docker).Replace("replace-with-64-hex-characters", $secret) | Set-Content .env.docker
-docker compose --env-file .env.docker up --build -d
-```
-
-Sau khi `docker compose ps` báo web đã chạy, mở
-<http://127.0.0.1:3000>. Đăng nhập admin bằng OTP local: bấm gửi mã rồi đọc
-email tại <http://127.0.0.1:8025>. SQLite/RAG được giữ trong
-`hostora-ai_runtime_data`; model nằm trong `hostora-ai_ollama_data`, nên restart
-không tải lại nếu volume còn nguyên.
-
-Máy có NVIDIA Container Toolkit có thể dùng:
+Phần hướng dẫn Docker đầy đủ nằm ở trên. Máy đã có NVIDIA Container Toolkit có
+thể dùng:
 
 ```bash
 ./scripts/docker-up.sh --gpu
@@ -239,13 +339,14 @@ HTTP 200, browser mobile viewport hoặc APK build thành công không thay th�
 
 HOSTORA là **một project duy nhất**: website khách hàng, web admin, Android và training source nằm chung một repository. Không cần nộp ba project rời. Bộ hồ sơ nên gồm:
 
-1. `HOSTORA-source-2.2.2-2026-11-03-r2.zip` — file bắt buộc để giám khảo tải và chạy; chứa README, web/admin, app source, cinematic source/assets, bảng 20 ca, test, training source/data/config và cấu hình mẫu. Không chứa secret, database thật hoặc model nền nhiều GB.
+1. `HOSTORA-source-2.2.2-2026-11-04.zip` — file bắt buộc để giám khảo tải và chạy; chứa README, web/admin, app source, cinematic source/assets, bảng 20 ca, test, training source/data/config và cấu hình mẫu. Không chứa secret, database thật hoặc model nền nhiều GB.
 2. `HOSTORA-AI-2.2.2-universal.apk` — artifact cài nhanh trên Android 7.0+, kèm file `.sha256`. Tên `arm64.apk` trong release là alias của cùng APK universal để giữ tương thích với biểu mẫu cũ.
-3. `HOSTORA-finetuning-2.2.2-2026-11-03.zip` — tài liệu bổ sung, chứa adapter `chatbot-v8` và `studio-v3`, tokenizer/config, manifest, đánh giá và trạng thái train. Đây là candidate để tái lập/đánh giá; `promotion.json` là nguồn xác nhận trạng thái, không được hiểu là model đang chạy production.
+3. `HOSTORA-finetuning-2.2.2-2026-11-04.zip` — tài liệu bổ sung, chứa adapter `chatbot-v8` và `studio-v3`, tokenizer/config, manifest, đánh giá và trạng thái train. Đây là candidate để tái lập/đánh giá; `promotion.json` là nguồn xác nhận trạng thái, không được hiểu là model đang chạy production.
 4. Video demo tối đa 02 phút — nộp link riêng trên cổng thi; mở trực tiếp APK/web và thể hiện đủ 05 tính năng.
 
 Các file checksum trong GitHub Release dùng để kiểm tra đúng artifact sau khi tải. Base model `unsloth/Qwen3.5-4B` không được sao chép vào gói fine-tuning; người chạy tải base model theo tài liệu rồi gắn LoRA adapter.
-Tên `HOSTORA-source-2.2.2-2026-11-03.zip` được giữ trong Release để tương thích với hồ sơ cũ; hồ sơ mới dùng bản `-r2.zip` ở trên.
+Hồ sơ mới dùng đúng hai gói ngày `2026-11-04` trong bảng “Truy cập nhanh”; các
+gói ngày cũ chỉ giữ để đối chiếu lịch sử và không nên nộp nhầm.
 
 ## Giới hạn hiện tại
 

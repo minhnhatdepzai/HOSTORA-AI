@@ -282,8 +282,8 @@ describe("portable release handoff", () => {
       expect(gradle).toContain('versionName "2.2.2"');
     }
     expect(readme).toContain("HOSTORA-AI-2.2.2-universal.apk");
-    expect(readme).toContain("HOSTORA-source-2.2.2-2026-11-03.zip");
-    expect(readme).toContain("HOSTORA-finetuning-2.2.2-2026-11-03.zip");
+    expect(readme).toContain("HOSTORA-source-2.2.2-2026-11-04.zip");
+    expect(readme).toContain("HOSTORA-finetuning-2.2.2-2026-11-04.zip");
     expect(mobileReadme).toContain("HOSTORA-AI-2.2.2-universal.apk");
   });
 });
