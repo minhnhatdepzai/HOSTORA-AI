@@ -18,6 +18,15 @@ test("keeps hosting budget and traffic numbers", () => {
   );
 });
 
+test("redacts a labeled password while preserving the hosting question", () => {
+  const result = redactContactInfo(
+    "Mật khẩu giả TEST_ONLY_123, hosting nào hợp shop 5000 khách/tháng?",
+  );
+  expect(result).not.toContain("TEST_ONLY_123");
+  expect(result).toContain("Mật khẩu giả [đã ẩn bí mật]");
+  expect(result).toContain("hosting nào hợp shop 5000 khách/tháng?");
+});
+
 test("identifies requests to put contact details in an AI prompt", () => {
   expect(
     asksToPutContactInfoInModel(

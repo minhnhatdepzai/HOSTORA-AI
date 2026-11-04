@@ -9,10 +9,13 @@ const fold = (value: string) =>
 const HOSTORA_SCOPE =
   /hostora|website|web\b|hosting|luu tru|ten mien|domain|dns|ssl|cdn|backup|vps|server|wordpress|woocommerce|seo|google|schema|sitemap|robots|email|thu dien tu|gia|chi phi|ngan sach|gia han|goi (?:hosting|dich vu|nao|chinh|thay the)|nha cung cap|trang web|cua hang|ban hang|thanh toan|hoa don|don hang|hoan tien|tai khoan|xay dung trang/i;
 const SOCIAL_ONLY = /^(xin chao|chao|hello|hi|cam on|cảm ơn|ok|oke|duoc|được)[!. ]*$/i;
-const HUMAN_REQUEST = /nhan vien|quan tri vien|nguoi that|ho tro truc tiep|gap tu van vien/i;
+const HUMAN_REQUEST =
+  /(?:(?:muon|can|cho toi|hay|xin|yeu cau).{0,24}(?:gap|noi chuyen|chuyen|ket noi).{0,24}|(?:gap|noi chuyen voi|chuyen cho|ket noi voi).{0,24})(?:nhan vien|quan tri vien|nguoi that|tu van vien)|(?:muon|can|xin).{0,20}ho tro truc tiep/i;
 const QUESTION_SHAPE = /\?|^(ai|cai gi|bao nhieu|bao gio|khi nao|o dau|tai sao|vi sao|lam sao|co |ngay mai|hom nay)/i;
+const DIRECT_REQUEST =
+  /^(hay |giup |viet |tao |chi |huong dan |dich |ke |soan |chan doan |du bao )/i;
 const INSUFFICIENT =
-  /chua (?:co du du lieu|co du thong tin|the xac nhan|xac minh)|khong (?:co du du lieu|the xac nhan|the tra loi)|can xac minh|ngoai pham vi/i;
+  /(?:minh |hostora )?(?:chua|khong) the (?:xac nhan|tra loi)|khong co du du lieu de (?:xac nhan|tra loi)|ngoai pham vi/i;
 
 export function evaluateAiEscalation(input: {
   question: string;
@@ -25,7 +28,10 @@ export function evaluateAiEscalation(input: {
   if (HUMAN_REQUEST.test(question)) return { reason: "human_requested" };
   if (input.answer && INSUFFICIENT.test(fold(input.answer)))
     return { reason: "insufficient_data" };
-  if (QUESTION_SHAPE.test(question) && !HOSTORA_SCOPE.test(question))
+  if (
+    (QUESTION_SHAPE.test(question) || DIRECT_REQUEST.test(question)) &&
+    !HOSTORA_SCOPE.test(question)
+  )
     return { reason: "out_of_scope" };
   return null;
 }

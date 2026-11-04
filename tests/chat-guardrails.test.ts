@@ -12,6 +12,8 @@ import {
   cdnVsHostingAnswer,
   customerSourceBusinessAnswer,
   unknownBusinessDataAnswer,
+  unrealisticGuaranteeAnswer,
+  ambiguousHostingRequestAnswer,
 } from "@/lib/chat-guardrails";
 import { EMPTY_CHAT_FACTS } from "@/lib/chat-memory";
 
@@ -140,6 +142,50 @@ test("memory recall includes the stored budget instead of relying on model wordi
   });
   expect(result).toContain("blog");
   expect(result).toContain("120.000đ/tháng");
+});
+
+test("a new contradictory requirement is advice input, not a memory recall request", () => {
+  const result = memoryRecallAnswer(
+    "Ngân sách của tôi chỉ 20.000 đồng nhưng website phải chịu 1 triệu khách cùng lúc.",
+    {
+      facts: {
+        ...EMPTY_CHAT_FACTS,
+        websiteType: "store",
+        monthlyVisits: 1_000_000,
+        monthlyBudget: 20_000,
+      },
+      summary: "",
+      unresolved: [],
+    },
+  );
+  expect(result).toBeNull();
+});
+
+test("an impossible load and SEO promise gets a grounded plan without repeating known inputs", () => {
+  const result = unrealisticGuaranteeAnswer(
+    "Ngân sách của tôi chỉ 20.000 đồng nhưng website phải chịu 1 triệu khách cùng lúc, không chậm và SEO top 1.",
+  );
+  expect(result?.answer).toContain("Không thể cam kết");
+  expect(result?.answer).toContain("một triệu lượt truy cập trong cả tháng");
+  expect(result?.answer).toContain("20.000đ/tháng");
+  expect(result?.answer).toContain("không yêu cầu bạn nhập lại");
+  expect(result?.answer).toContain("kế hoạch thử tải");
+  expect(result?.answer).not.toMatch(
+    /cho mình biết (?:lại )?(?:mức )?ngân sách/i,
+  );
+  expect(result?.sources.map((source) => source.citation)).toEqual(["K1", "K2"]);
+});
+
+test("a vague cheap-and-good shop request gets focused follow-up questions", () => {
+  const result = ambiguousHostingRequestAnswer(
+    "🤔 web bán hàng kiểu sao ta??? rẻ mà xịn 😵‍💫",
+  );
+  expect(result?.answer).toContain("không có một gói");
+  expect(result?.answer).toContain("lượt truy cập dự kiến mỗi tháng");
+  expect(result?.answer).toContain("ngân sách mỗi tháng");
+  expect(result?.answer).toContain("tên miền");
+  expect(result?.answer).toContain("thanh toán trực tiếp trên web");
+  expect(result?.sources.map((source) => source.citation)).toEqual(["K1", "K2"]);
 });
 
 test("budget correction repeats the exact amount that was stored", () => {

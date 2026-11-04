@@ -1,8 +1,8 @@
 # Ma trận 20 ca kiểm thử vòng loại — Đề 01, Bảng A
 
-**Bản xem nhanh cho giám khảo:** [Trang minh chứng 20 ca](MINH_CHUNG_20_CA.html) · [Báo cáo 9 ca APK](HOSTORA_MOBILE_9_CASES.html) · [PDF 6 ca tối thiểu](MINH_CHUNG_6_CA.pdf).
+**Bản xem nhanh cho giám khảo:** [Trang minh chứng 20 ca](MINH_CHUNG_20_CA.html) · [Báo cáo 9 ca APK](HOSTORA_MOBILE_9_CASES.html) · [9 ca hội thoại khó](AI_CHAT_HARD_CASES_2026-11-04.md) · [PDF 6 ca tối thiểu](MINH_CHUNG_6_CA.pdf).
 
-**Bản nguồn:** HOSTORA 2.2.2, commit phát hành `127bef9`, release `v2.2.2`.
+**Bản nguồn:** HOSTORA 2.2.2, nhánh `main`, release `v2.2.2`; đối chiếu lại ngày 04/11/2026.
 
 **Ngày đối chiếu:** 03/11/2026 (UTC+7).
 

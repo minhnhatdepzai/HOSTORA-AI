@@ -24,6 +24,7 @@ import { colors } from "@/constants/theme";
 import { DEFAULT_API_BASE, getApiBase, saveApiBase } from "@/lib/api";
 
 const USB_API_BASE = "http://127.0.0.1:3000";
+const EMULATOR_API_BASE = "http://10.0.2.2:3200";
 
 export default function SettingsScreen() {
   const [url, setUrl] = useState(DEFAULT_API_BASE);
@@ -31,6 +32,7 @@ export default function SettingsScreen() {
   const [message, setMessage] = useState("");
   const [connected, setConnected] = useState(false);
   const usbMode = url.trim() === USB_API_BASE;
+  const emulatorMode = url.trim() === EMULATOR_API_BASE;
 
   useEffect(() => {
     void getApiBase().then(setUrl);
@@ -47,13 +49,17 @@ export default function SettingsScreen() {
       if (!response.ok || !result.ok) throw new Error("Kết nối chưa sẵn sàng.");
       setConnected(true);
       setMessage(
-        usbMode
+        emulatorMode
+          ? "Đã kết nối từ máy ảo Android. Trợ lý HOSTORA đã sẵn sàng."
+          : usbMode
           ? "Đã kết nối qua cáp USB. Các tính năng tư vấn đã sẵn sàng."
           : "Đã kết nối. Các tính năng tư vấn đã sẵn sàng.",
       );
     } catch {
       setMessage(
-        usbMode
+        emulatorMode
+          ? "Máy ảo chưa thấy HOSTORA trên máy tính. Hãy kiểm tra dịch vụ ở cổng 3200 rồi thử lại."
+          : usbMode
           ? "Chưa kết nối qua USB. Hãy giữ cáp cắm, bật máy HOSTORA và thiết lập chuyển tiếp cổng rồi thử lại."
           : "Chưa kết nối được. Hãy kiểm tra hai thiết bị đang cùng Wi‑Fi và thử lại.",
       );
@@ -114,11 +120,19 @@ export default function SettingsScreen() {
             />
             <View style={styles.presets}>
               <Preset
+                icon="monitor"
+                label="Máy ảo Android"
+                copy="Dùng cho Android Studio Emulator trên máy này"
+                selected={emulatorMode}
+                wide
+                onPress={() => setUrl(EMULATOR_API_BASE)}
+              />
+              <Preset
                 icon="wifi"
                 label="Qua Wi‑Fi"
                 copy="Dùng khi hai thiết bị cùng mạng"
-                selected={!usbMode}
-                onPress={() => setUrl(DEFAULT_API_BASE)}
+                selected={!usbMode && !emulatorMode}
+                onPress={() => setUrl("")}
               />
               <Preset
                 icon="smartphone"
@@ -165,13 +179,18 @@ export default function SettingsScreen() {
             <Text style={styles.helpTitle}>Cách kết nối</Text>
             <Help
               number="1"
-              title="Điện thoại và máy HOSTORA cùng Wi‑Fi"
-              copy="Nhập địa chỉ do người cài đặt cung cấp, sau đó bấm Lưu và kiểm tra kết nối."
+              title="Nếu đang dùng máy ảo Android"
+              copy="Chọn Máy ảo Android. App sẽ đi thẳng tới HOSTORA trên máy tính, không cần cáp USB."
             />
             <Help
               number="2"
+              title="Nếu dùng điện thoại thật"
+              copy="Nhập địa chỉ do người cài đặt cung cấp hoặc chọn cáp USB, sau đó kiểm tra kết nối."
+            />
+            <Help
+              number="3"
               title="Nếu chưa kết nối được"
-              copy="Kiểm tra máy HOSTORA đang bật, hai thiết bị đang cùng mạng rồi thử lại."
+              copy="Kiểm tra máy HOSTORA đang bật và dịch vụ đang chạy rồi thử lại."
             />
           </Card>
           <View style={styles.privacy}>
@@ -212,12 +231,14 @@ function Preset({
   label,
   copy,
   selected,
+  wide = false,
   onPress,
 }: {
   icon: React.ComponentProps<typeof Feather>["name"];
   label: string;
   copy: string;
   selected: boolean;
+  wide?: boolean;
   onPress: () => void;
 }) {
   return (
@@ -227,6 +248,7 @@ function Preset({
       onPress={onPress}
       style={({ pressed }) => [
         styles.preset,
+        wide && styles.presetWide,
         selected && styles.presetSelected,
         pressed && { opacity: 0.72 },
       ]}
@@ -280,9 +302,10 @@ const styles = StyleSheet.create({
     fontFamily: "BeVietnamPro_600SemiBold",
     fontSize: 13,
   },
-  presets: { flexDirection: "row", gap: 8 },
+  presets: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   preset: {
-    flex: 1,
+    flexGrow: 1,
+    flexBasis: "47%",
     minHeight: 76,
     justifyContent: "center",
     gap: 5,
@@ -293,6 +316,7 @@ const styles = StyleSheet.create({
     borderColor: "rgba(184,243,214,.25)",
     backgroundColor: "rgba(184,243,214,.07)",
   },
+  presetWide: { flexBasis: "100%" },
   presetSelected: { backgroundColor: colors.mint, borderColor: colors.mint },
   presetHead: { flexDirection: "row", alignItems: "center", gap: 6 },
   presetText: {

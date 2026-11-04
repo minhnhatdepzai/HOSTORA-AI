@@ -5,7 +5,7 @@
 ## Tải và cài APK
 
 - APK hiện tại 2.2.2 universal: [tải từ GitHub Release](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-2.2.2-universal.apk). Bản này chứa `arm64-v8a`, `armeabi-v7a`, `x86`, `x86_64`. Link tên [`arm64.apk`](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-2.2.2-arm64.apk) phục vụ cùng binary universal để biểu mẫu cũ không bị hỏng.
-- Checksum SHA-256: `2d4c35ff43032cd8e33e51a3316e826bad84b455ac23fd79266ff17e28fc6e72`; xem tệp `HOSTORA-AI-2.2.2-universal.apk.sha256` trong GitHub Release mới nhất.
+- Checksum SHA-256: `9000fb661ec8234e0adcc7a623e0fa351efd1de22cbf20d7ef7a63ca65e85058`; xem tệp `HOSTORA-AI-2.2.2-universal.apk.sha256` trong GitHub Release mới nhất.
 - APK 2.1.0 trở về trước là bằng chứng lịch sử; không dùng làm link tải mặc định nữa.
 
 Cài bằng ADB:

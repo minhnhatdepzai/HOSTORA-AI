@@ -71,6 +71,89 @@ test("chat confirms the new budget after an explicit correction", async () => {
   expect(await response.text()).toContain("300.000đ/tháng");
 });
 
+test("chat answers contradictory in-scope guarantees without handing off to admin", async () => {
+  const conversationId = crypto.randomUUID();
+  const response = await POST(new Request("http://127.0.0.1:3000/api/ai/chat", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      conversationId,
+      messageId: crypto.randomUUID(),
+      messages: [{
+        role: "user",
+        content:
+          "Ngân sách của tôi chỉ 20.000 đồng nhưng website phải chịu 1 triệu khách cùng lúc, không chậm và SEO top 1.",
+      }],
+    }),
+  }));
+
+  expect(response.status).toBe(200);
+  expect(response.headers.get("x-hostora-support-status")).toBe("active");
+  const answer = await response.text();
+  expect(answer).toContain("Không thể cam kết");
+  expect(answer).toContain("20.000đ/tháng");
+  expect(answer).not.toMatch(/đã chuyển.*quản trị viên/i);
+
+  const stored = getCustomerStore()
+    .listAllAiConversations()
+    .find((item) => item.id === conversationId);
+  expect(stored).toMatchObject({ status: "active", escalationReason: null });
+});
+
+test("chat removes a password before storage and keeps the conversation active", async () => {
+  const conversationId = crypto.randomUUID();
+  const response = await POST(new Request("http://127.0.0.1:3000/api/ai/chat", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      conversationId,
+      messageId: crypto.randomUUID(),
+      messages: [{
+        role: "user",
+        content:
+          "Mật khẩu giả TEST_ONLY_123, tư vấn hosting cho shop 5.000 khách/tháng.",
+      }],
+    }),
+  }));
+
+  expect(response.status).toBe(200);
+  expect(response.headers.get("x-hostora-support-status")).toBe("active");
+  expect(await response.text()).toContain("đã ẩn chuỗi bí mật");
+  const stored = getCustomerStore()
+    .listAllAiConversations()
+    .find((item) => item.id === conversationId);
+  expect(JSON.stringify(stored)).not.toContain("TEST_ONLY_123");
+  expect(stored?.messages[0].content).toContain("[đã ẩn bí mật]");
+  expect(stored).toMatchObject({ status: "active", escalationReason: null });
+});
+
+test("chat answers an emoji-heavy vague shop request without handing off", async () => {
+  const conversationId = crypto.randomUUID();
+  const response = await POST(new Request("http://127.0.0.1:3000/api/ai/chat", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      conversationId,
+      messageId: crypto.randomUUID(),
+      messages: [{
+        role: "user",
+        content: "🤔 web bán hàng kiểu sao ta??? rẻ mà xịn 😵‍💫",
+      }],
+    }),
+  }));
+
+  expect(response.status).toBe(200);
+  expect(response.headers.get("x-hostora-support-status")).toBe("active");
+  const answer = await response.text();
+  expect(answer).toContain("không có một gói");
+  expect(answer).toContain("lượt truy cập dự kiến mỗi tháng");
+  expect(answer).not.toMatch(/đã chuyển.*quản trị viên/i);
+  const stored = getCustomerStore()
+    .listAllAiConversations()
+    .find((item) => item.id === conversationId);
+  expect(stored).toMatchObject({ status: "active", escalationReason: null });
+});
+
 test("chat rejects malformed memory instead of forwarding it to the model", async () => {
   const response = await POST(new Request("http://127.0.0.1:3000/api/ai/chat", {
     method: "POST",

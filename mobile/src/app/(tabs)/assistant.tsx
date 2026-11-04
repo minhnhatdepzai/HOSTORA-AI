@@ -37,6 +37,7 @@ import {
   recentChatMessages,
   type MobileChatMemory,
 } from "@/lib/chat-memory";
+import { redactChatSensitiveInfo } from "@/lib/privacy";
 
 type Message = {
   role: "user" | "assistant";
@@ -90,6 +91,7 @@ export default function AssistantScreen() {
   const [loading, setLoading] = useState(false);
   const [imageLoading, setImageLoading] = useState(false);
   const [sourceLoading, setSourceLoading] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
   const [sourceCount, setSourceCount] = useState(0);
   const [memory, setMemory] = useState<MobileChatMemory | null>(null);
   const [conversationId, setConversationId] = useState<string | null>(null);
@@ -231,8 +233,9 @@ export default function AssistantScreen() {
   }, [conversationAccess, conversationId, customer, supportStatus]);
 
   async function send(text = input) {
-    const clean = text.trim();
+    const clean = redactChatSensitiveInfo(text.trim());
     if (!clean || loading) return;
+    setSendError(null);
     const next: Message[] = [...messages, { role: "user", content: clean }];
     const nextMemory = buildConversationMemory(
       next.map(({ role, content }) => ({ role, content })),
@@ -264,8 +267,13 @@ export default function AssistantScreen() {
         }),
       });
       const answer = await response.text();
-      if (!response.ok || !answer)
-        throw new Error(answer || "Trợ lý chưa phản hồi.");
+      if (!response.ok || !answer) {
+        if (response.status === 403 || response.status === 404)
+          throw new Error(
+            "Cuộc trò chuyện cũ không còn dùng được. Hãy mở cuộc trò chuyện mới để tiếp tục.",
+          );
+        throw new Error("HOSTORA chưa phản hồi. Hãy thử lại sau ít phút.");
+      }
       const nextConversationId = response.headers.get(
         "x-hostora-conversation-id",
       );
@@ -318,14 +326,18 @@ export default function AssistantScreen() {
         await AsyncStorage.setItem(KEY, JSON.stringify(completed));
         await AsyncStorage.setItem(MEMORY_KEY, JSON.stringify(nextMemory));
       }
-    } catch {
+    } catch (error) {
       setInput(clean);
+      const failureMessage =
+        error instanceof Error && error.message.startsWith("Cuộc trò chuyện cũ")
+          ? error.message
+          : "Chưa kết nối được với HOSTORA. Hãy thử lại hoặc mở cuộc trò chuyện mới.";
+      setSendError(failureMessage);
       const failed: Message[] = [
         ...next,
         {
           role: "assistant",
-          content:
-            "Mình chưa thể trả lời lúc này. Vui lòng mở phần Kết nối, kiểm tra lại rồi thử lần nữa.",
+          content: failureMessage,
         },
       ];
       setMessages(failed);
@@ -502,6 +514,8 @@ export default function AssistantScreen() {
       },
     ];
     setMessages(initial);
+    setInput("");
+    setSendError(null);
     setConversationId(null);
     setConversationAccess(null);
     setSupportStatus("active");
@@ -513,6 +527,34 @@ export default function AssistantScreen() {
       await AsyncStorage.removeItem(CONVERSATION_ACCESS_KEY);
       await AsyncStorage.removeItem(SUPPORT_STATUS_KEY);
     }
+  }
+
+  async function startNewConversation() {
+    if (loading || imageLoading || sourceLoading) return;
+    const initial: Message[] = [
+      {
+        role: "assistant",
+        content:
+          "Đây là cuộc trò chuyện mới. Bạn đang chuẩn bị trang web gì?",
+      },
+    ];
+    setMessages(initial);
+    setInput("");
+    setMemory(null);
+    setConversationId(null);
+    setConversationAccess(null);
+    setSupportStatus("active");
+    setSendError(null);
+    if (!customer) {
+      await AsyncStorage.setItem(KEY, JSON.stringify(initial));
+      await Promise.all([
+        AsyncStorage.removeItem(MEMORY_KEY),
+        AsyncStorage.removeItem(CONVERSATION_KEY),
+        AsyncStorage.removeItem(CONVERSATION_ACCESS_KEY),
+        AsyncStorage.removeItem(SUPPORT_STATUS_KEY),
+      ]);
+    }
+    setTimeout(() => list.current?.scrollToEnd({ animated: true }), 80);
   }
 
   function clear() {
@@ -551,6 +593,18 @@ export default function AssistantScreen() {
             <Pill tone="mint" icon="shield">
               RIÊNG TƯ
             </Pill>
+            <Pressable
+              disabled={loading || imageLoading || sourceLoading}
+              onPress={() => void startNewConversation()}
+              style={[
+                styles.newConversationIcon,
+                (loading || imageLoading || sourceLoading) && { opacity: 0.35 },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel="Mở cuộc trò chuyện mới"
+            >
+              <Feather name="plus" color="white" size={18} />
+            </Pressable>
             <Pressable
               onPress={clear}
               style={styles.trash}
@@ -730,6 +784,35 @@ export default function AssistantScreen() {
           </View>
         ) : null}
 
+        {sendError ? (
+          <View style={styles.chatError} accessibilityLiveRegion="polite">
+            <View style={styles.chatErrorCopy}>
+              <Text style={styles.chatErrorTitle}>Tin nhắn chưa gửi được</Text>
+              <Text style={styles.chatErrorText}>{sendError}</Text>
+            </View>
+            <View style={styles.chatErrorActions}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Thử gửi lại tin nhắn"
+                onPress={() => void send()}
+                style={styles.retryButton}
+              >
+                <Feather name="refresh-cw" color={colors.primary} size={14} />
+                <Text style={styles.retryButtonText}>Thử lại</Text>
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Mở cuộc trò chuyện mới"
+                onPress={() => void startNewConversation()}
+                style={styles.newConversationButton}
+              >
+                <Feather name="plus" color="white" size={14} />
+                <Text style={styles.newConversationButtonText}>Chat mới</Text>
+              </Pressable>
+            </View>
+          </View>
+        ) : null}
+
         {messages.length < 3 ? (
           <ScrollView
             horizontal
@@ -827,6 +910,14 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,.9)",
   },
   headerRight: { flexDirection: "row", alignItems: "center", gap: 7 },
+  newConversationIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   trash: {
     width: 36,
     height: 36,
@@ -1000,6 +1091,61 @@ const styles = StyleSheet.create({
     fontSize: 10,
     lineHeight: 15,
     marginTop: 2,
+  },
+  chatError: {
+    marginHorizontal: 12,
+    marginBottom: 8,
+    padding: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#E8B0A4",
+    backgroundColor: "#FFF5F2",
+    gap: 10,
+  },
+  chatErrorCopy: { gap: 3 },
+  chatErrorTitle: {
+    color: colors.ink,
+    fontFamily: "BeVietnamPro_800ExtraBold",
+    fontSize: 11,
+  },
+  chatErrorText: {
+    color: colors.muted,
+    fontFamily: "BeVietnamPro_400Regular",
+    fontSize: 10,
+    lineHeight: 15,
+  },
+  chatErrorActions: { flexDirection: "row", gap: 8 },
+  retryButton: {
+    minHeight: 38,
+    flex: 1,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.line,
+    backgroundColor: "white",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+  },
+  retryButtonText: {
+    color: colors.primary,
+    fontFamily: "BeVietnamPro_700Bold",
+    fontSize: 11,
+  },
+  newConversationButton: {
+    minHeight: 38,
+    flex: 1,
+    borderRadius: 12,
+    backgroundColor: colors.primary,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+  },
+  newConversationButtonText: {
+    color: "white",
+    fontFamily: "BeVietnamPro_700Bold",
+    fontSize: 11,
   },
   startersScroll: { flexGrow: 0, maxHeight: 58 },
   starters: { gap: 7, paddingHorizontal: 16, paddingVertical: 7 },

@@ -17,3 +17,9 @@ test("drops empty editorial labels leaked from training format", () => {
     "Câu trả lời.",
   );
 });
+
+test("drops a wildcard customer-source placeholder leaked by the model", () => {
+  expect(
+    sanitizeCitations("Hãy cho biết thêm nhu cầu. [U*]", new Set()),
+  ).toBe("Hãy cho biết thêm nhu cầu.");
+});
