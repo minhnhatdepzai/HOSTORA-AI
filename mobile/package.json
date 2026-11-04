@@ -1,6 +1,6 @@
 {
   "name": "hostora-mobile",
-  "version": "2.2.2",
+  "version": "2.2.3",
   "main": "expo-router/entry",
   "dependencies": {
     "@expo-google-fonts/be-vietnam-pro": "^0.4.1",
@@ -10,6 +10,7 @@
     "@shopify/react-native-skia": "2.14.0",
     "expo": "~58.0.19",
     "expo-build-properties": "~58.0.11",
+    "expo-clipboard": "~58.0.4",
     "expo-constants": "~58.0.13",
     "expo-device": "~58.0.5",
     "expo-document-picker": "~58.0.4",

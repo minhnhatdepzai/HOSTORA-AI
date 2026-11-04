@@ -47,7 +47,7 @@ pnpm android:update
 - `audit:ui`: cùng cơ chế server cách ly, chụp desktop/mobile cho trang chủ, wizard, kết quả, admin, đơn hàng và hỗ trợ. Ghi `ui-audit.json`; exit 1 khi có lỗi axe/page/overflow. Đó là kết quả audit để xử lý, không phải script hỏng chỉ vì exit 1.
 - `test:mobile:e2e`: chạy `mobile/.maestro/consultation-smoke.yaml` trên thiết bị được chọn; đi bốn bước và yêu cầu màn kết quả đã tải bảng giá. Không xóa dữ liệu app và không gửi yêu cầu mua.
 - `test:mobile:mcp`: luồng bốn bước qua Mobile MCP khi Maestro chưa có quyền cài driver; tạo đường USB `adb reverse tcp:3000 tcp:3000`. Backend cổng 3000 phải đang chạy và app phải chọn chế độ USB trong Kết nối dịch vụ. Có ảnh từng bước, kết quả và log; test thất bại nếu catalog không tải được.
-- `android:update`: build arm64, kiểm tra package/version bằng aapt trước khi `adb install -r`, mở app. Nếu app.json và native Android chưa đồng bộ thì dừng, không cài nhầm APK. Việc upload/release ra GitHub không được thực hiện bởi lệnh này.
+- `android:update`: nhận kiến trúc của thiết bị đã chọn, build đúng `x86_64` cho Android Emulator hoặc `arm64-v8a` cho điện thoại, kiểm tra package/version bằng aapt trước khi `adb install -r`, rồi mở app. Nếu app.json và native Android chưa đồng bộ thì dừng, không cài nhầm APK. Việc upload/release ra GitHub không được thực hiện bởi lệnh này.
 
 Chọn thiết bị khi cắm nhiều máy:
 
@@ -57,7 +57,9 @@ HOSTORA_ANDROID_DEVICE=<adb-serial> pnpm test:mobile:e2e
 
 Ảnh và báo cáo ghi trong `output/playwright/agent-<UTC timestamp>/`; SQLite test nằm ở thư mục tạm được in cuối lệnh. Không đưa cơ sở dữ liệu thật, cookie, secret, raw lead hoặc ảnh có PII vào commit.
 
-## Trên Xiaomi/Redmi
+## Trên Android Emulator hoặc Xiaomi/Redmi
+
+Luồng hiện tại ưu tiên emulator. Đặt `HOSTORA_ANDROID_DEVICE=emulator-5554` khi có nhiều thiết bị; `android:update` sẽ tự build APK x86_64 phù hợp và vẫn cài đè bằng `adb install -r` để giữ dữ liệu.
 
 Maestro cần cài ứng dụng test driver qua USB. Nếu có `INSTALL_FAILED_USER_RESTRICTED`, người dùng phải cho phép “Cài đặt qua USB” và chấp nhận hộp thoại cài ứng dụng hỗ trợ. Không tự tắt bảo vệ thiết bị để né lỗi. Mobile MCP đã có thể khám phá máy, đọc cây và chụp ảnh trong cấu hình hiện tại; có thể dùng nó để kiểm tra thủ công có bằng chứng trong khi Maestro chờ quyền.
 

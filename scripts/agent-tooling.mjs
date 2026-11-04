@@ -85,11 +85,29 @@ async function isolatedWeb(action) {
 }
 async function androidUpdate() {
   const id = device();
-  await run(pnpm, ['--dir', 'mobile', 'apk:arm64'], { env: { ...process.env, ANDROID_HOME: sdk, ANDROID_SDK_ROOT: sdk, JAVA_HOME: javaHome } });
+  const supportedAbis = capture(adb, ['-s', id, 'shell', 'getprop', 'ro.product.cpu.abilist'])
+    .split(',')
+    .map(value => value.trim())
+    .filter(Boolean);
+  const architecture = supportedAbis.includes('x86_64')
+    ? 'x86_64'
+    : supportedAbis.includes('arm64-v8a')
+      ? 'arm64-v8a'
+      : null;
+  if (!architecture) {
+    throw new Error(`Unsupported Android architecture: ${supportedAbis.join(', ') || 'unknown'}.`);
+  }
+  await run(join(root, 'mobile/android/gradlew'), [
+    'assembleRelease',
+    `-PreactNativeArchitectures=${architecture}`,
+  ], {
+    cwd: join(root, 'mobile/android'),
+    env: { ...process.env, ANDROID_HOME: sdk, ANDROID_SDK_ROOT: sdk, JAVA_HOME: javaHome },
+  });
   const folder = join(root, 'mobile/android/app/build/outputs/apk/release');
   const files = readdirSync(folder).filter(name => name.endsWith('.apk') && !name.includes('unsigned'));
-  const name = files.find(name => name.includes('arm64')) || files.find(name => name === 'app-release.apk');
-  if (!name) throw new Error('No signed arm64/release APK found.');
+  const name = files.find(name => name === 'app-release.apk');
+  if (!name) throw new Error(`No signed ${architecture} release APK found.`);
   const apk = join(folder, name);
   const expected = JSON.parse(readFileSync(join(root, 'mobile/app.json'), 'utf8')).expo.version;
   const buildTools = join(sdk, 'build-tools');
@@ -99,7 +117,7 @@ async function androidUpdate() {
   if (!metadata.includes(`name='com.hostora.ai'`) || !metadata.includes(`versionName='${expected}'`)) throw new Error('APK metadata differs from app.json; sync the native project and rebuild before installing.');
   await run(adb, ['-s', id, 'install', '-r', apk]);
   await run(adb, ['-s', id, 'shell', 'am', 'start', '-n', 'com.hostora.ai/.MainActivity']);
-  console.log(`Installed ${expected} with existing app data preserved. Validate the changed user flow on the device.`);
+  console.log(`Installed ${expected} (${architecture}) with existing app data preserved. Validate the changed user flow on the device.`);
 }
 try {
   if (mode === 'doctor') await doctor();

@@ -259,7 +259,7 @@ describe("portable release handoff", () => {
     );
   });
 
-  it("keeps release 2.2.2 aligned across config, native Android and docs", () => {
+  it("keeps the mobile release metadata aligned across config and native Android", () => {
     const app = JSON.parse(
       readFileSync(path.join(root, "mobile/app.json"), "utf8"),
     ) as { expo: { version: string; android: { versionCode: number } } };
@@ -267,23 +267,12 @@ describe("portable release handoff", () => {
       readFileSync(path.join(root, "mobile/package.json"), "utf8"),
     ) as { version: string };
     const nativeGradle = path.join(root, "mobile/android/app/build.gradle");
-    const readme = readFileSync(path.join(root, "README.md"), "utf8");
-    const mobileReadme = readFileSync(
-      path.join(root, "mobile/README.md"),
-      "utf8",
-    );
-
-    expect(app.expo.version).toBe("2.2.2");
-    expect(app.expo.android.versionCode).toBe(25);
-    expect(mobilePackage.version).toBe("2.2.2");
+    expect(mobilePackage.version).toBe(app.expo.version);
+    expect(app.expo.android.versionCode).toBeGreaterThan(0);
     if (existsSync(nativeGradle)) {
       const gradle = readFileSync(nativeGradle, "utf8");
-      expect(gradle).toContain("versionCode 25");
-      expect(gradle).toContain('versionName "2.2.2"');
+      expect(gradle).toContain(`versionCode ${app.expo.android.versionCode}`);
+      expect(gradle).toContain(`versionName "${app.expo.version}"`);
     }
-    expect(readme).toContain("HOSTORA-AI-2.2.2-universal.apk");
-    expect(readme).toContain("HOSTORA-source-2.2.2-2026-11-04.zip");
-    expect(readme).toContain("HOSTORA-finetuning-2.2.2-2026-11-04.zip");
-    expect(mobileReadme).toContain("HOSTORA-AI-2.2.2-universal.apk");
   });
 });

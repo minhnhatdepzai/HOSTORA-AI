@@ -1,6 +1,7 @@
 import { Pressable } from "@/components/pressable";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Feather } from "@expo/vector-icons";
+import * as Clipboard from "expo-clipboard";
 import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
 import { File } from "expo-file-system";
@@ -98,6 +99,9 @@ export default function AssistantScreen() {
   const [conversationAccess, setConversationAccess] = useState<string | null>(null);
   const [supportStatus, setSupportStatus] = useState<SupportStatus>("active");
   const [historyLoading, setHistoryLoading] = useState(true);
+  const [copiedMessageIndex, setCopiedMessageIndex] = useState<number | null>(
+    null,
+  );
   const list = useRef<ScrollViewInstance>(null);
 
   useEffect(() => {
@@ -581,11 +585,16 @@ export default function AssistantScreen() {
     );
   }
 
+  async function copyMessage(index: number, content: string) {
+    await Clipboard.setStringAsync(content);
+    setCopiedMessageIndex(index);
+  }
+
   return (
     <SafeAreaView style={styles.safe} edges={["top", "left", "right"]}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <View style={styles.header}>
           <Brand />
@@ -631,18 +640,27 @@ export default function AssistantScreen() {
           scrollRef={list}
           style={styles.chat}
           contentContainerStyle={styles.chatContent}
+          keyboardDismissMode="on-drag"
+          keyboardShouldPersistTaps="handled"
           onContentSizeChange={() =>
             list.current?.scrollToEnd({ animated: true })
           }
         >
-          {messages.map((message, index) => (
-            <View
-              key={`${index}-${message.content.slice(0, 8)}`}
-              style={[
-                styles.messageRow,
-                message.role === "user" && styles.messageRowUser,
-              ]}
-            >
+          {messages.map((message, index) => {
+            const copyText =
+              message.role === "assistant"
+                ? customerAnswer(message.content, message.sources)
+                : message.content;
+            const copied = copiedMessageIndex === index;
+
+            return (
+              <View
+                key={`${index}-${message.content.slice(0, 8)}`}
+                style={[
+                  styles.messageRow,
+                  message.role === "user" && styles.messageRowUser,
+                ]}
+              >
               {message.role === "assistant" ? (
                 <View
                   style={[
@@ -739,13 +757,42 @@ export default function AssistantScreen() {
                     ) : null}
                   </>
                 ) : (
-                  <Text style={[styles.messageText, { color: "white" }]}>
+                  <Text
+                    selectable
+                    style={[styles.messageText, { color: "white" }]}
+                  >
                     {message.content}
                   </Text>
                 )}
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    copied ? "Đã sao chép tin nhắn" : "Sao chép tin nhắn"
+                  }
+                  onPress={() => void copyMessage(index, copyText)}
+                  style={[
+                    styles.copyButton,
+                    message.role === "user" && styles.copyButtonUser,
+                  ]}
+                >
+                  <Feather
+                    name={copied ? "check" : "copy"}
+                    color={message.role === "user" ? "white" : colors.primary}
+                    size={13}
+                  />
+                  <Text
+                    style={[
+                      styles.copyButtonText,
+                      message.role === "user" && styles.copyButtonTextUser,
+                    ]}
+                  >
+                    {copied ? "Đã sao chép" : "Sao chép"}
+                  </Text>
+                </Pressable>
               </View>
             </View>
-          ))}
+            );
+          })}
           {historyLoading ? (
             <View style={styles.thinking} accessibilityLiveRegion="polite">
               <ActivityIndicator color={colors.primary} size="small" />
@@ -872,6 +919,11 @@ export default function AssistantScreen() {
             style={styles.input}
             multiline
             maxLength={2000}
+            onFocus={() =>
+              requestAnimationFrame(() =>
+                list.current?.scrollToEnd({ animated: true }),
+              )
+            }
           />
           <Pressable
             disabled={!input.trim() || loading || imageLoading || sourceLoading}
@@ -986,6 +1038,25 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 20,
   },
+  copyButton: {
+    minHeight: 32,
+    marginTop: 8,
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+    borderRadius: 10,
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: colors.primarySoft,
+  },
+  copyButtonUser: { backgroundColor: "rgba(255,255,255,.16)" },
+  copyButtonText: {
+    color: colors.primary,
+    fontFamily: "BeVietnamPro_700Bold",
+    fontSize: 10,
+  },
+  copyButtonTextUser: { color: "white" },
   nextAction: {
     minHeight: 46,
     marginTop: 8,
