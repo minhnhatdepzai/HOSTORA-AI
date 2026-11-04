@@ -1,74 +1,266 @@
 # HOSTORA AI
 
-HOSTORA AI giúp chủ shop và doanh nghiệp Việt Nam đi từ một nhu cầu còn mơ hồ đến phương án website, hosting và đơn hàng có thể theo dõi. Người dùng mô tả bằng tiếng Việt, kiểm tra dữ kiện AI đã hiểu, so sánh gói, tạo website mẫu và gửi yêu cầu mua trên web hoặc Android. Mọi hội thoại AI được lưu sau khi ẩn email/số điện thoại; câu ngoài phạm vi hoặc chưa đủ dữ liệu được chuyển tới hộp thư admin để người thật trả lời ngay trong cuộc trò chuyện.
+> Nền tảng tư vấn và vận hành website local-first dành cho chủ shop, doanh nghiệp
+> nhỏ và người không rành kỹ thuật — từ một nhu cầu còn mơ hồ đến website mẫu,
+> phương án hosting có nguồn, yêu cầu mua và hỗ trợ sau bán hàng.
 
-AI chạy local qua Ollama. AI chỉ trích xuất, giải thích và soạn nội dung; giá, thứ tự gói, voucher và trạng thái giao dịch do mã TypeScript/SQLite tất định kiểm soát. HOSTORA không dùng cloud AI fallback và không đưa PII vào model.
+**Một repository · Ba bề mặt sản phẩm · Một backend dùng chung · AI chạy local**
+
+HOSTORA AI không phải một landing page gắn thêm ô chat. Đây là một sản phẩm
+full-stack hoàn chỉnh gồm website khách hàng, ứng dụng Android, web quản trị,
+backend giao dịch, hệ thống RAG, các workflow AI có kiểm soát, bộ dữ liệu thương
+mại có nguồn và quy trình kiểm thử/bàn giao có thể tái lập.
+
+## Mục lục
+
+- [Tổng quan và bài toán](#tổng-quan-dự-án)
+- [Web, Android và web quản trị](#những-gì-đã-xây-dựng)
+- [AI, RAG, guardrail và fine-tuning](#hệ-thống-ai-đã-triển-khai)
+- [Kiến trúc và công nghệ](#kiến-trúc-tổng-thể)
+- [Link demo, APK và Source ZIP](#truy-cập-nhanh)
+- [Chạy bằng Docker cho người mới](#hướng-dẫn-cho-người-chưa-biết-code--chạy-bằng-docker)
+- [Chạy development và Android](#chạy-local-cho-lập-trình-viên)
+- [Kiểm thử và hồ sơ vòng loại](#kiểm-thử-và-minh-chứng)
+
+## Tổng quan dự án
+
+### Bài toán HOSTORA giải quyết
+
+Người mới làm website thường biết mình muốn “bán hàng”, “giới thiệu công ty”
+hoặc “làm web cho đẹp”, nhưng chưa biết cần tên miền, hosting, SSL, email, sao
+lưu hay mức tài nguyên nào. Giá ưu đãi theo tháng cũng dễ bị hiểu nhầm thành số
+tiền phải trả từng tháng, trong khi kỳ thanh toán, giá gia hạn và dịch vụ đi kèm
+có thể thay đổi đáng kể.
+
+Một chatbot thuần LLM không đủ an toàn cho bài toán này: model có thể bịa giá,
+xếp sai gói, hứa SEO hoặc chịu tải không có căn cứ. HOSTORA vì vậy tách hệ thống
+thành hai lớp:
+
+- **AI hiểu và giải thích:** đọc nhu cầu tiếng Việt, truy xuất nguồn, soạn nội
+  dung website và diễn giải kết quả bằng ngôn ngữ dễ hiểu;
+- **Code quyết định:** TypeScript và SQLite kiểm soát giá, ngân sách, thứ tự gói,
+  voucher, hóa đơn, thanh toán, hoàn tiền và trạng thái hội thoại.
+
+Kết quả là một luồng xuyên suốt: **kể nhu cầu → kiểm tra AI hiểu gì → so sánh
+phương án → dựng website mẫu → gửi yêu cầu mua → theo dõi đơn → nhận hỗ trợ**.
+
+### Dữ liệu sản phẩm đã chuẩn hóa
+
+- 29 dịch vụ từ 9 nhà cung cấp: hosting, WordPress, cloud, VPS, tên miền, SSL,
+  email, workspace, backup, monitoring, CDN/security và automation;
+- 13 gói hosting có thông số, giá ưu đãi, kỳ thanh toán, giá gia hạn khi có,
+  giới hạn, URL nguồn và ngày xác minh;
+- 36 tài liệu knowledge có metadata nguồn, thẩm quyền, chủ đề và ngày kiểm tra;
+- dữ liệu chưa đủ được giữ là `null` hoặc hiển thị **Chưa xác minh**, không cho
+  model tự điền phần còn thiếu.
+
+## Những gì đã xây dựng
+
+| Bề mặt                 | Chức năng chính                                                                                                                                                                             | Điểm kỹ thuật nổi bật                                                                                                        |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| **Website khách hàng** | Catalog dịch vụ, wizard tư vấn, so sánh top 3, trợ lý AI có nguồn, gợi ý tên miền, Website Studio, launch readiness, chấm SEO/AI visibility, tài khoản, voucher, yêu cầu mua và tra cứu đơn | Next.js App Router, Server Components, structured metadata, JSON-LD, sitemap, `llms.txt`, responsive desktop/mobile          |
+| **Ứng dụng Android**   | Trang chủ, danh mục, chọn gói, chat AI, đính kèm ảnh/tài liệu, Website Studio, SEO analyzer, readiness, kiến thức, tài khoản, đơn hàng và hồ sơ giám khảo                                   | Expo Router, React Native, cinematic cold-start 12,4 giây, Skia shader, Reanimated, haptic, SecureStore, APK universal 4 ABI |
+| **Web quản trị**       | Dashboard doanh thu, catalog CRUD, hộp thư hội thoại AI, phản hồi người thật, yêu cầu mua, hóa đơn, đối soát, hủy và hoàn tiền                                                              | OTP email, session HMAC, Recharts, dự báo số học tất định, phân quyền route và dữ liệu SQLite                                |
+| **Backend dùng chung** | AI/RAG, account memory, ingestion nguồn riêng, catalog, thanh toán, email, analytics và Website Studio                                                                                      | Route handlers TypeScript, Zod, Node SQLite, Ollama loopback, Stripe/VNPay sandbox, Nodemailer/Mailpit                       |
+
+### Luồng trải nghiệm end-to-end
+
+1. Khách mô tả nhu cầu tự nhiên hoặc điền wizard bốn bước.
+2. Qwen trích xuất dữ kiện có cấu trúc; Zod từ chối output sai schema.
+3. Engine tất định lọc catalog, tính tiền trả trước, kiểm tra ngân sách và xếp
+   tối đa ba phương án.
+4. Trợ lý giải thích bằng tiếng Việt, đính nguồn và nêu rõ điều chưa xác minh.
+5. Khách có thể dùng Website Studio để tạo bản xem trước và tải website mẫu.
+6. Khách gửi yêu cầu mua; hệ thống tạo hóa đơn demo/sandbox và theo dõi toàn bộ
+   vòng đời đơn hàng.
+7. Khi khách chủ động yêu cầu người thật, câu hỏi thật sự ngoài phạm vi, thiếu dữ
+   liệu thời gian thực hoặc AI local gián đoạn, hội thoại được chuyển vào inbox
+   admin và có thể phát email thông báo cho quản trị viên.
+
+## Hệ thống AI đã triển khai
+
+### Model và vai trò
+
+| Thành phần     | Model/runtime                       | Vai trò và trạng thái                                                                                               |
+| -------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Structured AI  | `qwen3.5:9b-q8_0` qua Ollama        | Trích xuất nhu cầu, giải thích, phân tích readiness và các output JSON có schema; đang dùng trong runtime local     |
+| Chatbot RAG    | `hostora-chatbot:4b-q8-20261023-v2` | Model Qwen3.5-4B LoRA/GGUF Q8 đang dùng cho hội thoại trong môi trường demo đã kiểm tra                             |
+| Embedding      | `qwen3-embedding:4b`                | Vector 2.560 chiều cho knowledge RAG; có lexical fallback khi embedding/index không sẵn sàng                        |
+| Vision         | `qwen3-vl:8b`                       | Được cấu hình để đọc ảnh hành trình/ảnh nguồn riêng; output bị giới hạn schema và không được đoán chữ không nhìn rõ |
+| Website Studio | Qwen structured output + LangGraph  | Viết nội dung, kiểm tra claim không có nguồn, tự sửa một lượt rồi chuyển sang template fallback nếu vẫn không đạt   |
+| Runtime        | Ollama `127.0.0.1:11434`            | Context thực tế 16.384 token, `keep_alive=10m`, không có cloud AI fallback                                          |
+
+### RAG: dữ kiện mới không cần nhồi vào trọng số model
+
+```text
+Câu hỏi tiếng Việt
+      │
+      ├─ che PII + kiểm tra input
+      │
+      ├─ query expansion tất định
+      │
+      ├─ BM25 lexical + Qwen embedding/cosine
+      │       └─ đa dạng hóa URL và chủ đề
+      │
+      ├─ catalog + plan + knowledge có nguồn
+      │
+      └─ prompt coi context là dữ liệu không tin cậy
+              └─ Qwen trả lời → lọc citation giả → lưu bản đã che PII
+```
+
+RAG chính dùng 36 tài liệu trong `data/knowledge.json` và index local trong
+`data/rag-index.json`. Bộ đánh giá nội bộ 10 câu high-signal đạt Recall@5 = 1,00
+và MRR@5 = 0,95 tại snapshot 23/10/2026. Đây là chỉ số retrieval nội bộ, không
+được diễn giải thành độ chính xác tuyệt đối của câu trả lời hoặc hiệu quả kinh
+doanh.
+
+Tài khoản còn có thể thêm nguồn riêng dạng PDF, DOCX, TXT/Markdown, website công
+khai hoặc ảnh. Server giới hạn dung lượng/trang, chặn URL nội bộ để giảm SSRF,
+che thông tin liên hệ, cắt đoạn và dùng BM25 lấy tối đa bốn đoạn liên quan.
+Nguồn riêng chỉ giúp hiểu doanh nghiệp và sản phẩm của khách; nó không được dùng
+để thay thế dữ liệu giá/availability chính thức.
+
+### Guardrail và kiểm soát đầu ra
+
+- mọi structured output đi qua Zod và JSON Schema;
+- context RAG, website và ảnh được xem là dữ liệu không tin cậy; chỉ dẫn/prompt
+  injection nằm trong nguồn bị bỏ qua;
+- email, số điện thoại, OTP, token và chuỗi giống bí mật được che trước khi đưa
+  vào model hoặc lưu lịch sử;
+- citation chỉ được tạo từ metadata retrieval, không nhận citation ID model tự
+  bịa;
+- giá, xếp hạng, voucher, doanh thu, forecast và trạng thái thanh toán do code
+  tất định quyết định;
+- model không có shell, filesystem, database mutation hoặc network tool tùy ý;
+- bốn lý do escalation được kiểm soát: `human_requested`, `out_of_scope`,
+  `insufficient_data`, `assistant_unavailable`;
+- hội thoại được lưu để admin tiếp tục trả lời, nhưng log AI chỉ ghi model,
+  latency, token usage và feature — không ghi nguyên văn prompt hoặc PII.
+
+### Fine-tuning và artifact có thể kiểm tra
+
+Runtime hiện tại và adapter mới được tách rõ để không quảng bá nhầm candidate
+thành production:
+
+| Adapter      | Base model           | Dữ liệu/huấn luyện                                                  | Artifact và trạng thái                                                                                                                                       |
+| ------------ | -------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `chatbot-v8` | `unsloth/Qwen3.5-4B` | 737 dòng, 8 epoch, 1.480 step, BF16 LoRA; adapter reload thành công | Có adapter `.safetensors`, tokenizer, config, dataset manifest, evaluation và hash; `promotion.json` vẫn là **candidate**, gate chưa đạt và không tự promote |
+| `studio-v3`  | `unsloth/Qwen3.5-4B` | 384 dòng, 6 epoch, 768 step, BF16 LoRA; adapter reload thành công   | Có cùng bộ artifact và evaluation; gate offline đạt nhưng vẫn là **candidate** chờ human review, không tự promote                                            |
+
+Gói fine-tuning không chứa base model 4,6 GB; người kiểm tra tải base model theo
+tài liệu rồi gắn LoRA adapter. Việc có training loss hoặc reload thành công
+không được dùng thay cho benchmark độc lập với dữ liệu khách hàng thật.
+
+## Kiến trúc tổng thể
+
+```mermaid
+flowchart LR
+    U[Khách hàng] --> W[Next.js Web]
+    U --> M[Android Expo]
+    A[Quản trị viên] --> AD[Admin Web]
+
+    W --> API[Next.js Route Handlers]
+    M --> API
+    AD --> API
+
+    API --> D["Domain engines<br/>pricing · recommendation · scenario"]
+    API --> DB[("SQLite<br/>account · chat · order · catalog")]
+    API --> R["RAG<br/>BM25 + embedding + citations"]
+    API --> O[Ollama loopback]
+
+    O --> Q1[Qwen3.5 9B Q8]
+    O --> Q2[HOSTORA Chatbot 4B]
+    O --> Q3[Qwen3 Embedding 4B]
+    O --> Q4[Qwen3-VL 8B]
+
+    API --> PAY["Stripe / VNPay<br/>demo hoặc sandbox"]
+    API --> MAIL["SMTP / Mailpit<br/>OTP · đơn hàng · escalation"]
+```
+
+Các ranh giới quan trọng trong source:
+
+- `app/api/ai/*`: trích xuất, giải thích, hội thoại, retrieval và Studio;
+- `lib/recommendation.ts`, `lib/pricing.ts`, `lib/scenario.ts`: quyết định số học;
+- `lib/site-studio-workflow.ts`: graph `write_copy → recommend_hosting` và
+  template fallback;
+- `lib/customer-ai-sources.ts`: PDF/DOCX/text/web/image ingestion;
+- `data/hosting-catalog.ts`, `data/product-catalog.ts`: catalog có nguồn;
+- `data/knowledge.json`, `data/rag-index.json`: knowledge và embedding index;
+- `lib/customer/store.ts`, `lib/payments/store.ts`: SQLite runtime;
+- `mobile/`: ứng dụng Expo/React Native dùng chung backend.
+
+Xem thêm [sơ đồ hệ thống](docs/architecture/hostora-system.html),
+[luồng sản phẩm](docs/architecture/hostora-product-flow.html),
+[luồng RAG](docs/architecture/hostora-rag-flow.html) và
+[luồng Website Studio](docs/architecture/hostora-site-studio-flow.html).
+
+## Công nghệ sử dụng
+
+| Nhóm                | Công nghệ                                                                                | Ứng dụng trong HOSTORA                                               |
+| ------------------- | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Web full-stack      | Next.js 16.4.2, React 19.3.1, TypeScript 6.0.3, App Router, Tailwind CSS 4               | Website, admin, API, SEO metadata, standalone server                 |
+| Android             | Expo 58, React Native 0.88, Expo Router, Reanimated 4, Skia 2, AsyncStorage, SecureStore | Native navigation, animation, shader, persistence, auth và APK       |
+| AI/ML               | Ollama 0.34.3, Qwen3.5, Qwen3 Embedding, Qwen3-VL, LoRA, GGUF Q8, LangGraph              | Structured extraction, chat, RAG, vision và Website Studio workflow  |
+| Data                | Node SQLite, JSON knowledge/index, local filesystem runtime                              | Tài khoản, hội thoại, memory, catalog, đơn hàng, feedback và Studio  |
+| Validation/security | Zod, HMAC session, Turnstile tùy chọn, SSRF guard, PII redaction                         | Schema, admin auth, input boundary và bảo vệ dữ liệu                 |
+| Commerce/email      | Stripe SDK, VNPay HMAC, Nodemailer, Mailpit                                              | Checkout sandbox, webhook/IPN, đối soát, hoàn tiền, OTP và thông báo |
+| Visualization       | Three.js, Motion, Recharts, React Native Skia, Reanimated, haptic                        | Brand world 3D, cinematic mobile và dashboard quản trị               |
+| Testing             | Vitest, Playwright, axe-core, Maestro, Mobile MCP, ADB                                   | Unit/API, E2E desktop/mobile, accessibility và APK native            |
+| DevOps/bàn giao     | Docker Compose, GitHub Actions, GitHub Releases/Pages, Tailscale Funnel                  | Chạy đa nền tảng, CI, artifact, báo cáo tĩnh và demo HTTPS           |
+
+> Langfuse/OpenTelemetry đã có lớp tích hợp nhưng Langfuse mặc định tắt vì chưa
+> có project/self-host instance được kiểm chứng end-to-end. README không tính
+> dependency đã cài nhưng chưa hoạt động thành một thành tích production.
+
+## Năng lực kỹ thuật dự án thể hiện
+
+| Mảng                  | Phần đã thực hiện                                                                                                                    |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Product engineering   | Thiết kế hành trình từ tư vấn đến mua, thanh toán, hỗ trợ và vận hành thay vì làm các màn rời rạc                                    |
+| Full-stack            | Xây website, admin, REST-like route handlers, auth, SQLite, email và payment lifecycle trong một codebase TypeScript                 |
+| AI engineering        | Local inference, structured output, RAG hybrid, citation control, prompt-injection defense, model benchmark và LoRA artifact handoff |
+| Mobile engineering    | Expo/React Native app, cinematic/animation, responsive native UI, backend profiles và APK universal giữ dữ liệu khi cập nhật         |
+| Data/decision systems | Catalog có nguồn, scoring minh bạch, phân biệt giá ưu đãi/gia hạn/trả trước và graceful fallback khi AI lỗi                          |
+| Quality engineering   | Unit/API, Playwright desktop/mobile, accessibility audit, Maestro/Mobile MCP, checksum và release parity                             |
+| DevOps                | Docker đa nền tảng, standalone Next.js, GitHub Actions, Releases, Pages và public HTTPS tunnel                                       |
+
+Không đánh đồng số framework với chất lượng sản phẩm: các con số kiểm thử bên
+dưới là bằng chứng kỹ thuật của bản 2.2.2, không phải cam kết SLA hoặc bảo đảm
+thứ hạng cuộc thi.
 
 ## Truy cập nhanh
 
-| Nội dung               | Liên kết                                                                                                                       | Trạng thái                                                         |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------ |
-| Web khách hàng         | [Mở HOSTORA](https://admin123-system-product-name.tailfeea7a.ts.net:8443/)                                                   | HTTPS ổn định qua Tailscale Funnel, kiểm tra 02/11/2026                          |
-| Web quản trị           | [Mở trang admin](https://admin123-system-product-name.tailfeea7a.ts.net:8443/admin)                                          | Chuyển tới cổng đăng nhập admin                                    |
-| Hộp thư AI của admin   | [Mở hộp thư hỗ trợ](https://admin123-system-product-name.tailfeea7a.ts.net:8443/admin/support)                               | Cần phiên quản trị hợp lệ                                          |
-| Chấm SEO + AI visibility | [Mở công cụ kiểm tra](https://admin123-system-product-name.tailfeea7a.ts.net:8443/website-analyzer)                       | Tách điểm Google, AI crawler và kế hoạch sửa tất định              |
-| APK Android mới nhất   | [Tải HOSTORA AI 2.2.2 universal](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-2.2.2-universal.apk) | Android 7.0+, 4 ABI, package `com.hostora.ai`                  |
-| Link APK tương thích biểu mẫu cũ | [Tải qua tên `arm64.apk`](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-2.2.2-arm64.apk)           | Cùng binary universal; không phải bản chỉ có ARM64                   |
-| SHA-256 APK            | [Tải checksum](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-2.2.2-universal.apk.sha256)    | `9000fb661ec8234e0adcc7a623e0fa351efd1de22cbf20d7ef7a63ca65e85058` |
-| Web tĩnh “Kiểm thử”    | [Mở báo cáo 20 ca](https://minhnhatdepzai.github.io/HOSTORA-AI/)                                                               | GitHub Pages tự deploy bằng GitHub Actions                         |
-| Source ZIP mới nhất    | [Tải Source ZIP](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-source-2.2.2-2026-11-04.zip) | Web, admin, app, README, tài liệu, training source và cấu hình mẫu |
-| Adapter fine-tuning    | [Tải gói fine-tuning 2.2.2](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-finetuning-2.2.2-2026-11-04.zip) | Hai LoRA adapter mới nhất và bằng chứng; không nhân bản base model |
-| Source                 | [GitHub repository](https://github.com/minhnhatdepzai/HOSTORA-AI)                                                              | Nhánh `main`                                                       |
+| Nội dung                         | Liên kết                                                                                                                                   | Trạng thái                                                         |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------ |
+| Web khách hàng                   | [Mở HOSTORA](https://admin123-system-product-name.tailfeea7a.ts.net:8443/)                                                                 | HTTPS ổn định qua Tailscale Funnel, kiểm tra 02/11/2026            |
+| Web quản trị                     | [Mở trang admin](https://admin123-system-product-name.tailfeea7a.ts.net:8443/admin)                                                        | Chuyển tới cổng đăng nhập admin                                    |
+| Hộp thư AI của admin             | [Mở hộp thư hỗ trợ](https://admin123-system-product-name.tailfeea7a.ts.net:8443/admin/support)                                             | Cần phiên quản trị hợp lệ                                          |
+| Chấm SEO + AI visibility         | [Mở công cụ kiểm tra](https://admin123-system-product-name.tailfeea7a.ts.net:8443/website-analyzer)                                        | Tách điểm Google, AI crawler và kế hoạch sửa tất định              |
+| APK Android mới nhất             | [Tải HOSTORA AI 2.2.2 universal](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-2.2.2-universal.apk)     | Android 7.0+, 4 ABI, package `com.hostora.ai`                      |
+| Link APK tương thích biểu mẫu cũ | [Tải qua tên `arm64.apk`](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-2.2.2-arm64.apk)                | Cùng binary universal; không phải bản chỉ có ARM64                 |
+| SHA-256 APK                      | [Tải checksum](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-2.2.2-universal.apk.sha256)                | `9000fb661ec8234e0adcc7a623e0fa351efd1de22cbf20d7ef7a63ca65e85058` |
+| Web tĩnh “Kiểm thử”              | [Mở báo cáo 20 ca](https://minhnhatdepzai.github.io/HOSTORA-AI/)                                                                           | GitHub Pages tự deploy bằng GitHub Actions                         |
+| Source ZIP mới nhất              | [Tải Source ZIP](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-source-2.2.2-2026-11-04.zip)                | Web, admin, app, README, tài liệu, training source và cấu hình mẫu |
+| Adapter fine-tuning              | [Tải gói fine-tuning 2.2.2](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-finetuning-2.2.2-2026-11-04.zip) | Hai LoRA adapter mới nhất và bằng chứng; không nhân bản base model |
+| Source                           | [GitHub repository](https://github.com/minhnhatdepzai/HOSTORA-AI)                                                                          | Nhánh `main`                                                       |
 
 > URL `*.ts.net:8443` là hostname HTTPS cố định của Tailscale Funnel và không cần mua tên miền. HOSTORA production cùng Funnel tự chạy lại trên máy demo; máy tắt hoặc mất mạng thì website vẫn offline. Link APK trên GitHub Release hoạt động độc lập với máy demo.
 
 ## Trạng thái bản 2.2.2
 
-| Phần đã kiểm tra    | Kết quả gần nhất                                                                                          |
-| ------------------- | --------------------------------------------------------------------------------------------------------- |
-| Web + admin         | Typecheck, lint và production build đạt                                                                   |
-| Logic/API           | 309/309 test đạt                                                                                           |
-| AI local            | Ollama chat, Studio, embedding và smoke test chạy thật qua loopback; không dùng cloud fallback            |
-| E2E + UI audit      | 55 lượt đạt, 1 mobile CRUD bỏ qua có chủ đích; 12 màn audit không có lỗi axe/page/overflow tự động      |
+| Phần đã kiểm tra    | Kết quả gần nhất                                                                                                  |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Web + admin         | Typecheck, lint và production build đạt                                                                           |
+| Logic/API           | 309/309 test đạt                                                                                                  |
+| AI local            | Ollama chat, Studio, embedding và smoke test chạy thật qua loopback; không dùng cloud fallback                    |
+| E2E + UI audit      | 55 lượt đạt, 1 mobile CRUD bỏ qua có chủ đích; 12 màn audit không có lỗi axe/page/overflow tự động                |
 | Android             | `com.hostora.ai` 2.2.2, versionCode 25; APK universal cài đè bằng `adb install -r` và giữ hội thoại trên emulator |
-| Bộ giám khảo mobile | 20/20 kiểm tra showcase và TC01–TC09 đều đạt                                                              |
-| APK                 | 165.321.992 byte; đủ `arm64-v8a`, `armeabi-v7a`, `x86`, `x86_64`; SHA-256 như bảng trên                 |
+| Bộ giám khảo mobile | 20/20 kiểm tra showcase và TC01–TC09 đều đạt                                                                      |
+| APK                 | 165.321.992 byte; đủ `arm64-v8a`, `armeabi-v7a`, `x86`, `x86_64`; SHA-256 như bảng trên                           |
 
 Cinematic 12,4 giây phát ở mỗi cold-start và ghép đủ hai chương: orbit/beam/logo/headline, rồi H → HOSTORA → robot. Người dùng có thể bỏ qua hoặc phát lại từ Hồ sơ giám khảo; phát lại xong vẫn ở đúng màn đang mở. App giữ native splash, chuyển cảnh theo tiến độ, phản hồi chạm/haptic, Skia backdrop, sân khấu 3D và tôn trọng thiết lập Giảm chuyển động.
 
 Trang **Chấm SEO + AI visibility** đọc tín hiệu công khai như metadata, sitemap, `robots.txt`, `llms.txt`, JSON-LD và quyền crawler của OpenAI/Anthropic/Perplexity. Điểm và việc ưu tiên do TypeScript tính tất định; Ollama local chỉ gợi ý ý tưởng nội dung và không thể nâng điểm. “Cho phép crawler” không đồng nghĩa ChatGPT hoặc Claude chắc chắn đề xuất website.
-
-## HOSTORA bán gì và mua như thế nào?
-
-Danh mục gồm hosting dùng chung, WordPress, cloud, VPS, tên miền, SSL, email doanh nghiệp, công cụ tạo website và các dịch vụ vận hành website. Luồng chính:
-
-1. Khách kể nhu cầu bằng tiếng Việt hoặc điền form bốn bước.
-2. Code tính chi phí và xếp hạng; AI giải thích lý do bằng lời dễ hiểu.
-3. Khách so sánh một gói chính và tối đa hai phương án thay thế.
-4. Khách gửi yêu cầu mua; HOSTORA xác nhận nhà cung cấp, kỳ hạn và giá cuối.
-5. Admin phát hành hóa đơn; thanh toán thật chỉ hoàn tất sau webhook/IPN hợp lệ.
-
-Giá “từ” không tự trở thành số tiền phải thu. Dữ liệu chưa có được hiển thị “Chưa xác minh”, không để AI tự điền. Chế độ thanh toán mặc định là demo và không thu tiền thật.
-
-## Ba bề mặt, một backend
-
-| Bề mặt                    | Vai trò                                                                      |
-| ------------------------- | ---------------------------------------------------------------------------- |
-| Website Next.js           | Catalog, tư vấn AI, Website Studio, tài khoản, yêu cầu mua và tra cứu đơn    |
-| Android Expo/React Native | Tư vấn, sản phẩm, kết quả gợi ý, Studio, cài đặt backend và chế độ giám khảo |
-| Web admin                 | Catalog, hộp thư AI, phản hồi khách, yêu cầu mua, hóa đơn và doanh thu       |
-
-Kiến trúc giữ ranh giới rõ ràng:
-
-- `app/api/ai/*`: gọi Ollama local, kiểm tra input/output bằng schema;
-- `app/api/admin/ai-conversations`: hộp thư quản trị, phân quyền và phản hồi người thật;
-- `lib/recommendation.ts`, `lib/pricing.ts`, `lib/scenario.ts`: quyết định số học tất định;
-- `data/hosting-catalog.ts`: dữ liệu hosting có nguồn và ngày xác minh;
-- `data/knowledge.json`, `data/rag-index.json`: RAG local;
-- `lib/payments/*`: SQLite, email, Stripe/VNPay và đối soát;
-- `mobile/`: app Android dùng chung API HOSTORA.
-
-Xem [sơ đồ hệ thống](docs/architecture/hostora-system.html), [luồng sản phẩm](docs/architecture/hostora-product-flow.html), [luồng RAG](docs/architecture/hostora-rag-flow.html) và [luồng Website Studio](docs/architecture/hostora-site-studio-flow.html).
 
 ## Hướng dẫn cho người chưa biết code — chạy bằng Docker
 
@@ -129,12 +321,12 @@ RAG index. Không chia sẻ file `.env.docker` lên Internet.
 
 Mở các địa chỉ sau trên chính máy đang chạy Docker:
 
-| Cần mở | Địa chỉ | Dấu hiệu đúng |
-| --- | --- | --- |
-| Web khách hàng | <http://127.0.0.1:3000> | Hiện trang chủ HOSTORA |
-| Web admin | <http://127.0.0.1:3000/admin> | Hiện cổng đăng nhập quản trị |
-| Hộp thư OTP local | <http://127.0.0.1:8025> | Hiện giao diện Mailpit |
-| Kiểm tra backend | <http://127.0.0.1:3000/api/health> | Trả về trạng thái JSON |
+| Cần mở            | Địa chỉ                            | Dấu hiệu đúng                |
+| ----------------- | ---------------------------------- | ---------------------------- |
+| Web khách hàng    | <http://127.0.0.1:3000>            | Hiện trang chủ HOSTORA       |
+| Web admin         | <http://127.0.0.1:3000/admin>      | Hiện cổng đăng nhập quản trị |
+| Hộp thư OTP local | <http://127.0.0.1:8025>            | Hiện giao diện Mailpit       |
+| Kiểm tra backend  | <http://127.0.0.1:3000/api/health> | Trả về trạng thái JSON       |
 
 Đăng nhập admin theo luồng demo:
 
@@ -187,14 +379,14 @@ thủ công như bước 3.
 
 ### Lỗi thường gặp
 
-| Hiện tượng | Cách xử lý |
-| --- | --- |
-| `docker: command not found` | Mở Docker Desktop, đóng rồi mở lại Terminal/PowerShell; kiểm tra `docker compose version`. |
-| Docker báo không kết nối được Engine | Chờ Docker Desktop báo Engine đang chạy; trên Windows kiểm tra WSL 2 đã bật. |
-| Lần đầu chạy rất lâu | Xem tiến độ bằng `docker compose --env-file .env.docker logs -f model-init web`; chờ hai model tải xong. |
-| Cổng `3000` đang được dùng | Đổi `HOSTORA_PORT` và `HOSTORA_PUBLIC_BASE_URL` trong `.env.docker`, rồi chạy lại `up --build -d`. |
-| Máy thiếu RAM/dung lượng | Trong `.env.docker`, thử `HOSTORA_CHAT_MODEL=qwen3.5:4b-q4_K_M` và `HOSTORA_EMBED_MODEL=qwen3-embedding:0.6b`; phải kiểm tra lại chất lượng AI trước khi demo. |
-| App Android không kết nối | Mở URL backend bằng trình duyệt điện thoại trước; kiểm tra cùng Wi-Fi, firewall cổng 3000 và URL không dùng `127.0.0.1` trên điện thoại thật. |
+| Hiện tượng                           | Cách xử lý                                                                                                                                                     |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `docker: command not found`          | Mở Docker Desktop, đóng rồi mở lại Terminal/PowerShell; kiểm tra `docker compose version`.                                                                     |
+| Docker báo không kết nối được Engine | Chờ Docker Desktop báo Engine đang chạy; trên Windows kiểm tra WSL 2 đã bật.                                                                                   |
+| Lần đầu chạy rất lâu                 | Xem tiến độ bằng `docker compose --env-file .env.docker logs -f model-init web`; chờ hai model tải xong.                                                       |
+| Cổng `3000` đang được dùng           | Đổi `HOSTORA_PORT` và `HOSTORA_PUBLIC_BASE_URL` trong `.env.docker`, rồi chạy lại `up --build -d`.                                                             |
+| Máy thiếu RAM/dung lượng             | Trong `.env.docker`, thử `HOSTORA_CHAT_MODEL=qwen3.5:4b-q4_K_M` và `HOSTORA_EMBED_MODEL=qwen3-embedding:0.6b`; phải kiểm tra lại chất lượng AI trước khi demo. |
+| App Android không kết nối            | Mở URL backend bằng trình duyệt điện thoại trước; kiểm tra cùng Wi-Fi, firewall cổng 3000 và URL không dùng `127.0.0.1` trên điện thoại thật.                  |
 
 Hướng dẫn kỹ thuật sâu hơn nằm tại [docs/DOCKER_DEPLOYMENT.md](docs/DOCKER_DEPLOYMENT.md).
 
