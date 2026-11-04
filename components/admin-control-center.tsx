@@ -40,7 +40,11 @@ import {
 import type { Requirements } from "@/lib/types";
 import { formatVnd } from "@/lib/utils";
 import { TextRevealHeading } from "@/components/text-reveal-heading";
-import type { InvoicePage, SaleRequestPage } from "@/lib/payments/types";
+import type {
+  InvoicePage,
+  SaleRequest,
+  SaleRequestPage,
+} from "@/lib/payments/types";
 import { AdminRevenueDashboard } from "@/components/admin-revenue-dashboard";
 import { AdminServiceManager } from "@/components/admin-service-manager";
 import {
@@ -69,6 +73,13 @@ const statusStyles: Record<LeadStatus, string> = {
   contacted: "bg-amber-50 text-amber-700",
   qualified: "bg-emerald-50 text-emerald-700",
   closed: "bg-slate-100 text-slate-600",
+};
+
+const requestStatusLabels: Record<SaleRequest["status"], string> = {
+  new: "Chờ xử lý",
+  invoiced: "Đã lên hóa đơn",
+  declined: "Đã từ chối",
+  cancelled: "Đã hủy",
 };
 
 const websiteLabels: Record<Requirements["websiteType"], string> = {
@@ -127,10 +138,13 @@ export function AdminControlCenter({ catalog }: { catalog: CatalogSummary }) {
   const [activeSection, setActiveSection] = useState("#tong-quan");
   useEffect(() => {
     const ids = ["tong-quan", "doanh-thu", "khach-hang", "dich-vu", "du-lieu"];
-    const observer = new IntersectionObserver((entries) => {
-      const entry = entries.find((item) => item.isIntersecting);
-      if (entry) setActiveSection(`#${entry.target.id}`);
-    }, { rootMargin: "-90px 0px -55% 0px", threshold: 0 });
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries.find((item) => item.isIntersecting);
+        if (entry) setActiveSection(`#${entry.target.id}`);
+      },
+      { rootMargin: "-90px 0px -55% 0px", threshold: 0 },
+    );
     ids.forEach((id) => {
       const section = document.getElementById(id);
       if (section) observer.observe(section);
@@ -138,6 +152,9 @@ export function AdminControlCenter({ catalog }: { catalog: CatalogSummary }) {
     return () => observer.disconnect();
   }, []);
   const [commerce, setCommerce] = useState<CommerceSummary | null>(null);
+  const [consultationRequests, setConsultationRequests] = useState<
+    SaleRequest[]
+  >([]);
 
   const loadLocalData = useCallback(() => {
     const report = readStoredLeadReport(localStorage.getItem("hostora:leads"));
@@ -174,6 +191,7 @@ export function AdminControlCenter({ catalog }: { catalog: CatalogSummary }) {
         requestsResponse.json() as Promise<{ page: SaleRequestPage }>,
       ]);
       setCommerce(normalizeCommerceSummary(page, requestPage));
+      setConsultationRequests(requestPage.items);
     } catch {
       setCommerce(null);
     }
@@ -236,7 +254,10 @@ export function AdminControlCenter({ catalog }: { catalog: CatalogSummary }) {
   }, [leads, query, statusFilter]);
 
   function saveLeads(next: AdminLead[]) {
-    localStorage.setItem("hostora:leads", mergeStoredLeads(localStorage.getItem("hostora:leads"), next));
+    localStorage.setItem(
+      "hostora:leads",
+      mergeStoredLeads(localStorage.getItem("hostora:leads"), next),
+    );
     setLeads(next);
   }
 
@@ -344,7 +365,10 @@ export function AdminControlCenter({ catalog }: { catalog: CatalogSummary }) {
             </small>
           </span>
         </Link>
-        <nav className="admin-section-nav mt-10 space-y-2" aria-label="Điều hướng quản trị">
+        <nav
+          className="admin-section-nav mt-10 space-y-2"
+          aria-label="Điều hướng quản trị"
+        >
           {navItems.map(([href, label, Icon]) => (
             <a
               key={href}
@@ -442,8 +466,13 @@ export function AdminControlCenter({ catalog }: { catalog: CatalogSummary }) {
                   <a
                     key={href}
                     href={href}
-                    aria-current={activeSection === href ? "location" : undefined}
-                    onClick={() => { setActiveSection(href); setMobileMenu(false); }}
+                    aria-current={
+                      activeSection === href ? "location" : undefined
+                    }
+                    onClick={() => {
+                      setActiveSection(href);
+                      setMobileMenu(false);
+                    }}
                     className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-slate-200 hover:bg-white/10"
                   >
                     <Icon size={18} /> {label}
@@ -462,7 +491,15 @@ export function AdminControlCenter({ catalog }: { catalog: CatalogSummary }) {
         ) : null}
 
         <main className="mx-auto max-w-[1500px] space-y-8 px-5 py-8 lg:px-8 lg:py-10">
-          {invalidLeads > 0 && <p role="alert" className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">Có {invalidLeads} bản ghi chưa đọc được. Các khách hợp lệ vẫn hiển thị; dữ liệu gốc được giữ lại để khôi phục.</p>}
+          {invalidLeads > 0 && (
+            <p
+              role="alert"
+              className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900"
+            >
+              Có {invalidLeads} bản ghi chưa đọc được. Các khách hợp lệ vẫn hiển
+              thị; dữ liệu gốc được giữ lại để khôi phục.
+            </p>
+          )}
           {message ? (
             <div
               role="status"
@@ -523,14 +560,22 @@ export function AdminControlCenter({ catalog }: { catalog: CatalogSummary }) {
                 icon={PackageCheck}
                 label="Tổng đơn hàng"
                 value={commerce ? String(commerce.orders) : "—"}
-                note={commerce ? `${commerce.paid} đơn đã thanh toán` : "Đang đồng bộ kho đơn"}
+                note={
+                  commerce
+                    ? `${commerce.paid} đơn đã thanh toán`
+                    : "Đang đồng bộ kho đơn"
+                }
                 tone="blue"
               />
               <MetricCard
                 icon={UserRoundCheck}
                 label="Yêu cầu mua"
                 value={commerce ? String(commerce.requests) : "—"}
-                note={commerce ? `${commerce.newRequests} yêu cầu cần xử lý` : "Đang đồng bộ yêu cầu"}
+                note={
+                  commerce
+                    ? `${commerce.newRequests} yêu cầu cần xử lý`
+                    : "Đang đồng bộ yêu cầu"
+                }
                 tone="mint"
               />
               <MetricCard
@@ -560,7 +605,11 @@ export function AdminControlCenter({ catalog }: { catalog: CatalogSummary }) {
             </div>
           </section>
 
-          <section id="doanh-thu" className="scroll-mt-28" aria-label="Doanh thu">
+          <section
+            id="doanh-thu"
+            className="scroll-mt-28"
+            aria-label="Doanh thu"
+          >
             <AdminRevenueDashboard />
           </section>
 
@@ -672,11 +721,94 @@ export function AdminControlCenter({ catalog }: { catalog: CatalogSummary }) {
               <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
                 <div>
                   <p className="text-xs font-black tracking-[.14em] text-blue uppercase">
-                    Quản lý khách hàng
+                    Từ app và website
                   </p>
                   <h2 className="mt-1 text-2xl font-black">
-                    Danh sách đăng ký tư vấn
+                    Khách đã gửi yêu cầu tư vấn
                   </h2>
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+                    Đây là hồ sơ khách chủ động gửi về hệ thống. Danh bạ lưu
+                    riêng trên điện thoại không được tự động tải lên.
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-blue-700">
+                    {consultationRequests.length} yêu cầu
+                  </span>
+                  <Link
+                    href="/admin/orders"
+                    className="button-secondary !rounded-xl"
+                  >
+                    Xử lý tất cả <ChevronRight size={16} />
+                  </Link>
+                </div>
+              </div>
+
+              {consultationRequests.length ? (
+                <div className="mt-5 grid gap-3 lg:grid-cols-2">
+                  {consultationRequests.slice(0, 6).map((request) => (
+                    <article
+                      key={request.id}
+                      className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="font-black text-slate-900">
+                            {request.profile.customerName}
+                          </p>
+                          <p className="mt-1 text-sm text-slate-500">
+                            {request.contact}
+                          </p>
+                        </div>
+                        <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-[11px] font-black text-blue-700 shadow-sm">
+                          {requestStatusLabels[request.status]}
+                        </span>
+                      </div>
+                      <p className="mt-4 text-xs font-bold tracking-wide text-slate-400 uppercase">
+                        {request.provider}
+                      </p>
+                      <p className="mt-1 font-black text-blue">
+                        {request.productName}
+                      </p>
+                      <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+                        {request.profile.phone ? (
+                          <span>{request.profile.phone}</span>
+                        ) : null}
+                        <span>
+                          {request.consultationPreference === "ai"
+                            ? "AI HOSTORA tư vấn"
+                            : request.consultationAt
+                              ? `Hẹn ${new Date(request.consultationAt).toLocaleString("vi-VN")}`
+                              : "Chờ xác nhận lịch"}
+                        </span>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-5 rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-5 py-8 text-center">
+                  <Users className="mx-auto text-slate-300" size={30} />
+                  <p className="mt-3 font-black">Chưa có yêu cầu gửi về</p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    Hồ sơ mua hàng hoặc lịch tư vấn từ app sẽ xuất hiện tại đây.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="border-b border-slate-100 p-5 sm:p-6">
+              <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
+                <div>
+                  <p className="text-xs font-black tracking-[.14em] text-slate-500 uppercase">
+                    Chỉ trên trình duyệt này
+                  </p>
+                  <h3 className="mt-1 text-xl font-black">
+                    Lead cục bộ từ trang so sánh
+                  </h3>
+                  <p className="mt-2 text-sm text-slate-500">
+                    Dữ liệu này không đồng bộ giữa các máy và không được tính là
+                    yêu cầu đã gửi về HOSTORA.
+                  </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <button
@@ -824,7 +956,7 @@ export function AdminControlCenter({ catalog }: { catalog: CatalogSummary }) {
                   <p className="mt-3 font-black">
                     {leads.length
                       ? "Không tìm thấy khách phù hợp"
-                      : "Chưa có đăng ký tư vấn"}
+                      : "Chưa có lead cục bộ"}
                   </p>
                   <p className="mt-2 text-sm text-slate-500">
                     Đăng ký mới trên trình duyệt này sẽ xuất hiện tại đây.

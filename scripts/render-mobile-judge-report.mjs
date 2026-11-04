@@ -50,6 +50,15 @@ const failed = result.cases.filter((item) => item.status === "failed").length;
 const images = (result.images ?? [])
   .map((item) => ({ ...item, data: imageData(item.path) }))
   .filter((item) => item.data);
+const isEmulator =
+  /sdk_gphone|emulator|virtual/i.test(result.device?.model ?? "") ||
+  /^emu/i.test(result.device?.serialMasked ?? "");
+const androidEvidenceLabel = isEmulator
+  ? "BẰNG CHỨNG MÁY ẢO ANDROID"
+  : "BẰNG CHỨNG THIẾT BỊ ANDROID";
+const screenshotHeading = isEmulator
+  ? "Ảnh chụp trực tiếp từ máy ảo Android"
+  : "Ảnh chụp trực tiếp từ thiết bị Android";
 
 const caseCards = result.cases
   .map(
@@ -136,7 +145,7 @@ const html = `<!doctype html>
 <body>
 <main>
   <header class="hero">
-    <div class="eyebrow">HOSTORA AI · BẢNG A · BẰNG CHỨNG MÁY THẬT</div>
+    <div class="eyebrow">HOSTORA AI · BẢNG A · ${androidEvidenceLabel}</div>
     <h1>9 ca kiểm thử, nhìn là hiểu ngay.</h1>
     <p>Bộ hồ sơ này tách rõ bằng chứng Android, kiểm thử logic và mô phỏng sự cố. Không dùng ảnh mockup thay cho APK thật.</p>
     <div class="metrics">
@@ -158,7 +167,7 @@ const html = `<!doctype html>
   </section>
 
   <section>
-    <h2>Ảnh chụp trực tiếp từ Redmi</h2>
+    <h2>${screenshotHeading}</h2>
     <div class="gallery">${gallery}</div>
   </section>
 
@@ -168,7 +177,7 @@ const html = `<!doctype html>
   </section>
 
   <section class="note">
-    <b>Cách đọc bằng chứng:</b> “Native” là quan sát trên APK cài ở thiết bị; “unit” là kiểm thử logic tất định; “failure simulation” là chủ động tháo chuyển tiếp cổng USB rồi kiểm tra thông báo bản lưu. Dữ liệu cá nhân không được dùng trong bộ kiểm thử.
+    <b>Cách đọc bằng chứng:</b> “Native” là quan sát trên APK cài ở Android; “unit” là kiểm thử logic tất định; “failure simulation” là chủ động tháo chuyển tiếp ADB rồi kiểm tra thông báo bản lưu. Dữ liệu cá nhân không được dùng trong bộ kiểm thử.
   </section>
   <footer>Nguồn máy: ${escapeHtml(relative(root, resultPath))} · Báo cáo sinh tự động, có thể mở offline trong trình duyệt.</footer>
 </main>

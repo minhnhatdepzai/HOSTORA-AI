@@ -70,6 +70,95 @@ test("admin controls local leads and shows service data", async ({ page }) => {
   expect(classificationRequest).not.toHaveProperty("phone");
 });
 
+test("admin shows consultation requests submitted from the app", async ({
+  page,
+}) => {
+  await page.route("**/api/admin/payments/orders", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        page: {
+          items: [],
+          total: 0,
+          page: 1,
+          pageSize: 25,
+          pageCount: 0,
+          counts: {
+            all: 0,
+            awaitingPayment: 0,
+            paid: 0,
+            refunds: 0,
+            cancelled: 0,
+          },
+          financials: { recognizedPaidOrders: 0, recognizedRevenueVnd: 0 },
+        },
+      }),
+    });
+  });
+  await page.route("**/api/admin/payments/requests", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        page: {
+          items: [
+            {
+              id: "HSR-123456789A",
+              productId: "vietnix-business",
+              provider: "Vietnix",
+              productName: "Business Hosting",
+              contact: "judge-mobile@hostora.invalid",
+              note: "Cần tư vấn trước khi mua",
+              profile: {
+                customerName: "Khách từ máy ảo",
+                phone: "0900000000",
+                companyName: "Cửa hàng kiểm thử",
+                businessType: "Bán lẻ",
+                currentWebsite: "",
+                mainOffer: "Sản phẩm gia dụng",
+                serviceArea: "Đà Nẵng",
+                seoGoals: "Tìm kiếm địa phương",
+                websiteStatus: "idea",
+                websiteGoal: "Nhận yêu cầu tư vấn",
+                targetCustomers: "Khách hàng tại Đà Nẵng",
+                estimatedTraffic: "under_1k",
+                budgetRange: "500k_1m",
+              },
+              consultationPreference: "scheduled",
+              consultationAt: "2026-11-05T02:00:00.000Z",
+              consultationChannel: "phone",
+              voucherCode: null,
+              cancelReason: null,
+              status: "new",
+              invoiceId: null,
+              createdAt: "2026-11-04T15:00:00.000Z",
+            },
+          ],
+          total: 1,
+          page: 1,
+          pageSize: 25,
+          pageCount: 1,
+          counts: { all: 1, new: 1, invoiced: 0, declined: 0, cancelled: 0 },
+        },
+      }),
+    });
+  });
+
+  await page.goto("/admin");
+
+  const consultationSection = page.locator("#khach-hang");
+  await expect(
+    consultationSection.getByText("Khách từ máy ảo", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    consultationSection.getByText("Business Hosting", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    consultationSection.getByText("judge-mobile@hostora.invalid", {
+      exact: true,
+    }),
+  ).toBeVisible();
+});
+
 test("admin remains usable without horizontal overflow", async ({ page }) => {
   await page.goto("/admin");
   const sizes = await page.evaluate(() => ({
@@ -125,7 +214,9 @@ test("support inbox keeps existing conversations and explains a failed refresh",
   });
 
   await page.goto("/admin/support");
-  await expect(page.getByText("HOSTORA có bán vé máy bay không?")).toBeVisible();
+  await expect(
+    page.getByText("HOSTORA có bán vé máy bay không?"),
+  ).toBeVisible();
 
   failRefresh = true;
   await page.getByRole("button", { name: "Tải lại" }).click();
@@ -133,5 +224,7 @@ test("support inbox keeps existing conversations and explains a failed refresh",
   await expect(page.getByRole("status")).toContainText(
     "Chưa tải được hộp thư hỗ trợ.",
   );
-  await expect(page.getByText("HOSTORA có bán vé máy bay không?")).toBeVisible();
+  await expect(
+    page.getByText("HOSTORA có bán vé máy bay không?"),
+  ).toBeVisible();
 });

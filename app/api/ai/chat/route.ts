@@ -6,6 +6,7 @@ import { sanitizeCitations } from "@/lib/chat-citations";
 import {
   explicitChatRecommendation,
   needsRecommendationRequirements,
+  recommendationClarificationAnswer,
 } from "@/lib/chat-recommendation";
 import {
   dnsMigrationAnswer,
@@ -27,7 +28,10 @@ import { CHATBOT_MODEL, streamChat } from "@/lib/ollama";
 import { toCustomerLanguage } from "@/lib/customer-language";
 import { asksToPutContactInfoInModel, redactContactInfo } from "@/lib/privacy";
 import { retrieveDetailed } from "@/lib/rag";
-import { buildStudioProjectAdvice, studioProjectIdFromMessage } from "@/lib/chat-studio";
+import {
+  buildStudioProjectAdvice,
+  studioProjectIdFromMessage,
+} from "@/lib/chat-studio";
 import { getStudioProject } from "@/lib/site-studio-store";
 import { customerFromRequest } from "@/lib/customer/auth";
 import { getCustomerStore } from "@/lib/customer/store";
@@ -201,8 +205,7 @@ export async function POST(request: Request) {
           question: latestUser?.content ?? "",
           answer: safeAnswer,
         });
-    if (escalation)
-      escalate(escalation.reason, latestUser?.content ?? "");
+    if (escalation) escalate(escalation.reason, latestUser?.content ?? "");
     const response = textAnswer(safeAnswer, sources, nextAction);
     response.headers.set("x-hostora-conversation-id", conversationId);
     if (conversationAccess)
@@ -270,7 +273,11 @@ export async function POST(request: Request) {
   }
   const ideaDiscovery = websiteIdeaDiscoveryAnswer(latest);
   if (ideaDiscovery)
-    return respondText(ideaDiscovery.answer, ideaDiscovery.sources, "create-site");
+    return respondText(
+      ideaDiscovery.answer,
+      ideaDiscovery.sources,
+      "create-site",
+    );
   const journey = customerJourneyAnswer(latest);
   if (journey)
     return respondText(journey.answer, journey.sources, journey.nextAction);
@@ -288,9 +295,7 @@ export async function POST(request: Request) {
       memory.facts.monthlyBudget === null ||
       memory.facts.needsDomain === null)
   )
-    return respondText(
-      "Để chọn đúng một gói chính và hai gói thay thế, bạn cho mình biết: website bán hàng/giới thiệu/blog, lượt truy cập dự kiến mỗi tháng, ngân sách mỗi tháng và có cần tên miền không. Bạn cũng có thể mở mục Tư vấn để nhập bốn thông tin này. Khi chưa có nhu cầu cụ thể, mình không xếp hạng hay báo giá gói thay bạn.",
-    );
+    return respondText(recommendationClarificationAnswer(latest, memory.facts));
   for (const guard of [
     domainAvailabilityAnswer,
     structuredDataPenaltyAnswer,
@@ -404,7 +409,10 @@ export async function POST(request: Request) {
     })),
   );
   if (customerSourceAnswer)
-    return respondText(customerSourceAnswer.answer, customerSourceAnswer.sources);
+    return respondText(
+      customerSourceAnswer.answer,
+      customerSourceAnswer.sources,
+    );
   const guarded = robotsPrivacyAnswer(latest, knowledgeContext);
   if (guarded) return respondText(guarded.answer, guarded.sources);
   const system = `<role>Bạn là HOSTORA, cố vấn chọn dịch vụ website và cải thiện khả năng được tìm thấy trên Google cho chủ kinh doanh Việt Nam.</role>
@@ -476,15 +484,13 @@ ${JSON.stringify({ summary: memory.summary, facts: memory.facts, unresolved: mem
     ...customerKnowledgeContext.map((item) => "[" + item.citation + "]"),
   ]);
   const responseSources = [
-    ...knowledgeContext.map(
-      ({ citation, title, sourceUrl, verifiedAt }) => ({
-        citation,
-        title,
-        sourceUrl,
-        verifiedAt,
-        kind: "knowledge",
-      }),
-    ),
+    ...knowledgeContext.map(({ citation, title, sourceUrl, verifiedAt }) => ({
+      citation,
+      title,
+      sourceUrl,
+      verifiedAt,
+      kind: "knowledge",
+    })),
     ...catalog.map(({ citation, name, sourceUrl, verifiedAt }) => ({
       citation,
       title: name,
@@ -492,15 +498,13 @@ ${JSON.stringify({ summary: memory.summary, facts: memory.facts, unresolved: mem
       verifiedAt,
       kind: "plan",
     })),
-    ...products.map(
-      ({ citation, name, provider, sourceUrl, verifiedAt }) => ({
-        citation,
-        title: `${provider} ${name}`,
-        sourceUrl,
-        verifiedAt,
-        kind: "product",
-      }),
-    ),
+    ...products.map(({ citation, name, provider, sourceUrl, verifiedAt }) => ({
+      citation,
+      title: `${provider} ${name}`,
+      sourceUrl,
+      verifiedAt,
+      kind: "product",
+    })),
     ...customerKnowledgeContext.map(
       ({ citation, title, sourceUrl, verifiedAt }) => ({
         citation,

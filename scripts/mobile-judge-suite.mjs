@@ -20,6 +20,11 @@ const stamp = new Date()
   .replaceAll(".", "-");
 const output = join(root, "output", `judge-mobile-${stamp}`);
 mkdirSync(output, { recursive: true });
+const mobileConfig = JSON.parse(
+  readFileSync(join(root, "mobile/app.json"), "utf8"),
+).expo;
+const expectedVersionName = mobileConfig.version;
+const expectedVersionCode = String(mobileConfig.android.versionCode);
 
 function command(binary, args, options = {}) {
   return execFileSync(binary, args, {
@@ -43,7 +48,9 @@ function connectedDevice() {
   const requested = process.env.HOSTORA_ANDROID_DEVICE;
   if (requested && devices.includes(requested)) return requested;
   if (devices.length !== 1) {
-    throw new Error("Cần đúng một thiết bị Android đã cấp quyền USB.");
+    throw new Error(
+      "Cần đúng một thiết bị Android đang sẵn sàng (máy ảo hoặc thiết bị đã cấp quyền ADB).",
+    );
   }
   return devices[0];
 }
@@ -104,7 +111,18 @@ function packageValue(packageDump, expression) {
 
 function resultFor(id, status, observed, evidence) {
   const definition = judgeCases.find((item) => item.id === id);
-  return { ...definition, status, observed, evidence };
+  const portableDefinition = {
+    ...definition,
+    demo: definition.demo
+      .replace("trên Redmi", "trên thiết bị Android")
+      .replace("Kết nối USB", "Kết nối backend")
+      .replace("Ngắt chuyển tiếp USB", "Ngắt chuyển tiếp ADB"),
+    expected: definition.expected.replace(
+      "cấu hình USB",
+      "cấu hình kết nối",
+    ),
+  };
+  return { ...portableDefinition, status, observed, evidence };
 }
 
 const serial = connectedDevice();
@@ -279,10 +297,12 @@ const cases = [
   ),
   resultFor(
     "TC09",
-    versionName === "2.2.1" && versionCode === "24" && settings.matched
+    versionName === expectedVersionName &&
+      versionCode === expectedVersionCode &&
+      settings.matched
       ? "passed"
       : "failed",
-    `Thiết bị đang chạy ${versionName} (${versionCode}); firstInstallTime ${firstInstallTime.trim()}, lastUpdateTime ${lastUpdateTime.trim()}; cấu hình USB vẫn xuất hiện sau adb install -r.`,
+    `Thiết bị đang chạy ${versionName} (${versionCode}), app.json yêu cầu ${expectedVersionName} (${expectedVersionCode}); firstInstallTime ${firstInstallTime.trim()}, lastUpdateTime ${lastUpdateTime.trim()}; cấu hình kết nối vẫn được giữ sau adb install -r.`,
     "Native package metadata + persisted settings · ảnh 07-settings-preserved",
   ),
 ];

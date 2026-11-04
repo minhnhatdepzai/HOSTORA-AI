@@ -2,7 +2,9 @@ import { expect, test } from "vitest";
 import {
   explicitChatRecommendation,
   needsRecommendationRequirements,
+  recommendationClarificationAnswer,
 } from "@/lib/chat-recommendation";
+import type { ChatFacts } from "@/lib/chat-memory";
 
 test("ranks three catalog plans deterministically for explicit shop needs", () => {
   const result = explicitChatRecommendation(
@@ -27,4 +29,29 @@ test("generic plan question requests missing business inputs before ranking", ()
   expect(needsRecommendationRequirements("CDN giúp gì khi flash sale?")).toBe(
     false,
   );
+});
+
+test("clarification keeps known hard-case facts and asks only for missing inputs", () => {
+  const facts: ChatFacts = {
+    websiteType: null,
+    ecommerce: null,
+    monthlyVisits: 12_000,
+    monthlyBudget: 450_000,
+    upfrontBudget: null,
+    needsDomain: null,
+  };
+
+  const answer = recommendationClarificationAnswer(
+    "Website WordPress 12.000 lượt/tháng, ngân sách 450.000đ, cần backup hằng ngày và 20 email; hãy chọn gói chính xác.",
+    facts,
+  );
+
+  expect(answer).toContain("12.000 lượt/tháng");
+  expect(answer).toContain("450.000đ/tháng");
+  expect(answer).toContain("loại website");
+  expect(answer).toContain("có cần mua tên miền");
+  expect(answer).toContain("backup hằng ngày");
+  expect(answer).toContain("20 hộp thư");
+  expect(answer).not.toContain("bao nhiêu lượt truy cập");
+  expect(answer).not.toContain("bao nhiêu đồng mỗi tháng");
 });
