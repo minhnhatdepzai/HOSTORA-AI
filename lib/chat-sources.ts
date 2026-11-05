@@ -33,5 +33,20 @@ export function readChatSources(header: string | null): ChatSource[] {
 }
 
 export function citedSources(answer: string, sources: ChatSource[]) {
-  return sources.filter((source) => answer.includes(`[${source.citation}]`));
+  return sources
+    .filter((source) => answer.includes(`[${source.citation}]`))
+    .sort(
+      (first, second) =>
+        answer.indexOf(`[${first.citation}]`) -
+        answer.indexOf(`[${second.citation}]`),
+    );
+}
+
+/** Keep stable source IDs in storage; show short, ordered numbers to customers. */
+export function numberedChatAnswer(answer: string, sources: ChatSource[]) {
+  return citedSources(answer, sources).reduce(
+    (text, source, index) =>
+      text.split(`[${source.citation}]`).join(`[${index + 1}]`),
+    answer,
+  );
 }

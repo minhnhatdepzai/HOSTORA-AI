@@ -20,6 +20,11 @@ describe("mobile presentation", () => {
     );
     expect(actual).not.toMatch(/backend|rag|webhook|gateway|sandbox|ocr|seo/i);
   });
+  it("does not explain CDN twice when the server already explained it", () => {
+    expect(toCustomerLanguage("CDN (dịch vụ tăng tốc) giúp tải ảnh. CDN không xử lý giỏ hàng.")).toContain(
+      "CDN (dịch vụ tăng tốc) giúp tải ảnh. CDN không xử lý giỏ hàng.",
+    );
+  });
   it("ships the sourced catalog without inventing prices for offline browsing", () => {
     expect(catalog).toEqual(productCatalog);
     expect(catalog.some((item) => item.priceFromVnd === null)).toBe(true);

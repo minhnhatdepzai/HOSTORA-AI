@@ -60,6 +60,8 @@ export function explicitChatRecommendation(question: string) {
   });
   if (!parsed.success) return null;
   const recommendations = recommendPlans(parsed.data);
+  const peakMatch = text.match(/(\d[\d.,]*)\s*(?:người|khách)\s*(?:cùng lúc|đồng thời)/i);
+  const peakVisitors = peakMatch ? amount(peakMatch[1]) : null;
   const sources = recommendations.map(({ plan }, index) => ({
     citation: "P" + (index + 1),
     title: plan.provider + " " + plan.name,
@@ -79,7 +81,7 @@ export function explicitChatRecommendation(question: string) {
       kind: "knowledge",
     });
   const lines = recommendations.map(
-    ({ plan, cautions, eligibility }, index) => {
+    ({ plan, reasons, cautions, eligibility }, index) => {
       const label =
         eligibility !== "eligible"
           ? "Chỉ tham khảo " + (index + 1)
@@ -95,11 +97,17 @@ export function explicitChatRecommendation(question: string) {
       const domain = plan.domainIncluded
         ? "có tên miền theo điều kiện gói"
         : "chưa gồm tên miền";
-      const caution = cautions.length ? "; lưu ý: " + cautions[0] : "";
+      const caution = cautions.find(
+        (item) => !/trả trước toàn bộ kỳ ưu đãi|giá ưu đãi yêu cầu trả trước|thử website thật/i.test(item),
+      );
       const overBudget =
         plan.promoMonthlyVnd > parsed.data.monthlyBudget
           ? "; giá quy đổi vượt ngân sách tháng đã nhập"
           : "";
+      const fit = reasons.find((reason) =>
+        /Cửa hàng:|Trang doanh nghiệp:|Blog:|hỗ trợ thương mại điện tử|hỗ trợ vận hành/.test(reason),
+      );
+      const why = index === 0 && fit ? ` ${fit.replace(/[.!?]+$/, "")}.` : "";
       return (
         label +
         ": " +
@@ -117,8 +125,8 @@ export function explicitChatRecommendation(question: string) {
         "; " +
         domain +
         overBudget +
-        caution +
-        ". [P" +
+        (caution ? `; lưu ý: ${caution.replace(/[.!?]+$/, "")}` : "") +
+        "." + why + " [P" +
         (index + 1) +
         "]"
       );
@@ -127,10 +135,11 @@ export function explicitChatRecommendation(question: string) {
   return {
     answer:
       (recommendations.some((item) => item.eligibility === "eligible")
-        ? "Dựa trên nhu cầu bạn nêu và bảng gói đã xác minh, thứ tự gợi ý của app là:\n"
-        : "Chưa có gói đáp ứng ngân sách và nhu cầu đã nhập. Đây chỉ là phương án tham khảo, cần sửa ngân sách hoặc tư vấn thêm:\n") +
+        ? "Với nhu cầu và ngân sách bạn nêu, mình nghiêng về gói đầu tiên. Hai gói sau giúp bạn so sánh thêm:\n"
+        : "Chưa có gói đáp ứng ngân sách và nhu cầu đã nhập. Mình vẫn để các phương án gần nhất cho bạn so sánh, nhưng chưa nên chốt mua:\n") +
       lines.join("\n") +
-      "\nĐây là xếp hạng theo nhu cầu, không phải cam kết chịu tải. Lượt truy cập tháng chưa đủ để khẳng định website sẽ hoạt động tốt trong đợt bán cao điểm; hãy chạy thử quy trình mua hàng với nhiều người dùng trước khi mua. [K1] Giá, thuế, điều kiện tên miền và tình trạng đăng ký cần kiểm tra lại trên trang thanh toán.",
+      `\nSố lượt truy cập mỗi tháng chưa cho biết website có chịu được giờ cao điểm hay không. ${peakVisitors ? `Với ${peakVisitors.toLocaleString("vi-VN")} khách cùng lúc bạn dự kiến, ` : "Nếu bạn có đợt bán lớn, "}hãy thử luồng đặt hàng và thanh toán ở mức tải đó trước khi chốt gói. [K1] Giá, thuế và điều kiện tên miền cần kiểm tra lại trên trang thanh toán.` +
+      (recommendations[0] ? ` Bạn có thể trả trước ${(recommendations[0].plan.promoMonthlyVnd * recommendations[0].plan.billingMonths).toLocaleString("vi-VN")}đ cho kỳ đầu không?` : ""),
     sources,
   };
 }

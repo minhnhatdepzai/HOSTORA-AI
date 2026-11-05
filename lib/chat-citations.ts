@@ -12,6 +12,9 @@ export function sanitizeCitations(answer: string, allowed: Set<string>) {
     )
     .replace(/\[(?:grounding rule|quy tắc nguồn)\s*\d+\]/gi, "")
     .replace(/\[(?:Dữ kiện nguồn|Suy luận tư vấn|Cần xác minh):?\]/gi, "")
+    .replace(/\[[A-Z]\d{1,2}\]/gi, (token) =>
+      allowed.has(token.toLocaleUpperCase("vi")) ? token : "",
+    )
     .replace(/ {2,}/g, " ")
     .replace(/ +([.,;:])/g, "$1")
     .trim();

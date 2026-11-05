@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { citedSources, parseChatSources, readChatSources } from "@/lib/chat-sources";
+import { citedSources, numberedChatAnswer, parseChatSources, readChatSources } from "@/lib/chat-sources";
 import { sanitizeCitations } from "@/lib/chat-citations";
 
 test("resolves only referenced, safe source links", () => {
@@ -45,6 +45,16 @@ test("accepts private account citations without exposing unsafe links", () => {
       },
     ]),
   ).toHaveLength(1);
+});
+
+test("numbers references in reading order while retaining the matching documents", () => {
+  const sources = parseChatSources([
+    { citation: "K1", title: "Kiểm tra tải", sourceUrl: "https://example.com/load", verifiedAt: "2026-11-05" },
+    { citation: "P2", title: "Bảng giá", sourceUrl: "https://example.com/price", verifiedAt: "2026-11-05" },
+  ]);
+  const answer = "Giá gia hạn cần xem lại [P2]. Khả năng chịu tải phải thử thật [K1]. Giá hiện tại xem nguồn [P2].";
+  expect(numberedChatAnswer(answer, sources)).toBe("Giá gia hạn cần xem lại [1]. Khả năng chịu tải phải thử thật [2]. Giá hiện tại xem nguồn [1].");
+  expect(citedSources(answer, sources).map((source) => source.title)).toEqual(["Bảng giá", "Kiểm tra tải"]);
 });
 
 test("normalizes allowed private citations and removes invented citation tokens", () => {

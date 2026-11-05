@@ -23,3 +23,7 @@ test("drops a wildcard customer-source placeholder leaked by the model", () => {
     sanitizeCitations("Hãy cho biết thêm nhu cầu. [U*]", new Set()),
   ).toBe("Hãy cho biết thêm nhu cầu.");
 });
+
+test("drops hallucinated citation families that are not supplied as sources", () => {
+  expect(sanitizeCitations("Xem thêm [K1][C4].", new Set(["[K1]"]))).toBe("Xem thêm [K1].");
+});

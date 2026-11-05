@@ -19,6 +19,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
   citedSources,
+  numberedChatAnswer,
   parseChatSources,
   readChatSources,
   type ChatSource,
@@ -782,7 +783,9 @@ export function AiAssistant() {
                       ),
                     }}
                   >
-                    {m.content}
+                    {m.role === "assistant"
+                      ? numberedChatAnswer(m.content, m.sources ?? [])
+                      : m.content}
                   </ReactMarkdown>
                 ) : (
                   <span className="flex items-center gap-2 text-slate-500">
@@ -814,15 +817,27 @@ export function AiAssistant() {
                   citedSources(m.content, m.sources).length > 0 && (
                     <div className="mt-4 border-t border-slate-200 pt-3 text-xs leading-5">
                       <p className="font-black text-slate-600">
-                        Dữ liệu đã kiểm tra
+                        Tài liệu tham khảo
                       </p>
-                      {citedSources(m.content, m.sources).map((source) => (
+                      {citedSources(m.content, m.sources).map((source, index) => (
                         <p
                           key={source.citation}
                           className="mt-1 font-bold text-slate-600"
                         >
-                          [{source.citation}] {source.title} ·{" "}
-                          {source.verifiedAt}
+                          [{index + 1}]{" "}
+                          {source.sourceUrl ? (
+                            <a
+                              href={source.sourceUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="underline underline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#0f695c]"
+                            >
+                              {source.title}
+                            </a>
+                          ) : (
+                            source.title
+                          )}{" "}
+                          · {source.verifiedAt}
                         </p>
                       ))}
                     </div>

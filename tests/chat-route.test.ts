@@ -90,7 +90,7 @@ test("chat answers contradictory in-scope guarantees without handing off to admi
   expect(response.status).toBe(200);
   expect(response.headers.get("x-hostora-support-status")).toBe("active");
   const answer = await response.text();
-  expect(answer).toContain("Không thể cam kết");
+  expect(answer).toContain("chưa thể cam kết");
   expect(answer).toContain("20.000đ/tháng");
   expect(answer).not.toMatch(/đã chuyển.*quản trị viên/i);
 

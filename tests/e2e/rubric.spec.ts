@@ -62,14 +62,12 @@ test("chat shows verified citations without sending customers away", async ({
     .getByLabel("Tin nhắn")
     .fill("Tên miền abc-hostora-demo.com còn trống hôm nay không?");
   await page.getByRole("button", { name: "Gửi", exact: true }).click();
-  await expect(page.getByText("Dữ liệu đã kiểm tra")).toBeVisible();
+  await expect(page.getByText("Tài liệu tham khảo")).toBeVisible();
   await expect(
-    page.getByText(/không thể xác nhận trực tiếp trạng thái tên miền/i),
+    page.getByText(/chưa tra được tên miền này còn trống/i),
   ).toBeVisible();
-  await expect(page.getByText(/\[K1\].*Tên miền/)).toBeVisible();
-  await expect(
-    page.locator('a[href^="http"]').filter({ hasText: /\[K1\]/ }),
-  ).toHaveCount(0);
+  await expect(page.locator('a[href^="https://"]').filter({ hasText: /Tên miền/ })).toBeVisible();
+  await expect(page.getByText(/\[K1\]/)).toHaveCount(0);
 });
 
 test("catalog outage never substitutes unverified prices", async ({ page }) => {
@@ -108,7 +106,7 @@ test("old chat claims stay archived and out of new AI context", async ({
     .getByLabel("Tin nhắn")
     .fill("Tên miền abc-hostora-demo.com còn trống hôm nay không?");
   await page.getByRole("button", { name: "Gửi", exact: true }).click();
-  await expect(page.getByText("Dữ liệu đã kiểm tra")).toBeVisible();
+  await expect(page.getByText("Tài liệu tham khảo")).toBeVisible();
   expect(
     sentMessages.some((message) => message.content.includes("Giá cũ")),
   ).toBe(false);

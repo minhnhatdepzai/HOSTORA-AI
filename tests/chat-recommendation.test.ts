@@ -14,7 +14,8 @@ test("ranks three catalog plans deterministically for explicit shop needs", () =
   expect(result?.answer).toContain("Gói chính:");
   expect(result?.answer).toContain("Thay thế 1:");
   expect(result?.answer).toContain("Thay thế 2:");
-  expect(result?.answer).toContain("không phải cam kết chịu tải");
+  expect(result?.answer).toContain("chưa cho biết website có chịu được giờ cao điểm");
+  expect(result?.answer).not.toContain("..");
   expect(result?.sources).toHaveLength(4);
 });
 

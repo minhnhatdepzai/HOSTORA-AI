@@ -73,9 +73,10 @@ phương án → dựng website mẫu → gửi yêu cầu mua → theo dõi đ�
 5. Khách có thể dùng Website Studio để tạo bản xem trước và tải website mẫu.
 6. Khách gửi yêu cầu mua; hệ thống tạo hóa đơn demo/sandbox và theo dõi toàn bộ
    vòng đời đơn hàng.
-7. Khi khách chủ động yêu cầu người thật, câu hỏi thật sự ngoài phạm vi, thiếu dữ
-   liệu thời gian thực hoặc AI local gián đoạn, hội thoại được chuyển vào inbox
-   admin và có thể phát email thông báo cho quản trị viên.
+7. Trợ lý tiếp tục giải thích phần có căn cứ khi câu hỏi khó hoặc thiếu dữ kiện;
+   dữ liệu thời gian thực như trạng thái tên miền được hướng dẫn kiểm tra lại.
+   Khi khách yêu cầu người thật, câu hỏi thực sự ngoài phạm vi hoặc AI local
+   gián đoạn, hội thoại được chuyển vào inbox admin và có thể phát email thông báo.
 
 ## Hệ thống AI đã triển khai
 
@@ -89,6 +90,12 @@ phương án → dựng website mẫu → gửi yêu cầu mua → theo dõi đ�
 | Vision         | `qwen3-vl:8b`                       | Được cấu hình để đọc ảnh hành trình/ảnh nguồn riêng; output bị giới hạn schema và không được đoán chữ không nhìn rõ |
 | Website Studio | Qwen structured output + LangGraph  | Viết nội dung, kiểm tra claim không có nguồn, tự sửa một lượt rồi chuyển sang template fallback nếu vẫn không đạt   |
 | Runtime        | Ollama `127.0.0.1:11434`            | Context thực tế 16.384 token, `keep_alive=10m`, không có cloud AI fallback                                          |
+
+LangGraph hiện điều phối **Website Studio**. Luồng chatbot dùng phân nhánh bảo vệ,
+bộ nhớ nhu cầu, RAG, catalog và Ollama trực tiếp; không gắn nhãn chatbot là
+LangGraph khi chưa có graph cho hội thoại. Câu trả lời trên web và Android chỉ
+hiện số tham chiếu như `[1]`; danh sách tài liệu và liên kết nằm ngay dưới câu
+trả lời.
 
 ### RAG: dữ kiện mới không cần nhồi vào trọng số model
 
@@ -132,8 +139,9 @@ Nguồn riêng chỉ giúp hiểu doanh nghiệp và sản phẩm của khách; 
 - giá, xếp hạng, voucher, doanh thu, forecast và trạng thái thanh toán do code
   tất định quyết định;
 - model không có shell, filesystem, database mutation hoặc network tool tùy ý;
-- bốn lý do escalation được kiểm soát: `human_requested`, `out_of_scope`,
-  `insufficient_data`, `assistant_unavailable`;
+- chuyển quản trị viên khi khách yêu cầu người thật, câu hỏi ngoài phạm vi hoặc
+  trợ lý không sẵn sàng; thiếu giá/dữ kiện riêng chưa xác minh được giải thích
+  và hỏi tiếp trong cuộc chat;
 - hội thoại được lưu để admin tiếp tục trả lời, nhưng log AI chỉ ghi model,
   latency, token usage và feature — không ghi nguyên văn prompt hoặc PII.
 
@@ -232,7 +240,7 @@ thứ hạng cuộc thi.
 
 | Nội dung                         | Liên kết                                                                                                                                   | Trạng thái                                                         |
 | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------ |
-| Web khách hàng                   | [Mở HOSTORA](https://admin123-system-product-name.tailfeea7a.ts.net:8443/)                                                                 | HTTPS ổn định qua Tailscale Funnel, kiểm tra 02/11/2026            |
+| Web khách hàng                   | [Mở HOSTORA](https://admin123-system-product-name.tailfeea7a.ts.net:8443/)                                                                 | HTTPS ổn định qua Tailscale Funnel, kiểm tra 05/11/2026            |
 | Web quản trị                     | [Mở trang admin](https://admin123-system-product-name.tailfeea7a.ts.net:8443/admin)                                                        | Chuyển tới cổng đăng nhập admin                                    |
 | Hộp thư AI của admin             | [Mở hộp thư hỗ trợ](https://admin123-system-product-name.tailfeea7a.ts.net:8443/admin/support)                                             | Cần phiên quản trị hợp lệ                                          |
 | Chấm SEO + AI visibility         | [Mở công cụ kiểm tra](https://admin123-system-product-name.tailfeea7a.ts.net:8443/website-analyzer)                                        | Tách điểm Google, AI crawler và kế hoạch sửa tất định              |
@@ -516,6 +524,7 @@ pnpm report:mobile:judge
 Các tài liệu dành cho vòng loại:
 
 - [Nghiệm thu bàn phím toàn app và đồng bộ Android → Admin 2.2.3](docs/submission/MOBILE_ALL_SCREENS_ADMIN_SYNC_2026-11-05.md);
+- [Nghiệm thu chatbot và tư vấn 2.2.4](docs/submission/CHAT_ADVISOR_2.2.4_2026-11-05.md) gồm ca khó, đường đi quản trị viên và ảnh APK trên Android ảo;
 - [Báo cáo 9 ca mobile](docs/submission/HOSTORA_MOBILE_9_CASES.html);
 - [Minh chứng 20 ca cho giám khảo](docs/submission/MINH_CHUNG_20_CA.html);
 - [Minh chứng 9 ca cũ](docs/submission/MINH_CHUNG_9_CA.html) để đối chiếu lịch sử;
@@ -528,7 +537,7 @@ Các tài liệu dành cho vòng loại:
 
 HTTP 200, browser mobile viewport hoặc APK build thành công không thay thế kiểm thử luồng thật. Bằng chứng Android phải đến từ APK cài trên thiết bị; ca sự cố mô phỏng phải được ghi rõ là mô phỏng.
 
-> **Bản đang nghiệm thu:** source/APK emulator 2.2.3 đã qua bàn phím toàn app, Maestro native, luồng Android → Admin và AI → Admin → Android. Link tải công khai vẫn là 2.2.2 universal cho đến khi artifact 2.2.3 đủ bốn ABI, checksum và Source ZIP được phát hành đồng bộ.
+> **Bản đang nghiệm thu:** source và APK emulator x86_64 2.2.4 đã được cài đè, giữ dữ liệu và kiểm tra trực tiếp chat có tài liệu `[1]`, câu hỏi CDN chậm và chuyển hosting. Bộ kiểm thử bàn phím toàn app, Maestro native và Android → Admin ở bản 2.2.3 là bằng chứng lịch sử riêng. Link tải công khai vẫn là 2.2.2 universal cho đến khi artifact 2.2.4 đủ bốn ABI, checksum và Source ZIP được phát hành đồng bộ.
 
 ## Gói nộp vòng loại
 

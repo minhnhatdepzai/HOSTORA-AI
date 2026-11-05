@@ -18,11 +18,14 @@ export function recommendationFacts(requirements: Requirements) {
 
 export function renderRecommendationExplanation(requirements: Requirements, selectedFactIds: string[]) {
   const { items, decision, facts } = recommendationFacts(requirements);
+  const primary = items.find((item) => item.eligibility === "eligible");
   const mandatoryIds = items.map(({ plan }) => `${plan.id}:cost`);
   // Always include unknown feature states, regardless of model selection.
   const ids = new Set([...mandatoryIds, ...items.map(({ plan }) => `${plan.id}:cdn`), ...selectedFactIds]);
   return {
-    summary: decision.message,
+    summary: primary
+      ? `${decision.message} Mình nghiêng về ${primary.plan.provider} ${primary.plan.name}: giá kỳ đầu và giá gia hạn của gói này nằm trong ngân sách hosting bạn nhập. Đây là điểm bắt đầu để so sánh; khả năng phục vụ khách khi cao điểm vẫn cần thử trên website thật.`
+      : decision.message,
     tradeoffs: facts.filter((fact) => ids.has(fact.id)).map((fact) => fact.text),
     nextStep: decision.status === "no-match"
       ? "Sửa ngân sách hoặc trao đổi với tư vấn viên trước khi chọn gói. Không thanh toán gói vượt khả năng chi trả."

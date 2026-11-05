@@ -1,4 +1,7 @@
 const replacements: readonly (readonly [RegExp, string])[] = [
+  [/\bdatabase (?:queries|query)\b/gi, "truy vấn dữ liệu"],
+  [/\bkho dữ liệu thao tác tìm dữ liệu\b/gi, "truy vấn dữ liệu"],
+  [/\bsnapshot gói\b/gi, "bản thông tin gói đã kiểm tra"],
   [/\blocal AI\b/gi, "trợ lý riêng tư"],
   [/\bOllama\b/gi, "trợ lý"],
   [/\bQwen(?:[\w.:-]+)?\b/gi, "trợ lý HOSTORA"],
@@ -40,7 +43,7 @@ const replacements: readonly (readonly [RegExp, string])[] = [
   [/\bcache\b/gi, "cách lưu nội dung tạm thời"],
   [/\bdatabase\b/gi, "kho dữ liệu"],
   [/\bquery\b/gi, "thao tác tìm dữ liệu"],
-  [/\bCDN\b/g, "CDN (dịch vụ tăng tốc)"],
+  [/\bCDN\b/g, "CDN"],
   [/\bSSL\b/g, "kết nối an toàn"],
   [/\bHTML\b/g, "nội dung trang"],
   [/\bCPU\b/g, "khả năng xử lý"],
@@ -72,7 +75,13 @@ export function toCustomerLanguage(value: string) {
     (result, [pattern, replacement]) => result.replace(pattern, replacement),
     value,
   );
-  return value[0] === value[0]?.toLocaleUpperCase("vi-VN") && output[0]
-    ? output[0].toLocaleUpperCase("vi-VN") + output.slice(1)
-    : output;
+  let explainedCdn = false;
+  const naturalOutput = output.replace(/\bCDN\b(?: \(dịch vụ tăng tốc\))?/g, () => {
+    if (explainedCdn) return "CDN";
+    explainedCdn = true;
+    return "CDN (dịch vụ tăng tốc)";
+  });
+  return value[0] === value[0]?.toLocaleUpperCase("vi-VN") && naturalOutput[0]
+    ? naturalOutput[0].toLocaleUpperCase("vi-VN") + naturalOutput.slice(1)
+    : naturalOutput;
 }

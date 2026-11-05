@@ -10,6 +10,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Linking,
   Platform,
   ScrollView,
   type ScrollViewInstance,
@@ -28,6 +29,7 @@ import { useCustomerAuth } from "@/context/customer-auth-context";
 import { toCustomerLanguage } from "@/lib/customer-language";
 import {
   citedSources,
+  numberedChatAnswer,
   parseChatSources,
   readChatSources,
   type ChatSource,
@@ -62,13 +64,7 @@ const starters = [
 ];
 
 function customerAnswer(content: string, sources: ChatSource[] = []) {
-  return toCustomerLanguage(
-    sources.reduce(
-      (answer, source, index) =>
-        answer.split(`[${source.citation}]`).join(`[Dữ liệu ${index + 1}]`),
-      content,
-    ),
-  );
+  return toCustomerLanguage(numberedChatAnswer(content, sources));
 }
 
 function randomUuid() {
@@ -737,16 +733,21 @@ export default function AssistantScreen() {
                       0 ? (
                       <View style={styles.sourceList}>
                         <Text style={styles.sourceHeading}>
-                          DỮ LIỆU ĐÃ KIỂM TRA
+                          TÀI LIỆU THAM KHẢO
                         </Text>
                         {citedSources(message.content, message.sources).map(
                           (source, sourceIndex) => (
                             <Text
                               key={source.citation}
                               style={styles.sourceLink}
+                              accessibilityRole={source.sourceUrl ? "link" : "text"}
+                              onPress={
+                                source.sourceUrl
+                                  ? () => void Linking.openURL(source.sourceUrl!)
+                                  : undefined
+                              }
                             >
-                              Dữ liệu {sourceIndex + 1} · HOSTORA kiểm tra ngày{" "}
-                              {source.verifiedAt}
+                              [{sourceIndex + 1}] {source.title} · {source.verifiedAt}
                             </Text>
                           ),
                         )}

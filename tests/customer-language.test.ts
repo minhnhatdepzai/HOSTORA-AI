@@ -26,4 +26,10 @@ describe("customer-facing AI language", () => {
     expect(output).toContain("thông báo giao dịch tự động");
     expect(output).toContain("khả năng được tìm thấy trên Google");
   });
+
+  it("explains CDN once in a repeated answer", () => {
+    expect(toCustomerLanguage("CDN giúp tải ảnh. Bật CDN không xử lý giỏ hàng.")).toBe(
+      "CDN (dịch vụ tăng tốc) giúp tải ảnh. Bật CDN không xử lý giỏ hàng.",
+    );
+  });
 });

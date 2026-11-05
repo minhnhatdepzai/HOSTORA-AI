@@ -10,6 +10,7 @@ import {
   memoryRecallAnswer,
   budgetCorrectionAnswer,
   cdnVsHostingAnswer,
+  cdnSlowCheckoutAnswer,
   customerSourceBusinessAnswer,
   unknownBusinessDataAnswer,
   unrealisticGuaranteeAnswer,
@@ -57,7 +58,7 @@ test("live domain status and price are never invented", () => {
   const result = domainAvailabilityAnswer(
     "hostora-shop-2026.vn chắc chắn đang còn trống và giá đăng ký hôm nay là bao nhiêu?",
   );
-  expect(result?.answer).toContain("không thể xác nhận");
+  expect(result?.answer).toContain("chưa tra được tên miền này còn trống");
   expect(result?.sources).toHaveLength(2);
 });
 
@@ -165,14 +166,33 @@ test("an impossible load and SEO promise gets a grounded plan without repeating 
   const result = unrealisticGuaranteeAnswer(
     "Ngân sách của tôi chỉ 20.000 đồng nhưng website phải chịu 1 triệu khách cùng lúc, không chậm và SEO top 1.",
   );
-  expect(result?.answer).toContain("Không thể cam kết");
+  expect(result?.answer).toContain("chưa thể cam kết");
   expect(result?.answer).toContain("một triệu lượt truy cập trong cả tháng");
   expect(result?.answer).toContain("20.000đ/tháng");
-  expect(result?.answer).toContain("không yêu cầu bạn nhập lại");
-  expect(result?.answer).toContain("kế hoạch thử tải");
+  expect(result?.answer).toContain("đã ghi nhận ngân sách");
+  expect(result?.answer).toContain("thử tải");
   expect(result?.answer).not.toMatch(
     /cho mình biết (?:lại )?(?:mức )?ngân sách/i,
   );
+  expect(result?.sources.map((source) => source.citation)).toEqual(["K1", "K2"]);
+});
+
+test("a smaller flash sale never inherits the million-user or SEO scenario", () => {
+  const result = unrealisticGuaranteeAnswer(
+    "Shop flash sale 300 người cùng lúc, ngân sách 300.000đ/tháng, có chắc không lag không?",
+  );
+  expect(result?.answer).toContain("thử tải");
+  expect(result?.answer).not.toContain("Một triệu");
+  expect(result?.answer).not.toContain("Google");
+});
+
+test("migration advice covers email, orders and URL checks when asked", () => {
+  const result = dnsMigrationAnswer(
+    "Tôi chuyển hosting, giữ domain cũ. Làm sao để không mất email, SEO và đơn hàng?",
+  );
+  expect(result?.answer).toContain("gửi, nhận thư");
+  expect(result?.answer).toContain("đơn hàng");
+  expect(result?.answer).toContain("canonical");
   expect(result?.sources.map((source) => source.citation)).toEqual(["K1", "K2"]);
 });
 
@@ -204,6 +224,21 @@ test("CDN explanation keeps both technical terms and avoids promises", () => {
   expect(result?.answer).not.toMatch(/cam kết|bảo đảm/i);
 });
 
+test("slow checkout with CDN gets a grounded diagnosis before suggesting an upgrade", () => {
+  const result = cdnSlowCheckoutAnswer("Tôi bật CDN rồi mà website vẫn chậm khi 200 khách cùng lúc đặt hàng. Khi nào mới cần nâng hosting?");
+  expect(result?.answer).toContain("giỏ hàng");
+  expect(result?.answer).toContain("số đo thật");
+  expect(result?.sources.map((source) => source.citation)).toEqual(["K1", "K2"]);
+});
+
+test("hosting migration advice covers mail, orders and SEO without requiring DNS keyword", () => {
+  const result = dnsMigrationAnswer("Chuyển hosting mà vẫn giữ email, SEO và đơn hàng WooCommerce thì cần làm sao?");
+  expect(result?.answer).toContain("đồng bộ đơn hàng");
+  expect(result?.answer).toContain("kiểm tra gửi, nhận thư");
+  expect(result?.answer).toContain("canonical");
+  expect(result?.sources).toHaveLength(2);
+});
+
 test("customer source answer quotes grounded business facts and drops instructions", () => {
   const result = customerSourceBusinessAnswer(
     "Theo tài liệu riêng, Mộc An bán gì và phục vụ nhóm khách nào?",
@@ -212,6 +247,9 @@ test("customer source answer quotes grounded business facts and drops instructio
   expect(result?.answer).toContain("bình gốm");
   expect(result?.answer).toContain("quán cà phê độc lập");
   expect(result?.answer).toContain("[U1]");
+  expect(result?.sources).toEqual([
+    expect.objectContaining({ citation: "U1", sourceUrl: null }),
+  ]);
   expect(result?.answer).not.toContain("1 đồng");
 });
 

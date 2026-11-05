@@ -105,11 +105,18 @@ export function unrealisticGuaranteeAnswer(question: string) {
   const budget = budgetMatch
     ? parseBudgetAmount(budgetMatch[1], budgetMatch[2] ?? "")
     : null;
-  const parts = ["Không thể cam kết nguyên yêu cầu này một cách có trách nhiệm."];
+  const parts = [
+    asksNoSlowdown || asksExtremeConcurrency
+      ? "Mình có thể giúp bạn chọn hướng phù hợp, nhưng chưa thể cam kết website không chậm khi đông khách."
+      : "Mình có thể giúp bạn cải thiện khả năng được tìm thấy, nhưng không thể hứa vị trí số một trên Google.",
+  ];
 
   if (asksExtremeConcurrency || asksNoSlowdown)
     parts.push(
-      "Một triệu khách cùng lúc khác hoàn toàn một triệu lượt truy cập trong cả tháng. Tên gói hoặc thông số quảng cáo không đủ chứng minh website sẽ không chậm hay không lỗi; phải thử tải đúng luồng xem trang, đăng nhập, tìm kiếm và thanh toán, rồi theo dõi CPU, RAM, cơ sở dữ liệu, thời gian phản hồi và tỷ lệ lỗi." +
+      (asksExtremeConcurrency
+        ? "Một triệu khách cùng lúc khác hoàn toàn một triệu lượt truy cập trong cả tháng. "
+        : "Số người truy cập cùng lúc khác với lượt truy cập cả tháng. ") +
+        "Thông số gói chưa chứng minh website của bạn sẽ chạy ổn trong giờ cao điểm; cần thử tải đúng luồng xem sản phẩm, đặt hàng và thanh toán, rồi theo dõi thời gian phản hồi và tỷ lệ lỗi." +
         performanceCitation,
     );
   if (asksTopOne)
@@ -119,11 +126,12 @@ export function unrealisticGuaranteeAnswer(question: string) {
     );
   if (budget !== null)
     parts.push(
-      `Ngân sách bạn đã nêu là ${budget.toLocaleString("vi-VN")}đ/tháng; HOSTORA đã ghi nhận con số này và không yêu cầu bạn nhập lại. Dữ liệu hiện có không đủ để ghép mức ngân sách đó với các cam kết trên.`,
+      `Mình đã ghi nhận ngân sách ${budget.toLocaleString("vi-VN")}đ/tháng. Mức này giúp lọc gói, còn tiền trả trước và sức chịu tải phải kiểm tra riêng.`,
     );
-  parts.push(
-    "Hướng khả thi là chốt một kịch bản tải cụ thể (bao nhiêu người chỉ xem, bao nhiêu người thanh toán và cao điểm kéo dài bao lâu), thử tải theo từng mức, đặt ngưỡng nâng cấp theo số đo thật; với tối ưu tìm kiếm, theo dõi việc lập chỉ mục, nội dung, trải nghiệm trang và thứ hạng theo thời gian. Hãy cho mình biết tỷ lệ khách xem trang và khách thanh toán trong giờ cao điểm để mình lập kế hoạch thử tải, không cần nhắc lại ngân sách hay số khách cùng lúc.",
-  );
+  if (asksNoSlowdown || asksExtremeConcurrency)
+    parts.push("Bước tiếp theo là ước lượng bao nhiêu khách chỉ xem và bao nhiêu khách thanh toán trong giờ cao điểm, rồi thử tải từ thấp lên cao. Bạn có số đơn dự kiến trong một giờ bán cao điểm không?");
+  if (asksTopOne)
+    parts.push("Với Google, hãy kiểm tra trang đã được lập chỉ mục, nội dung có giải quyết đúng điều khách tìm và tốc độ tải thực tế; theo dõi kết quả theo thời gian thay vì mua một gói chỉ vì lời hứa thứ hạng.");
 
   return { answer: parts.join("\n\n"), sources };
 }
@@ -267,7 +275,7 @@ export function domainAvailabilityAnswer(question: string) {
   if (!domain || !pricing) return null;
   return {
     answer:
-      "Tôi không thể xác nhận trực tiếp trạng thái tên miền hoặc mức phí hiện tại nếu chưa kiểm tra. HOSTORA sẽ xác minh tên miền, giá và thời hạn trước khi tạo hóa đơn; dữ liệu trong ứng dụng luôn có ngày kiểm tra rõ ràng. [K1] [K2]",
+      "Mình chưa tra được tên miền này còn trống hay giá hiện tại ngay trong cuộc chat. Bạn hãy nhập đúng tên miền trên trang đăng ký, rồi xem cả giá năm đầu, phí gia hạn và thời hạn trước khi thanh toán. [K1] [K2] Nếu bạn gửi các mức giá đã thấy, mình sẽ giúp so sánh tổng tiền cần trả.",
     sources: [domain, pricing],
   };
 }
@@ -292,7 +300,13 @@ export function customerSourceBusinessAnswer(
   if (!safeSentence) return null;
   return {
     answer: `Theo tài liệu riêng của bạn: ${safeSentence} [${source.citation}]`,
-    sources: [],
+    sources: [{
+      citation: source.citation,
+      title: source.title ?? "Tài liệu bạn đã cung cấp",
+      sourceUrl: null,
+      verifiedAt: "Nguồn riêng của bạn",
+      kind: "customer",
+    }],
   };
 }
 
@@ -303,6 +317,22 @@ export function cdnVsHostingAnswer(question: string) {
     answer:
       "CDN không thay thế hosting. Hosting lưu và chạy website; CDN phân phối bản sao nội dung tĩnh gần người truy cập để giảm thời gian chờ. Hai thành phần bổ trợ nhau, còn giá và khả năng phục vụ nhiều khách cùng lúc cần được kiểm tra theo cấu hình và tải thực tế." + (source ? " [K1]" : ""),
     sources: source ? [source] : [],
+  };
+}
+
+export function cdnSlowCheckoutAnswer(question: string) {
+  if (!/\bCDN\b/i.test(question) ||
+      !/(chậm|lag|treo|quá tải|lỗi)/i.test(question) ||
+      !/(đặt hàng|thanh toán|checkout|mua hàng|cùng lúc|đồng thời)/i.test(question))
+    return null;
+  const cdn = knowledgeSource("ssl-cdn-backup", "K1");
+  const performance = knowledgeSource("performance-limits", "K2");
+  return {
+    answer:
+      "CDN chủ yếu giúp tải ảnh và nội dung ít thay đổi; giỏ hàng và thanh toán vẫn cần website xử lý riêng, nên bật CDN rồi mà giờ đông khách vẫn chậm là điều có thể xảy ra. [K1] " +
+      "Trước khi đổi gói, hãy thử lại đúng lúc nhiều khách đặt hàng: đo bước giỏ hàng, thanh toán và thời gian đọc, lưu dữ liệu; xem máy chủ có quá tải hay phát sinh lỗi không. [K2] " +
+      "Nếu phần xử lý đơn hàng vẫn chậm sau khi đã tối ưu, lúc đó mới so sánh gói hosting theo số đo thật. Bạn thấy chậm nhất ở giỏ hàng hay khi bấm thanh toán?",
+    sources: [cdn, performance].filter((source): source is NonNullable<typeof source> => Boolean(source)),
   };
 }
 
@@ -324,17 +354,26 @@ export function structuredDataPenaltyAnswer(question: string) {
 export function dnsMigrationAnswer(question: string) {
   if (
     !/(chuyển|đổi)/i.test(question) ||
-    !/(hosting|web)/i.test(question) ||
-    !/(dns|domain cũ|tên miền cũ)/i.test(question)
+    !/(hosting|nhà cung cấp lưu trữ|máy chủ|server|dns|domain cũ|tên miền cũ)/i.test(question)
   )
     return null;
   const source = knowledgeSource("domain-basics", "K1");
   if (!source) return null;
+  const mentionsMail = /email|mail|hộp thư|thư điện tử/i.test(question);
+  const mentionsSeo = /seo|google|thứ hạng|thu hang/i.test(question);
+  const mentionsOrders = /đơn hàng|don hang|woocommerce|dữ liệu bán hàng|du lieu ban hang/i.test(question);
+  const seoSource = mentionsSeo ? knowledgeSource("seo-canonical", "K2") : null;
+  const checks = [
+    mentionsMail ? "chép lại thiết lập email và kiểm tra gửi, nhận thư sau khi đổi DNS" : null,
+    mentionsOrders ? "đồng bộ đơn hàng phát sinh sát giờ chuyển và thử đặt một đơn kiểm tra" : null,
+    mentionsSeo ? "giữ URL cũ nếu có thể; nếu đổi URL, kiểm tra chuyển hướng, canonical và sitemap khớp nhau" + (seoSource ? " [K2]" : "") : null,
+  ].filter((item): item is string => Boolean(item));
   return {
     answer:
-      "Bạn thường có thể giữ tên miền cũ khi đổi hosting vì địa chỉ website và nơi lưu website là hai phần riêng nhau. [K1]\n" +
-      "Các bước đề xuất: (1) sao lưu toàn bộ website; (2) cài và chạy thử ở gói mới; (3) lấy thông tin kết nối tên miền từ nhà cung cấp mới; (4) cập nhật trong tài khoản quản lý tên miền; (5) kiểm tra website, biểu tượng ổ khóa và email sau khi chuyển. Hãy lưu lại thiết lập cũ để có thể quay lại nếu cần. Thời gian hoàn tất phụ thuộc từng nhà cung cấp nên cần xác nhận trước.",
-    sources: [source],
+      "Bạn thường có thể giữ tên miền cũ khi đổi hosting vì tên miền và nơi lưu website là hai phần riêng nhau. [K1]\n\nĐể giảm rủi ro, hãy sao lưu và thử website trên gói mới trước, ghi lại thiết lập DNS hiện tại, rồi mới đổi kết nối tên miền. " +
+      (checks.length ? `Với trường hợp của bạn, cần thêm: ${checks.join("; ")}. ` : "") +
+      "Sau khi đổi, kiểm tra website, đăng nhập, biểu tượng ổ khóa và giữ cấu hình cũ để quay lại nếu cần. Bạn đang dùng email theo tên miền này hay email ở dịch vụ riêng?",
+    sources: seoSource ? [source, seoSource] : [source],
   };
 }
 

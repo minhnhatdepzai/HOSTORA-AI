@@ -10,6 +10,12 @@ describe("AI human handoff", () => {
     ).toEqual({ reason: "out_of_scope" });
   });
 
+  it("does not mistake giai or gia tri in a math question for a price request", () => {
+    expect(evaluateAiEscalation({
+      question: "Hãy giải bài toán tích phân này: giá trị x bình phương từ 0 đến 1?",
+    })).toEqual({ reason: "out_of_scope" });
+  });
+
   it("keeps HOSTORA hosting and website questions with the trained assistant", () => {
     expect(
       evaluateAiEscalation({
@@ -56,14 +62,23 @@ describe("AI human handoff", () => {
     ).toEqual({ reason: "human_requested" });
   });
 
-  it("escalates when the assistant explicitly lacks the requested live data", () => {
+  it("keeps an in-scope live-data question with the assistant and explains how to check", () => {
     expect(
       evaluateAiEscalation({
         question: "Tên miền mocan.vn hiện còn trống không?",
         answer:
           "Mình chưa thể xác nhận tình trạng tên miền theo thời gian thực.",
       }),
-    ).toEqual({ reason: "insufficient_data" });
+    ).toBeNull();
+  });
+
+  it("keeps unknown renewal cost and business metrics in the advisor flow", () => {
+    for (const [question, answer] of [
+      ["Giá gia hạn gói hosting này là bao nhiêu?", "Mình chưa thể xác nhận giá gia hạn từ dữ liệu hiện có; hãy kiểm tra báo giá trước khi mua."],
+      ["Doanh thu website của tôi tháng này là bao nhiêu?", "Mình chưa thể xác nhận doanh thu nếu chưa có báo cáo của bạn."],
+    ]) {
+      expect(evaluateAiEscalation({ question, answer })).toBeNull();
+    }
   });
 
   it("escalates an unavailable local model without exposing implementation details", () => {
