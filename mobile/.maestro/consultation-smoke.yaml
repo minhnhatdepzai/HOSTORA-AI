@@ -12,6 +12,11 @@ tags:
 - tapOn:
     text: "Trang chủ"
     optional: true
+- runFlow:
+    when:
+      visible: "Việc vừa xảy ra."
+    commands:
+      - tapOn: "Đóng"
 - scrollUntilVisible:
     element:
       text: "Tư vấn chọn gói phù hợp"
@@ -20,6 +25,11 @@ tags:
 - tapOn: "Tư vấn chọn gói phù hợp"
 - assertVisible: "BƯỚC 1/4"
 - takeScreenshot: consultation-step-1
+- runFlow:
+    when:
+      visible: "Việc vừa xảy ra."
+    commands:
+      - tapOn: "Đóng"
 - scrollUntilVisible:
     element:
       text: "Tiếp tục"
@@ -27,6 +37,11 @@ tags:
     timeout: 15000
 - tapOn: "Tiếp tục"
 - assertVisible: "BƯỚC 2/4"
+- runFlow:
+    when:
+      visible: "Việc vừa xảy ra."
+    commands:
+      - tapOn: "Đóng"
 - scrollUntilVisible:
     element:
       text: "Tiếp tục"
@@ -34,6 +49,11 @@ tags:
     timeout: 15000
 - tapOn: "Tiếp tục"
 - assertVisible: "BƯỚC 3/4"
+- runFlow:
+    when:
+      visible: "Việc vừa xảy ra."
+    commands:
+      - tapOn: "Đóng"
 - scrollUntilVisible:
     element:
       text: "Tiếp tục"
@@ -41,6 +61,11 @@ tags:
     timeout: 15000
 - tapOn: "Tiếp tục"
 - assertVisible: "BƯỚC 4/4"
+- runFlow:
+    when:
+      visible: "Việc vừa xảy ra."
+    commands:
+      - tapOn: "Đóng"
 - scrollUntilVisible:
     element:
       text: "Xem đề xuất"

@@ -82,4 +82,13 @@ describe("AI human handoff", () => {
       }),
     ).toEqual({ reason: "out_of_scope" });
   });
+
+  it("routes a polite unrelated request without a question mark", () => {
+    expect(
+      evaluateAiEscalation({
+        question:
+          "Cho tôi lịch thi đấu bóng đá World Cup 2030 và dự báo tỉ số.",
+      }),
+    ).toEqual({ reason: "out_of_scope" });
+  });
 });

@@ -21,6 +21,7 @@ import { Onboarding } from "@/components/onboarding";
 import { AppProvider } from "@/context/app-context";
 import { CustomerAuthProvider } from "@/context/customer-auth-context";
 import { NotificationCenter } from "@/components/notification-center";
+import { KeyboardSafeView } from "@/components/keyboard-safe-view";
 import { IntroPlaybackContext } from "@/context/intro-playback-context";
 import {
   ONBOARDING_COMPLETED_VALUE,
@@ -124,34 +125,36 @@ export default function RootLayout() {
                     style={styles.routedContent}
                     {...routedContentAccessibility}
                   >
-                    <Stack
-                      screenOptions={{
-                        headerShown: false,
-                        contentStyle: { backgroundColor: colors.canvas },
-                        animation: reduceMotion ? "none" : "slide_from_right",
-                        gestureEnabled: true,
-                      }}
-                    >
-                      <Stack.Screen
-                        name="(tabs)"
-                        options={{ animation: "none" }}
-                      />
-                      <Stack.Screen name="recommendations" />
-                      <Stack.Screen name="judge" />
-                      <Stack.Screen name="domain" />
-                      <Stack.Screen name="analyzer" />
-                      <Stack.Screen name="knowledge" />
-                      <Stack.Screen name="journal" />
-                      <Stack.Screen name="seo" />
-                      <Stack.Screen name="readiness" />
-                      <Stack.Screen name="settings" />
-                      <Stack.Screen name="orders" />
-                      <Stack.Screen name="studio" />
-                      <Stack.Screen name="account" />
-                      <Stack.Screen name="account-login" />
-                      <Stack.Screen name="account-register" />
-                      <Stack.Screen name="account-forgot" />
-                    </Stack>
+                    <KeyboardSafeView>
+                      <Stack
+                        screenOptions={{
+                          headerShown: false,
+                          contentStyle: { backgroundColor: colors.canvas },
+                          animation: reduceMotion ? "none" : "slide_from_right",
+                          gestureEnabled: true,
+                        }}
+                      >
+                        <Stack.Screen
+                          name="(tabs)"
+                          options={{ animation: "none" }}
+                        />
+                        <Stack.Screen name="recommendations" />
+                        <Stack.Screen name="judge" />
+                        <Stack.Screen name="domain" />
+                        <Stack.Screen name="analyzer" />
+                        <Stack.Screen name="knowledge" />
+                        <Stack.Screen name="journal" />
+                        <Stack.Screen name="seo" />
+                        <Stack.Screen name="readiness" />
+                        <Stack.Screen name="settings" />
+                        <Stack.Screen name="orders" />
+                        <Stack.Screen name="studio" />
+                        <Stack.Screen name="account" />
+                        <Stack.Screen name="account-login" />
+                        <Stack.Screen name="account-register" />
+                        <Stack.Screen name="account-forgot" />
+                      </Stack>
+                    </KeyboardSafeView>
                   </View>
                 ) : null}
                 {playingIntro ? (

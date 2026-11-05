@@ -24,6 +24,7 @@ import { formatVnd } from "@/lib/catalog";
 import { useApp } from "@/context/app-context";
 import { createAppNotification } from "@/lib/app-notifications";
 import { useCustomerAuth } from "@/context/customer-auth-context";
+import { KeyboardSafeView } from "@/components/keyboard-safe-view";
 
 type Product = {
   id: string;
@@ -400,353 +401,358 @@ function ProductsContent({ initialCategory }: { initialCategory: string }) {
         animationType="slide"
         onRequestClose={() => setSelected(null)}
       >
-        <View style={styles.modalBackdrop}>
-          <ScrollView
-            keyboardShouldPersistTaps="handled"
-            contentContainerStyle={styles.modalScroll}
-          >
-            <View style={styles.modalCard}>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Đóng"
-                onPress={() => setSelected(null)}
-                style={styles.modalClose}
-              >
-                <Feather name="x" size={22} color={colors.ink} />
-              </Pressable>
-              <Text style={styles.modalKicker}>MUA HÀNG QUA HOSTORA</Text>
-              <Text style={styles.modalTitle}>{selected?.name}</Text>
-              <Text style={styles.modalCopy}>
-                {selected?.provider} · {selected?.summary}
-              </Text>
-              {requestResult ? (
-                <View style={styles.requestSuccess}>
-                  <Feather
-                    name="check-circle"
-                    size={22}
-                    color={colors.primary}
-                  />
-                  <Text style={styles.requestSuccessTitle}>
-                    Hồ sơ đã gửi tới HOSTORA
-                  </Text>
-                  <Text style={styles.requestCode}>
-                    Mã yêu cầu: {requestResult.id}
-                  </Text>
-                  <Text style={styles.modalCopy}>
-                    Email xác nhận có nút theo dõi và hủy. Chưa có khoản tiền
-                    nào bị thu.
-                  </Text>
-                  {requestResult.consultationPreference === "ai" ? (
-                    <Button
-                      label="AI tư vấn ngay"
-                      icon="zap"
-                      onPress={() => router.push("/(tabs)/assistant")}
+        <KeyboardSafeView>
+          <View style={styles.modalBackdrop}>
+            <ScrollView
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
+              contentContainerStyle={styles.modalScroll}
+            >
+              <View style={styles.modalCard}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Đóng"
+                  onPress={() => setSelected(null)}
+                  style={styles.modalClose}
+                >
+                  <Feather name="x" size={22} color={colors.ink} />
+                </Pressable>
+                <Text style={styles.modalKicker}>MUA HÀNG QUA HOSTORA</Text>
+                <Text style={styles.modalTitle}>{selected?.name}</Text>
+                <Text style={styles.modalCopy}>
+                  {selected?.provider} · {selected?.summary}
+                </Text>
+                {requestResult ? (
+                  <View style={styles.requestSuccess}>
+                    <Feather
+                      name="check-circle"
+                      size={22}
+                      color={colors.primary}
                     />
-                  ) : null}
-                  <Button
-                    label="Theo dõi hoặc hủy"
-                    variant="secondary"
-                    icon="clipboard"
-                    onPress={() =>
-                      router.push({
-                        pathname: "/orders",
-                        params: {
-                          requestId: requestResult.id,
-                          requestCode: requestResult.accessCode,
-                        },
-                      })
-                    }
-                  />
-                </View>
-              ) : (
-                <View style={styles.modalForm}>
-                  <Text style={styles.formSection}>
-                    1 · NGƯỜI MUA VÀ DOANH NGHIỆP
-                  </Text>
-                  <Text style={styles.modalLabel}>Họ tên người phụ trách</Text>
-                  <TextInput
-                    accessibilityLabel="Họ tên người phụ trách"
-                    style={styles.modalInput}
-                    value={customerName}
-                    onChangeText={setCustomerName}
-                    placeholder="Nguyễn Minh Anh"
-                    placeholderTextColor={colors.muted}
-                    maxLength={100}
-                  />
-                  <Text style={styles.modalLabel}>
-                    Email nhận xác nhận và hóa đơn
-                  </Text>
-                  <TextInput
-                    accessibilityLabel="Email nhận xác nhận và hóa đơn"
-                    style={styles.modalInput}
-                    value={contact}
-                    onChangeText={setContact}
-                    placeholder="ban@example.com"
-                    placeholderTextColor={colors.muted}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    keyboardType="email-address"
-                    maxLength={160}
-                  />
-                  <Text style={styles.modalLabel}>Số điện thoại</Text>
-                  <TextInput
-                    accessibilityLabel="Số điện thoại"
-                    style={styles.modalInput}
-                    value={phone}
-                    onChangeText={setPhone}
-                    placeholder="09…"
-                    placeholderTextColor={colors.muted}
-                    keyboardType="phone-pad"
-                    maxLength={30}
-                  />
-                  <Text style={styles.modalLabel}>
-                    Tên doanh nghiệp (không bắt buộc)
-                  </Text>
-                  <TextInput
-                    accessibilityLabel="Tên doanh nghiệp"
-                    style={styles.modalInput}
-                    value={companyName}
-                    onChangeText={setCompanyName}
-                    placeholder="Công ty / cửa hàng"
-                    placeholderTextColor={colors.muted}
-                    maxLength={160}
-                  />
-                  <Text style={styles.modalLabel}>
-                    Ngành hoặc loại hình kinh doanh
-                  </Text>
-                  <TextInput
-                    accessibilityLabel="Ngành kinh doanh"
-                    style={styles.modalInput}
-                    value={businessType}
-                    onChangeText={setBusinessType}
-                    placeholder="Thời trang, nha khoa, giáo dục…"
-                    placeholderTextColor={colors.muted}
-                    maxLength={120}
-                  />
-                  <Text style={styles.modalLabel}>
-                    Sản phẩm hoặc dịch vụ chủ lực
-                  </Text>
-                  <TextInput
-                    accessibilityLabel="Sản phẩm hoặc dịch vụ chủ lực"
-                    style={[styles.modalInput, styles.modalTextarea]}
-                    value={mainOffer}
-                    onChangeText={setMainOffer}
-                    placeholder="Bạn bán gì và điểm khác biệt là gì?"
-                    placeholderTextColor={colors.muted}
-                    multiline
-                    maxLength={500}
-                  />
-                  <Text style={styles.formSection}>
-                    2 · WEBSITE VÀ KHÁCH HÀNG
-                  </Text>
-                  <Text style={styles.modalLabel}>Tình trạng website</Text>
-                  <ChoiceChips
-                    value={websiteStatus}
-                    onChange={setWebsiteStatus}
-                    options={[
-                      ["idea", "Mới có ý tưởng"],
-                      ["building", "Đang xây"],
-                      ["live", "Đã hoạt động"],
-                      ["migrating", "Muốn chuyển"],
-                    ]}
-                  />
-                  <Text style={styles.modalLabel}>
-                    Website hiện tại (nếu có)
-                  </Text>
-                  <TextInput
-                    accessibilityLabel="Website hiện tại"
-                    style={styles.modalInput}
-                    value={currentWebsite}
-                    onChangeText={setCurrentWebsite}
-                    placeholder="tenmien.vn"
-                    placeholderTextColor={colors.muted}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    keyboardType="url"
-                    maxLength={253}
-                  />
-                  <Text style={styles.modalLabel}>Khu vực phục vụ</Text>
-                  <TextInput
-                    accessibilityLabel="Khu vực phục vụ"
-                    style={styles.modalInput}
-                    value={serviceArea}
-                    onChangeText={setServiceArea}
-                    placeholder="TP.HCM, toàn quốc…"
-                    placeholderTextColor={colors.muted}
-                    maxLength={160}
-                  />
-                  <Text style={styles.modalLabel}>Mục tiêu chính</Text>
-                  <TextInput
-                    accessibilityLabel="Mục tiêu website"
-                    style={[styles.modalInput, styles.modalTextarea]}
-                    value={websiteGoal}
-                    onChangeText={setWebsiteGoal}
-                    placeholder="Bán hàng, nhận đặt lịch, giới thiệu doanh nghiệp…"
-                    placeholderTextColor={colors.muted}
-                    multiline
-                    maxLength={500}
-                  />
-                  <Text style={styles.modalLabel}>Khách hàng mục tiêu</Text>
-                  <TextInput
-                    accessibilityLabel="Khách hàng mục tiêu"
-                    style={[styles.modalInput, styles.modalTextarea]}
-                    value={targetCustomers}
-                    onChangeText={setTargetCustomers}
-                    placeholder="Ai truy cập và họ cần làm gì?"
-                    placeholderTextColor={colors.muted}
-                    multiline
-                    maxLength={500}
-                  />
-                  <Text style={styles.modalLabel}>
-                    Khách sẽ tìm bạn bằng từ nào? (không bắt buộc)
-                  </Text>
-                  <TextInput
-                    accessibilityLabel="Từ khách dùng để tìm doanh nghiệp"
-                    style={[styles.modalInput, styles.modalTextarea]}
-                    value={seoGoals}
-                    onChangeText={setSeoGoals}
-                    placeholder="Ví dụ: bánh sinh nhật tại Đà Nẵng"
-                    placeholderTextColor={colors.muted}
-                    multiline
-                    maxLength={500}
-                  />
-                  <Text style={styles.modalLabel}>Lượt truy cập dự kiến</Text>
-                  <ChoiceChips
-                    value={estimatedTraffic}
-                    onChange={setEstimatedTraffic}
-                    options={[
-                      ["under_1k", "< 1.000"],
-                      ["1k_10k", "1–10 nghìn"],
-                      ["10k_50k", "10–50 nghìn"],
-                      ["over_50k", "> 50 nghìn"],
-                    ]}
-                  />
-                  <Text style={styles.modalLabel}>Ngân sách mỗi tháng</Text>
-                  <ChoiceChips
-                    value={budgetRange}
-                    onChange={setBudgetRange}
-                    options={[
-                      ["under_500k", "< 500 nghìn"],
-                      ["500k_1m", "500 nghìn–1 triệu"],
-                      ["1m_3m", "1–3 triệu"],
-                      ["over_3m", "> 3 triệu"],
-                    ]}
-                  />
-                  <Text style={styles.modalLabel}>Mã voucher (nếu có)</Text>
-                  {auth.customer ? (
-                    <Text style={styles.modalHelp}>
-                      {auth.vouchers.some((item) => item.status === "active")
-                        ? "Voucher còn hiệu lực trong tài khoản sẽ được chọn tự động nếu bạn để trống."
-                        : "Voucher mới sẽ tự lưu vào tài khoản sau đơn đủ điều kiện."}
+                    <Text style={styles.requestSuccessTitle}>
+                      Hồ sơ đã gửi tới HOSTORA
                     </Text>
-                  ) : null}
-                  <TextInput
-                    accessibilityLabel="Mã voucher"
-                    style={styles.modalInput}
-                    value={voucherCode}
-                    onChangeText={(value) =>
-                      setVoucherCode(value.toUpperCase())
-                    }
-                    placeholder="HOSTORA-…"
-                    placeholderTextColor={colors.muted}
-                    autoCapitalize="characters"
-                    maxLength={40}
-                  />
-                  <Text style={styles.formSection}>3 · CÁCH TƯ VẤN</Text>
-                  <ChoiceChips
-                    value={consultationPreference}
-                    onChange={setConsultationPreference}
-                    options={[
-                      ["ai", "AI tư vấn ngay"],
-                      ["scheduled", "Chọn lịch chuyên viên"],
-                    ]}
-                  />
-                  {consultationPreference === "scheduled" ? (
-                    <>
-                      <Text style={styles.modalLabel}>
-                        Ngày mong muốn (YYYY-MM-DD)
-                      </Text>
-                      <TextInput
-                        accessibilityLabel="Ngày tư vấn"
-                        style={styles.modalInput}
-                        value={consultationDate}
-                        onChangeText={setConsultationDate}
-                        placeholder="2026-10-28"
-                        placeholderTextColor={colors.muted}
-                        maxLength={10}
-                      />
-                      <Text style={styles.modalLabel}>Khung giờ</Text>
-                      <ChoiceChips
-                        value={consultationTime}
-                        onChange={setConsultationTime}
-                        options={[
-                          ["09:00", "09:00"],
-                          ["14:00", "14:00"],
-                          ["19:00", "19:00"],
-                        ]}
-                      />
-                      <Text style={styles.modalLabel}>Kênh tư vấn</Text>
-                      <ChoiceChips
-                        value={consultationChannel}
-                        onChange={setConsultationChannel}
-                        options={[
-                          ["email", "Email"],
-                          ["phone", "Điện thoại"],
-                          ["video", "Video"],
-                        ]}
-                      />
-                    </>
-                  ) : null}
-                  <Text style={styles.modalLabel}>
-                    Yêu cầu chi tiết (không bắt buộc)
-                  </Text>
-                  <TextInput
-                    accessibilityLabel="Yêu cầu chi tiết"
-                    style={[styles.modalInput, styles.modalTextarea]}
-                    value={note}
-                    onChangeText={setNote}
-                    placeholder="Sản phẩm đang bán, tính năng cần có, thời hạn triển khai…"
-                    placeholderTextColor={colors.muted}
-                    multiline
-                    maxLength={1500}
-                  />
-                  <View style={styles.voucherBox}>
-                    <Text style={styles.voucherTitle}>
-                      Đơn từ 1 triệu: tặng voucher 100.000đ
+                    <Text style={styles.requestCode}>
+                      Mã yêu cầu: {requestResult.id}
                     </Text>
-                    <Text style={styles.modalDisclaimer}>
-                      Dùng cho đơn tiếp theo từ 1 triệu, hiệu lực 30 ngày sau
-                      khi thanh toán được xác nhận.
+                    <Text style={styles.modalCopy}>
+                      Email xác nhận có nút theo dõi và hủy. Chưa có khoản tiền
+                      nào bị thu.
                     </Text>
+                    {requestResult.consultationPreference === "ai" ? (
+                      <Button
+                        label="AI tư vấn ngay"
+                        icon="zap"
+                        onPress={() => router.push("/(tabs)/assistant")}
+                      />
+                    ) : null}
+                    <Button
+                      label="Theo dõi hoặc hủy"
+                      variant="secondary"
+                      icon="clipboard"
+                      onPress={() =>
+                        router.push({
+                          pathname: "/orders",
+                          params: {
+                            requestId: requestResult.id,
+                            requestCode: requestResult.accessCode,
+                          },
+                        })
+                      }
+                    />
                   </View>
-                  <Text style={styles.modalDisclaimer}>
-                    Hồ sơ chỉ dùng để tư vấn, báo giá và vận hành đơn; không gửi
-                    dữ liệu cá nhân vào AI.
-                  </Text>
-                  <Button
-                    label={
-                      requestBusy ? "Đang tạo hồ sơ…" : "Gửi hồ sơ mua hàng"
-                    }
-                    disabled={
-                      requestBusy ||
-                      customerName.trim().length < 2 ||
-                      businessType.trim().length < 2 ||
-                      mainOffer.trim().length < 3 ||
-                      serviceArea.trim().length < 2 ||
-                      websiteGoal.trim().length < 5 ||
-                      targetCustomers.trim().length < 3 ||
-                      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.trim()) ||
-                      (consultationPreference === "scheduled" &&
-                        consultationChannel === "phone" &&
-                        phone.trim().length < 8)
-                    }
-                    onPress={() => void requestPurchase()}
-                  />
-                </View>
-              )}
-            </View>
-          </ScrollView>
-        </View>
+                ) : (
+                  <View style={styles.modalForm}>
+                    <Text style={styles.formSection}>
+                      1 · NGƯỜI MUA VÀ DOANH NGHIỆP
+                    </Text>
+                    <Text style={styles.modalLabel}>
+                      Họ tên người phụ trách
+                    </Text>
+                    <TextInput
+                      accessibilityLabel="Họ tên người phụ trách"
+                      style={styles.modalInput}
+                      value={customerName}
+                      onChangeText={setCustomerName}
+                      placeholder="Nguyễn Minh Anh"
+                      placeholderTextColor={colors.muted}
+                      maxLength={100}
+                    />
+                    <Text style={styles.modalLabel}>
+                      Email nhận xác nhận và hóa đơn
+                    </Text>
+                    <TextInput
+                      accessibilityLabel="Email nhận xác nhận và hóa đơn"
+                      style={styles.modalInput}
+                      value={contact}
+                      onChangeText={setContact}
+                      placeholder="ban@example.com"
+                      placeholderTextColor={colors.muted}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      keyboardType="email-address"
+                      maxLength={160}
+                    />
+                    <Text style={styles.modalLabel}>Số điện thoại</Text>
+                    <TextInput
+                      accessibilityLabel="Số điện thoại"
+                      style={styles.modalInput}
+                      value={phone}
+                      onChangeText={setPhone}
+                      placeholder="09…"
+                      placeholderTextColor={colors.muted}
+                      keyboardType="phone-pad"
+                      maxLength={30}
+                    />
+                    <Text style={styles.modalLabel}>
+                      Tên doanh nghiệp (không bắt buộc)
+                    </Text>
+                    <TextInput
+                      accessibilityLabel="Tên doanh nghiệp"
+                      style={styles.modalInput}
+                      value={companyName}
+                      onChangeText={setCompanyName}
+                      placeholder="Công ty / cửa hàng"
+                      placeholderTextColor={colors.muted}
+                      maxLength={160}
+                    />
+                    <Text style={styles.modalLabel}>
+                      Ngành hoặc loại hình kinh doanh
+                    </Text>
+                    <TextInput
+                      accessibilityLabel="Ngành kinh doanh"
+                      style={styles.modalInput}
+                      value={businessType}
+                      onChangeText={setBusinessType}
+                      placeholder="Thời trang, nha khoa, giáo dục…"
+                      placeholderTextColor={colors.muted}
+                      maxLength={120}
+                    />
+                    <Text style={styles.modalLabel}>
+                      Sản phẩm hoặc dịch vụ chủ lực
+                    </Text>
+                    <TextInput
+                      accessibilityLabel="Sản phẩm hoặc dịch vụ chủ lực"
+                      style={[styles.modalInput, styles.modalTextarea]}
+                      value={mainOffer}
+                      onChangeText={setMainOffer}
+                      placeholder="Bạn bán gì và điểm khác biệt là gì?"
+                      placeholderTextColor={colors.muted}
+                      multiline
+                      maxLength={500}
+                    />
+                    <Text style={styles.formSection}>
+                      2 · WEBSITE VÀ KHÁCH HÀNG
+                    </Text>
+                    <Text style={styles.modalLabel}>Tình trạng website</Text>
+                    <ChoiceChips
+                      value={websiteStatus}
+                      onChange={setWebsiteStatus}
+                      options={[
+                        ["idea", "Mới có ý tưởng"],
+                        ["building", "Đang xây"],
+                        ["live", "Đã hoạt động"],
+                        ["migrating", "Muốn chuyển"],
+                      ]}
+                    />
+                    <Text style={styles.modalLabel}>
+                      Website hiện tại (nếu có)
+                    </Text>
+                    <TextInput
+                      accessibilityLabel="Website hiện tại"
+                      style={styles.modalInput}
+                      value={currentWebsite}
+                      onChangeText={setCurrentWebsite}
+                      placeholder="tenmien.vn"
+                      placeholderTextColor={colors.muted}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      keyboardType="url"
+                      maxLength={253}
+                    />
+                    <Text style={styles.modalLabel}>Khu vực phục vụ</Text>
+                    <TextInput
+                      accessibilityLabel="Khu vực phục vụ"
+                      style={styles.modalInput}
+                      value={serviceArea}
+                      onChangeText={setServiceArea}
+                      placeholder="TP.HCM, toàn quốc…"
+                      placeholderTextColor={colors.muted}
+                      maxLength={160}
+                    />
+                    <Text style={styles.modalLabel}>Mục tiêu chính</Text>
+                    <TextInput
+                      accessibilityLabel="Mục tiêu website"
+                      style={[styles.modalInput, styles.modalTextarea]}
+                      value={websiteGoal}
+                      onChangeText={setWebsiteGoal}
+                      placeholder="Bán hàng, nhận đặt lịch, giới thiệu doanh nghiệp…"
+                      placeholderTextColor={colors.muted}
+                      multiline
+                      maxLength={500}
+                    />
+                    <Text style={styles.modalLabel}>Khách hàng mục tiêu</Text>
+                    <TextInput
+                      accessibilityLabel="Khách hàng mục tiêu"
+                      style={[styles.modalInput, styles.modalTextarea]}
+                      value={targetCustomers}
+                      onChangeText={setTargetCustomers}
+                      placeholder="Ai truy cập và họ cần làm gì?"
+                      placeholderTextColor={colors.muted}
+                      multiline
+                      maxLength={500}
+                    />
+                    <Text style={styles.modalLabel}>
+                      Khách sẽ tìm bạn bằng từ nào? (không bắt buộc)
+                    </Text>
+                    <TextInput
+                      accessibilityLabel="Từ khách dùng để tìm doanh nghiệp"
+                      style={[styles.modalInput, styles.modalTextarea]}
+                      value={seoGoals}
+                      onChangeText={setSeoGoals}
+                      placeholder="Ví dụ: bánh sinh nhật tại Đà Nẵng"
+                      placeholderTextColor={colors.muted}
+                      multiline
+                      maxLength={500}
+                    />
+                    <Text style={styles.modalLabel}>Lượt truy cập dự kiến</Text>
+                    <ChoiceChips
+                      value={estimatedTraffic}
+                      onChange={setEstimatedTraffic}
+                      options={[
+                        ["under_1k", "< 1.000"],
+                        ["1k_10k", "1–10 nghìn"],
+                        ["10k_50k", "10–50 nghìn"],
+                        ["over_50k", "> 50 nghìn"],
+                      ]}
+                    />
+                    <Text style={styles.modalLabel}>Ngân sách mỗi tháng</Text>
+                    <ChoiceChips
+                      value={budgetRange}
+                      onChange={setBudgetRange}
+                      options={[
+                        ["under_500k", "< 500 nghìn"],
+                        ["500k_1m", "500 nghìn–1 triệu"],
+                        ["1m_3m", "1–3 triệu"],
+                        ["over_3m", "> 3 triệu"],
+                      ]}
+                    />
+                    <Text style={styles.modalLabel}>Mã voucher (nếu có)</Text>
+                    {auth.customer ? (
+                      <Text style={styles.modalHelp}>
+                        {auth.vouchers.some((item) => item.status === "active")
+                          ? "Voucher còn hiệu lực trong tài khoản sẽ được chọn tự động nếu bạn để trống."
+                          : "Voucher mới sẽ tự lưu vào tài khoản sau đơn đủ điều kiện."}
+                      </Text>
+                    ) : null}
+                    <TextInput
+                      accessibilityLabel="Mã voucher"
+                      style={styles.modalInput}
+                      value={voucherCode}
+                      onChangeText={(value) =>
+                        setVoucherCode(value.toUpperCase())
+                      }
+                      placeholder="HOSTORA-…"
+                      placeholderTextColor={colors.muted}
+                      autoCapitalize="characters"
+                      maxLength={40}
+                    />
+                    <Text style={styles.formSection}>3 · CÁCH TƯ VẤN</Text>
+                    <ChoiceChips
+                      value={consultationPreference}
+                      onChange={setConsultationPreference}
+                      options={[
+                        ["ai", "AI tư vấn ngay"],
+                        ["scheduled", "Chọn lịch chuyên viên"],
+                      ]}
+                    />
+                    {consultationPreference === "scheduled" ? (
+                      <>
+                        <Text style={styles.modalLabel}>
+                          Ngày mong muốn (YYYY-MM-DD)
+                        </Text>
+                        <TextInput
+                          accessibilityLabel="Ngày tư vấn"
+                          style={styles.modalInput}
+                          value={consultationDate}
+                          onChangeText={setConsultationDate}
+                          placeholder="2026-10-28"
+                          placeholderTextColor={colors.muted}
+                          maxLength={10}
+                        />
+                        <Text style={styles.modalLabel}>Khung giờ</Text>
+                        <ChoiceChips
+                          value={consultationTime}
+                          onChange={setConsultationTime}
+                          options={[
+                            ["09:00", "09:00"],
+                            ["14:00", "14:00"],
+                            ["19:00", "19:00"],
+                          ]}
+                        />
+                        <Text style={styles.modalLabel}>Kênh tư vấn</Text>
+                        <ChoiceChips
+                          value={consultationChannel}
+                          onChange={setConsultationChannel}
+                          options={[
+                            ["email", "Email"],
+                            ["phone", "Điện thoại"],
+                            ["video", "Video"],
+                          ]}
+                        />
+                      </>
+                    ) : null}
+                    <Text style={styles.modalLabel}>
+                      Yêu cầu chi tiết (không bắt buộc)
+                    </Text>
+                    <TextInput
+                      accessibilityLabel="Yêu cầu chi tiết"
+                      style={[styles.modalInput, styles.modalTextarea]}
+                      value={note}
+                      onChangeText={setNote}
+                      placeholder="Sản phẩm đang bán, tính năng cần có, thời hạn triển khai…"
+                      placeholderTextColor={colors.muted}
+                      multiline
+                      maxLength={1500}
+                    />
+                    <View style={styles.voucherBox}>
+                      <Text style={styles.voucherTitle}>
+                        Đơn từ 1 triệu: tặng voucher 100.000đ
+                      </Text>
+                      <Text style={styles.modalDisclaimer}>
+                        Dùng cho đơn tiếp theo từ 1 triệu, hiệu lực 30 ngày sau
+                        khi thanh toán được xác nhận.
+                      </Text>
+                    </View>
+                    <Text style={styles.modalDisclaimer}>
+                      Hồ sơ chỉ dùng để tư vấn, báo giá và vận hành đơn; không
+                      gửi dữ liệu cá nhân vào AI.
+                    </Text>
+                    <Button
+                      label={
+                        requestBusy ? "Đang tạo hồ sơ…" : "Gửi hồ sơ mua hàng"
+                      }
+                      disabled={
+                        requestBusy ||
+                        customerName.trim().length < 2 ||
+                        businessType.trim().length < 2 ||
+                        mainOffer.trim().length < 3 ||
+                        serviceArea.trim().length < 2 ||
+                        websiteGoal.trim().length < 5 ||
+                        targetCustomers.trim().length < 3 ||
+                        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.trim()) ||
+                        (consultationPreference === "scheduled" &&
+                          consultationChannel === "phone" &&
+                          phone.trim().length < 8)
+                      }
+                      onPress={() => void requestPurchase()}
+                    />
+                  </View>
+                )}
+              </View>
+            </ScrollView>
+          </View>
+        </KeyboardSafeView>
       </Modal>
     </SafeAreaView>
   );

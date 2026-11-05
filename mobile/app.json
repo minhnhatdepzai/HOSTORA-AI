@@ -13,6 +13,7 @@
     "android": {
       "package": "com.hostora.ai",
       "versionCode": 26,
+      "softwareKeyboardLayoutMode": "resize",
       "predictiveBackGestureEnabled": false,
       "blockedPermissions": [
         "android.permission.SYSTEM_ALERT_WINDOW",

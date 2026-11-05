@@ -13,7 +13,7 @@ const HUMAN_REQUEST =
   /(?:(?:muon|can|cho toi|hay|xin|yeu cau).{0,24}(?:gap|noi chuyen|chuyen|ket noi).{0,24}|(?:gap|noi chuyen voi|chuyen cho|ket noi voi).{0,24})(?:nhan vien|quan tri vien|nguoi that|tu van vien)|(?:muon|can|xin).{0,20}ho tro truc tiep/i;
 const QUESTION_SHAPE = /\?|^(ai|cai gi|bao nhieu|bao gio|khi nao|o dau|tai sao|vi sao|lam sao|co |ngay mai|hom nay)/i;
 const DIRECT_REQUEST =
-  /^(hay |giup |viet |tao |chi |huong dan |dich |ke |soan |chan doan |du bao )/i;
+  /^(hay |giup |cho toi |xin cho |viet |tao |chi |huong dan |dich |ke |soan |chan doan |du bao )/i;
 const INSUFFICIENT =
   /(?:minh |hostora )?(?:chua|khong) the (?:xac nhan|tra loi)|khong co du du lieu de (?:xac nhan|tra loi)|ngoai pham vi/i;
 

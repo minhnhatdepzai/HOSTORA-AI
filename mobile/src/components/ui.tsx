@@ -1,7 +1,13 @@
 import { Pressable } from "@/components/pressable";
 import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
-import { Children, isValidElement, useCallback, useMemo, useState } from "react";
+import {
+  Children,
+  isValidElement,
+  useCallback,
+  useMemo,
+  useState,
+} from "react";
 import type { ComponentProps, PropsWithChildren, ReactNode, Ref } from "react";
 import {
   Animated,
@@ -41,10 +47,10 @@ export function Screen({
   const [viewportHeight, setViewportHeight] = useState(0);
   const handleScroll = useMemo(
     () =>
-      Animated.event(
-        [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-        { useNativeDriver: true, listener: onScroll },
-      ),
+      Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
+        useNativeDriver: true,
+        listener: onScroll,
+      }),
     [onScroll, scrollY],
   );
   const handleViewportLayout = useCallback((event: LayoutChangeEvent) => {
@@ -57,7 +63,9 @@ export function Screen({
       edges={insetTop ? ["top", "left", "right", "bottom"] : ["bottom"]}
       onLayout={handleViewportLayout}
     >
-      <ScrollMotionContext.Provider value={{ scrollY, viewportHeight, baseTop: 0 }}>
+      <ScrollMotionContext.Provider
+        value={{ scrollY, viewportHeight, baseTop: 0 }}
+      >
         <Animated.ScrollView
           ref={scrollRef}
           onScroll={handleScroll}
@@ -90,6 +98,8 @@ export function CinematicScrollView({
   onScroll,
   onLayout,
   revealChildren = true,
+  keyboardShouldPersistTaps = "handled",
+  keyboardDismissMode = "on-drag",
   ...props
 }: PropsWithChildren<
   ScrollViewProps & {
@@ -101,10 +111,10 @@ export function CinematicScrollView({
   const [viewportHeight, setViewportHeight] = useState(0);
   const handleScroll = useMemo(
     () =>
-      Animated.event(
-        [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-        { useNativeDriver: true, listener: onScroll },
-      ),
+      Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
+        useNativeDriver: true,
+        listener: onScroll,
+      }),
     [onScroll, scrollY],
   );
   const handleLayout = useCallback(
@@ -116,13 +126,17 @@ export function CinematicScrollView({
   );
 
   return (
-    <ScrollMotionContext.Provider value={{ scrollY, viewportHeight, baseTop: 0 }}>
+    <ScrollMotionContext.Provider
+      value={{ scrollY, viewportHeight, baseTop: 0 }}
+    >
       <Animated.ScrollView
         {...props}
         ref={scrollRef}
         onLayout={handleLayout}
         onScroll={handleScroll}
         scrollEventThrottle={16}
+        keyboardShouldPersistTaps={keyboardShouldPersistTaps}
+        keyboardDismissMode={keyboardDismissMode}
       >
         {revealChildren
           ? Children.map(children, (child, index) =>
@@ -273,7 +287,17 @@ export function Button({
       ]}
     >
       <Text style={[styles.buttonText, { color: textColor }]}>{label}</Text>
-      <View style={[styles.buttonIcon, { backgroundColor: variant === "primary" ? "rgba(255,255,255,0.12)" : "rgba(17,105,94,0.07)" }]}>
+      <View
+        style={[
+          styles.buttonIcon,
+          {
+            backgroundColor:
+              variant === "primary"
+                ? "rgba(255,255,255,0.12)"
+                : "rgba(17,105,94,0.07)",
+          },
+        ]}
+      >
         <Feather name={icon} size={16} color={textColor} />
       </View>
     </Pressable>
@@ -411,8 +435,19 @@ const styles = StyleSheet.create({
   },
   buttonMint: { backgroundColor: colors.mint },
   buttonGhost: { backgroundColor: colors.surfaceAlt },
-  buttonText: { fontFamily: "BeVietnamPro_800ExtraBold", fontSize: 13, flexShrink: 1 },
-  buttonIcon: { width: 28, height: 28, borderRadius: 9, alignItems: "center", justifyContent: "center", flexShrink: 0 },
+  buttonText: {
+    fontFamily: "BeVietnamPro_800ExtraBold",
+    fontSize: 13,
+    flexShrink: 1,
+  },
+  buttonIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 9,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
   pressed: { opacity: 0.9 },
   disabled: { opacity: 0.4 },
   sectionHeader: {

@@ -10,7 +10,6 @@ import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  KeyboardAvoidingView,
   Platform,
   ScrollView,
   type ScrollViewInstance,
@@ -96,7 +95,9 @@ export default function AssistantScreen() {
   const [sourceCount, setSourceCount] = useState(0);
   const [memory, setMemory] = useState<MobileChatMemory | null>(null);
   const [conversationId, setConversationId] = useState<string | null>(null);
-  const [conversationAccess, setConversationAccess] = useState<string | null>(null);
+  const [conversationAccess, setConversationAccess] = useState<string | null>(
+    null,
+  );
   const [supportStatus, setSupportStatus] = useState<SupportStatus>("active");
   const [historyLoading, setHistoryLoading] = useState(true);
   const [copiedMessageIndex, setCopiedMessageIndex] = useState<number | null>(
@@ -141,7 +142,13 @@ export default function AssistantScreen() {
             );
           return;
         }
-        const [saved, savedMemory, savedConversationId, savedAccess, savedSupportStatus] = await Promise.all([
+        const [
+          saved,
+          savedMemory,
+          savedConversationId,
+          savedAccess,
+          savedSupportStatus,
+        ] = await Promise.all([
           AsyncStorage.getItem(KEY),
           AsyncStorage.getItem(MEMORY_KEY),
           AsyncStorage.getItem(CONVERSATION_KEY),
@@ -264,7 +271,9 @@ export default function AssistantScreen() {
             : {}),
         },
         body: JSON.stringify({
-          messages: recentChatMessages(next.map(({ role, content }) => ({ role, content }))),
+          messages: recentChatMessages(
+            next.map(({ role, content }) => ({ role, content })),
+          ),
           memory: nextMemory,
           ...(conversationId ? { conversationId } : {}),
           messageId: randomUuid(),
@@ -304,12 +313,11 @@ export default function AssistantScreen() {
         nextSupportStatus === "escalated" ||
         nextSupportStatus === "answered" ||
         nextSupportStatus === "resolved"
-      )
-        {
-          setSupportStatus(nextSupportStatus);
-          if (!customer)
-            await AsyncStorage.setItem(SUPPORT_STATUS_KEY, nextSupportStatus);
-        }
+      ) {
+        setSupportStatus(nextSupportStatus);
+        if (!customer)
+          await AsyncStorage.setItem(SUPPORT_STATUS_KEY, nextSupportStatus);
+      }
       const completed: Message[] = [
         ...next,
         {
@@ -501,7 +509,9 @@ export default function AssistantScreen() {
     } catch (error) {
       Alert.alert(
         "Chưa thêm được tài liệu",
-        error instanceof Error ? error.message : "Kiểm tra kết nối rồi thử lại.",
+        error instanceof Error
+          ? error.message
+          : "Kiểm tra kết nối rồi thử lại.",
       );
     } finally {
       setSourceLoading(false);
@@ -538,8 +548,7 @@ export default function AssistantScreen() {
     const initial: Message[] = [
       {
         role: "assistant",
-        content:
-          "Đây là cuộc trò chuyện mới. Bạn đang chuẩn bị trang web gì?",
+        content: "Đây là cuộc trò chuyện mới. Bạn đang chuẩn bị trang web gì?",
       },
     ];
     setMessages(initial);
@@ -574,11 +583,11 @@ export default function AssistantScreen() {
           style: "destructive",
           onPress: () => {
             void performClear().catch(() =>
-                Alert.alert(
-                  "Chưa xóa được lịch sử",
-                  "Kiểm tra kết nối rồi thử lại.",
-                ),
-              );
+              Alert.alert(
+                "Chưa xóa được lịch sử",
+                "Kiểm tra kết nối rồi thử lại.",
+              ),
+            );
           },
         },
       ],
@@ -592,75 +601,69 @@ export default function AssistantScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={["top", "left", "right"]}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      <View style={styles.header}>
+        <Brand />
+        <View style={styles.headerRight}>
+          <Pill tone="mint" icon="shield">
+            RIÊNG TƯ
+          </Pill>
+          <Pressable
+            disabled={loading || imageLoading || sourceLoading}
+            onPress={() => void startNewConversation()}
+            style={[
+              styles.newConversationIcon,
+              (loading || imageLoading || sourceLoading) && { opacity: 0.35 },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel="Mở cuộc trò chuyện mới"
+          >
+            <Feather name="plus" color="white" size={18} />
+          </Pressable>
+          <Pressable
+            onPress={clear}
+            style={styles.trash}
+            accessibilityRole="button"
+            accessibilityLabel="Xóa lịch sử trò chuyện"
+          >
+            <Feather name="trash-2" color={colors.muted} size={17} />
+          </Pressable>
+        </View>
+      </View>
+      <View style={styles.heading}>
+        <Text style={styles.kicker}>TRỢ LÝ HOSTORA</Text>
+        <Text style={styles.title}>Hỏi về lưu trữ, xem rõ lựa chọn.</Text>
+        <Text style={styles.copy}>
+          Câu trả lời dựa trên bảng giá và tài liệu đã được kiểm tra
+          {customer && sourceCount > 0 ? ` · ${sourceCount} nguồn của bạn` : ""}
+          .
+        </Text>
+      </View>
+
+      <CinematicScrollView
+        scrollRef={list}
+        style={styles.chat}
+        contentContainerStyle={styles.chatContent}
+        keyboardDismissMode="on-drag"
+        keyboardShouldPersistTaps="handled"
+        onContentSizeChange={() =>
+          list.current?.scrollToEnd({ animated: true })
+        }
       >
-        <View style={styles.header}>
-          <Brand />
-          <View style={styles.headerRight}>
-            <Pill tone="mint" icon="shield">
-              RIÊNG TƯ
-            </Pill>
-            <Pressable
-              disabled={loading || imageLoading || sourceLoading}
-              onPress={() => void startNewConversation()}
+        {messages.map((message, index) => {
+          const copyText =
+            message.role === "assistant"
+              ? customerAnswer(message.content, message.sources)
+              : message.content;
+          const copied = copiedMessageIndex === index;
+
+          return (
+            <View
+              key={`${index}-${message.content.slice(0, 8)}`}
               style={[
-                styles.newConversationIcon,
-                (loading || imageLoading || sourceLoading) && { opacity: 0.35 },
+                styles.messageRow,
+                message.role === "user" && styles.messageRowUser,
               ]}
-              accessibilityRole="button"
-              accessibilityLabel="Mở cuộc trò chuyện mới"
             >
-              <Feather name="plus" color="white" size={18} />
-            </Pressable>
-            <Pressable
-              onPress={clear}
-              style={styles.trash}
-              accessibilityRole="button"
-              accessibilityLabel="Xóa lịch sử trò chuyện"
-            >
-              <Feather name="trash-2" color={colors.muted} size={17} />
-            </Pressable>
-          </View>
-        </View>
-        <View style={styles.heading}>
-          <Text style={styles.kicker}>TRỢ LÝ HOSTORA</Text>
-          <Text style={styles.title}>Hỏi về lưu trữ, xem rõ lựa chọn.</Text>
-          <Text style={styles.copy}>
-            Câu trả lời dựa trên bảng giá và tài liệu đã được kiểm tra
-            {customer && sourceCount > 0
-              ? ` · ${sourceCount} nguồn của bạn`
-              : ""}
-            .
-          </Text>
-        </View>
-
-        <CinematicScrollView
-          scrollRef={list}
-          style={styles.chat}
-          contentContainerStyle={styles.chatContent}
-          keyboardDismissMode="on-drag"
-          keyboardShouldPersistTaps="handled"
-          onContentSizeChange={() =>
-            list.current?.scrollToEnd({ animated: true })
-          }
-        >
-          {messages.map((message, index) => {
-            const copyText =
-              message.role === "assistant"
-                ? customerAnswer(message.content, message.sources)
-                : message.content;
-            const copied = copiedMessageIndex === index;
-
-            return (
-              <View
-                key={`${index}-${message.content.slice(0, 8)}`}
-                style={[
-                  styles.messageRow,
-                  message.role === "user" && styles.messageRowUser,
-                ]}
-              >
               {message.role === "assistant" ? (
                 <View
                   style={[
@@ -680,15 +683,24 @@ export default function AssistantScreen() {
                   styles.bubble,
                   message.role === "user"
                     ? styles.userBubble
-                    : [styles.aiBubble, message.fromAdmin && styles.adminBubble],
+                    : [
+                        styles.aiBubble,
+                        message.fromAdmin && styles.adminBubble,
+                      ],
                 ]}
               >
                 {message.role === "assistant" ? (
                   <>
                     {message.fromAdmin ? (
                       <View style={styles.adminLabel}>
-                        <Feather name="message-circle" color={colors.primary} size={12} />
-                        <Text style={styles.adminLabelText}>QUẢN TRỊ VIÊN HOSTORA</Text>
+                        <Feather
+                          name="message-circle"
+                          color={colors.primary}
+                          size={12}
+                        />
+                        <Text style={styles.adminLabelText}>
+                          QUẢN TRỊ VIÊN HOSTORA
+                        </Text>
                       </View>
                     ) : null}
                     <Markdown style={markdownStyles}>
@@ -791,159 +803,170 @@ export default function AssistantScreen() {
                 </Pressable>
               </View>
             </View>
-            );
-          })}
-          {historyLoading ? (
-            <View style={styles.thinking} accessibilityLiveRegion="polite">
-              <ActivityIndicator color={colors.primary} size="small" />
-              <Text style={styles.thinkingText}>Đang mở lịch sử gần nhất…</Text>
-            </View>
-          ) : null}
-          {loading ? (
-            <View style={styles.thinking}>
-              <ActivityIndicator color={colors.primary} size="small" />
-              <Text style={styles.thinkingText}>
-                HOSTORA đang kiểm tra thông tin…
-              </Text>
-            </View>
-          ) : null}
-        </CinematicScrollView>
-
-        {supportStatus === "escalated" ? (
-          <View style={styles.supportBanner} accessibilityLiveRegion="polite">
-            <View style={styles.supportBannerIcon}>
-              <Feather name="user-check" color={colors.warning} size={17} />
-            </View>
-            <View style={styles.supportBannerCopy}>
-              <Text style={styles.supportBannerTitle}>Đã chuyển quản trị viên</Text>
-              <Text style={styles.supportBannerText}>Bạn có thể đóng app; phản hồi sẽ tự xuất hiện tại đây.</Text>
-            </View>
-          </View>
-        ) : supportStatus === "answered" ? (
-          <View style={[styles.supportBanner, styles.supportBannerAnswered]} accessibilityLiveRegion="polite">
-            <View style={styles.supportBannerIcon}>
-              <Feather name="check" color={colors.primary} size={17} />
-            </View>
-            <View style={styles.supportBannerCopy}>
-              <Text style={styles.supportBannerTitle}>Quản trị viên đã phản hồi</Text>
-              <Text style={styles.supportBannerText}>Câu trả lời mới đã nằm ở cuối cuộc trò chuyện.</Text>
-            </View>
+          );
+        })}
+        {historyLoading ? (
+          <View style={styles.thinking} accessibilityLiveRegion="polite">
+            <ActivityIndicator color={colors.primary} size="small" />
+            <Text style={styles.thinkingText}>Đang mở lịch sử gần nhất…</Text>
           </View>
         ) : null}
-
-        {sendError ? (
-          <View style={styles.chatError} accessibilityLiveRegion="polite">
-            <View style={styles.chatErrorCopy}>
-              <Text style={styles.chatErrorTitle}>Tin nhắn chưa gửi được</Text>
-              <Text style={styles.chatErrorText}>{sendError}</Text>
-            </View>
-            <View style={styles.chatErrorActions}>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Thử gửi lại tin nhắn"
-                onPress={() => void send()}
-                style={styles.retryButton}
-              >
-                <Feather name="refresh-cw" color={colors.primary} size={14} />
-                <Text style={styles.retryButtonText}>Thử lại</Text>
-              </Pressable>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Mở cuộc trò chuyện mới"
-                onPress={() => void startNewConversation()}
-                style={styles.newConversationButton}
-              >
-                <Feather name="plus" color="white" size={14} />
-                <Text style={styles.newConversationButtonText}>Chat mới</Text>
-              </Pressable>
-            </View>
+        {loading ? (
+          <View style={styles.thinking}>
+            <ActivityIndicator color={colors.primary} size="small" />
+            <Text style={styles.thinkingText}>
+              HOSTORA đang kiểm tra thông tin…
+            </Text>
           </View>
         ) : null}
+      </CinematicScrollView>
 
-        {messages.length < 3 ? (
-          <ScrollView
-            horizontal
-            style={styles.startersScroll}
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.starters}
-          >
-            {starters.map((item) => (
-              <Pressable
-                key={item}
-                onPress={() => void send(item)}
-                style={styles.starter}
-              >
-                <Text style={styles.starterText}>{item}</Text>
-              </Pressable>
-            ))}
-          </ScrollView>
-        ) : null}
-        <View style={styles.composer}>
-          <Pressable
-            disabled={loading || imageLoading || sourceLoading}
-            onPress={() => void addKnowledgeFile()}
-            accessibilityRole="button"
-            accessibilityLabel="Thêm PDF, Word, văn bản hoặc ảnh làm kiến thức"
-            style={[
-              styles.imageButton,
-              (loading || imageLoading || sourceLoading) && { opacity: 0.35 },
-            ]}
-          >
-            {sourceLoading ? (
-              <ActivityIndicator color={colors.primary} size="small" />
-            ) : (
-              <Feather name="paperclip" color={colors.primary} size={19} />
-            )}
-          </Pressable>
-          <Pressable
-            disabled={loading || imageLoading || sourceLoading}
-            onPress={() => void inspectScreenshot()}
-            accessibilityRole="button"
-            accessibilityLabel="Gửi ảnh màn hình để được hướng dẫn"
-            style={[
-              styles.imageButton,
-              (loading || imageLoading || sourceLoading) && { opacity: 0.35 },
-            ]}
-          >
-            {imageLoading ? (
-              <ActivityIndicator color={colors.primary} size="small" />
-            ) : (
-              <Feather name="image" color={colors.primary} size={19} />
-            )}
-          </Pressable>
-          <TextInput
-            value={input}
-            onChangeText={setInput}
-            placeholder="Hỏi HOSTORA về lưu trữ..."
-            placeholderTextColor={colors.faint}
-            style={styles.input}
-            multiline
-            maxLength={2000}
-            onFocus={() =>
-              requestAnimationFrame(() =>
-                list.current?.scrollToEnd({ animated: true }),
-              )
-            }
-          />
-          <Pressable
-            disabled={!input.trim() || loading || imageLoading || sourceLoading}
-            onPress={() => void send()}
-            accessibilityRole="button"
-            accessibilityLabel="Gửi câu hỏi cho HOSTORA"
-            style={[
-              styles.send,
-              (!input.trim() || loading || imageLoading || sourceLoading) && {
-                opacity: 0.35,
-              },
-            ]}
-          >
-            <Feather name="arrow-up" color="white" size={19} />
-          </Pressable>
+      {supportStatus === "escalated" ? (
+        <View style={styles.supportBanner} accessibilityLiveRegion="polite">
+          <View style={styles.supportBannerIcon}>
+            <Feather name="user-check" color={colors.warning} size={17} />
+          </View>
+          <View style={styles.supportBannerCopy}>
+            <Text style={styles.supportBannerTitle}>
+              Đã chuyển quản trị viên
+            </Text>
+            <Text style={styles.supportBannerText}>
+              Bạn có thể đóng app; phản hồi sẽ tự xuất hiện tại đây.
+            </Text>
+          </View>
         </View>
-        <Text style={styles.privacy}>
-          Hội thoại được lưu để hỗ trợ · Email và số điện thoại được ẩn trước khi lưu
-        </Text>
-      </KeyboardAvoidingView>
+      ) : supportStatus === "answered" ? (
+        <View
+          style={[styles.supportBanner, styles.supportBannerAnswered]}
+          accessibilityLiveRegion="polite"
+        >
+          <View style={styles.supportBannerIcon}>
+            <Feather name="check" color={colors.primary} size={17} />
+          </View>
+          <View style={styles.supportBannerCopy}>
+            <Text style={styles.supportBannerTitle}>
+              Quản trị viên đã phản hồi
+            </Text>
+            <Text style={styles.supportBannerText}>
+              Câu trả lời mới đã nằm ở cuối cuộc trò chuyện.
+            </Text>
+          </View>
+        </View>
+      ) : null}
+
+      {sendError ? (
+        <View style={styles.chatError} accessibilityLiveRegion="polite">
+          <View style={styles.chatErrorCopy}>
+            <Text style={styles.chatErrorTitle}>Tin nhắn chưa gửi được</Text>
+            <Text style={styles.chatErrorText}>{sendError}</Text>
+          </View>
+          <View style={styles.chatErrorActions}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Thử gửi lại tin nhắn"
+              onPress={() => void send()}
+              style={styles.retryButton}
+            >
+              <Feather name="refresh-cw" color={colors.primary} size={14} />
+              <Text style={styles.retryButtonText}>Thử lại</Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Mở cuộc trò chuyện mới"
+              onPress={() => void startNewConversation()}
+              style={styles.newConversationButton}
+            >
+              <Feather name="plus" color="white" size={14} />
+              <Text style={styles.newConversationButtonText}>Chat mới</Text>
+            </Pressable>
+          </View>
+        </View>
+      ) : null}
+
+      {messages.length < 3 ? (
+        <ScrollView
+          horizontal
+          style={styles.startersScroll}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.starters}
+        >
+          {starters.map((item) => (
+            <Pressable
+              key={item}
+              onPress={() => void send(item)}
+              style={styles.starter}
+            >
+              <Text style={styles.starterText}>{item}</Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+      ) : null}
+      <View style={styles.composer}>
+        <Pressable
+          disabled={loading || imageLoading || sourceLoading}
+          onPress={() => void addKnowledgeFile()}
+          accessibilityRole="button"
+          accessibilityLabel="Thêm PDF, Word, văn bản hoặc ảnh làm kiến thức"
+          style={[
+            styles.imageButton,
+            (loading || imageLoading || sourceLoading) && { opacity: 0.35 },
+          ]}
+        >
+          {sourceLoading ? (
+            <ActivityIndicator color={colors.primary} size="small" />
+          ) : (
+            <Feather name="paperclip" color={colors.primary} size={19} />
+          )}
+        </Pressable>
+        <Pressable
+          disabled={loading || imageLoading || sourceLoading}
+          onPress={() => void inspectScreenshot()}
+          accessibilityRole="button"
+          accessibilityLabel="Gửi ảnh màn hình để được hướng dẫn"
+          style={[
+            styles.imageButton,
+            (loading || imageLoading || sourceLoading) && { opacity: 0.35 },
+          ]}
+        >
+          {imageLoading ? (
+            <ActivityIndicator color={colors.primary} size="small" />
+          ) : (
+            <Feather name="image" color={colors.primary} size={19} />
+          )}
+        </Pressable>
+        <TextInput
+          value={input}
+          onChangeText={setInput}
+          placeholder="Hỏi HOSTORA về lưu trữ..."
+          placeholderTextColor={colors.faint}
+          style={styles.input}
+          multiline
+          maxLength={2000}
+          onFocus={() =>
+            requestAnimationFrame(() =>
+              list.current?.scrollToEnd({ animated: true }),
+            )
+          }
+        />
+        <Pressable
+          disabled={!input.trim() || loading || imageLoading || sourceLoading}
+          onPress={() => void send()}
+          accessibilityRole="button"
+          accessibilityLabel="Gửi câu hỏi cho HOSTORA"
+          style={[
+            styles.send,
+            (!input.trim() || loading || imageLoading || sourceLoading) && {
+              opacity: 0.35,
+            },
+          ]}
+        >
+          <Feather name="arrow-up" color="white" size={19} />
+        </Pressable>
+      </View>
+      <Text style={styles.privacy}>
+        Hội thoại được lưu để hỗ trợ · Email và số điện thoại được ẩn trước khi
+        lưu
+      </Text>
     </SafeAreaView>
   );
 }

@@ -515,6 +515,7 @@ pnpm report:mobile:judge
 
 Các tài liệu dành cho vòng loại:
 
+- [Nghiệm thu bàn phím toàn app và đồng bộ Android → Admin 2.2.3](docs/submission/MOBILE_ALL_SCREENS_ADMIN_SYNC_2026-11-05.md);
 - [Báo cáo 9 ca mobile](docs/submission/HOSTORA_MOBILE_9_CASES.html);
 - [Minh chứng 20 ca cho giám khảo](docs/submission/MINH_CHUNG_20_CA.html);
 - [Minh chứng 9 ca cũ](docs/submission/MINH_CHUNG_9_CA.html) để đối chiếu lịch sử;
@@ -526,6 +527,8 @@ Các tài liệu dành cho vòng loại:
 - [Báo cáo bảo mật](docs/SECURITY_REVIEW.md).
 
 HTTP 200, browser mobile viewport hoặc APK build thành công không thay thế kiểm thử luồng thật. Bằng chứng Android phải đến từ APK cài trên thiết bị; ca sự cố mô phỏng phải được ghi rõ là mô phỏng.
+
+> **Bản đang nghiệm thu:** source/APK emulator 2.2.3 đã qua bàn phím toàn app, Maestro native, luồng Android → Admin và AI → Admin → Android. Link tải công khai vẫn là 2.2.2 universal cho đến khi artifact 2.2.3 đủ bốn ABI, checksum và Source ZIP được phát hành đồng bộ.
 
 ## Gói nộp vòng loại
 
