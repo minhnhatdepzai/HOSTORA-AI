@@ -19,6 +19,8 @@ import {
   budgetCorrectionAnswer,
   cdnVsHostingAnswer,
   cdnSlowCheckoutAnswer,
+  botSaleAnswer,
+  multiSiteHostingAnswer,
   customerSourceBusinessAnswer,
   unknownBusinessDataAnswer,
   websiteIdeaDiscoveryAnswer,
@@ -315,6 +317,8 @@ export async function POST(request: Request) {
     domainAvailabilityAnswer,
     structuredDataPenaltyAnswer,
     dnsMigrationAnswer,
+    botSaleAnswer,
+    multiSiteHostingAnswer,
     cdnSlowCheckoutAnswer,
     cdnVsHostingAnswer,
   ]) {

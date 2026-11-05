@@ -11,6 +11,8 @@ import {
   budgetCorrectionAnswer,
   cdnVsHostingAnswer,
   cdnSlowCheckoutAnswer,
+  botSaleAnswer,
+  multiSiteHostingAnswer,
   customerSourceBusinessAnswer,
   unknownBusinessDataAnswer,
   unrealisticGuaranteeAnswer,
@@ -237,6 +239,22 @@ test("hosting migration advice covers mail, orders and SEO without requiring DNS
   expect(result?.answer).toContain("kiểm tra gửi, nhận thư");
   expect(result?.answer).toContain("canonical");
   expect(result?.sources).toHaveLength(2);
+});
+
+test("bot traffic during a sale gets checkout diagnosis rather than unrelated SEO advice", () => {
+  const result = botSaleAnswer("Shop tôi hay bị bot quét lúc mở bán, có CDN rồi nhưng đơn vẫn rớt. Ngân sách 300.000đ/tháng, nên làm gì?");
+  expect(result?.answer).toContain("luồng đặt hàng");
+  expect(result?.answer).toContain("bot");
+  expect(result?.answer).not.toMatch(/canonical|sitemap|Search Console/i);
+  expect(result?.sources.map((source) => source.citation)).toEqual(["K1", "K2"]);
+});
+
+test("multiple sites can share a plan only when its published site limit permits", () => {
+  const result = multiSiteHostingAnswer("Hai khách có website blog dùng email và shop video, có nên dùng chung một gói hosting không?");
+  expect(result?.answer).toContain("AZ Pro 2 cho hai");
+  expect(result?.answer).toContain("không có quy tắc bắt buộc");
+  expect(result?.answer).toContain("cấu hình DNS");
+  expect(result?.sources.map((source) => source.citation)).toEqual(["K1", "K2", "K3"]);
 });
 
 test("customer source answer quotes grounded business facts and drops instructions", () => {

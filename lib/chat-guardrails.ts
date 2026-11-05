@@ -336,6 +336,43 @@ export function cdnSlowCheckoutAnswer(question: string) {
   };
 }
 
+export function botSaleAnswer(question: string) {
+  const folded = foldedQuestion(question);
+  if (!/(bot|spam|quet)/i.test(folded) ||
+      !/(don hang|dat hang|mo ban|flash sale|checkout|thanh toan)/i.test(folded) ||
+      !/(rot|cham|loi|qua tai|mat don|khong vao)/i.test(folded))
+    return null;
+  const cdn = knowledgeSource("ssl-cdn-backup", "K1");
+  const performance = knowledgeSource("performance-limits", "K2");
+  return {
+    answer:
+      "Nếu đơn rớt đúng lúc bot quét và khách thật cùng vào, nên kiểm tra luồng đặt hàng trước khi đổi gói. CDN giúp tải nội dung tĩnh và hỗ trợ hấp thụ một phần lưu lượng tấn công, nhưng riêng việc bật CDN chưa chứng minh được bot đã bị chặn hoặc thanh toán sẽ ổn. [K1] " +
+      "Hãy đối chiếu thời điểm bot tăng với lỗi đặt hàng, thời gian xử lý thanh toán và mức tải máy chủ; sau đó thử lại bằng lượng khách thật dự kiến. [K2] Nếu đã hạn chế truy cập tự động mà đơn vẫn rớt khi máy chủ quá tải, lúc đó mới dùng số đo để chọn gói mạnh hơn. Bot tập trung ở trang xem sản phẩm hay bước thanh toán?",
+    sources: [cdn, performance].filter((source): source is NonNullable<typeof source> => Boolean(source)),
+  };
+}
+
+export function multiSiteHostingAnswer(question: string) {
+  const folded = foldedQuestion(question);
+  if (!/(dung chung|chung mot|gom chung|gop chung|nhieu website.*chung)/i.test(folded) ||
+      !/(goi|hosting|may chu|server)/i.test(folded) ||
+      !/(website|trang web|web|blog|shop)/i.test(folded))
+    return null;
+  const capacity = knowledgeSource("azdigi-pro-hosting", "K1");
+  const basics = knowledgeSource("hosting-basics", "K2");
+  const performance = knowledgeSource("performance-limits", "K3");
+  const mailNote = /email|mail|hop thu|thu dien tu/i.test(folded)
+    ? " Với email theo tên miền, hãy ghi lại nơi đang cung cấp hộp thư và cấu hình DNS trước khi chuyển."
+    : "";
+  return {
+    answer:
+      "Có thể dùng chung nếu gói cho phép nhiều website; không có quy tắc bắt buộc mỗi trang phải thuê một gói riêng. Bảng gói AZDIGI đã kiểm tra cho biết AZ Pro 1 cho một website, AZ Pro 2 cho hai và AZ Pro 3 cho ba; đây là giới hạn số trang công bố, chưa phải cam kết tốc độ. [K1] " +
+      "Điểm cần cân nhắc là các trang cùng dùng dung lượng và sức xử lý của một gói vào giờ đông khách. [K2] Hãy kiểm tra dung lượng, bản sao lưu và quyền quản trị của từng khách trước khi gộp; website có video cần xác định video lưu ngay trên hosting hay nhúng từ nơi khác." + mailNote + " " +
+      "Nếu một khách bán hàng hoặc học trực tuyến có giờ cao điểm, nên thử tải riêng luồng quan trọng của khách đó trước khi quyết định dùng chung. [K3] Bạn dự kiến hai website có bao nhiêu khách truy cập cùng lúc?",
+    sources: [capacity, basics, performance].filter((source): source is NonNullable<typeof source> => Boolean(source)),
+  };
+}
+
 export function structuredDataPenaltyAnswer(question: string) {
   if (
     !/(schema|json-ld|structured data)/i.test(question) ||
