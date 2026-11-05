@@ -538,7 +538,8 @@ Các tài liệu dành cho vòng loại:
 - [Minh chứng 9 ca cũ](docs/submission/MINH_CHUNG_9_CA.html) để đối chiếu lịch sử;
 - [Ma trận kiểm thử Bảng A](docs/submission/TEST_MATRIX.md);
 - [Minh chứng 6 ca dạng HTML](docs/submission/MINH_CHUNG_6_CA.html) và [PDF](docs/submission/MINH_CHUNG_6_CA.pdf);
-- [Kịch bản video và demo vòng loại](docs/submission/KICH_BAN_VONG_LOAI_2026-11-01.md);
+- [Kịch bản quay 02 phút và trình diễn sâu HOSTORA 2.2.4](docs/submission/KICH_BAN_DEMO_HOSTORA_2.2.4_2026-11-05.md);
+- [Kịch bản vòng loại 2.2.0 (lưu để đối chiếu)](docs/submission/KICH_BAN_VONG_LOAI_2026-11-01.md);
 - [Nguồn dữ liệu và ngày xác minh](docs/DATA_SOURCES.md);
 - [Kiến trúc AI](docs/AI_ARCHITECTURE.md);
 - [Báo cáo bảo mật](docs/SECURITY_REVIEW.md).
