@@ -10,6 +10,10 @@ import {
 } from "@/lib/chat-recommendation";
 import {
   dnsMigrationAnswer,
+  urgentStoreOutageAnswer,
+  checkoutAfterMigrationAnswer,
+  sitemapIndexAnswer,
+  newStoreStartingAnswer,
   domainAvailabilityAnswer,
   customerJourneyAnswer,
   robotsPrivacyAnswer,
@@ -246,6 +250,10 @@ export async function POST(request: Request) {
     return respondText(
       "Mình đã ẩn chuỗi bí mật trước khi lưu và không gửi chuỗi đó cho trợ lý. Không gửi mật khẩu, mã OTP, khóa API, mã truy cập hoặc CVC trong hội thoại; nếu đây là thông tin thật, hãy đổi hoặc thu hồi ngay. Bạn hãy gửi lại câu hỏi về hosting chỉ với loại website, lượng khách dự kiến, ngân sách và nhu cầu tên miền.",
     );
+  for (const guard of [urgentStoreOutageAnswer, checkoutAfterMigrationAnswer]) {
+    const result = guard(latest);
+    if (result) return respondText(result.answer, result.sources);
+  }
   const unrealisticGuarantee = unrealisticGuaranteeAnswer(latest);
   if (unrealisticGuarantee) {
     const recommendation = explicitChatRecommendation(
@@ -298,6 +306,13 @@ export async function POST(request: Request) {
   const journey = customerJourneyAnswer(latest);
   if (journey)
     return respondText(journey.answer, journey.sources, journey.nextAction);
+  for (const guard of [
+    sitemapIndexAnswer,
+    newStoreStartingAnswer,
+  ]) {
+    const result = guard(latest);
+    if (result) return respondText(result.answer, result.sources);
+  }
   const costGuard = unknownRenewalCostAnswer(latest);
   if (costGuard) return respondText(costGuard.answer, costGuard.sources);
   const recommendationGuard = explicitChatRecommendation(
@@ -462,6 +477,7 @@ export async function POST(request: Request) {
 </grounding_rules>
 <answer_contract>
 - Trả lời thẳng câu hỏi trước.
+- Không chèn URL hoặc danh sách đường dẫn vào thân câu trả lời; chỉ dùng mã nguồn [K1], [P1], [S1] hoặc [U1] khi dữ kiện cần dẫn chứng. Giao diện sẽ hiện tài liệu tương ứng bên dưới.
 - Câu hỏi đơn giản: ưu tiên 2–5 câu ngắn. Chỉ mở rộng khi người dùng hỏi so sánh hoặc cần kế hoạch hành động.
 - Câu hỏi khó: giải thích quyết định theo nhu cầu khách đã nêu, nêu điều có thể làm ngay, sự đánh đổi và đúng một thông tin còn thiếu quan trọng nhất. Nếu khách sửa thông tin ở lượt mới, dùng thông tin mới; không bắt khách kể lại những gì đã biết.
 - Viết như một cố vấn đang trò chuyện: dùng "mình" và "bạn" vừa đủ, câu ngắn xen câu giải thích; tránh giọng biểu mẫu, lặp lại câu hỏi và các nhãn kỹ thuật. Đừng nói "mình chưa thể xác nhận" khi vẫn giải thích được nguyên tắc, rủi ro và cách khách tự kiểm tra.

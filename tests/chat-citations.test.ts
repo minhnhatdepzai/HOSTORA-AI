@@ -27,3 +27,10 @@ test("drops a wildcard customer-source placeholder leaked by the model", () => {
 test("drops hallucinated citation families that are not supplied as sources", () => {
   expect(sanitizeCitations("Xem thêm [K1][C4].", new Set(["[K1]"]))).toBe("Xem thêm [K1].");
 });
+
+test("keeps source numbers while moving external URLs out of model prose", () => {
+  const answer = sanitizeCitations("Xem [tài liệu](https://example.com/guide) hoặc https://example.com/pay trước. [K1]", new Set(["[K1]"]));
+  expect(answer).toContain("[K1]");
+  expect(answer).not.toContain("https://");
+  expect(answer).toContain("tài liệu");
+});

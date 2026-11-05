@@ -122,6 +122,23 @@ describe("judge review regressions", () => {
     expect(explanation.tradeoffs.join(" ")).not.toContain("Không có CDN");
     expect(explanation.tradeoffs.join(" ")).toContain("CDN (phân phối nội dung): Chưa xác minh");
     expect(explanation.tradeoffs.join(" ")).not.toContain("fake");
+    expect(explanation.tradeoffs.length).toBeLessThanOrEqual(4);
+    expect(explanation.nextStep).toContain("trả trước");
+  });
+  it("explains why a shop gets the dearer primary plan without repeating all cards", () => {
+    const shop: Requirements = {
+      ...requirements,
+      websiteType: "store",
+      ecommerce: true,
+      monthlyVisits: 15000,
+      monthlyBudget: 300000,
+    };
+    const explanation = renderRecommendationExplanation(shop, [`${recommendPlans(shop)[0].plan.id}:backup`]);
+    expect(explanation.summary).toContain("CDN đã công bố");
+    expect(explanation.summary).toContain("rẻ hơn");
+    expect(explanation.tradeoffs.length).toBeLessThanOrEqual(3);
+    expect(explanation.tradeoffs.join(" ")).not.toContain("sao lưu");
+    expect(explanation.nextStep).toContain("trả trước");
   });
   it.each([" ", "   ", "\t\n"])("rejects whitespace-only names %j", (name) => {
     expect(adminLeadSchema.safeParse({ ...lead, name }).success).toBe(false);

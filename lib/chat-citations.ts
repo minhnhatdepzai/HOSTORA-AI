@@ -2,6 +2,8 @@
 // existence, not whether the cited claim is actually supported.
 export function sanitizeCitations(answer: string, allowed: Set<string>) {
   return answer
+    .replace(/\[([^\]\n]+)\]\(https?:\/\/[^\s)]+\)/gi, "$1")
+    .replace(/https?:\/\/[^\s<>)\]]+/gi, "")
     .replace(/\(([KPSU]\d{1,2})\)/gi, (token, citation: string) => {
       const normalized = `[${citation.toLocaleUpperCase("vi")}]`;
       return allowed.has(normalized) ? normalized : token;

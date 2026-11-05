@@ -31,7 +31,7 @@ function amount(raw: string, unit = "") {
 
 export function explicitChatRecommendation(question: string) {
   const text = question.toLocaleLowerCase("vi");
-  if (!/(chọn gói|tư vấn gói|phương án|gợi ý gói|so sánh gói)/i.test(text))
+  if (!/(chọn (?:giúp )?(?:đúng )?(?:một |1 )?gói|tư vấn gói|phương án|gợi ý gói|so sánh gói)/i.test(text))
     return null;
   const websiteType = /shop|cửa hàng|woocommerce|bán hàng/i.test(text)
     ? "store"
@@ -60,9 +60,11 @@ export function explicitChatRecommendation(question: string) {
   });
   if (!parsed.success) return null;
   const recommendations = recommendPlans(parsed.data);
+  const singlePlan = /(?:đúng|chỉ|duy nhất)\s*(?:một|1)\s*gói|(?:một|1)\s*gói\s*(?:thôi|duy nhất)/i.test(text);
+  const shownRecommendations = singlePlan ? recommendations.slice(0, 1) : recommendations;
   const peakMatch = text.match(/(\d[\d.,]*)\s*(?:người|khách)\s*(?:cùng lúc|đồng thời)/i);
   const peakVisitors = peakMatch ? amount(peakMatch[1]) : null;
-  const sources = recommendations.map(({ plan }, index) => ({
+  const sources = shownRecommendations.map(({ plan }, index) => ({
     citation: "P" + (index + 1),
     title: plan.provider + " " + plan.name,
     sourceUrl: plan.sourceUrl,
@@ -72,7 +74,8 @@ export function explicitChatRecommendation(question: string) {
   const performance = knowledge.find(
     (item) => item.id === "performance-limits",
   );
-  if (performance)
+  const needsPerformanceNote = !singlePlan || websiteType === "store" && /flash sale|cùng lúc|đồng thời|cao điểm/i.test(text);
+  if (performance && needsPerformanceNote)
     sources.push({
       citation: "K1",
       title: performance.title,
@@ -80,7 +83,22 @@ export function explicitChatRecommendation(question: string) {
       verifiedAt: performance.verifiedAt,
       kind: "knowledge",
     });
-  const lines = recommendations.map(
+  if (singlePlan && shownRecommendations[0]) {
+    const { plan, eligibility } = shownRecommendations[0];
+    const firstTerm = plan.promoMonthlyVnd * plan.billingMonths;
+    const renewal = plan.renewalMonthlyVnd === null
+      ? "giá gia hạn chưa xác minh"
+      : `gia hạn ${plan.renewalMonthlyVnd.toLocaleString("vi-VN")}đ/tháng`;
+    const fit = eligibility === "eligible"
+      ? websiteType === "blog" ? "Đây là lựa chọn chi phí thấp cho blog mới." : "Đây là lựa chọn gần nhu cầu bạn đã nêu."
+      : "Gói này chỉ để tham khảo vì chưa xác nhận đáp ứng toàn bộ nhu cầu hoặc ngân sách.";
+    return {
+      answer: `Gói chính: ${plan.provider} ${plan.name}. Kỳ đầu quy đổi ${plan.promoMonthlyVnd.toLocaleString("vi-VN")}đ/tháng nhưng cần trả ${firstTerm.toLocaleString("vi-VN")}đ cho ${plan.billingMonths} tháng; ${renewal}. [P1]\n\n${fit} ${needsDomain ? "Bạn còn cần kiểm tra chi phí tên miền riêng" : "Theo thông tin bạn đưa, không cần mua thêm tên miền"}, đồng thời kiểm tra thuế và điều kiện tại trang thanh toán. Mức trả trước ${firstTerm.toLocaleString("vi-VN")}đ có phù hợp không?` +
+        (needsPerformanceNote ? " Nếu có giờ bán cao điểm, hãy thử luồng đặt hàng và thanh toán với tải thật trước khi mua. [K1]" : ""),
+      sources,
+    };
+  }
+  const lines = shownRecommendations.map(
     ({ plan, reasons, cautions, eligibility }, index) => {
       const label =
         eligibility !== "eligible"
@@ -135,11 +153,12 @@ export function explicitChatRecommendation(question: string) {
   return {
     answer:
       (recommendations.some((item) => item.eligibility === "eligible")
-        ? "Với nhu cầu và ngân sách bạn nêu, mình nghiêng về gói đầu tiên. Hai gói sau giúp bạn so sánh thêm:\n"
-        : "Chưa có gói đáp ứng ngân sách và nhu cầu đã nhập. Mình vẫn để các phương án gần nhất cho bạn so sánh, nhưng chưa nên chốt mua:\n") +
+        ? singlePlan ? "Với thông tin bạn đưa, mình chọn gói này:\n" : "Với nhu cầu và ngân sách bạn nêu, mình nghiêng về gói đầu tiên. Hai gói sau giúp bạn so sánh thêm:\n"
+        : singlePlan ? "Chưa có gói đáp ứng chắc chắn nhu cầu và ngân sách. Đây là lựa chọn gần nhất để bạn kiểm tra, chưa nên chốt mua:\n" : "Chưa có gói đáp ứng ngân sách và nhu cầu đã nhập. Mình vẫn để các phương án gần nhất cho bạn so sánh, nhưng chưa nên chốt mua:\n") +
       lines.join("\n") +
-      `\nSố lượt truy cập mỗi tháng chưa cho biết website có chịu được giờ cao điểm hay không. ${peakVisitors ? `Với ${peakVisitors.toLocaleString("vi-VN")} khách cùng lúc bạn dự kiến, ` : "Nếu bạn có đợt bán lớn, "}hãy thử luồng đặt hàng và thanh toán ở mức tải đó trước khi chốt gói. [K1] Giá, thuế và điều kiện tên miền cần kiểm tra lại trên trang thanh toán.` +
-      (recommendations[0] ? ` Bạn có thể trả trước ${(recommendations[0].plan.promoMonthlyVnd * recommendations[0].plan.billingMonths).toLocaleString("vi-VN")}đ cho kỳ đầu không?` : ""),
+      (needsPerformanceNote ? `\nSố lượt truy cập mỗi tháng chưa cho biết website có chịu được giờ cao điểm hay không. ${peakVisitors ? `Với ${peakVisitors.toLocaleString("vi-VN")} khách cùng lúc bạn dự kiến, ` : "Nếu bạn có đợt bán lớn, "}hãy thử luồng đặt hàng và thanh toán ở mức tải đó trước khi chốt gói. [K1]` : "") +
+      `\nGiá, thuế và điều kiện tên miền cần kiểm tra lại trên trang thanh toán.` +
+      (!singlePlan && recommendations[0] ? ` Bạn có thể trả trước ${(recommendations[0].plan.promoMonthlyVnd * recommendations[0].plan.billingMonths).toLocaleString("vi-VN")}đ cho kỳ đầu không?` : ""),
     sources,
   };
 }

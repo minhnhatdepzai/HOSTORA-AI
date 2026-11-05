@@ -233,7 +233,7 @@ Xem thêm [sơ đồ hệ thống](docs/architecture/hostora-system.html),
 | DevOps                | Docker đa nền tảng, standalone Next.js, GitHub Actions, Releases, Pages và public HTTPS tunnel                                       |
 
 Không đánh đồng số framework với chất lượng sản phẩm: các con số kiểm thử bên
-dưới là bằng chứng kỹ thuật của bản 2.2.2, không phải cam kết SLA hoặc bảo đảm
+dưới là bằng chứng kỹ thuật theo từng phiên bản, không phải cam kết SLA hoặc bảo đảm
 thứ hạng cuộc thi.
 
 ## Truy cập nhanh
@@ -244,17 +244,24 @@ thứ hạng cuộc thi.
 | Web quản trị                     | [Mở trang admin](https://admin123-system-product-name.tailfeea7a.ts.net:8443/admin)                                                        | Chuyển tới cổng đăng nhập admin                                    |
 | Hộp thư AI của admin             | [Mở hộp thư hỗ trợ](https://admin123-system-product-name.tailfeea7a.ts.net:8443/admin/support)                                             | Cần phiên quản trị hợp lệ                                          |
 | Chấm SEO + AI visibility         | [Mở công cụ kiểm tra](https://admin123-system-product-name.tailfeea7a.ts.net:8443/website-analyzer)                                        | Tách điểm Google, AI crawler và kế hoạch sửa tất định              |
-| APK Android mới nhất             | [Tải HOSTORA AI 2.2.2 universal](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-2.2.2-universal.apk)     | Android 7.0+, 4 ABI, package `com.hostora.ai`                      |
-| Link APK tương thích biểu mẫu cũ | [Tải qua tên `arm64.apk`](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-2.2.2-arm64.apk)                | Cùng binary universal; không phải bản chỉ có ARM64                 |
-| SHA-256 APK                      | [Tải checksum](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-2.2.2-universal.apk.sha256)                | `9000fb661ec8234e0adcc7a623e0fa351efd1de22cbf20d7ef7a63ca65e85058` |
+| APK Android mới nhất             | [Tải HOSTORA AI 2.2.4 universal](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-2.2.4-universal.apk)     | Android 7.0+, 4 ABI, package `com.hostora.ai`                      |
+| Link APK tương thích biểu mẫu cũ | [Tải qua tên `arm64.apk`](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-2.2.4-arm64.apk)                | Cùng binary universal; không phải bản chỉ có ARM64                 |
+| SHA-256 APK                      | [Tải checksum](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-2.2.4-universal.apk.sha256)                | `9626e57b7c4e35a6e94dbbdf3a2506ac222e6f42a3d5a6f0fbc6bf2e43bebed0` |
 | Web tĩnh “Kiểm thử”              | [Mở báo cáo 20 ca](https://minhnhatdepzai.github.io/HOSTORA-AI/)                                                                           | GitHub Pages tự deploy bằng GitHub Actions                         |
-| Source ZIP mới nhất              | [Tải Source ZIP](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-source-2.2.2-2026-11-04.zip)                | Web, admin, app, README, tài liệu, training source và cấu hình mẫu |
-| Adapter fine-tuning              | [Tải gói fine-tuning 2.2.2](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-finetuning-2.2.2-2026-11-04.zip) | Hai LoRA adapter mới nhất và bằng chứng; không nhân bản base model |
+| Source ZIP mới nhất              | [Tải Source ZIP](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-source-2.2.4-2026-11-05.zip)                | Web, admin, app, README, tài liệu, training source và cấu hình mẫu |
+| Adapter fine-tuning              | [Tải gói fine-tuning 2.2.4](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-finetuning-2.2.4-2026-11-05.zip) | Hai LoRA adapter và bằng chứng; không nhân bản base model |
 | Source                           | [GitHub repository](https://github.com/minhnhatdepzai/HOSTORA-AI)                                                                          | Nhánh `main`                                                       |
 
 > URL `*.ts.net:8443` là hostname HTTPS cố định của Tailscale Funnel và không cần mua tên miền. HOSTORA production cùng Funnel tự chạy lại trên máy demo; máy tắt hoặc mất mạng thì website vẫn offline. Link APK trên GitHub Release hoạt động độc lập với máy demo.
 
-## Trạng thái bản 2.2.2
+## Trạng thái bản 2.2.4
+
+- Source cuối: typecheck, lint, **334/334** unit/API test và production build đạt; Ollama local qua `pnpm ai:check` đạt.
+- Browser production cách ly: **57 ca đạt, 1 ca mobile CRUD bỏ qua có chủ đích**; audit 12 màn desktop/mobile không báo lỗi tự động.
+- APK universal `versionCode 27`: đủ bốn ABI, chữ ký APK hợp lệ, đã cài đè trên Android Emulator và giữ preset backend `http://10.0.2.2:3200`.
+- [Báo cáo ca khó Android ảo](docs/submission/CHAT_ADVISOR_HARD_CASES_2026-11-05.md) ghi cả ca lỗi đã tìm được và kết quả sửa, kèm ảnh trực tiếp. Maestro driver chưa khởi động trên emulator; Mobile MCP/ADB được dùng để nghiệm thu native.
+
+### Snapshot lịch sử 2.2.2
 
 | Phần đã kiểm tra    | Kết quả gần nhất                                                                                                  |
 | ------------------- | ----------------------------------------------------------------------------------------------------------------- |
@@ -281,7 +288,7 @@ bên dưới.
 
 ### Bước 1 — tải và giải nén Source ZIP
 
-1. Tải [HOSTORA Source ZIP mới nhất](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-source-2.2.2-2026-11-04.zip).
+1. Tải [HOSTORA Source ZIP mới nhất](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-source-2.2.4-2026-11-05.zip).
 2. Windows: bấm chuột phải file ZIP → **Extract All / Giải nén tất cả**.
 3. macOS: bấm đúp file ZIP. Linux: dùng trình quản lý file và chọn **Extract**.
 4. Mở thư mục vừa giải nén. Đúng thư mục project sẽ nhìn thấy `README.md`,
@@ -376,7 +383,7 @@ và toàn bộ dữ liệu runtime, khiến lần sau phải tải/tạo lại t
 
 ### Kết nối app Android với backend Docker
 
-1. Cài [APK universal 2.2.2](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-2.2.2-universal.apk).
+1. Cài [APK universal 2.2.4](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-2.2.4-universal.apk).
 2. Điện thoại thật cùng Wi-Fi: trong app mở **Công cụ → Kết nối local AI**, nhập
    `http://<IP-LAN-của-máy-tính>:3000`, lưu và kiểm tra kết nối.
 3. Android Emulator trên cùng máy: nhập thủ công `http://10.0.2.2:3000`.
@@ -459,10 +466,10 @@ Xem [hướng dẫn Docker](docs/DOCKER_DEPLOYMENT.md).
 Tải APK universal ở bảng “Truy cập nhanh”, sau đó mở trên điện thoại Android 7.0 trở lên hoặc cài bằng ADB. File chứa `arm64-v8a`, `armeabi-v7a`, `x86` và `x86_64`, vì vậy dùng được cho điện thoại ARM 32/64-bit và máy ảo Android tương ứng:
 
 ```bash
-adb install -r HOSTORA-AI-2.2.2-universal.apk
+adb install -r HOSTORA-AI-2.2.4-universal.apk
 ```
 
-`-r` cài đè và giữ dữ liệu app. Android 6 trở xuống không được Expo 58/React Native 0.88 hỗ trợ; cần một ứng dụng legacy riêng nếu buộc phải chạy trên các máy đó. APK 2.2.2 hiện dùng chữ ký debug cục bộ để chấm vòng loại, chưa phải bản ký production cho Google Play.
+`-r` cài đè và giữ dữ liệu app. Android 6 trở xuống không được Expo 58/React Native 0.88 hỗ trợ; cần một ứng dụng legacy riêng nếu buộc phải chạy trên các máy đó. APK 2.2.4 hiện dùng chữ ký debug cục bộ để chấm vòng loại, chưa phải bản ký production cho Google Play.
 
 ### Chạy app với backend qua USB
 
@@ -525,6 +532,7 @@ Các tài liệu dành cho vòng loại:
 
 - [Nghiệm thu bàn phím toàn app và đồng bộ Android → Admin 2.2.3](docs/submission/MOBILE_ALL_SCREENS_ADMIN_SYNC_2026-11-05.md);
 - [Nghiệm thu chatbot và tư vấn 2.2.4](docs/submission/CHAT_ADVISOR_2.2.4_2026-11-05.md) gồm ca khó, đường đi quản trị viên và ảnh APK trên Android ảo;
+- [Ca khó chatbot và tư vấn trực tiếp trên Android ảo](docs/submission/CHAT_ADVISOR_HARD_CASES_2026-11-05.md) gồm lỗi đã phát hiện, bản sửa và ảnh người chấm xem ngay;
 - [Báo cáo 9 ca mobile](docs/submission/HOSTORA_MOBILE_9_CASES.html);
 - [Minh chứng 20 ca cho giám khảo](docs/submission/MINH_CHUNG_20_CA.html);
 - [Minh chứng 9 ca cũ](docs/submission/MINH_CHUNG_9_CA.html) để đối chiếu lịch sử;
@@ -537,19 +545,19 @@ Các tài liệu dành cho vòng loại:
 
 HTTP 200, browser mobile viewport hoặc APK build thành công không thay thế kiểm thử luồng thật. Bằng chứng Android phải đến từ APK cài trên thiết bị; ca sự cố mô phỏng phải được ghi rõ là mô phỏng.
 
-> **Bản đang nghiệm thu:** source và APK emulator x86_64 2.2.4 đã được cài đè, giữ dữ liệu và kiểm tra trực tiếp chat có tài liệu `[1]`, câu hỏi CDN chậm và chuyển hosting. Bộ kiểm thử bàn phím toàn app, Maestro native và Android → Admin ở bản 2.2.3 là bằng chứng lịch sử riêng. Link tải công khai vẫn là 2.2.2 universal cho đến khi artifact 2.2.4 đủ bốn ABI, checksum và Source ZIP được phát hành đồng bộ.
+> **Bản đang nghiệm thu:** source và APK universal 2.2.4 đã được cài đè trên Android Emulator, giữ dữ liệu và kiểm tra trực tiếp chat có tài liệu `[1]`, các ca sự cố thanh toán, chọn một gói và tư vấn chi phí. Bộ kiểm thử bàn phím toàn app, Maestro native và Android → Admin ở bản 2.2.3 là bằng chứng lịch sử riêng.
 
 ## Gói nộp vòng loại
 
 HOSTORA là **một project duy nhất**: website khách hàng, web admin, Android và training source nằm chung một repository. Không cần nộp ba project rời. Bộ hồ sơ nên gồm:
 
-1. `HOSTORA-source-2.2.2-2026-11-04.zip` — file bắt buộc để giám khảo tải và chạy; chứa README, web/admin, app source, cinematic source/assets, bảng 20 ca, test, training source/data/config và cấu hình mẫu. Không chứa secret, database thật hoặc model nền nhiều GB.
-2. `HOSTORA-AI-2.2.2-universal.apk` — artifact cài nhanh trên Android 7.0+, kèm file `.sha256`. Tên `arm64.apk` trong release là alias của cùng APK universal để giữ tương thích với biểu mẫu cũ.
-3. `HOSTORA-finetuning-2.2.2-2026-11-04.zip` — tài liệu bổ sung, chứa adapter `chatbot-v8` và `studio-v3`, tokenizer/config, manifest, đánh giá và trạng thái train. Đây là candidate để tái lập/đánh giá; `promotion.json` là nguồn xác nhận trạng thái, không được hiểu là model đang chạy production.
+1. `HOSTORA-source-2.2.4-2026-11-05.zip` — file bắt buộc để giám khảo tải và chạy; chứa README, web/admin, app source, cinematic source/assets, bảng 20 ca, test, training source/data/config và cấu hình mẫu. Không chứa secret, database thật hoặc model nền nhiều GB.
+2. `HOSTORA-AI-2.2.4-universal.apk` — artifact cài nhanh trên Android 7.0+, kèm file `.sha256`. Tên `arm64.apk` trong release là alias của cùng APK universal để giữ tương thích với biểu mẫu cũ.
+3. `HOSTORA-finetuning-2.2.4-2026-11-05.zip` — tài liệu bổ sung, chứa adapter `chatbot-v8` và `studio-v3`, tokenizer/config, manifest, đánh giá và trạng thái train. Đây là candidate để tái lập/đánh giá; `promotion.json` là nguồn xác nhận trạng thái, không được hiểu là model đang chạy production.
 4. Video demo tối đa 02 phút — nộp link riêng trên cổng thi; mở trực tiếp APK/web và thể hiện đủ 05 tính năng.
 
 Các file checksum trong GitHub Release dùng để kiểm tra đúng artifact sau khi tải. Base model `unsloth/Qwen3.5-4B` không được sao chép vào gói fine-tuning; người chạy tải base model theo tài liệu rồi gắn LoRA adapter.
-Hồ sơ mới dùng đúng hai gói ngày `2026-11-04` trong bảng “Truy cập nhanh”; các
+Hồ sơ mới dùng đúng hai gói ngày `2026-11-05` trong bảng “Truy cập nhanh”; các
 gói ngày cũ chỉ giữ để đối chiếu lịch sử và không nên nộp nhầm.
 
 ## Giới hạn hiện tại

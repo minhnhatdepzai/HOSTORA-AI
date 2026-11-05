@@ -23,6 +23,17 @@ test("asks chatbot to clarify when needs are incomplete", () => {
   expect(explicitChatRecommendation("Tư vấn gói hosting cho tôi")).toBeNull();
 });
 
+test("respects a request for exactly one plan and omits unrelated performance source for a blog", () => {
+  const result = explicitChatRecommendation("Tôi có blog mới 1.000 lượt mỗi tháng, ngân sách 100.000 đồng, đã có tên miền. Chọn giúp đúng một gói và giải thích ngắn.");
+  expect(result).not.toBeNull();
+  expect(result?.answer).toContain("Gói chính:");
+  expect(result?.answer).not.toContain("Thay thế 1:");
+  expect(result?.answer).toContain("trả 955.200đ cho 48 tháng");
+  expect(result?.answer).not.toContain("cần xác nhận giá gia hạn");
+  expect(result?.answer.length).toBeLessThan(550);
+  expect(result?.sources).toHaveLength(1);
+});
+
 test("generic plan question requests missing business inputs before ranking", () => {
   expect(needsRecommendationRequirements("Shop mới nên chọn gói nào?")).toBe(
     true,

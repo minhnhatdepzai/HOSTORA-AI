@@ -262,6 +262,57 @@ function knowledgeSource(id: string, citation: string) {
   };
 }
 
+/** Prioritize live transactions before discussing a new hosting plan. */
+export function urgentStoreOutageAnswer(question: string) {
+  const folded = foldedQuestion(question);
+  if (!/(shop|cua hang|woocommerce|website ban hang|web ban hang)/i.test(folded) ||
+      !/(sap|khong truy cap|khong vao duoc|qua tai|loi 5\d\d)/i.test(folded) ||
+      !/(flash sale|dang ban|don hang|khach|ngay|gap)/i.test(folded)) return null;
+  const source = knowledgeSource("performance-limits", "K1");
+  const concurrent = folded.match(/(\d[\d.,]*)\s*(?:khach|nguoi)\s*(?:cung luc|dong thoi)/i)?.[1];
+  return {
+    answer: `Ưu tiên giữ đơn và ngừng gửi thêm khách vào trang đang lỗi. ${concurrent ? `Với ${concurrent} khách cùng lúc, ` : ""}hãy tạm dừng quảng cáo hoặc đợt flash sale, báo khách cách liên hệ để giữ đơn và ghi lại thời điểm lỗi. Đừng yêu cầu khách thanh toán lại nếu chưa đối soát giao dịch.\n\nNgay sau đó, kiểm tra trạng thái máy chủ và log lỗi, tạm tắt plugin vừa cập nhật nếu lỗi xuất hiện sau thay đổi, rồi thử một lượt xem sản phẩm → đặt hàng → thanh toán. Chỉ bật lại lưu lượng khi luồng đặt hàng ổn; sau sự cố hãy đo tải thực tế trước khi đổi gói.${source ? " [K1]" : ""}`,
+    sources: source ? [source] : [],
+  };
+}
+
+export function checkoutAfterMigrationAnswer(question: string) {
+  const folded = foldedQuestion(question);
+  if (!/(chuyen|doi).{0,24}(hosting|may chu|server)/i.test(folded) ||
+      !/(thanh toan|checkout|dat hang)/i.test(folded) ||
+      !/(loi|hong|khong duoc|that bai|mat don)/i.test(folded)) return null;
+  const source = knowledgeSource("performance-limits", "K1");
+  return {
+    answer: `Hãy xử lý luồng đặt hàng trước: tạm dừng quảng cáo, báo khách chưa đặt lại đơn nếu tài khoản đã bị trừ tiền, rồi đối soát đơn và giao dịch ở cổng thanh toán. Việc nhận email chỉ cho thấy luồng thư còn hoạt động, chưa chứng minh thanh toán ổn.\n\nTạo một đơn thử ở môi trường kiểm thử, kiểm tra lỗi checkout và webhook/callback cổng thanh toán sau khi chuyển hosting; kiểm tra URL, HTTPS và cấu hình bí mật của cổng trên máy mới. Nếu chưa tìm ra lỗi, quay về bản chạy ổn sau khi đồng bộ các đơn phát sinh, rồi thử lại trước khi mở bán. Khi đã ổn định, thử tải lại đúng luồng giỏ hàng và thanh toán trước đợt bán tiếp theo.${source ? " [K1]" : ""}`,
+    sources: source ? [source] : [],
+  };
+}
+
+export function sitemapIndexAnswer(question: string) {
+  const folded = foldedQuestion(question);
+  if (!/(google|search console|tim kiem)/i.test(folded) ||
+      !/(chua index|khong index|chua duoc lap chi muc|khong duoc lap chi muc)/i.test(folded) ||
+      !/(sitemap|trang san pham|url)/i.test(folded)) return null;
+  const crawl = knowledgeSource("seo-crawling-indexing", "K1");
+  const sitemap = knowledgeSource("seo-sitemap", "K2");
+  return {
+    answer: `Trước tiên, nhập URL cụ thể của trang sản phẩm vào công cụ Kiểm tra URL trong Google Search Console. Xem Google có truy cập được trang và lý do chưa lập chỉ mục; gửi sitemap không bảo đảm trang sẽ được index.${sitemap ? " [K2]" : ""}\n\nNếu URL bị chặn, kiểm tra HTTP 200, robots.txt và thẻ noindex.${crawl ? " [K1]" : ""} Nếu Google truy cập được, kiểm tra canonical của trang có khớp URL trong sitemap, trang có liên kết nội bộ và nội dung riêng đủ rõ; sau khi sửa, yêu cầu Google kiểm tra lại URL.${sitemap ? " [K2]" : ""}`,
+    sources: [crawl, sitemap].filter((source): source is NonNullable<typeof source> => Boolean(source)),
+  };
+}
+
+export function newStoreStartingAnswer(question: string) {
+  const folded = foldedQuestion(question);
+  if (!/(ban|mo|lam).{0,24}(online|shop|cua hang|san pham)|shop moi/i.test(folded) ||
+      !/(chua biet|khong biet).{0,30}(khach|ngan sach)|(?:khach|ngan sach).{0,15}(chua biet|khong biet)/i.test(folded) ||
+      !/(lam gi truoc|bat dau|buoc dau|nen lam gi)/i.test(folded)) return null;
+  const source = knowledgeSource("hosting-decision", "K1");
+  return {
+    answer: `Bắt đầu bằng một danh sách nhỏ sản phẩm bạn định bán: ảnh, giá, cách giao hàng và cách khách đặt mua. Sau đó làm trang thử với vài sản phẩm và nhờ một người đặt thử từ điện thoại; bạn sẽ biết phần nào cần sửa trước khi mua gói lớn.\n\nKhi đã có đơn thử, hãy ghi lại mức chi bạn thấy thoải mái mỗi tháng và dự kiến có chạy quảng cáo hay đợt bán đông khách không. Lúc đó mình mới lọc gói phù hợp, không đoán nhu cầu từ con số bạn chưa có.${source ? " [K1]" : ""}`,
+    sources: source ? [source] : [],
+  };
+}
+
 export function domainAvailabilityAnswer(question: string) {
   if (
     !/[a-z0-9-]+(?:\.[a-z0-9-]+)+/i.test(question) ||

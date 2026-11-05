@@ -11,6 +11,10 @@ import {
   budgetCorrectionAnswer,
   cdnVsHostingAnswer,
   cdnSlowCheckoutAnswer,
+  urgentStoreOutageAnswer,
+  checkoutAfterMigrationAnswer,
+  sitemapIndexAnswer,
+  newStoreStartingAnswer,
   botSaleAnswer,
   multiSiteHostingAnswer,
   customerSourceBusinessAnswer,
@@ -231,6 +235,44 @@ test("slow checkout with CDN gets a grounded diagnosis before suggesting an upgr
   expect(result?.answer).toContain("giỏ hàng");
   expect(result?.answer).toContain("số đo thật");
   expect(result?.sources.map((source) => source.citation)).toEqual(["K1", "K2"]);
+});
+
+test("live flash sale outage gets immediate order triage, not a new hosting pitch", () => {
+  const result = urgentStoreOutageAnswer("Shop WooCommerce của tôi sập lúc flash sale 300 khách cùng lúc. Tôi cần xử lý ngay hôm nay, đừng chỉ khuyên nâng gói.");
+  expect(result?.answer).toMatch(/ngay|trước/i);
+  expect(result?.answer).toContain("300");
+  expect(result?.answer).toContain("đơn");
+  expect(result?.answer).not.toMatch(/lượt truy cập tháng|chọn gói|cho biết số người/i);
+  expect(result?.sources).toHaveLength(1);
+});
+
+test("checkout failure after migration prioritizes orders and payments over DNS checklist", () => {
+  const result = checkoutAfterMigrationAnswer("Sau khi chuyển hosting, khách bấm thanh toán bị lỗi nhưng email vẫn nhận. Tôi làm gì ngay để không mất đơn?");
+  expect(result?.answer).toContain("đơn");
+  expect(result?.answer).toContain("thanh toán");
+  expect(result?.answer).not.toMatch(/giữ tên miền cũ|thư điện tử ở dịch vụ riêng/i);
+  expect(result?.sources).toHaveLength(1);
+});
+
+test("partial live checkout failure after a migration is still a payment incident", () => {
+  const result = checkoutAfterMigrationAnswer("Sau đợt chuyển hosting, 30% khách bấm thanh toán lúc livestream bị lỗi, email vẫn nhận. Tôi nên nâng gói ngay hay kiểm tra gì trước để không mất đơn?");
+  expect(result?.answer).toContain("đối soát đơn");
+  expect(result?.answer).toContain("luồng giỏ hàng và thanh toán");
+  expect(result?.answer).not.toMatch(/tên miền cũ|thiết lập DNS/i);
+});
+
+test("unindexed product after submitting sitemap starts with the exact URL", () => {
+  const result = sitemapIndexAnswer("Google chưa index trang sản phẩm mới dù tôi đã gửi sitemap. Tôi kiểm tra bước nào trước?");
+  expect(result?.answer).toContain("URL cụ thể");
+  expect(result?.answer).toContain("noindex");
+  expect(result?.answer).not.toContain("Discovery > Pages");
+  expect(result?.sources).toHaveLength(2);
+});
+
+test("store owner with no metrics gets one practical first step", () => {
+  const result = newStoreStartingAnswer("Tôi bán giày online nhưng chưa biết lượng khách và ngân sách. Giờ nên làm gì trước?");
+  expect(result?.answer).toContain("sản phẩm");
+  expect(result?.answer).not.toMatch(/tên miền còn trống|giá gia hạn|số lượt truy cập dự kiến/i);
 });
 
 test("hosting migration advice covers mail, orders and SEO without requiring DNS keyword", () => {
