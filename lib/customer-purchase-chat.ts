@@ -225,7 +225,7 @@ export function profileBasedAdviceAnswer(
       : "Mình chưa thấy yêu cầu mua gắn với hồ sơ này, nên chưa coi bất kỳ gói nào là đã mua.";
 
   return [
-    `Mình sẽ dùng dữ liệu đã có, không bắt bạn nhập lại. Hồ sơ hiện tại cho thấy ${known.join(", ") || "bạn đang chuẩn bị một website mới"}${websiteGoal ? `; mục tiêu website là ${websiteGoal}` : ""}.`,
+    `Dựa trên hồ sơ hiện tại của bạn, mình thấy ${known.join(", ") || "bạn đang chuẩn bị một website mới"}${websiteGoal ? `; mục tiêu website là ${websiteGoal}` : ""}.`,
     `1. Ưu tiên luồng tạo khách: đưa ${mainOffer} lên phần đầu trang, sau đó dẫn thẳng ${targetCustomers} đến một hành động chính như đặt mua, đặt lịch hoặc liên hệ phù hợp với mục tiêu đã khai. Đừng chia sự chú ý vào quá nhiều nút ngang nhau.`,
     `2. Ưu tiên nội dung dễ được tìm thấy: làm một trang hoặc cụm nội dung riêng cho ${mainOffer}${serviceArea ? ` tại ${serviceArea}` : ""}${seoGoals ? `, bám sát mục tiêu SEO “${seoGoals}”` : ""}. Nội dung cần trả lời vấn đề của khách, quy trình, phạm vi phục vụ và cách liên hệ trước khi viết nhiều bài rời rạc.`,
     `3. Ưu tiên hạ tầng và ra mắt: hồ sơ đang ở mức lưu lượng ${traffic}, ngân sách ${budget}. ${selected} Trước khi chốt, hãy đối chiếu giá kỳ đầu, giá gia hạn và thử trọn luồng liên hệ/đặt hàng ở giờ cao điểm; yêu cầu mua chưa có nghĩa là dịch vụ đã hoạt động.`,

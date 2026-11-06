@@ -155,6 +155,8 @@ test("chat reads only the signed-in customer's paid and pending hosting orders",
   const personalizedAnswer = await personalizedResponse.text();
   expect(personalizedResponse.headers.get("x-hostora-support-status")).toBe("active");
   expect(personalizedAnswer).toContain("1. Ưu tiên luồng tạo khách");
+  expect(personalizedAnswer).toContain("Dựa trên hồ sơ hiện tại của bạn");
+  expect(personalizedAnswer).not.toContain("không bắt bạn nhập lại");
   expect(personalizedAnswer).toContain("2. Ưu tiên nội dung");
   expect(personalizedAnswer).toContain("3. Ưu tiên hạ tầng");
   expect(personalizedAnswer).toContain("Mỹ phẩm thiên nhiên");
