@@ -13,7 +13,7 @@ type Mode = "login" | "register" | "forgot";
 const content = {
   login: { eyebrow: "SỔ DỊCH VỤ", title: "Chào mừng bạn quay lại.", copy: "Mở voucher, yêu cầu hỗ trợ và những website thuộc tài khoản của bạn.", action: "Đăng nhập" },
   register: { eyebrow: "MỘT TÀI KHOẢN", title: "Giữ mọi thứ ở cùng một nơi.", copy: "Dùng đúng email nhận hóa đơn để voucher được cất tự động.", action: "Tạo tài khoản" },
-  forgot: { eyebrow: "KHÔI PHỤC", title: "Lấy lại mật khẩu.", copy: "Nếu email đã có tài khoản, HOSTORA sẽ gửi liên kết dùng một lần.", action: "Gửi liên kết" },
+  forgot: { eyebrow: "KHÔI PHỤC", title: "Lấy lại mật khẩu.", copy: "Dùng email nhận hóa đơn; HOSTORA sẽ gửi liên kết nếu email khớp tài khoản hoặc giao dịch.", action: "Gửi liên kết" },
 } satisfies Record<Mode, { eyebrow: string; title: string; copy: string; action: string }>;
 
 export function AccountAuthScreen({ mode }: { mode: Mode }) {

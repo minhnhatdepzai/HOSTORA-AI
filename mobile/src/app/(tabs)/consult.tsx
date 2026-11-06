@@ -1,4 +1,5 @@
 import { Pressable } from "@/components/pressable";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AnimatedProgress, Reveal, StepTransition } from "@/components/motion";
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -106,6 +107,7 @@ export default function ConsultScreen() {
 
   function finish() {
     setRequirements({ ...data, notes: natural });
+    void AsyncStorage.setItem("hostora:mobile:consultation:completed", "true");
     router.push("/recommendations");
   }
 

@@ -302,6 +302,33 @@ export class PaymentStore {
     return rows.map((row) => ({ id: row.id, productId: row.product_id, provider: row.provider, productName: row.product_name, contact: row.contact, note: row.note, profile: parseProfile(row.profile_json), consultationPreference: row.consultation_preference, consultationAt: row.consultation_at, consultationChannel: row.consultation_channel, voucherCode: row.voucher_code, cancelReason: row.cancel_reason, status: row.status, invoiceId: row.invoice_id, createdAt: row.created_at }));
   }
 
+  findPasswordRecoveryIdentity(email: string): { name: string } | null {
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail) return null;
+    const request = this.db
+      .prepare(
+        `SELECT profile_json
+         FROM sale_requests
+         WHERE lower(contact) = ?
+         ORDER BY created_at DESC
+         LIMIT 1`,
+      )
+      .get(normalizedEmail) as { profile_json: string } | undefined;
+    if (request) {
+      const name = parseProfile(request.profile_json).customerName.trim();
+      return { name: name || "Khách hàng HOSTORA" };
+    }
+    const invoice = this.db
+      .prepare(
+        `SELECT 1 AS found
+         FROM invoices
+         WHERE lower(customer_email) = ?
+         LIMIT 1`,
+      )
+      .get(normalizedEmail) as { found: number } | undefined;
+    return invoice ? { name: "Khách hàng HOSTORA" } : null;
+  }
+
   listSaleRequestsPage(input: {
     search?: string;
     status?: SaleRequest["status"];

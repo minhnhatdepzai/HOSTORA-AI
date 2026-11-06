@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import type { SiteBrief, SiteIdea } from "@/lib/site-studio";
 import {
@@ -28,18 +28,19 @@ export type StudioFeedback = {
   reason: "visual" | "copy" | "navigation" | "business_fit" | "other";
 };
 
-const storageRoot = path.join(process.cwd(), "data", "runtime", "site-studio");
+const storageRoot = () => process.env.HOSTORA_STUDIO_STORAGE_ROOT ??
+  path.join(process.cwd(), "data", "runtime", "site-studio");
 const projectIdSchema =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function projectPath(id: string) {
   if (!projectIdSchema.test(id)) throw new Error("Mã website không hợp lệ.");
-  return path.join(storageRoot, `${id}.json`);
+  return path.join(storageRoot(), `${id}.json`);
 }
 
 export async function saveStudioProject(project: StoredStudioProject) {
   const destination = projectPath(project.id);
-  await mkdir(storageRoot, { recursive: true });
+  await mkdir(storageRoot(), { recursive: true });
   const temporary = `${destination}.${randomUUID()}.tmp`;
   await writeFile(temporary, JSON.stringify(project), { mode: 0o600 });
   await rename(temporary, destination);
@@ -50,7 +51,7 @@ export async function saveStudioFeedback(
   project: StoredStudioProject,
   feedback: StudioFeedback,
 ) {
-  const directory = path.join(storageRoot, "feedback");
+  const directory = path.join(storageRoot(), "feedback");
   await mkdir(directory, { recursive: true });
   const event = {
     id: randomUUID(),
@@ -106,6 +107,25 @@ export async function getStudioProject(id: string) {
     return candidate as StoredStudioProject;
   } catch {
     return null;
+  }
+}
+
+export async function listStudioProjectsForCustomer(customerId: string) {
+  try {
+    const entries = await readdir(storageRoot());
+    const ids = entries
+      .filter((name) => name.endsWith(".json") && projectIdSchema.test(name.slice(0, -5)))
+      .slice(0, 500)
+      .map((name) => name.slice(0, -5));
+    const projects = await Promise.all(ids.map((id) => getStudioProject(id)));
+    return projects
+      .filter((project): project is StoredStudioProject =>
+        Boolean(project && isStudioProjectOwner(project, customerId)),
+      )
+      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+      .slice(0, 5);
+  } catch {
+    return [];
   }
 }
 

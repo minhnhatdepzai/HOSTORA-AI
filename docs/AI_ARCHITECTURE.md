@@ -33,6 +33,10 @@ Prompt coi context là dữ liệu không tin cậy và yêu cầu bỏ qua inst
 
 Tài khoản đăng nhập dùng SQLite cho bốn lớp dữ liệu tách biệt: lịch sử chat đã che PII, bộ nhớ nhu cầu kinh doanh có schema/giới hạn, nguồn riêng đã trích xuất và sở thích Website Studio. Chat chỉ nạp các lượt gần nhất cùng bản tóm tắt tất định; thông tin mới có quyền sửa thông tin cũ. Bộ nhớ không lưu giá, ưu đãi, availability hoặc trạng thái giao dịch.
 
+Mỗi lượt chat còn đọc **dữ liệu hiện tại của đúng tài khoản đã xác thực**: website Studio theo `ownerCustomerId`, hồ sơ yêu cầu mua theo email tài khoản và hóa đơn theo email. Câu hỏi “đã tạo web nào”, “đã điền gì”, “đã mua gói gì” được trả lời từ dữ liệu này, không hỏi model đoán. Yêu cầu mới và hóa đơn chờ thanh toán luôn được phân biệt với gói đã thanh toán. Web và Android gửi các trường nhu cầu đã điền trong wizard sau khi người dùng có thao tác lưu; server validate rồi lưu bộ nhớ nhu cầu, không gửi họ tên/số điện thoại của form tư vấn vào model. Context model chỉ nhận trạng thái và dữ kiện kinh doanh tối thiểu, không nhận thông tin liên hệ hoặc hồ sơ nguyên văn.
+
+Website Studio và yêu cầu mua trong bản production được lưu cùng runtime của server. Dữ liệu nằm trong một runtime phát triển khác sẽ không tự xuất hiện trên production; cần đối chiếu tài khoản và di chuyển dữ liệu riêng, tránh gộp nhầm khách kiểm thử.
+
 PDF, DOCX, text, trang web công khai và ảnh được trích xuất ở server rồi cắt đoạn; BM25 chọn tối đa bốn đoạn liên quan và gắn citation `U`. Nguồn `U` chỉ dùng để hiểu doanh nghiệp, sản phẩm và ý định của khách, không được dùng làm bằng chứng thương mại cho catalog. Lịch sử và nguồn được cô lập bằng `customer_id`; xóa lịch sử và xóa cả bộ nhớ là hai thao tác riêng.
 
 ## Streaming và tài nguyên

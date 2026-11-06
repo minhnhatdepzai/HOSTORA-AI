@@ -31,7 +31,7 @@ function amount(raw: string, unit = "") {
 
 export function explicitChatRecommendation(question: string) {
   const text = question.toLocaleLowerCase("vi");
-  if (!/(chọn (?:giúp )?(?:đúng )?(?:một |1 )?gói|tư vấn gói|phương án|gợi ý gói|so sánh gói)/i.test(text))
+  if (!/(chọn (?:giúp )?(?:đúng )?(?:một |1 )?gói|tư vấn gói|phương án|gợi ý gói|so sánh gói|mua hosting (?:nào|gì)|hosting nào)/i.test(text))
     return null;
   const websiteType = /shop|cửa hàng|woocommerce|bán hàng/i.test(text)
     ? "store"
@@ -164,7 +164,7 @@ export function explicitChatRecommendation(question: string) {
 }
 
 export function needsRecommendationRequirements(question: string) {
-  return /(chọn gói|gói nào|tư vấn gói|gợi ý gói)/i.test(question);
+  return /(chọn gói|gói nào|tư vấn gói|gợi ý gói|mua hosting (?:nào|gì)|hosting nào)/i.test(question);
 }
 
 export function recommendationClarificationAnswer(

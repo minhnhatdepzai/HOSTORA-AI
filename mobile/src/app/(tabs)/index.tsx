@@ -92,32 +92,7 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      <Reveal delay={40}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Mở hồ sơ vòng loại cho giám khảo"
-          accessibilityHint="Xem kịch bản demo, năm tính năng và chín ca kiểm thử"
-          onPress={() => router.push("/judge" as Href)}
-          style={({ pressed }) => [
-            styles.judgeBanner,
-            pressed && styles.judgeBannerPressed,
-          ]}
-        >
-          <View style={styles.judgeBadge}>
-            <Feather name="award" size={17} color={colors.mint} />
-          </View>
-          <View style={styles.judgeCopy}>
-            <Text style={styles.judgeEyebrow}>HỒ SƠ VÒNG LOẠI · BẢNG A</Text>
-            <Text style={styles.judgeTitle}>Mở chế độ trình bày</Text>
-            <Text style={styles.judgeMeta}>
-              Demo 2 phút · 5 tính năng · 9 ca kiểm thử
-            </Text>
-          </View>
-          <Feather name="arrow-up-right" size={20} color={colors.mint} />
-        </Pressable>
-      </Reveal>
-
-      <Reveal delay={80} style={styles.hero}>
+      <Reveal delay={40} style={styles.hero}>
         <BrandStage />
         <View style={styles.heroTop}>
           <View style={styles.heroRule} />
@@ -425,47 +400,6 @@ const styles = StyleSheet.create({
     borderColor: colors.line,
     alignItems: "center",
     justifyContent: "center",
-  },
-  judgeBanner: {
-    minHeight: 94,
-    marginHorizontal: 16,
-    marginBottom: 12,
-    paddingHorizontal: 16,
-    borderRadius: 22,
-    backgroundColor: colors.ink,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  judgeBannerPressed: { opacity: 0.86, transform: [{ scale: 0.985 }] },
-  judgeBadge: {
-    width: 44,
-    height: 44,
-    borderRadius: 15,
-    borderWidth: 1,
-    borderColor: "#40574F",
-    backgroundColor: "#17332D",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  judgeCopy: { flex: 1 },
-  judgeEyebrow: {
-    color: colors.mint,
-    fontFamily: "BeVietnamPro_800ExtraBold",
-    fontSize: 8,
-    letterSpacing: 0.9,
-  },
-  judgeTitle: {
-    marginTop: 4,
-    color: "white",
-    fontFamily: "BeVietnamPro_800ExtraBold",
-    fontSize: 15,
-  },
-  judgeMeta: {
-    marginTop: 3,
-    color: "#AFC1BA",
-    fontFamily: "BeVietnamPro_500Medium",
-    fontSize: 9,
   },
   hero: {
     marginHorizontal: 16,

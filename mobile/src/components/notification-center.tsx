@@ -61,26 +61,33 @@ export function NotificationCenter() {
   return (
     <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
       {latestUnread && !open && !keyboardVisible ? (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`${latestUnread.title}. Mở thông báo`}
-          onPress={() => {
-            markNotificationRead(latestUnread.id);
-            setOpen(true);
-          }}
-          style={[styles.banner, { bottom: floatingBottom }]}
-        >
-          <View style={styles.bannerIcon}>
-            <Feather name="bell" size={17} color={colors.mint} />
-          </View>
-          <View style={styles.bannerCopy}>
-            <Text style={styles.bannerEyebrow}>{kindLabel[latestUnread.kind]}</Text>
-            <Text numberOfLines={1} style={styles.bannerTitle}>
-              {latestUnread.title}
-            </Text>
-          </View>
-          <Feather name="chevron-right" size={18} color="#B8C9C5" />
-        </Pressable>
+        <View style={[styles.banner, { bottom: floatingBottom }]}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`${latestUnread.title}. Mở thông báo`}
+            onPress={() => {
+              markNotificationRead(latestUnread.id);
+              setOpen(true);
+            }}
+            style={styles.bannerOpen}
+          >
+            <View style={styles.bannerIcon}>
+              <Feather name="bell" size={17} color={colors.mint} />
+            </View>
+            <View style={styles.bannerCopy}>
+              <Text style={styles.bannerEyebrow}>{kindLabel[latestUnread.kind]}</Text>
+              <Text numberOfLines={1} style={styles.bannerTitle}>{latestUnread.title}</Text>
+            </View>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Tắt thông báo này"
+            onPress={() => markNotificationRead(latestUnread.id)}
+            style={styles.bannerClose}
+          >
+            <Feather name="x" size={18} color="white" />
+          </Pressable>
+        </View>
       ) : null}
 
       {!keyboardVisible ? (
@@ -169,7 +176,9 @@ export function NotificationCenter() {
 }
 
 const styles = StyleSheet.create({
-  banner: { position: "absolute", zIndex: 80, left: 14, right: 66, minHeight: 58, backgroundColor: "#092734F2", borderWidth: 1, borderColor: "#B5EFD233", paddingHorizontal: 11, paddingVertical: 9, flexDirection: "row", alignItems: "center", gap: 10, shadowColor: "#071827", shadowOpacity: .24, shadowRadius: 18, elevation: 12 },
+  banner: { position: "absolute", zIndex: 80, left: 14, right: 66, minHeight: 58, backgroundColor: "#092734F2", borderWidth: 1, borderColor: "#B5EFD233", flexDirection: "row", alignItems: "center", shadowColor: "#071827", shadowOpacity: .24, shadowRadius: 18, elevation: 12 },
+  bannerOpen: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", gap: 10, paddingLeft: 11, paddingVertical: 9 },
+  bannerClose: { width: 48, minHeight: 48, alignItems: "center", justifyContent: "center" },
   bannerIcon: { width: 37, height: 37, borderRadius: 11, backgroundColor: "#B5EFD21A", alignItems: "center", justifyContent: "center" },
   bannerCopy: { flex: 1 }, bannerEyebrow: { color: colors.mint, fontFamily: "BeVietnamPro_800ExtraBold", fontSize: 8, letterSpacing: 1.1, textTransform: "uppercase" }, bannerTitle: { color: "white", fontFamily: "BeVietnamPro_700Bold", fontSize: 12, marginTop: 2 },
   bell: { position: "absolute", zIndex: 90, right: 22, width: 44, height: 44, borderRadius: 14, backgroundColor: colors.ink, borderWidth: 1, borderColor: "#B5EFD266", alignItems: "center", justifyContent: "center", elevation: 13 },

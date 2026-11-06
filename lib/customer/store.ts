@@ -13,6 +13,7 @@ import type {
   CustomerStudioPreferences,
   AdminCustomerSupportCase,
   CustomerOrderSummary,
+  CustomerPurchaseRequestSummary,
   CustomerSession,
   CustomerSupportCase,
   CustomerVoucher,
@@ -961,6 +962,58 @@ export class CustomerStore {
         status: row.status,
         updatedAt: row.updated_at,
       }));
+    } catch {
+      return [];
+    }
+  }
+
+  listPurchaseRequests(email: string): CustomerPurchaseRequestSummary[] {
+    try {
+      const rows = this.db
+        .prepare(
+          `SELECT product_name, provider, status, invoice_id, created_at, profile_json
+           FROM sale_requests
+           WHERE lower(contact) = ?
+           ORDER BY created_at DESC
+           LIMIT 20`,
+        )
+        .all(normalizedEmail(email)) as Array<{
+        product_name: string;
+        provider: string;
+        status: CustomerPurchaseRequestSummary["status"];
+        invoice_id: string | null;
+        created_at: string;
+        profile_json: string;
+      }>;
+      return rows.map((row) => {
+        let profile: Record<string, unknown> = {};
+        try {
+          const parsed = JSON.parse(row.profile_json) as unknown;
+          if (parsed && typeof parsed === "object" && !Array.isArray(parsed))
+            profile = parsed as Record<string, unknown>;
+        } catch {}
+        const field = (name: string) =>
+          typeof profile[name] === "string" ? (profile[name] as string).slice(0, 500) : "";
+        return {
+        productName: row.product_name,
+        provider: row.provider,
+        status: row.status,
+        invoiceId: row.invoice_id,
+        createdAt: row.created_at,
+        profile: {
+          companyName: field("companyName"),
+          businessType: field("businessType"),
+          currentWebsite: field("currentWebsite"),
+          mainOffer: field("mainOffer"),
+          serviceArea: field("serviceArea"),
+          seoGoals: field("seoGoals"),
+          websiteStatus: field("websiteStatus"),
+          websiteGoal: field("websiteGoal"),
+          targetCustomers: field("targetCustomers"),
+          estimatedTraffic: field("estimatedTraffic"),
+          budgetRange: field("budgetRange"),
+        },
+      }; });
     } catch {
       return [];
     }

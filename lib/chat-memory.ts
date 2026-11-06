@@ -211,7 +211,7 @@ export function recentChatMessages(messages: ChatMemoryMessage[], limit = 14) {
 }
 
 export function recommendationContextQuestion(latest: string, facts: ChatFacts) {
-  if (!/(chọn gói|tư vấn gói|phương án|gợi ý gói|so sánh gói|gói nào)/i.test(latest)) return latest;
+  if (!/(chọn gói|tư vấn gói|phương án|gợi ý gói|so sánh gói|gói nào|mua hosting (?:nào|gì)|hosting nào)/i.test(latest)) return latest;
   if (facts.websiteType === null || facts.monthlyVisits === null || facts.monthlyBudget === null || facts.needsDomain === null) return latest;
   const website = facts.websiteType === "store" ? "cửa hàng bán hàng" : facts.websiteType === "blog" ? "blog" : "trang giới thiệu công ty";
   // Keep the synthesized phrase compatible with the existing deterministic

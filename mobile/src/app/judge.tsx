@@ -39,7 +39,7 @@ export default function JudgeScreen() {
         </Pressable>
         <Brand />
         <View style={styles.releaseBadge}>
-          <Text style={styles.releaseBadgeText}>V2.2.1</Text>
+          <Text style={styles.releaseBadgeText}>V2.2.5</Text>
         </View>
       </View>
 

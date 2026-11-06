@@ -26,6 +26,7 @@ import { colors, radii } from "@/constants/theme";
 import { deleteJson, getApiBase, getJson, postJson } from "@/lib/api";
 import { readCustomerSessionToken } from "@/lib/auth-session";
 import { useCustomerAuth } from "@/context/customer-auth-context";
+import { useApp } from "@/context/app-context";
 import { toCustomerLanguage } from "@/lib/customer-language";
 import {
   citedSources,
@@ -76,11 +77,12 @@ function randomUuid() {
 
 export default function AssistantScreen() {
   const { customer, hydrated: authHydrated } = useCustomerAuth();
+  const { requirements } = useApp();
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
       content:
-        "Chào bạn, mình là HOSTORA — trợ lý chọn lưu trữ và tên miền. Bạn đang chuẩn bị trang web gì?",
+        "Chào bạn, mình là HOSTORA. Mình sẽ dùng hồ sơ tài khoản và nhu cầu đã lưu; bạn chỉ cần nói điều muốn cải thiện hoặc nhắn “Tư vấn cho tôi”.",
     },
   ]);
   const [input, setInput] = useState("");
@@ -256,6 +258,9 @@ export default function AssistantScreen() {
       const apiBase = await getApiBase();
       if (!apiBase) throw new Error("Chưa có kết nối tư vấn.");
       const token = await readCustomerSessionToken();
+      const consultationCompleted =
+        (await AsyncStorage.getItem("hostora:mobile:consultation:completed")) === "true" ||
+        (await AsyncStorage.getItem("hostora:mobile:requirements")) !== null;
       const response = await fetch(`${apiBase}/api/ai/chat`, {
         method: "POST",
         headers: {
@@ -271,6 +276,13 @@ export default function AssistantScreen() {
             next.map(({ role, content }) => ({ role, content })),
           ),
           memory: nextMemory,
+          ...(consultationCompleted ? { consultation: {
+            websiteType: requirements.websiteType,
+            monthlyVisits: requirements.monthlyVisits,
+            monthlyBudget: requirements.monthlyBudget,
+            needsDomain: requirements.needsDomain,
+            ecommerce: requirements.ecommerce,
+          } } : {}),
           ...(conversationId ? { conversationId } : {}),
           messageId: randomUuid(),
         }),
@@ -544,12 +556,16 @@ export default function AssistantScreen() {
     const initial: Message[] = [
       {
         role: "assistant",
-        content: "Đây là cuộc trò chuyện mới. Bạn đang chuẩn bị trang web gì?",
+        content:
+          "Đây là cuộc trò chuyện mới, nhưng mình vẫn dùng hồ sơ tài khoản và nhu cầu đã lưu. Bạn chỉ cần nói điều muốn cải thiện hoặc nhắn “Tư vấn cho tôi”.",
       },
     ];
     setMessages(initial);
     setInput("");
-    setMemory(null);
+    // A new thread clears the transcript, not the signed-in customer's
+    // bounded requirement memory. Anonymous memory remains device-local and
+    // is cleared below together with the anonymous conversation.
+    if (!customer) setMemory(null);
     setConversationId(null);
     setConversationAccess(null);
     setSupportStatus("active");

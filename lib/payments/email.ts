@@ -95,17 +95,54 @@ async function sendMail(input: { to: string; subject: string; text: string; html
     auth: { user: config.user, pass: config.password },
     tls: { minVersion: "TLSv1.2" }, connectionTimeout: 10_000, greetingTimeout: 10_000, socketTimeout: 20_000,
   });
-  await transporter.sendMail({
+  const info = await transporter.sendMail({
     from: config.from, to: input.to, replyTo: config.replyTo, subject: input.subject,
     text: input.text, html: input.html,
     headers: { "Auto-Submitted": "auto-generated", "X-Auto-Response-Suppress": "All", "X-Entity-Ref-ID": input.reference },
   });
-  return { sent: true as const };
+  return {
+    sent: true as const,
+    accepted: Array.isArray(info.accepted) ? info.accepted.length : 0,
+    rejected: Array.isArray(info.rejected) ? info.rejected.length : 0,
+  };
 }
 
 async function safelySend(event: string, reference: string, messages: Parameters<typeof sendMail>[0][]) {
   const settled = await Promise.allSettled(messages.map((message) => sendMail(message)));
-  for (const result of settled) if (result.status === "rejected") console.error("HOSTORA email delivery failed", { event, reference });
+  for (const result of settled) {
+    if (result.status === "fulfilled") {
+      if (result.value.sent)
+        console.info("HOSTORA email accepted", {
+          event,
+          reference,
+          accepted: result.value.accepted,
+          rejected: result.value.rejected,
+        });
+      else
+        console.warn("HOSTORA email skipped", {
+          event,
+          reference,
+          reason: result.value.reason,
+        });
+      continue;
+    }
+    const failure = result.reason as {
+      code?: unknown;
+      responseCode?: unknown;
+    };
+    console.error("HOSTORA email delivery failed", {
+      event,
+      reference,
+      code:
+        typeof failure?.code === "string"
+          ? failure.code.slice(0, 40)
+          : "UNKNOWN",
+      responseCode:
+        typeof failure?.responseCode === "number"
+          ? failure.responseCode
+          : undefined,
+    });
+  }
 }
 
 function consultationCopy(request: SaleRequest) {

@@ -46,6 +46,27 @@ export type CustomerOrderSummary = {
   updatedAt: string;
 };
 
+export type CustomerPurchaseRequestSummary = {
+  productName: string;
+  provider: string;
+  status: "new" | "invoiced" | "declined" | "cancelled";
+  invoiceId: string | null;
+  createdAt: string;
+  profile: {
+    companyName: string;
+    businessType: string;
+    currentWebsite: string;
+    mainOffer: string;
+    serviceArea: string;
+    seoGoals: string;
+    websiteStatus: string;
+    websiteGoal: string;
+    targetCustomers: string;
+    estimatedTraffic: string;
+    budgetRange: string;
+  };
+};
+
 export type CustomerSession = {
   customer: CustomerAccount;
   token: string;

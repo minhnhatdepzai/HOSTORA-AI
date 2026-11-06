@@ -25,7 +25,7 @@ const copy = {
   },
   forgot: {
     title: "Lấy lại mật khẩu",
-    subtitle: "HOSTORA sẽ gửi một liên kết dùng một lần nếu email đã có tài khoản.",
+    subtitle: "Dùng email nhận hóa đơn; HOSTORA sẽ gửi liên kết dùng một lần nếu email khớp tài khoản hoặc giao dịch.",
     submit: "Gửi liên kết",
   },
   reset: {

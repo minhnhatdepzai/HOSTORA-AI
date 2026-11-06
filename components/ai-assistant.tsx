@@ -249,6 +249,19 @@ export function AiAssistant() {
     setBusy(true);
     try {
       const contextMessages = next.map(({ role, content }) => ({ role, content }));
+      let consultation: Record<string, unknown> | undefined;
+      try {
+        if (localStorage.getItem("hostora:consultation:completed") === "true" || localStorage.getItem("hostora:requirements")) {
+          const saved = JSON.parse(localStorage.getItem("hostora:requirements") ?? "null") as Record<string, unknown> | null;
+          if (saved) consultation = {
+            websiteType: saved.websiteType,
+            monthlyVisits: saved.monthlyVisits,
+            monthlyBudget: saved.monthlyBudget,
+            needsDomain: saved.needsDomain,
+            ecommerce: saved.ecommerce,
+          };
+        }
+      } catch {}
       const res = await fetch("/api/ai/chat", {
         method: "POST",
         headers: {
@@ -260,6 +273,7 @@ export function AiAssistant() {
         body: JSON.stringify({
           messages: recentChatMessages(contextMessages),
           memory: buildConversationMemory(contextMessages),
+          ...(consultation ? { consultation } : {}),
           ...(conversationId ? { conversationId } : {}),
           messageId: crypto.randomUUID(),
         }),

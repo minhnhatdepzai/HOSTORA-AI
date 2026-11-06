@@ -79,6 +79,7 @@ export function ConsultationWizard() {
   }
   function finish() {
     localStorage.setItem("hostora:requirements", JSON.stringify(data));
+    localStorage.setItem("hostora:consultation:completed", "true");
     router.push("/recommendations");
   }
   return (
