@@ -186,11 +186,14 @@ export function AdminControlCenter({ catalog }: { catalog: CatalogSummary }) {
         setCommerce(null);
         return;
       }
-      const [{ page }, { page: requestPage }] = await Promise.all([
-        ordersResponse.json() as Promise<{ page: InvoicePage }>,
+      const [{ page, customers }, { page: requestPage }] = await Promise.all([
+        ordersResponse.json() as Promise<{
+          page: InvoicePage;
+          customers?: number;
+        }>,
         requestsResponse.json() as Promise<{ page: SaleRequestPage }>,
       ]);
-      setCommerce(normalizeCommerceSummary(page, requestPage));
+      setCommerce(normalizeCommerceSummary(page, requestPage, customers));
       setConsultationRequests(requestPage.items);
     } catch {
       setCommerce(null);
@@ -223,23 +226,46 @@ export function AdminControlCenter({ catalog }: { catalog: CatalogSummary }) {
     };
   }, [refreshCommerce]);
 
-  const statusCounts = useMemo(
-    () =>
-      Object.fromEntries(
-        leadStatuses.map((status) => [
-          status,
-          leads.filter((lead) => lead.status === status).length,
-        ]),
-      ) as Record<LeadStatus, number>,
-    [leads],
-  );
-
   const popularPlans = useMemo(() => {
     const counts = new Map<string, number>();
-    for (const lead of leads)
-      counts.set(lead.plan, (counts.get(lead.plan) ?? 0) + 1);
+    for (const request of consultationRequests)
+      counts.set(
+        request.productName,
+        (counts.get(request.productName) ?? 0) + 1,
+      );
     return [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4);
-  }, [leads]);
+  }, [consultationRequests]);
+
+  const requestProgress = useMemo(
+    () => [
+      {
+        key: "accounts",
+        label: "Tài khoản khách hàng",
+        count: commerce?.customers ?? 0,
+        tone: "bg-blue",
+      },
+      {
+        key: "new",
+        label: "Chờ báo giá",
+        count: commerce?.newRequests ?? 0,
+        tone: "bg-amber-400",
+      },
+      {
+        key: "invoiced",
+        label: "Đã tạo hóa đơn",
+        count: commerce?.invoicedRequests ?? 0,
+        tone: "bg-emerald-500",
+      },
+      {
+        key: "closed",
+        label: "Đã hủy / từ chối",
+        count: commerce?.closedRequests ?? 0,
+        tone: "bg-slate-400",
+      },
+    ],
+    [commerce],
+  );
+  const latestRequest = consultationRequests[0] ?? null;
 
   const visibleLeads = useMemo(() => {
     const normalized = query.trim().toLocaleLowerCase("vi");
@@ -555,14 +581,14 @@ export function AdminControlCenter({ catalog }: { catalog: CatalogSummary }) {
               </span>
             </div>
 
-            <div className="mt-7 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+            <div className="mt-7 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-5">
               <MetricCard
                 icon={PackageCheck}
                 label="Tổng đơn hàng"
                 value={commerce ? String(commerce.orders) : "—"}
                 note={
                   commerce
-                    ? `${commerce.paid} đơn đã thanh toán`
+                    ? `${commerce.paid} đơn đang ghi nhận doanh thu`
                     : "Đang đồng bộ kho đơn"
                 }
                 tone="blue"
@@ -577,6 +603,13 @@ export function AdminControlCenter({ catalog }: { catalog: CatalogSummary }) {
                     : "Đang đồng bộ yêu cầu"
                 }
                 tone="mint"
+              />
+              <MetricCard
+                icon={Users}
+                label="Khách hàng đăng ký"
+                value={commerce ? String(commerce.customers) : "—"}
+                note="Tài khoản khách hàng trên hệ thống"
+                tone="blue"
               />
               <MetricCard
                 icon={Gauge}
@@ -623,30 +656,29 @@ export function AdminControlCenter({ catalog }: { catalog: CatalogSummary }) {
                     Tiến độ xử lý
                   </p>
                   <h2 className="mt-1 text-xl font-black">
-                    Trạng thái khách đăng ký
+                    Tình trạng khách và yêu cầu
                   </h2>
                 </div>
                 <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">
-                  {leads.length} mục
+                  {commerce ? `${commerce.customers} tài khoản` : "Đang tải"}
                 </span>
               </div>
               <div className="mt-7 space-y-5">
-                {leadStatuses.map((status) => {
-                  const count = statusCounts[status];
-                  const width = leads.length
-                    ? Math.max(4, (count / leads.length) * 100)
+                {requestProgress.map((item) => {
+                  const width = commerce?.requests
+                    ? Math.max(4, (item.count / commerce.requests) * 100)
                     : 0;
                   return (
-                    <div key={status}>
+                    <div key={item.key}>
                       <div className="flex items-center justify-between text-sm">
                         <span className="font-bold text-slate-600">
-                          {statusLabels[status]}
+                          {item.label}
                         </span>
-                        <strong>{count}</strong>
+                        <strong>{item.count}</strong>
                       </div>
                       <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-slate-100">
                         <div
-                          className={`h-full rounded-full ${status === "new" ? "bg-blue" : status === "contacted" ? "bg-amber-400" : status === "qualified" ? "bg-emerald-500" : "bg-slate-400"}`}
+                          className={`h-full rounded-full ${item.tone}`}
                           style={{ width: `${width}%` }}
                         />
                       </div>
@@ -678,11 +710,11 @@ export function AdminControlCenter({ catalog }: { catalog: CatalogSummary }) {
                   }
                 />
                 <TaskRow
-                  done={statusCounts.new === 0}
+                  done={Boolean(commerce?.customers)}
                   text={
-                    statusCounts.new
-                      ? `Liên hệ ${statusCounts.new} khách mới`
-                      : "Không còn khách mới chờ xử lý"
+                    commerce
+                      ? `Đang quản lý ${commerce.customers} tài khoản khách hàng`
+                      : "Đang tải danh sách tài khoản khách hàng"
                   }
                 />
                 <TaskRow
@@ -702,11 +734,13 @@ export function AdminControlCenter({ catalog }: { catalog: CatalogSummary }) {
                   }
                 />
                 <TaskRow
-                  done={Boolean(requirements)}
+                  done={Boolean(latestRequest || requirements)}
                   text={
-                    requirements
-                      ? "Đã có hồ sơ nhu cầu gần nhất"
-                      : "Chưa có hồ sơ nhu cầu trong trình duyệt"
+                    latestRequest
+                      ? `Đã có hồ sơ mới nhất: ${latestRequest.profile.customerName}`
+                      : requirements
+                        ? "Đã có hồ sơ nhu cầu trên trình duyệt"
+                        : "Chưa có hồ sơ nhu cầu"
                   }
                 />
               </div>
@@ -1019,7 +1053,26 @@ export function AdminControlCenter({ catalog }: { catalog: CatalogSummary }) {
                 Nhu cầu gần nhất
               </p>
               <h2 className="mt-1 text-xl font-black">Hồ sơ khách hàng</h2>
-              {requirements ? (
+              {latestRequest ? (
+                <div className="mt-5 space-y-4 text-sm">
+                  <Detail
+                    label="Khách hàng"
+                    value={latestRequest.profile.customerName}
+                  />
+                  <Detail
+                    label="Mục tiêu website"
+                    value={latestRequest.profile.websiteGoal}
+                  />
+                  <Detail
+                    label="Khách hàng mục tiêu"
+                    value={latestRequest.profile.targetCustomers}
+                  />
+                  <Detail
+                    label="Dịch vụ quan tâm"
+                    value={`${latestRequest.provider} · ${latestRequest.productName}`}
+                  />
+                </div>
+              ) : requirements ? (
                 <div className="mt-5 space-y-4 text-sm">
                   <Detail
                     label="Loại website"
@@ -1040,7 +1093,7 @@ export function AdminControlCenter({ catalog }: { catalog: CatalogSummary }) {
                 </div>
               ) : (
                 <p className="mt-5 text-sm leading-6 text-slate-500">
-                  Chưa có hồ sơ nhu cầu trên trình duyệt này.
+                  Chưa có hồ sơ nhu cầu nào được gửi về hệ thống.
                 </p>
               )}
             </div>

@@ -112,6 +112,7 @@ describe("email đơn hàng HOSTORA", () => {
     configureEmail();
     const invoice: CreatedInvoice = {
       id: "HST-ABCDEF123456",
+      productId: null,
       accessCode: "private-invoice-access-code",
       customerEmail: "customer@example.com",
       title: "Gói HOSTORA Business",

@@ -25,7 +25,12 @@ const status: Record<Invoice["status"], string> = {
 
 export default function OrdersScreen() {
   const { pushNotification } = useApp();
-  const params = useLocalSearchParams<{ requestId?: string; requestCode?: string }>();
+  const params = useLocalSearchParams<{
+    requestId?: string;
+    requestCode?: string;
+    invoiceId?: string;
+    accessCode?: string;
+  }>();
   const [id, setId] = useState("");
   const [code, setCode] = useState("");
   const [detail, setDetail] = useState<Detail | null>(null);
@@ -78,6 +83,30 @@ export default function OrdersScreen() {
       .then((result) => setSaleRequest(result.request))
       .catch((error) => setMessage(error instanceof Error ? error.message : "Không thể mở yêu cầu mua."));
   }, [params.requestCode, params.requestId]);
+
+  useEffect(() => {
+    if (!params.invoiceId || !params.accessCode) return;
+    const invoiceId = params.invoiceId.trim().toUpperCase();
+    const accessCode = params.accessCode;
+    setId(invoiceId);
+    setCode(accessCode);
+    setBusy(true);
+    void postJson<Detail>("/api/payments/orders", {
+      id: invoiceId,
+      accessCode,
+    })
+      .then((result) => {
+        applyOrderDetail(result);
+        activeOrder.current = { id: invoiceId, code: accessCode };
+        setMessage("Hóa đơn đã được tạo từ cuộc trò chuyện. Chọn cổng thanh toán bên dưới để tiếp tục.");
+      })
+      .catch((error) =>
+        setMessage(
+          error instanceof Error ? error.message : "Không thể mở hóa đơn.",
+        ),
+      )
+      .finally(() => setBusy(false));
+  }, [applyOrderDetail, params.accessCode, params.invoiceId]);
 
   async function cancelSaleRequest() {
     if (!saleRequest || !params.requestCode) return;

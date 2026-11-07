@@ -11,6 +11,7 @@ import {
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { RecommendationScore, Requirements } from "@/lib/types";
+import type { PlanInventory } from "@/lib/payments/types";
 import { formatVnd } from "@/lib/utils";
 import { normalizeContact } from "@/shared/contact";
 import { adminLeadSchema, mergeStoredLeads, readStoredLeads } from "@/lib/local-admin";
@@ -30,8 +31,12 @@ const backupLabel = {
   "daily-on-demand": "Hàng ngày + theo yêu cầu",
 };
 
+type RecommendationItem = RecommendationScore & {
+  inventory: PlanInventory | null;
+};
+
 export function RecommendationsView() {
-  const [items, setItems] = useState<RecommendationScore[]>([]);
+  const [items, setItems] = useState<RecommendationItem[]>([]);
   const [requirements, setRequirements] = useState(defaults);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
@@ -45,7 +50,9 @@ export function RecommendationsView() {
   const [explaining, setExplaining] = useState(false);
   const [explainError, setExplainError] = useState("");
   const selectedItem =
-    items.find((item) => item.plan.id === selectedPlanId) ?? items[0];
+    items.find((item) => item.plan.id === selectedPlanId) ??
+    items.find((item) => (item.inventory?.quantity ?? 1) > 0) ??
+    items[0];
   useEffect(() => {
     const controller = new AbortController();
     let requirements = defaults;
@@ -68,7 +75,12 @@ export function RecommendationsView() {
       .then((o) => {
         if (!Array.isArray(o.recommendations) || o.recommendations.length !== 3)
           throw new Error("Chưa nhận đủ ba gói để so sánh.");
-        setItems(o.recommendations);
+        const recommendations = o.recommendations as RecommendationItem[];
+        setItems(recommendations);
+        const available = recommendations.find(
+          (item) => (item.inventory?.quantity ?? 1) > 0,
+        );
+        setSelectedPlanId((current) => current ?? available?.plan.id ?? null);
         setRequirements(o.requirements);
         setLoadError("");
       })
@@ -241,25 +253,36 @@ export function RecommendationsView() {
               <p className="mt-5 text-xs font-bold text-slate-500">
                 HOSTORA kiểm tra ngày {item.plan.verifiedAt}
               </p>
+              <div className={`mt-3 flex items-center justify-between border-l-4 px-3 py-2 text-xs font-bold ${item.inventory?.status === "sold_out" ? "border-red-500 bg-red-50 text-red-800" : item.inventory?.status === "low" ? "border-amber-500 bg-amber-50 text-amber-900" : "border-emerald-500 bg-emerald-50 text-emerald-800"}`}>
+                <span>{item.inventory?.status === "sold_out" ? "Hết hàng" : item.inventory?.status === "low" ? "Sắp hết" : "Còn hàng"}</span>
+                <span>{item.inventory ? `${item.inventory.quantity} suất bán qua HOSTORA` : "Đang đồng bộ số lượng"}</span>
+              </div>
               <button
                 type="button"
                 aria-pressed={selectedItem?.plan.id === item.plan.id}
+                disabled={item.inventory?.status === "sold_out"}
                 onClick={() => {
                   setSelectedPlanId(item.plan.id);
                   setSaved(false);
                 }}
-                className={`mt-5 block w-full rounded-xl border px-4 py-3 text-sm font-black ${selectedItem?.plan.id === item.plan.id ? "border-blue bg-blue text-white" : "border-slate-200 text-blue hover:border-blue"}`}
+                className={`mt-5 block w-full rounded-xl border px-4 py-3 text-sm font-black disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-500 ${selectedItem?.plan.id === item.plan.id && item.inventory?.status !== "sold_out" ? "border-blue bg-blue text-white" : "border-slate-200 text-blue hover:border-blue"}`}
               >
-                {selectedItem?.plan.id === item.plan.id
+                {item.inventory?.status === "sold_out"
+                  ? "Gói hiện đã hết hàng"
+                  : selectedItem?.plan.id === item.plan.id
                   ? "Đang chọn gói này"
                   : `Chọn ${item.plan.name} để tư vấn`}
               </button>
-              <Link
-                href="/services?category=hosting"
-                className="mt-3 block w-full rounded-xl bg-ink px-4 py-3 text-center text-sm font-black text-white"
-              >
-                Đặt mua qua HOSTORA
-              </Link>
+              {item.inventory?.status === "sold_out" ? (
+                <span className="mt-3 block w-full rounded-xl bg-slate-200 px-4 py-3 text-center text-sm font-black text-slate-500">Không thể tạo hóa đơn</span>
+              ) : (
+                <Link
+                  href={`/ai-assistant?planId=${encodeURIComponent(item.plan.id)}`}
+                  className="mt-3 block w-full rounded-xl bg-ink px-4 py-3 text-center text-sm font-black text-white"
+                >
+                  Tư vấn & thanh toán gói này
+                </Link>
+              )}
             </div>
           </article>
         ))}

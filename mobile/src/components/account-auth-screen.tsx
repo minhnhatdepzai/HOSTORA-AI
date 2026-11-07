@@ -36,7 +36,7 @@ export function AccountAuthScreen({ mode }: { mode: Mode }) {
         const result = await postJson<{ message: string }>("/api/account/forgot-password", { email });
         setMessage(result.message); setSuccess(true); return;
       }
-      const destination = params.next === "/studio" || params.next === "/orders" ? params.next : "/account";
+      const destination = params.next === "/studio" || params.next === "/orders" || params.next === "/assistant" ? params.next : "/account";
       router.replace(destination as Href);
     } catch (cause) { setMessage(cause instanceof Error ? cause.message : "Chưa thể hoàn tất yêu cầu."); }
     finally { setBusy(false); }

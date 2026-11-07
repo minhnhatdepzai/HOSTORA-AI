@@ -10,6 +10,7 @@ import type {
   AiEscalationReason,
   CustomerAiSource,
   CustomerChatMessage,
+  CustomerChatThreadSummary,
   CustomerStudioPreferences,
   AdminCustomerSupportCase,
   CustomerOrderSummary,
@@ -171,6 +172,13 @@ export class CustomerStore {
     this.db.close();
   }
 
+  countAccounts() {
+    const row = this.db
+      .prepare("SELECT COUNT(*) AS count FROM customer_accounts")
+      .get() as { count: number };
+    return row.count;
+  }
+
   consumeRateLimitDetailed(
     key: string,
     limit: number,
@@ -329,6 +337,57 @@ export class CustomerStore {
         createdAt: row.created_at,
       };
     });
+  }
+
+  listChatSummaries(customerId: string, limit = 30): CustomerChatThreadSummary[] {
+    const safeLimit = Math.min(50, Math.max(1, Math.floor(limit)));
+    const rows = this.db
+      .prepare(
+        `SELECT messages.conversation_id,
+                COUNT(*) AS message_count,
+                MAX(messages.created_at) AS latest_message_at,
+                COALESCE(conversation.status, 'active') AS support_status,
+                COALESCE((
+                  SELECT first_user.content
+                  FROM customer_chat_messages first_user
+                  WHERE first_user.customer_id = messages.customer_id
+                    AND first_user.conversation_id = messages.conversation_id
+                    AND first_user.role = 'user'
+                  ORDER BY first_user.created_at ASC, first_user.rowid ASC
+                  LIMIT 1
+                ), 'Cuộc trò chuyện HOSTORA') AS title,
+                COALESCE((
+                  SELECT latest.content
+                  FROM customer_chat_messages latest
+                  WHERE latest.customer_id = messages.customer_id
+                    AND latest.conversation_id = messages.conversation_id
+                  ORDER BY latest.created_at DESC, latest.rowid DESC
+                  LIMIT 1
+                ), '') AS latest_preview
+         FROM customer_chat_messages messages
+         LEFT JOIN ai_conversations conversation
+           ON conversation.id = messages.conversation_id
+         WHERE messages.customer_id = ?
+         GROUP BY messages.conversation_id
+         ORDER BY latest_message_at DESC
+         LIMIT ?`,
+      )
+      .all(customerId, safeLimit) as Array<{
+      conversation_id: string;
+      message_count: number;
+      latest_message_at: string;
+      support_status: CustomerChatThreadSummary["supportStatus"];
+      title: string;
+      latest_preview: string;
+    }>;
+    return rows.map((row) => ({
+      conversationId: row.conversation_id,
+      title: row.title.slice(0, 100),
+      messageCount: Number(row.message_count),
+      latestMessageAt: row.latest_message_at,
+      latestPreview: row.latest_preview.slice(0, 180),
+      supportStatus: row.support_status,
+    }));
   }
 
   clearAiHistory(customerId: string, clearMemory = false) {
@@ -556,6 +615,93 @@ export class CustomerStore {
       isDemonstration: row.email?.endsWith("@demo.hostora.invalid") ?? false,
       messages: this.aiConversationMessages(row.id),
     }));
+  }
+
+  listAiConversationsPage(
+    input: {
+      query?: string;
+      page?: number;
+      pageSize?: number;
+    } = {},
+  ) {
+    const query = input.query?.trim().slice(0, 200) ?? "";
+    const pageSize = Math.min(25, Math.max(1, input.pageSize ?? 10));
+    const requestedPage = Math.max(1, input.page ?? 1);
+    const escapedQuery = query.replace(/[\\%_]/g, "\\$&");
+    const pattern = `%${escapedQuery}%`;
+    const where = query
+      ? `WHERE c.id LIKE ? ESCAPE '\\'
+          OR COALESCE(a.name, '') LIKE ? ESCAPE '\\'
+          OR COALESCE(a.email, '') LIKE ? ESCAPE '\\'
+          OR EXISTS (
+            SELECT 1 FROM ai_conversation_messages m
+            WHERE m.conversation_id = c.id
+              AND m.content LIKE ? ESCAPE '\\'
+          )`
+      : "";
+    const params = query ? [pattern, pattern, pattern, pattern] : [];
+    const totals = this.db
+      .prepare(
+        `SELECT COUNT(*) AS all_count,
+                SUM(CASE WHEN status = 'escalated' THEN 1 ELSE 0 END) AS escalated_count
+         FROM ai_conversations`,
+      )
+      .get() as { all_count: number; escalated_count: number | null };
+    const filtered = this.db
+      .prepare(
+        `SELECT COUNT(*) AS count
+         FROM ai_conversations c
+         LEFT JOIN customer_accounts a ON a.id = c.customer_id
+         ${where}`,
+      )
+      .get(...params) as { count: number };
+    const total = Number(filtered.count);
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+    const page = Math.min(requestedPage, totalPages);
+    const rows = this.db
+      .prepare(
+        `SELECT c.id, c.customer_id, c.status, c.escalation_reason,
+                c.created_at, c.updated_at, a.name, a.email
+         FROM ai_conversations c
+         LEFT JOIN customer_accounts a ON a.id = c.customer_id
+         ${where}
+         ORDER BY CASE c.status WHEN 'escalated' THEN 0 WHEN 'answered' THEN 1 WHEN 'active' THEN 2 ELSE 3 END,
+                  c.updated_at DESC
+         LIMIT ? OFFSET ?`,
+      )
+      .all(...params, pageSize, (page - 1) * pageSize) as Array<{
+      id: string;
+      customer_id: string | null;
+      status: AiConversation["status"];
+      escalation_reason: AiEscalationReason | null;
+      created_at: string;
+      updated_at: string;
+      name: string | null;
+      email: string | null;
+    }>;
+    const conversations = rows.map((row) => ({
+      id: row.id,
+      customerId: row.customer_id,
+      status: row.status,
+      escalationReason: row.escalation_reason,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      customerName: row.name ?? "Khách chưa đăng nhập",
+      customerEmail: row.email,
+      isDemonstration: row.email?.endsWith("@demo.hostora.invalid") ?? false,
+      messages: this.aiConversationMessages(row.id),
+    }));
+    return {
+      conversations,
+      pagination: {
+        page,
+        pageSize,
+        total,
+        totalPages,
+        allTotal: Number(totals.all_count),
+        escalatedTotal: Number(totals.escalated_count ?? 0),
+      },
+    };
   }
 
   replyToAiConversation(conversationId: string, content: string) {
@@ -971,13 +1117,14 @@ export class CustomerStore {
     try {
       const rows = this.db
         .prepare(
-          `SELECT product_name, provider, status, invoice_id, created_at, profile_json
+          `SELECT id, product_name, provider, status, invoice_id, created_at, profile_json
            FROM sale_requests
            WHERE lower(contact) = ?
            ORDER BY created_at DESC
            LIMIT 20`,
         )
         .all(normalizedEmail(email)) as Array<{
+        id: string;
         product_name: string;
         provider: string;
         status: CustomerPurchaseRequestSummary["status"];
@@ -993,30 +1140,73 @@ export class CustomerStore {
             profile = parsed as Record<string, unknown>;
         } catch {}
         const field = (name: string) =>
-          typeof profile[name] === "string" ? (profile[name] as string).slice(0, 500) : "";
+          typeof profile[name] === "string"
+            ? (profile[name] as string).slice(0, 500)
+            : "";
         return {
-        productName: row.product_name,
-        provider: row.provider,
-        status: row.status,
-        invoiceId: row.invoice_id,
-        createdAt: row.created_at,
-        profile: {
-          companyName: field("companyName"),
-          businessType: field("businessType"),
-          currentWebsite: field("currentWebsite"),
-          mainOffer: field("mainOffer"),
-          serviceArea: field("serviceArea"),
-          seoGoals: field("seoGoals"),
-          websiteStatus: field("websiteStatus"),
-          websiteGoal: field("websiteGoal"),
-          targetCustomers: field("targetCustomers"),
-          estimatedTraffic: field("estimatedTraffic"),
-          budgetRange: field("budgetRange"),
-        },
-      }; });
+          id: row.id,
+          productName: row.product_name,
+          provider: row.provider,
+          status: row.status,
+          invoiceId: row.invoice_id,
+          createdAt: row.created_at,
+          profile: {
+            companyName: field("companyName"),
+            businessType: field("businessType"),
+            currentWebsite: field("currentWebsite"),
+            mainOffer: field("mainOffer"),
+            serviceArea: field("serviceArea"),
+            seoGoals: field("seoGoals"),
+            websiteStatus: field("websiteStatus"),
+            websiteGoal: field("websiteGoal"),
+            targetCustomers: field("targetCustomers"),
+            estimatedTraffic: field("estimatedTraffic"),
+            budgetRange: field("budgetRange"),
+          },
+        };
+      });
     } catch {
       return [];
     }
+  }
+
+  chatSummary(customerId: string) {
+    const row = this.db
+      .prepare(
+        `SELECT conversation_id, COUNT(*) AS message_count,
+                MAX(created_at) AS latest_message_at
+         FROM customer_chat_messages
+         WHERE customer_id = ?
+         GROUP BY conversation_id
+         ORDER BY latest_message_at DESC LIMIT 1`,
+      )
+      .get(customerId) as
+      | {
+          conversation_id: string;
+          message_count: number;
+          latest_message_at: string;
+        }
+      | undefined;
+    if (!row)
+      return {
+        conversationId: null,
+        messageCount: 0,
+        latestMessageAt: null,
+        latestPreview: null,
+      };
+    const latest = this.db
+      .prepare(
+        `SELECT content FROM customer_chat_messages
+         WHERE customer_id = ? AND conversation_id = ?
+         ORDER BY created_at DESC LIMIT 1`,
+      )
+      .get(customerId, row.conversation_id) as { content: string } | undefined;
+    return {
+      conversationId: row.conversation_id,
+      messageCount: Number(row.message_count),
+      latestMessageAt: row.latest_message_at,
+      latestPreview: latest?.content.slice(0, 180) ?? null,
+    };
   }
 
   bestActiveVoucher(email: string) {

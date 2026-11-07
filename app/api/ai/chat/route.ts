@@ -43,6 +43,7 @@ import { getStudioProject, listStudioProjectsForCustomer } from "@/lib/site-stud
 import { requirementsFromIdea } from "@/lib/site-studio";
 import { customerFromRequest } from "@/lib/customer/auth";
 import { getCustomerStore } from "@/lib/customer/store";
+import { getPaymentStore } from "@/lib/payments/store";
 import {
   asksAboutOwnProfile,
   asksAboutOwnPurchase,
@@ -74,6 +75,14 @@ import {
   type ChatMemoryMessage,
 } from "@/lib/chat-memory";
 import { z } from "zod";
+import {
+  asksForSelectedPlanAdvice,
+  checkoutPrompt,
+  isPurchaseConfirmation,
+  quoteForConversation,
+  selectedPlanAdviceAnswer,
+  type ChatCheckoutQuote,
+} from "@/lib/chat-checkout";
 
 const schema = z.object({
   messages: z
@@ -102,7 +111,8 @@ const schema = z.object({
 function textAnswer(
   answer: string,
   sources: unknown[] = [],
-  nextAction?: "create-site" | "upload-screen",
+  nextAction?: "create-site" | "upload-screen" | "checkout" | "login",
+  checkout?: ChatCheckoutQuote,
 ) {
   const headers = new Headers({
     "content-type": "text/plain; charset=utf-8",
@@ -110,6 +120,11 @@ function textAnswer(
     "x-content-type-options": "nosniff",
   });
   if (nextAction) headers.set("x-hostora-next-action", nextAction);
+  if (checkout)
+    headers.set(
+      "x-hostora-checkout",
+      encodeURIComponent(JSON.stringify(checkout)),
+    );
   return new Response(answer, { headers });
 }
 
@@ -231,9 +246,10 @@ export async function POST(request: Request) {
   const respondText = (
     answer: string,
     sources: unknown[] = [],
-    nextAction?: "create-site" | "upload-screen",
+    nextAction?: "create-site" | "upload-screen" | "checkout" | "login",
     escalationReason?: AiEscalationReason,
     evaluateEscalation = true,
+    checkout?: ChatCheckoutQuote,
   ) => {
     const safeAnswer = toCustomerLanguage(answer);
     store.appendAiConversationMessage({
@@ -257,7 +273,7 @@ export async function POST(request: Request) {
           answer: safeAnswer,
         }) : null;
     if (escalation) escalate(escalation.reason, latestUser?.content ?? "");
-    const response = textAnswer(safeAnswer, sources, nextAction);
+    const response = textAnswer(safeAnswer, sources, nextAction, checkout);
     response.headers.set("x-hostora-conversation-id", conversationId);
     if (conversationAccess)
       response.headers.set("x-hostora-conversation-access", conversationAccess);
@@ -282,6 +298,9 @@ export async function POST(request: Request) {
     ? customerStore.listPurchaseRequests(customer.email) : [];
   const accountProjects = customer
     ? await listStudioProjectsForCustomer(customer.id) : [];
+  const planInventory = new Map(
+    getPaymentStore().listPlanInventory().map((item) => [item.planId, item]),
+  );
   const studioRequirements = accountProjects[0]
     ? requirementsFromIdea(accountProjects[0].idea) : null;
   const adviceMemory = studioRequirements
@@ -297,6 +316,69 @@ export async function POST(request: Request) {
         },
       }
     : memory;
+  const checkoutQuote = quoteForConversation(adviceMemory.facts, messages);
+  const checkoutInventory = checkoutQuote
+    ? planInventory.get(checkoutQuote.planId)
+    : null;
+  if (isPurchaseConfirmation(latest)) {
+    if (!customer)
+      return respondText(
+        "Mình đã giữ phương án bạn vừa chọn. Hãy đăng nhập để HOSTORA tạo hóa đơn đúng email, gửi bản sao qua mail và mở bước thanh toán mà không bắt bạn nhập lại hồ sơ.",
+        [],
+        "login",
+        undefined,
+        false,
+      );
+    if (!checkoutQuote)
+      return respondText(
+        recommendationClarificationAnswer(latest, adviceMemory.facts),
+        [],
+        undefined,
+        undefined,
+        false,
+      );
+    if (checkoutInventory?.status === "sold_out")
+      return respondText(
+        `${checkoutQuote.title} hiện đã hết suất bán qua HOSTORA nên mình chưa mở thanh toán. Bạn hãy chọn một gói còn hàng trong mục Chọn gói; hồ sơ và nhu cầu hiện tại vẫn được giữ nguyên.`,
+        [],
+        undefined,
+        undefined,
+        false,
+      );
+    return respondText(
+      checkoutPrompt(checkoutQuote),
+      [],
+      "checkout",
+      undefined,
+      false,
+      checkoutQuote,
+    );
+  }
+  if (checkoutQuote && asksForSelectedPlanAdvice(latest)) {
+    const matchingRequest = accountRequests.find(
+      (item) =>
+        item.provider === checkoutQuote.provider &&
+        item.productName === checkoutQuote.planName,
+    );
+    const matchingOrder = matchingRequest?.invoiceId
+      ? accountOrders.find((item) => item.id === matchingRequest.invoiceId)
+      : accountOrders.find((item) => item.title === checkoutQuote.planName);
+    const advice = selectedPlanAdviceAnswer({
+      quote: checkoutQuote,
+      facts: adviceMemory.facts,
+      orderStatus: matchingOrder?.status,
+      businessFocus: accountRequests[0]?.profile.mainOffer,
+    });
+    if (advice)
+      return respondText(
+        `${advice.answer}\n\n**Tình trạng số lượng:** ${checkoutInventory?.status === "sold_out" ? "Gói đang hết hàng và chưa thể tạo hóa đơn." : checkoutInventory ? `Còn ${checkoutInventory.quantity} suất bán qua HOSTORA.` : "Đang đồng bộ số lượng trước khi thanh toán."}`,
+        advice.sources,
+        matchingOrder?.status === "paid" || checkoutInventory?.status === "sold_out" ? undefined : "checkout",
+        undefined,
+        false,
+        matchingOrder?.status === "paid" || checkoutInventory?.status === "sold_out" ? undefined : checkoutQuote,
+      );
+  }
   if (asksForProfileBasedAdvice(latest))
     return respondText(
       customer
@@ -397,7 +479,11 @@ export async function POST(request: Request) {
   const ideaDiscovery = websiteIdeaDiscoveryAnswer(latest);
   if (ideaDiscovery)
     return respondText(
-      ideaDiscovery.answer,
+      accountProjects[0]
+        ? `Mình nhớ website bạn đã tạo: **${accountProjects[0].idea.brand}** — ${accountProjects[0].brief.headline}. Mục tiêu hiện tại là ${accountProjects[0].idea.goal === "sell" ? "bán hàng" : accountProjects[0].idea.goal === "book" ? "nhận đặt lịch" : accountProjects[0].idea.goal === "contact" ? "nhận liên hệ" : "giới thiệu thương hiệu"}, dành cho ${accountProjects[0].idea.audience}. Bạn có thể mở Xưởng để tiếp tục chỉnh đúng website này; không cần mô tả lại từ đầu.`
+        : accountRequests[0]?.profile.websiteGoal
+          ? `Dựa trên hồ sơ hiện tại của bạn, website cần phục vụ mục tiêu **${accountRequests[0].profile.websiteGoal}** cho nhóm **${accountRequests[0].profile.targetCustomers}**. Mình đã giữ thông tin này; bạn chỉ cần mở Xưởng tạo website để chọn phong cách và xem bản thử, không cần khai lại nhu cầu.`
+          : ideaDiscovery.answer,
       ideaDiscovery.sources,
       "create-site",
     );
@@ -417,7 +503,20 @@ export async function POST(request: Request) {
     recommendationContextQuestion(latest, adviceMemory.facts),
   );
   if (recommendationGuard)
-    return respondText(recommendationGuard.answer, recommendationGuard.sources);
+    return respondText(
+      checkoutInventory?.status === "sold_out"
+        ? `${recommendationGuard.answer}\n\nGói phù hợp nhất vừa nêu hiện đã hết suất bán qua HOSTORA. Hãy mở mục Chọn gói để chọn phương án còn hàng; mình sẽ giữ nguyên hồ sơ của bạn.`
+        : recommendationGuard.answer,
+      recommendationGuard.sources,
+      customer && checkoutQuote && checkoutInventory?.status !== "sold_out"
+        ? "checkout"
+        : undefined,
+      undefined,
+      true,
+      customer && checkoutInventory?.status !== "sold_out"
+        ? checkoutQuote ?? undefined
+        : undefined,
+    );
   if (
     needsRecommendationRequirements(latest) &&
     (adviceMemory.facts.websiteType === null ||
@@ -495,6 +594,7 @@ export async function POST(request: Request) {
       limitations: p.limitations,
       sourceUrl: p.sourceUrl,
       verifiedAt: p.verifiedAt,
+      inventory: planInventory.get(p.id) ?? null,
     }));
   const products = (needsCommercialContext ? productCatalog : [])
     .map((product) => ({

@@ -111,6 +111,14 @@ describe("guarded customer flows", () => {
     expect(ownerHistoryBody.messages).toEqual([
       expect.objectContaining({ content: "Nội dung chỉ thuộc tài khoản chủ." }),
     ]);
+    expect(ownerHistoryBody.conversations).toEqual([
+      expect.objectContaining({
+        conversationId,
+        title: "Nội dung chỉ thuộc tài khoản chủ.",
+        messageCount: 1,
+        supportStatus: "escalated",
+      }),
+    ]);
 
     store.replyToAiConversation(
       conversationId,
@@ -141,6 +149,18 @@ describe("guarded customer flows", () => {
       }),
     );
     expect((await otherHistory.json()).messages).toEqual([]);
+    const forbiddenHistory = await getChatHistory(
+      new Request(
+        `${origin}/api/account/chat-history?conversationId=${conversationId}`,
+        {
+          headers: {
+            "x-hostora-client": "mobile",
+            authorization: `Bearer ${otherToken}`,
+          },
+        },
+      ),
+    );
+    expect(forbiddenHistory.status).toBe(404);
 
     const added = await addAiSource(
       mobileRequest(

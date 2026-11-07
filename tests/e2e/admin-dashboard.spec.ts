@@ -119,3 +119,33 @@ test("quản trị thêm, xuất bản rồi lưu trữ dịch vụ qua giao di�
   };
   expect(archivedBody.products).toEqual([]);
 });
+
+test("quản trị tăng giảm số suất và backend dùng chung cập nhật ngay", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "chromium-desktop", "Luồng tồn kho chạy một lần trên desktop");
+  await page.goto(`${appUrl}/admin#dich-vu`);
+  const inventorySection = page.locator('section[aria-labelledby="inventory-title"]');
+  await expect(inventorySection).toBeVisible();
+  const plan = inventorySection
+    .getByRole("article")
+    .filter({ has: page.getByRole("heading", { name: "Đơn", exact: true }) })
+    .filter({ hasText: "Hostinger" });
+  await expect(plan).toBeVisible();
+
+  const beforeResponse = await page.request.get(`${appUrl}/api/admin/inventory`);
+  const before = (await beforeResponse.json()) as {
+    inventory: Array<{ planId: string; quantity: number }>;
+  };
+  const initial = before.inventory.find((item) => item.planId === "hostinger-single")!;
+
+  await plan.getByRole("button", { name: "Thêm một suất" }).click();
+  await expect(plan).toContainText(`${initial.quantity + 1}suất`);
+  const increased = await page.request.get(`${appUrl}/api/inventory`);
+  expect(
+    ((await increased.json()) as typeof before).inventory.find(
+      (item) => item.planId === "hostinger-single",
+    )?.quantity,
+  ).toBe(initial.quantity + 1);
+
+  await plan.getByRole("button", { name: "Giảm một suất" }).click();
+  await expect(plan).toContainText(`${initial.quantity}suất`);
+});

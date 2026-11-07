@@ -2,6 +2,7 @@ import { createHash, randomBytes, randomUUID, timingSafeEqual } from "node:crypt
 import { mkdirSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
+import { hostingCatalog } from "@/data/hosting-catalog";
 import type {
   ConsultationChannel,
   ConsultationPreference,
@@ -18,10 +19,12 @@ import type {
   SaleRequest,
   SaleRequestPage,
   RevenueAnalytics,
+  PlanInventory,
 } from "./types";
 
 type InvoiceRow = {
   id: string;
+  product_id: string | null;
   access_hash: string;
   customer_email: string | null;
   title: string;
@@ -50,6 +53,7 @@ type InvoiceRow = {
 function toInvoice(row: InvoiceRow): Invoice {
   return {
     id: row.id,
+    productId: row.product_id,
     customerEmail: row.customer_email,
     title: row.title,
     description: row.description,
@@ -113,6 +117,7 @@ export class PaymentStore {
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS invoices (
         id TEXT PRIMARY KEY,
+        product_id TEXT,
         access_hash TEXT NOT NULL,
         customer_email TEXT,
         title TEXT NOT NULL,
@@ -189,8 +194,25 @@ export class PaymentStore {
         requested_at TEXT NOT NULL,
         attempts INTEGER NOT NULL DEFAULT 0
       );
+      CREATE TABLE IF NOT EXISTS plan_inventory (
+        plan_id TEXT PRIMARY KEY,
+        quantity INTEGER NOT NULL CHECK (quantity >= 0),
+        low_stock_threshold INTEGER NOT NULL DEFAULT 3 CHECK (low_stock_threshold >= 0),
+        updated_at TEXT NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS inventory_movements (
+        id TEXT PRIMARY KEY,
+        plan_id TEXT NOT NULL REFERENCES plan_inventory(plan_id),
+        invoice_id TEXT NOT NULL REFERENCES invoices(id),
+        movement_type TEXT NOT NULL CHECK (movement_type IN ('sale','refund')),
+        delta INTEGER NOT NULL,
+        created_at TEXT NOT NULL,
+        UNIQUE(invoice_id, movement_type)
+      );
+      CREATE INDEX IF NOT EXISTS inventory_movements_plan_created ON inventory_movements(plan_id, created_at DESC);
     `);
     const columns = this.db.prepare("PRAGMA table_info(invoices)").all() as { name: string }[];
+    if (!columns.some((column) => column.name === "product_id")) this.db.exec("ALTER TABLE invoices ADD COLUMN product_id TEXT");
     if (!columns.some((column) => column.name === "customer_email")) this.db.exec("ALTER TABLE invoices ADD COLUMN customer_email TEXT");
     if (!columns.some((column) => column.name === "sale_type")) this.db.exec("ALTER TABLE invoices ADD COLUMN sale_type TEXT NOT NULL DEFAULT 'hostora_service'");
     if (!columns.some((column) => column.name === "partner_provider")) this.db.exec("ALTER TABLE invoices ADD COLUMN partner_provider TEXT");
@@ -211,6 +233,11 @@ export class PaymentStore {
     if (!saleRequestColumns.some((column) => column.name === "consultation_channel")) this.db.exec("ALTER TABLE sale_requests ADD COLUMN consultation_channel TEXT NOT NULL DEFAULT 'email'");
     if (!saleRequestColumns.some((column) => column.name === "voucher_code")) this.db.exec("ALTER TABLE sale_requests ADD COLUMN voucher_code TEXT");
     if (!saleRequestColumns.some((column) => column.name === "cancel_reason")) this.db.exec("ALTER TABLE sale_requests ADD COLUMN cancel_reason TEXT");
+    const seedInventory = this.db.prepare(
+      "INSERT OR IGNORE INTO plan_inventory (plan_id, quantity, low_stock_threshold, updated_at) VALUES (?, 12, 3, ?)",
+    );
+    const inventorySeededAt = new Date().toISOString();
+    for (const plan of hostingCatalog) seedInventory.run(plan.id, inventorySeededAt);
   }
 
   close() {
@@ -232,6 +259,78 @@ export class PaymentStore {
   private addEvent(invoiceId: string, type: string, detail: string, externalKey?: string) {
     this.db.prepare("INSERT OR IGNORE INTO invoice_events (id, invoice_id, type, detail, external_key, created_at) VALUES (?, ?, ?, ?, ?, ?)")
       .run(randomUUID(), invoiceId, type, detail, externalKey ?? null, new Date().toISOString());
+  }
+
+  listPlanInventory(): PlanInventory[] {
+    const rows = this.db
+      .prepare("SELECT plan_id, quantity, low_stock_threshold, updated_at FROM plan_inventory ORDER BY quantity ASC, plan_id")
+      .all() as Array<{ plan_id: string; quantity: number; low_stock_threshold: number; updated_at: string }>;
+    const plans = new Map(hostingCatalog.map((plan) => [plan.id, plan]));
+    return rows.flatMap((row) => {
+      const plan = plans.get(row.plan_id);
+      if (!plan) return [];
+      return [{
+        planId: row.plan_id,
+        provider: plan.provider,
+        planName: plan.name,
+        quantity: row.quantity,
+        lowStockThreshold: row.low_stock_threshold,
+        status: row.quantity === 0 ? "sold_out" as const : row.quantity <= row.low_stock_threshold ? "low" as const : "available" as const,
+        updatedAt: row.updated_at,
+      }];
+    });
+  }
+
+  getPlanInventory(planId: string): PlanInventory | null {
+    return this.listPlanInventory().find((item) => item.planId === planId) ?? null;
+  }
+
+  setPlanInventory(planId: string, quantity: number, lowStockThreshold?: number): PlanInventory {
+    if (!hostingCatalog.some((plan) => plan.id === planId)) throw new Error("Không tìm thấy gói lưu trữ.");
+    if (!Number.isSafeInteger(quantity) || quantity < 0 || quantity > 100_000) throw new Error("Số lượng phải từ 0 đến 100.000.");
+    const threshold = lowStockThreshold ?? this.getPlanInventory(planId)?.lowStockThreshold ?? 3;
+    if (!Number.isSafeInteger(threshold) || threshold < 0 || threshold > 10_000) throw new Error("Ngưỡng sắp hết không hợp lệ.");
+    this.db.prepare(`INSERT INTO plan_inventory (plan_id, quantity, low_stock_threshold, updated_at)
+      VALUES (?, ?, ?, ?) ON CONFLICT(plan_id) DO UPDATE SET quantity=excluded.quantity, low_stock_threshold=excluded.low_stock_threshold, updated_at=excluded.updated_at`)
+      .run(planId, quantity, threshold, new Date().toISOString());
+    return this.getPlanInventory(planId)!;
+  }
+
+  adjustPlanInventory(planId: string, delta: number): PlanInventory {
+    if (!Number.isSafeInteger(delta) || delta === 0 || Math.abs(delta) > 10_000) throw new Error("Mức điều chỉnh số lượng không hợp lệ.");
+    const current = this.getPlanInventory(planId);
+    if (!current) throw new Error("Không tìm thấy gói lưu trữ.");
+    return this.setPlanInventory(planId, Math.max(0, current.quantity + delta), current.lowStockThreshold);
+  }
+
+  assertPlanAvailable(planId: string) {
+    const inventory = this.getPlanInventory(planId);
+    if (inventory && inventory.quantity <= 0) throw new Error("Gói này đã hết suất bán qua HOSTORA.");
+    return inventory;
+  }
+
+  private decrementInventoryForPaidInvoice(invoice: Invoice) {
+    if (!invoice.productId) return;
+    const inventory = this.getPlanInventory(invoice.productId);
+    if (!inventory) return;
+    const alreadyMoved = this.db.prepare("SELECT 1 AS found FROM inventory_movements WHERE invoice_id = ? AND movement_type = 'sale'").get(invoice.id);
+    if (alreadyMoved) return;
+    const now = new Date().toISOString();
+    const changed = this.db.prepare("UPDATE plan_inventory SET quantity = quantity - 1, updated_at = ? WHERE plan_id = ? AND quantity > 0").run(now, invoice.productId);
+    if (changed.changes !== 1) throw new Error("Gói này vừa hết suất bán qua HOSTORA. Chưa ghi nhận thanh toán; vui lòng chọn gói khác.");
+    this.db.prepare("INSERT INTO inventory_movements (id, plan_id, invoice_id, movement_type, delta, created_at) VALUES (?, ?, ?, 'sale', -1, ?)")
+      .run(randomUUID(), invoice.productId, invoice.id, now);
+  }
+
+  private restoreInventoryForRefund(invoice: Invoice) {
+    if (!invoice.productId) return;
+    const sold = this.db.prepare("SELECT 1 AS found FROM inventory_movements WHERE invoice_id = ? AND movement_type = 'sale'").get(invoice.id);
+    const restored = this.db.prepare("SELECT 1 AS found FROM inventory_movements WHERE invoice_id = ? AND movement_type = 'refund'").get(invoice.id);
+    if (!sold || restored) return;
+    const now = new Date().toISOString();
+    this.db.prepare("UPDATE plan_inventory SET quantity = quantity + 1, updated_at = ? WHERE plan_id = ?").run(now, invoice.productId);
+    this.db.prepare("INSERT INTO inventory_movements (id, plan_id, invoice_id, movement_type, delta, created_at) VALUES (?, ?, ?, 'refund', 1, ?)")
+      .run(randomUUID(), invoice.productId, invoice.id, now);
   }
 
   createSaleRequest(input: {
@@ -416,15 +515,61 @@ export class PaymentStore {
     return valid;
   }
 
-  createInvoiceForSaleRequest(id: string, input: { amountVnd: number; description?: string }): CreatedInvoice {
-    const row = this.db.prepare("SELECT provider, product_name, contact, voucher_code, status FROM sale_requests WHERE id = ?").get(id) as { provider: string; product_name: string; contact: string; voucher_code: string | null; status: SaleRequest["status"] } | undefined;
-    if (!row || row.status !== "new") throw new Error("Yêu cầu mua không còn chờ báo giá.");
-    const invoice = this.createInvoice({ title: row.product_name, description: input.description, amountVnd: input.amountVnd, saleType: "partner_service", partnerProvider: row.provider, customerEmail: row.contact, voucherCode: row.voucher_code ?? undefined });
-    this.db.prepare("UPDATE sale_requests SET status = 'invoiced', invoice_id = ? WHERE id = ? AND status = 'new'").run(invoice.id, id);
+  createInvoiceForSaleRequest(
+    id: string,
+    input: {
+      amountVnd: number;
+      description?: string;
+      repeatPurchase?: boolean;
+      createdBy?: "admin" | "ai";
+    },
+  ): CreatedInvoice {
+    const row = this.db.prepare("SELECT product_id, provider, product_name, contact, voucher_code, status FROM sale_requests WHERE id = ?").get(id) as { product_id: string; provider: string; product_name: string; contact: string; voucher_code: string | null; status: SaleRequest["status"] } | undefined;
+    const canCreate = row?.status === "new" || (row?.status === "invoiced" && input.repeatPurchase === true);
+    if (!row || !canCreate)
+      throw new Error(
+        row?.status === "invoiced"
+          ? "Yêu cầu này đã có hóa đơn. Hãy chọn mua thêm để tạo một đơn mới."
+          : "Yêu cầu mua không còn chờ báo giá.",
+      );
+    this.assertPlanAvailable(row.product_id);
+
+    // A voucher is selected automatically when the customer submits a
+    // request. It must never block invoicing later when the confirmed total is
+    // below the voucher minimum or the voucher has expired in the meantime.
+    const voucher = row.voucher_code
+      ? this.db
+          .prepare(
+            "SELECT min_order_vnd, status, expires_at FROM vouchers WHERE code = ?",
+          )
+          .get(row.voucher_code) as
+          | { min_order_vnd: number; status: string; expires_at: string }
+          | undefined
+      : undefined;
+    const eligibleVoucher =
+      voucher &&
+      voucher.status === "active" &&
+      new Date(voucher.expires_at).valueOf() > Date.now() &&
+      input.amountVnd >= voucher.min_order_vnd
+        ? row.voucher_code ?? undefined
+        : undefined;
+    const invoice = this.createInvoice({
+      title: row.product_name,
+      productId: row.product_id,
+      description: input.description,
+      amountVnd: input.amountVnd,
+      saleType: "partner_service",
+      partnerProvider: row.provider,
+      customerEmail: row.contact,
+      voucherCode: eligibleVoucher,
+      createdBy: input.createdBy,
+    });
+    if (row.status === "new")
+      this.db.prepare("UPDATE sale_requests SET status = 'invoiced', invoice_id = ? WHERE id = ? AND status = 'new'").run(invoice.id, id);
     return invoice;
   }
 
-  createInvoice(input: { title: string; amountVnd: number; description?: string; saleType?: "hostora_service" | "partner_service"; partnerProvider?: string; customerEmail?: string; voucherCode?: string }): CreatedInvoice {
+  createInvoice(input: { title: string; productId?: string; amountVnd: number; description?: string; saleType?: "hostora_service" | "partner_service"; partnerProvider?: string; customerEmail?: string; voucherCode?: string; createdBy?: "admin" | "ai" }): CreatedInvoice {
     const title = input.title.trim();
     const description = (input.description ?? "").trim();
     const saleType = input.saleType ?? "hostora_service";
@@ -447,10 +592,16 @@ export class PaymentStore {
     const accessCode = randomBytes(24).toString("base64url");
     const now = new Date().toISOString();
     this.transaction(() => {
-      this.db.prepare("INSERT INTO invoices (id, access_hash, customer_email, title, description, amount_vnd, subtotal_vnd, discount_vnd, voucher_code, sale_type, partner_provider, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)")
-        .run(id, hashAccessCode(accessCode), customerEmail || null, title, description, payableVnd, input.amountVnd, discountVnd, voucherCode, saleType, saleType === "partner_service" ? partnerProvider : null, now, now);
+      this.db.prepare("INSERT INTO invoices (id, product_id, access_hash, customer_email, title, description, amount_vnd, subtotal_vnd, discount_vnd, voucher_code, sale_type, partner_provider, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)")
+        .run(id, input.productId ?? null, hashAccessCode(accessCode), customerEmail || null, title, description, payableVnd, input.amountVnd, discountVnd, voucherCode, saleType, saleType === "partner_service" ? partnerProvider : null, now, now);
       if (voucherCode) this.db.prepare("UPDATE vouchers SET status = 'redeemed', redeemed_invoice_id = ?, redeemed_at = ? WHERE code = ? AND status = 'active'").run(id, now, voucherCode);
-      this.addEvent(id, "created", "Hóa đơn được tạo bởi quản trị viên.");
+      this.addEvent(
+        id,
+        "created",
+        input.createdBy === "ai"
+          ? "Hóa đơn được tạo sau khi khách chốt báo giá trong cuộc trò chuyện AI."
+          : "Hóa đơn được tạo bởi quản trị viên.",
+      );
     });
     return { ...this.getInvoice(id)!, accessCode };
   }
@@ -505,10 +656,29 @@ export class PaymentStore {
       refund_pending: 0, refunded: 0, cancelled: 0,
     };
     for (const row of mixRows) statusMix[row.status] = row.count;
+    const productRows = this.db.prepare(`
+      SELECT product_id, title, COALESCE(partner_provider, 'HOSTORA') AS provider,
+        COUNT(*) AS paid_orders, COALESCE(SUM(amount_vnd), 0) AS revenue_vnd
+      FROM invoices
+      WHERE status IN ${recognized}
+      GROUP BY product_id, title, partner_provider
+      ORDER BY paid_orders DESC, revenue_vnd DESC, title ASC
+      LIMIT 12
+    `).all() as Array<{ product_id: string | null; title: string; provider: string; paid_orders: number; revenue_vnd: number }>;
+    const recognizedOrders = productRows.reduce((sum, row) => sum + row.paid_orders, 0);
+    const productMix = productRows.map((row) => ({
+      planId: row.product_id,
+      title: row.title,
+      provider: row.provider,
+      paidOrders: row.paid_orders,
+      revenueVnd: row.revenue_vnd,
+      sharePercent: recognizedOrders ? Math.round((row.paid_orders / recognizedOrders) * 10_000) / 100 : 0,
+    }));
     const differenceVnd = current.revenue_vnd - previous.revenue_vnd;
     return {
       daily,
       statusMix,
+      productMix,
       current30Days: { revenueVnd: current.revenue_vnd, paidOrders: current.paid_orders },
       previous30Days: { revenueVnd: previous.revenue_vnd, paidOrders: previous.paid_orders },
       differenceVnd,
@@ -645,6 +815,7 @@ export class PaymentStore {
       if (invoice.status === "paid" && invoice.provider === provider && invoice.providerReference === reference) return invoice;
       if (!["pending", "cancel_requested"].includes(invoice.status) || (invoice.provider && invoice.provider !== provider) || (invoice.providerReference && invoice.providerReference !== reference)) throw new Error("Đơn không ở trạng thái chờ thanh toán qua cổng này.");
       if (paymentDate && !/^\d{14}$/.test(paymentDate)) throw new Error("Ngày giao dịch không hợp lệ.");
+      this.decrementInventoryForPaidInvoice(invoice);
       const now = new Date().toISOString();
       const status = invoice.status === "cancel_requested" ? "refund_requested" : "paid";
       this.db.prepare("UPDATE invoices SET status = ?, provider = ?, provider_reference = ?, gateway_payment_date = ?, gateway_transaction_no = ?, updated_at = ? WHERE id = ?")
@@ -778,6 +949,7 @@ export class PaymentStore {
       if (invoice.status !== "refund_pending") throw new Error("Khoản hoàn chưa được gửi đi.");
       this.db.prepare("UPDATE invoices SET status = 'refunded', updated_at = ? WHERE id = ?")
         .run(new Date().toISOString(), id);
+      this.restoreInventoryForRefund(invoice);
       if (invoice.voucherCode) {
         this.db.prepare("UPDATE vouchers SET status = 'active', redeemed_invoice_id = NULL, redeemed_at = NULL WHERE code = ? AND status = 'redeemed' AND redeemed_invoice_id = ? AND expires_at > ?")
           .run(invoice.voucherCode, id, new Date().toISOString());

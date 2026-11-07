@@ -2,9 +2,12 @@
 
 import {
   Archive,
+  AlertTriangle,
   Check,
   CirclePlus,
+  Minus,
   PencilLine,
+  Plus,
   RefreshCw,
   Search,
   Send,
@@ -12,6 +15,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { AdminProduct } from "@/lib/admin/catalog-store";
+import type { PlanInventory } from "@/lib/payments/types";
 import {
   buildCatalogPayload,
   catalogBillingUnits,
@@ -86,6 +90,8 @@ function productDraft(product: AdminProduct): CatalogDraft {
 
 export function AdminServiceManager() {
   const [products, setProducts] = useState<AdminProduct[]>([]);
+  const [inventory, setInventory] = useState<PlanInventory[]>([]);
+  const [inventoryBusy, setInventoryBusy] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<"all" | AdminProduct["status"]>("all");
   const [draft, setDraft] = useState<CatalogDraft | null>(null);
@@ -100,15 +106,22 @@ export function AdminServiceManager() {
     setLoading(true);
     setError("");
     try {
-      const response = await fetch("/api/admin/catalog/products", {
-        cache: "no-store",
-      });
+      const [response, inventoryResponse] = await Promise.all([
+        fetch("/api/admin/catalog/products", { cache: "no-store" }),
+        fetch("/api/admin/inventory", { cache: "no-store" }),
+      ]);
       const body = (await response.json()) as {
         products?: AdminProduct[];
         error?: string;
       };
+      const inventoryBody = (await inventoryResponse.json()) as {
+        inventory?: PlanInventory[];
+        error?: string;
+      };
       if (!response.ok) throw new Error(body.error ?? "Không thể tải dịch vụ.");
+      if (!inventoryResponse.ok) throw new Error(inventoryBody.error ?? "Không thể tải số lượng gói.");
       setProducts(body.products ?? []);
+      setInventory(inventoryBody.inventory ?? []);
     } catch (caught) {
       setError(
         caught instanceof Error ? caught.message : "Không thể tải dịch vụ.",
@@ -240,6 +253,28 @@ export function AdminServiceManager() {
     }
   }
 
+  async function adjustInventory(plan: PlanInventory, delta: number) {
+    if (inventoryBusy) return;
+    setInventoryBusy(plan.planId);
+    setError("");
+    setNotice("");
+    try {
+      const response = await fetch(`/api/admin/inventory/${encodeURIComponent(plan.planId)}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(delta === -plan.quantity ? { quantity: 0 } : { delta }),
+      });
+      const body = (await response.json()) as { inventory?: PlanInventory; error?: string };
+      if (!response.ok || !body.inventory) throw new Error(body.error ?? "Không thể cập nhật số lượng.");
+      setInventory((current) => current.map((item) => item.planId === plan.planId ? body.inventory! : item));
+      setNotice(`Đã cập nhật ${plan.provider} ${plan.planName}: còn ${body.inventory.quantity} suất.`);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Không thể cập nhật số lượng.");
+    } finally {
+      setInventoryBusy(null);
+    }
+  }
+
   return (
     <section
       id="dich-vu"
@@ -319,6 +354,44 @@ export function AdminServiceManager() {
           {error}
         </p>
       ) : null}
+
+      <section className="border-b border-[#d7e2de] bg-[#f6f9f7] p-4 sm:p-5" aria-labelledby="inventory-title">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-black tracking-[.14em] text-blue uppercase">Số suất bán qua HOSTORA</p>
+            <h3 id="inventory-title" className="mt-1 text-xl font-black tracking-[-.025em]">Tồn kho gói lưu trữ dùng chung</h3>
+            <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600">Web, ứng dụng và thanh toán đọc cùng số liệu này. Thanh toán thành công mới trừ một suất; hoàn tiền hoàn tất sẽ trả lại một suất.</p>
+          </div>
+          <p className="text-xs font-semibold text-slate-700">Mặc định cảnh báo khi còn 3 suất</p>
+        </div>
+        <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {inventory.map((plan) => (
+            <article key={plan.planId} className="border border-[#d7e2de] bg-white p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate text-xs font-bold text-slate-500">{plan.provider}</p>
+                  <h4 className="mt-0.5 truncate font-black">{plan.planName}</h4>
+                </div>
+                <span className={`shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-black ${plan.status === "sold_out" ? "border-red-200 bg-red-50 text-red-700" : plan.status === "low" ? "border-amber-200 bg-amber-50 text-amber-800" : "border-emerald-200 bg-emerald-50 text-emerald-800"}`}>
+                  {plan.status === "sold_out" ? "Hết hàng" : plan.status === "low" ? "Sắp hết" : "Còn hàng"}
+                </span>
+              </div>
+              <div className="mt-4 flex items-end justify-between gap-3">
+                <div>
+                  <p className="text-xs font-bold text-slate-500 uppercase">Còn lại</p>
+                  <p className="mt-1 text-3xl font-black tabular-nums">{plan.quantity}<span className="ml-1 text-sm text-slate-500">suất</span></p>
+                </div>
+                <div className="flex items-center gap-1" aria-label={`Điều chỉnh ${plan.provider} ${plan.planName}`}>
+                  <button type="button" className="grid size-12 place-items-center border border-slate-200 bg-white text-slate-700 disabled:opacity-40" disabled={plan.quantity === 0 || inventoryBusy === plan.planId} onClick={() => void adjustInventory(plan, -1)} aria-label="Giảm một suất"><Minus size={17} /></button>
+                  <button type="button" className="grid size-12 place-items-center border border-slate-200 bg-white text-slate-700 disabled:opacity-40" disabled={inventoryBusy === plan.planId} onClick={() => void adjustInventory(plan, 1)} aria-label="Thêm một suất"><Plus size={17} /></button>
+                  <button type="button" className="h-12 border border-slate-200 bg-white px-3 text-xs font-black text-slate-700 disabled:opacity-40" disabled={inventoryBusy === plan.planId} onClick={() => void adjustInventory(plan, 5)}>+5</button>
+                </div>
+              </div>
+              {plan.quantity > 0 ? <button type="button" className="mt-3 inline-flex min-h-11 items-center gap-2 text-xs font-bold text-red-700 disabled:opacity-40" disabled={inventoryBusy === plan.planId} onClick={() => void adjustInventory(plan, -plan.quantity)}><AlertTriangle size={15} /> Đặt hết hàng</button> : null}
+            </article>
+          ))}
+        </div>
+      </section>
 
       {loading ? (
         <div className="grid min-h-52 place-items-center text-sm font-semibold text-slate-500">

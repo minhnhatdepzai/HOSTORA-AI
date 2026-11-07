@@ -1,6 +1,6 @@
 {
   "name": "hostora-mobile",
-  "version": "2.2.5",
+  "version": "2.2.6",
   "main": "expo-router/entry",
   "dependencies": {
     "@expo-google-fonts/be-vietnam-pro": "^0.4.1",

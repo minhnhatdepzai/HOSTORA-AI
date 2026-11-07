@@ -20,7 +20,6 @@ import { BrandFilm } from "@/components/brand-film";
 import { Onboarding } from "@/components/onboarding";
 import { AppProvider } from "@/context/app-context";
 import { CustomerAuthProvider } from "@/context/customer-auth-context";
-import { NotificationCenter } from "@/components/notification-center";
 import { KeyboardSafeView } from "@/components/keyboard-safe-view";
 import { IntroPlaybackContext } from "@/context/intro-playback-context";
 import {
@@ -163,9 +162,6 @@ export default function RootLayout() {
                   <View style={StyleSheet.absoluteFill}>
                     <Onboarding onFinish={finishOnboarding} />
                   </View>
-                ) : null}
-                {!showOnboarding && !playingIntro ? (
-                  <NotificationCenter />
                 ) : null}
               </View>
             </CustomerAuthProvider>

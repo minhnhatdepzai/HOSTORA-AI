@@ -11,8 +11,29 @@ export async function GET(request: Request) {
       { error: "Bạn cần đăng nhập quản trị." },
       { status: 401 },
     );
+  const url = new URL(request.url);
+  const parsed = z
+    .object({
+      q: z.string().trim().max(200).default(""),
+      page: z.coerce.number().int().min(1).default(1),
+      limit: z.coerce.number().int().min(1).max(25).default(10),
+    })
+    .safeParse({
+      q: url.searchParams.get("q") ?? "",
+      page: url.searchParams.get("page") ?? "1",
+      limit: url.searchParams.get("limit") ?? "10",
+    });
+  if (!parsed.success)
+    return Response.json(
+      { error: "Bộ lọc hội thoại không hợp lệ." },
+      { status: 400 },
+    );
   return Response.json(
-    { conversations: getCustomerStore().listAllAiConversations() },
+    getCustomerStore().listAiConversationsPage({
+      query: parsed.data.q,
+      page: parsed.data.page,
+      pageSize: parsed.data.limit,
+    }),
     { headers: { "cache-control": "no-store" } },
   );
 }

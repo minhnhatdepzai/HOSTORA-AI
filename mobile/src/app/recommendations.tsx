@@ -73,7 +73,10 @@ export default function RecommendationsScreen() {
   const [saved, setSaved] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [costDetailsOpen, setCostDetailsOpen] = useState(false);
-  const selectedPlan = ranked.find((plan) => plan.id === selected) ?? ranked[0];
+  const selectedPlan =
+    ranked.find((plan) => plan.id === selected) ??
+    ranked.find((plan) => plan.inventory?.status !== "sold_out") ??
+    ranked[0];
   const hasEligiblePlan = ranked.some(
     (plan) => plan.eligibility === "eligible",
   );
@@ -265,6 +268,42 @@ export default function RecommendationsScreen() {
                     ? "Chưa xác minh"
                     : `${formatVnd(plan.renewal)}/tháng`}
                 </Text>
+                <View
+                  style={[
+                    styles.inventory,
+                    plan.inventory?.status === "sold_out" &&
+                      styles.inventorySoldOut,
+                    plan.inventory?.status === "low" && styles.inventoryLow,
+                  ]}
+                >
+                  <View style={styles.inventoryCopy}>
+                    <Text style={styles.inventoryLabel}>
+                      {plan.inventory?.status === "sold_out"
+                        ? "HẾT HÀNG"
+                        : plan.inventory?.status === "low"
+                          ? "SẮP HẾT"
+                          : "CÒN HÀNG"}
+                    </Text>
+                    <Text style={styles.inventoryText}>
+                      {plan.inventory
+                        ? `${plan.inventory.quantity} suất bán qua HOSTORA`
+                        : "Đang đồng bộ số lượng"}
+                    </Text>
+                  </View>
+                  <Feather
+                    name={
+                      plan.inventory?.status === "sold_out"
+                        ? "x-circle"
+                        : "package"
+                    }
+                    color={
+                      plan.inventory?.status === "sold_out"
+                        ? colors.danger
+                        : colors.primary
+                    }
+                    size={19}
+                  />
+                </View>
                 <View style={styles.reasons}>
                   {plan.reasons.map((reason) => (
                     <View key={reason} style={styles.reason}>
@@ -288,7 +327,9 @@ export default function RecommendationsScreen() {
                 </View>
                 <Button
                   label={
-                    selectedPlan?.id === plan.id
+                    plan.inventory?.status === "sold_out"
+                      ? "Gói hiện đã hết hàng"
+                      : selectedPlan?.id === plan.id
                       ? "Đang chọn gói này"
                       : "Chọn gói này"
                   }
@@ -296,22 +337,36 @@ export default function RecommendationsScreen() {
                     selectedPlan?.id === plan.id ? "primary" : "secondary"
                   }
                   icon="check-circle"
-                  disabled={status === "loading"}
+                  disabled={
+                    status === "loading" ||
+                    plan.inventory?.status === "sold_out"
+                  }
                   onPress={() => {
                     setSelected(plan.id);
                     setSaved(false);
                   }}
                 />
                 <Text style={styles.purchaseHint}>
-                  Xem danh sách dịch vụ và gửi yêu cầu mua trong HOSTORA. Giá
-                  cuối được xác nhận trước khi tạo hóa đơn.
+                  Tiếp tục với đúng gói này để hỏi AI hoặc tạo hóa đơn. Bạn
+                  không phải tìm lại trong danh sách dịch vụ.
                 </Text>
                 <Button
-                  label="Mua qua HOSTORA"
+                  label={
+                    plan.inventory?.status === "sold_out"
+                      ? "Không thể tạo hóa đơn"
+                      : "Tư vấn & thanh toán gói này"
+                  }
                   icon="arrow-right"
                   variant={selectedPlan?.id === plan.id ? "mint" : "secondary"}
+                  disabled={plan.inventory?.status === "sold_out"}
                   onPress={() =>
-                    router.push("/(tabs)/products?category=hosting")
+                    router.push({
+                      pathname: "/(tabs)/assistant",
+                      params: {
+                        planId: plan.id,
+                        planTitle: `${plan.provider} ${plan.name}`,
+                      },
+                    })
                   }
                 />
               </Card>
@@ -713,6 +768,39 @@ const styles = StyleSheet.create({
     color: colors.muted,
     fontFamily: "BeVietnamPro_500Medium",
     fontSize: 9,
+  },
+  inventory: {
+    minHeight: 54,
+    marginTop: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.success,
+    backgroundColor: colors.successSoft,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+  },
+  inventoryLow: {
+    borderLeftColor: colors.warning,
+    backgroundColor: colors.warningSoft,
+  },
+  inventorySoldOut: {
+    borderLeftColor: colors.danger,
+    backgroundColor: "#FFF0ED",
+  },
+  inventoryCopy: { flex: 1, gap: 2 },
+  inventoryLabel: {
+    color: colors.primary,
+    fontFamily: "BeVietnamPro_800ExtraBold",
+    fontSize: 9,
+    letterSpacing: 0.8,
+  },
+  inventoryText: {
+    color: colors.text,
+    fontFamily: "BeVietnamPro_600SemiBold",
+    fontSize: 10,
   },
   reasons: { gap: 7, marginTop: 15 },
   reason: { flexDirection: "row", alignItems: "flex-start", gap: 7 },

@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterAll, expect, test } from "vitest";
 import { POST } from "@/app/api/ai/chat/route";
+import { POST as createAiCheckout } from "@/app/api/ai/checkout/route";
 import { getCustomerStore } from "@/lib/customer/store";
 import { getPaymentStore } from "@/lib/payments/store";
 import { buildFallbackBrief, type SiteIdea } from "@/lib/site-studio";
@@ -106,6 +107,15 @@ test("chat reads only the signed-in customer's paid and pending hosting orders",
   });
   await saveStudioProject({
     id: crypto.randomUUID(),
+    ownerCustomerId: owner.id,
+    idea: { ...idea, brand: "Mộc Shop Landing" },
+    brief: buildFallbackBrief({ ...idea, brand: "Mộc Shop Landing" }),
+    generationMode: "template-fallback",
+    createdAt: new Date(Date.now() - 1_000).toISOString(),
+    updatedAt: new Date(Date.now() - 1_000).toISOString(),
+  });
+  await saveStudioProject({
+    id: crypto.randomUUID(),
     ownerCustomerId: other.id,
     idea: { ...idea, brand: "Website riêng của người khác" },
     brief: buildFallbackBrief({ ...idea, brand: "Website riêng của người khác" }),
@@ -161,6 +171,9 @@ test("chat reads only the signed-in customer's paid and pending hosting orders",
   expect(personalizedAnswer).toContain("3. Ưu tiên hạ tầng");
   expect(personalizedAnswer).toContain("Mỹ phẩm thiên nhiên");
   expect(personalizedAnswer).toContain("Khách muốn mua mỹ phẩm thiên nhiên");
+  expect(personalizedAnswer).toContain("Bạn đã tạo 2 website trong tài khoản");
+  expect(personalizedAnswer).toContain("Mộc Shop");
+  expect(personalizedAnswer).toContain("Mộc Shop Landing");
   expect(personalizedAnswer).toContain("chưa phải gói đã mua");
   expect(personalizedAnswer).not.toContain("0900000000");
 
@@ -243,4 +256,120 @@ test("chat reads only the signed-in customer's paid and pending hosting orders",
   const guestAnswer = await (await chat("Tôi đã mua hosting gì?")).text();
   expect(guestAnswer).toContain("hãy đăng nhập");
   expect(guestAnswer).not.toContain("Hosting Gói A thử nghiệm");
+});
+
+test("chat turns a signed-in confirmation into a deterministic checkout action", async () => {
+  const suffix = crypto.randomUUID();
+  const store = getCustomerStore();
+  const customer = store.createCustomer({
+    name: "Khách chốt đơn",
+    email: `checkout-${suffix}@example.com`,
+    passwordHash: "test-hash",
+  });
+  const token = store.createSession(customer.id).token;
+  const response = await chat("Tôi chốt, tạo hóa đơn cho tôi", token, {
+    websiteType: "store",
+    ecommerce: true,
+    monthlyVisits: 5_000,
+    monthlyBudget: 500_000,
+    needsDomain: false,
+  });
+
+  expect(response.status).toBe(200);
+  expect(response.headers.get("x-hostora-next-action")).toBe("checkout");
+  const rawQuote = response.headers.get("x-hostora-checkout");
+  expect(rawQuote).toBeTruthy();
+  const quote = JSON.parse(decodeURIComponent(rawQuote!)) as {
+    planId: string;
+    amountVnd: number;
+  };
+  expect(quote.planId).toBeTruthy();
+  expect(quote.amountVnd).toBeGreaterThan(0);
+  expect(await response.text()).toContain("mỗi lần chốt tạo một hóa đơn riêng");
+
+  const create = () =>
+    createAiCheckout(
+      new Request("http://127.0.0.1:3000/api/ai/checkout", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          authorization: `Bearer ${token}`,
+          "x-hostora-client": "mobile",
+        },
+        body: JSON.stringify({ planId: quote.planId }),
+      }),
+    );
+  const first = await create();
+  const second = await create();
+  expect(first.status).toBe(201);
+  expect(second.status).toBe(201);
+  const firstOrder = (await first.json()) as { invoice: { id: string } };
+  const secondOrder = (await second.json()) as { invoice: { id: string } };
+  expect(secondOrder.invoice.id).not.toBe(firstOrder.invoice.id);
+  expect(
+    getPaymentStore()
+      .listInvoices()
+      .filter((invoice) => invoice.customerEmail === customer.email),
+  ).toHaveLength(2);
+});
+
+test("selected recommendation can create checkout directly and records admin-visible chat", async () => {
+  const suffix = crypto.randomUUID();
+  const conversationId = crypto.randomUUID();
+  const store = getCustomerStore();
+  const customer = store.createCustomer({
+    name: "Khách chọn từ ba gói",
+    email: `direct-checkout-${suffix}@example.com`,
+    passwordHash: "test-hash",
+  });
+  const token = store.createSession(customer.id).token;
+  const response = await createAiCheckout(
+    new Request("http://127.0.0.1:3000/api/ai/checkout", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${token}`,
+        "x-hostora-client": "mobile",
+      },
+      body: JSON.stringify({
+        planId: "azdigi-az-pro-2",
+        conversationId,
+        recordSelection: true,
+        consultation: {
+          websiteType: "store",
+          ecommerce: true,
+          monthlyVisits: 5_000,
+          monthlyBudget: 500_000,
+          needsDomain: false,
+        },
+      }),
+    }),
+  );
+
+  expect(response.status).toBe(201);
+  const result = (await response.json()) as {
+    invoice: { id: string; amountVnd: number };
+    requestId: string;
+  };
+  expect(result.invoice.amountVnd).toBe(540_000);
+  expect(store.listPurchaseRequests(customer.email)[0]).toMatchObject({
+    id: result.requestId,
+    productName: "AZ Pro 2",
+    invoiceId: result.invoice.id,
+  });
+  expect(store.listChatMessages(customer.id, conversationId)).toEqual([
+    expect.objectContaining({
+      role: "user",
+      content: expect.stringContaining("Tôi chốt AZDIGI AZ Pro 2"),
+    }),
+    expect.objectContaining({
+      role: "assistant",
+      content: expect.stringContaining(result.invoice.id),
+    }),
+  ]);
+  expect(
+    store
+      .listAllAiConversations()
+      .find((conversation) => conversation.id === conversationId)?.messages,
+  ).toHaveLength(2);
 });

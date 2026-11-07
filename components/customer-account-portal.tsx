@@ -3,13 +3,16 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowRight, BookOpen, CalendarDays, LifeBuoy, LogOut, Sparkles, TicketCheck } from "lucide-react";
-import type { CustomerAccount, CustomerOrderSummary, CustomerSupportCase, CustomerVoucher } from "@/lib/customer/types";
+import { ArrowRight, BookOpen, CalendarDays, LayoutTemplate, LifeBuoy, LogOut, MessageCircle, Sparkles, TicketCheck } from "lucide-react";
+import type { CustomerAccount, CustomerChatSummary, CustomerOrderSummary, CustomerPurchaseRequestSummary, CustomerStudioProjectSummary, CustomerSupportCase, CustomerVoucher } from "@/lib/customer/types";
 
 type SessionData = {
   customer: CustomerAccount;
   vouchers: CustomerVoucher[];
   orders: CustomerOrderSummary[];
+  purchaseRequests: CustomerPurchaseRequestSummary[];
+  studioProjects: CustomerStudioProjectSummary[];
+  chat: CustomerChatSummary;
   supportCases: CustomerSupportCase[];
 };
 
@@ -19,10 +22,11 @@ const orderStatus: Record<CustomerOrderSummary["status"], string> = {
   refund_requested: "Chờ duyệt hoàn tiền", refund_pending: "Đang hoàn tiền", refunded: "Đã hoàn tiền", cancelled: "Đã hủy",
 };
 const supportStatus: Record<CustomerSupportCase["status"], string> = { new: "Đã tiếp nhận", in_progress: "Đang xử lý", resolved: "Đã giải quyết" };
+const purchaseStatus: Record<CustomerPurchaseRequestSummary["status"], string> = { new: "Chờ báo giá", invoiced: "Đã có hóa đơn", declined: "Không tiếp nhận", cancelled: "Đã hủy" };
 
 export function CustomerAccountPortal({ initialCustomer }: { initialCustomer: CustomerAccount }) {
   const router = useRouter();
-  const [data, setData] = useState<SessionData>({ customer: initialCustomer, vouchers: [], orders: [], supportCases: [] });
+  const [data, setData] = useState<SessionData>({ customer: initialCustomer, vouchers: [], orders: [], purchaseRequests: [], studioProjects: [], chat: { conversationId: null, messageCount: 0, latestMessageAt: null, latestPreview: null }, supportCases: [] });
   const [loading, setLoading] = useState(true);
   const [subject, setSubject] = useState("");
   const [category, setCategory] = useState<CustomerSupportCase["category"]>("order");
@@ -84,9 +88,20 @@ export function CustomerAccountPortal({ initialCustomer }: { initialCustomer: Cu
         </section>
         <section className="customer-orders-section" aria-labelledby="account-orders-title">
           <div className="customer-section-heading"><BookOpen size={22} /><div><p>NHẬT KÝ MUA HÀNG</p><h2 id="account-orders-title">Đơn gần đây</h2></div></div>
-          <div className="customer-order-list">{data.orders.length ? data.orders.map((order) => <div key={order.id}><span><strong>{order.title}</strong><small>{order.id} · {new Date(order.updatedAt).toLocaleDateString("vi-VN")}</small></span><span><strong>{money(order.amountVnd)}</strong><small>{orderStatus[order.status]}</small></span></div>) : <div className="customer-account-empty">Chưa có hóa đơn gắn với email này.</div>}</div>
+          <div className="customer-order-list">
+            {data.purchaseRequests.map((request) => <div key={request.id}><span><em>YÊU CẦU MUA</em><strong>{request.provider} · {request.productName}</strong><small>{request.id} · {new Date(request.createdAt).toLocaleDateString("vi-VN")}</small></span><span><strong>{purchaseStatus[request.status]}</strong><small>{request.invoiceId ?? "Đang chờ báo giá"}</small></span></div>)}
+            {data.orders.map((order) => <div key={order.id}><span><em>HÓA ĐƠN</em><strong>{order.title}</strong><small>{order.id} · {new Date(order.updatedAt).toLocaleDateString("vi-VN")}</small></span><span><strong>{money(order.amountVnd)}</strong><small>{orderStatus[order.status]}</small></span></div>)}
+            {!data.purchaseRequests.length && !data.orders.length ? <div className="customer-account-empty">Chưa có yêu cầu mua hoặc hóa đơn gắn với email này.</div> : null}
+          </div>
         </section>
       </div>
+      <section className="customer-account-history" aria-label="Website và lịch sử AI">
+        <div className="customer-projects">
+          <div className="customer-section-heading"><LayoutTemplate size={22} /><div><p>WEBSITE ĐÃ TẠO</p><h2>{data.studioProjects.length ? `${data.studioProjects.length} website trong tài khoản` : "Chưa có website"}</h2></div></div>
+          <div className="customer-project-list">{data.studioProjects.length ? data.studioProjects.map((project) => <Link key={project.id} href={project.url} target="_blank" rel="noreferrer" aria-label={`Xem website ${project.brand} qua link`}><span><strong>{project.brand}</strong><small>{project.headline}</small><em>Cập nhật {new Date(project.updatedAt).toLocaleDateString("vi-VN")} · Xem website qua link</em></span><ArrowRight size={18} /></Link>) : <div className="customer-account-empty">Bản tạo mới sẽ xuất hiện ở đây và vẫn còn sau khi đăng nhập lại.</div>}</div>
+        </div>
+        <Link href="/ai-assistant" className="customer-chat-resume"><MessageCircle size={25} /><p>LỊCH SỬ VỚI AI</p><h2>{data.chat.messageCount ? `${data.chat.messageCount} tin nhắn đã lưu` : "Bắt đầu tư vấn"}</h2><span>{data.chat.latestPreview ?? "AI sẽ tiếp tục từ hồ sơ, website và lựa chọn gói trong tài khoản."}</span><strong>Mở lại cuộc trò chuyện <ArrowRight size={17} /></strong></Link>
+      </section>
       <section className="customer-support-section" aria-labelledby="support-title">
         <div className="customer-support-intro"><LifeBuoy size={26} /><p>CHĂM SÓC KHÁCH HÀNG</p><h2 id="support-title">Có vấn đề? Gửi một yêu cầu rõ ràng.</h2><span>Mỗi yêu cầu có mã riêng để bạn biết HOSTORA đã nhận và đang xử lý tới đâu.</span></div>
         <form onSubmit={sendSupport}>

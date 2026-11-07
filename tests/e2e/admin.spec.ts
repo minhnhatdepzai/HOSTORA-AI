@@ -205,11 +205,21 @@ test("support inbox keeps existing conversations and explains a failed refresh",
       body: JSON.stringify({ cases: [] }),
     });
   });
-  await page.route("**/api/admin/ai-conversations", async (route) => {
+  await page.route("**/api/admin/ai-conversations**", async (route) => {
     if (failRefresh) return route.abort("internetdisconnected");
     await route.fulfill({
       contentType: "application/json",
-      body: JSON.stringify({ conversations: [conversation] }),
+      body: JSON.stringify({
+        conversations: [conversation],
+        pagination: {
+          page: 1,
+          pageSize: 10,
+          total: 1,
+          totalPages: 1,
+          allTotal: 1,
+          escalatedTotal: 1,
+        },
+      }),
     });
   });
 

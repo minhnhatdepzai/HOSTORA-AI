@@ -17,7 +17,13 @@ export async function GET(request: Request) {
   const requested = new URL(request.url).searchParams.get("conversationId");
   if (requested && !conversationIdPattern.test(requested))
     return Response.json({ error: "Mã cuộc trò chuyện không hợp lệ." }, { status: 400 });
-  const conversationId = requested ?? store.latestConversationId(customer.id);
+  const conversations = store.listChatSummaries(customer.id);
+  if (requested && !conversations.some((item) => item.conversationId === requested))
+    return Response.json(
+      { error: "Không tìm thấy cuộc trò chuyện của tài khoản này." },
+      { status: 404 },
+    );
+  const conversationId = requested ?? conversations[0]?.conversationId ?? null;
   const supportConversation = conversationId
     ? store.getAiConversationForViewer({
         conversationId,
@@ -39,6 +45,7 @@ export async function GET(request: Request) {
   return Response.json(
     {
       conversationId,
+      conversations,
       messages,
       supportStatus,
       memory: normalizeChatMemory(store.getAiMemory(customer.id)),

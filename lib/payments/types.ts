@@ -87,6 +87,14 @@ export type InvoiceQueueCounts = {
 export type RevenueAnalytics = {
   daily: Array<{ date: string; revenueVnd: number; paidOrders: number }>;
   statusMix: Record<InvoiceStatus, number>;
+  productMix: Array<{
+    planId: string | null;
+    title: string;
+    provider: string;
+    paidOrders: number;
+    revenueVnd: number;
+    sharePercent: number;
+  }>;
   current30Days: { revenueVnd: number; paidOrders: number };
   previous30Days: { revenueVnd: number; paidOrders: number };
   differenceVnd: number;
@@ -108,6 +116,7 @@ export type InvoicePage = {
 
 export type Invoice = {
   id: string;
+  productId: string | null;
   customerEmail: string | null;
   title: string;
   description: string;
@@ -129,6 +138,16 @@ export type Invoice = {
   earnedVoucherAmountVnd: number | null;
   earnedVoucherExpiresAt: string | null;
   createdAt: string;
+  updatedAt: string;
+};
+
+export type PlanInventory = {
+  planId: string;
+  provider: string;
+  planName: string;
+  quantity: number;
+  lowStockThreshold: number;
+  status: "available" | "low" | "sold_out";
   updatedAt: string;
 };
 

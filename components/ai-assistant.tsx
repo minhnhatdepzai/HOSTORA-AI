@@ -7,6 +7,9 @@ import {
   ImageUp,
   Link2,
   LoaderCircle,
+  CreditCard,
+  Clock3,
+  MessageSquarePlus,
   Send,
   Sparkles,
   Trash2,
@@ -14,6 +17,7 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -25,6 +29,7 @@ import {
   type ChatSource,
 } from "@/lib/chat-sources";
 import { buildConversationMemory, recentChatMessages } from "@/lib/chat-memory";
+import type { ChatCheckoutQuote } from "@/lib/chat-checkout";
 
 type Message = {
   id?: string;
@@ -32,7 +37,8 @@ type Message = {
   content: string;
   sources?: ChatSource[];
   ragMode?: string;
-  nextAction?: "create-site" | "upload-screen";
+  nextAction?: "create-site" | "upload-screen" | "checkout" | "login";
+  checkout?: ChatCheckoutQuote;
   fromAdmin?: boolean;
 };
 type AccountState = "loading" | "authenticated" | "guest" | "error";
@@ -42,6 +48,14 @@ type KnowledgeSource = {
   title: string;
   kind: "pdf" | "docx" | "text" | "web" | "image";
   characters: number;
+};
+type ChatThreadSummary = {
+  conversationId: string;
+  title: string;
+  messageCount: number;
+  latestMessageAt: string;
+  latestPreview: string;
+  supportStatus: SupportStatus;
 };
 const starters = [
   "Tôi chưa biết nên làm trang web gì để bắt đầu kinh doanh.",
@@ -54,7 +68,35 @@ const CHAT_ID_KEY = "hostora:chat:conversation-id:v1";
 const CHAT_ACCESS_KEY = "hostora:chat:conversation-access:v1";
 const CHAT_STATUS_KEY = "hostora:chat:support-status:v1";
 
-export function AiAssistant() {
+function readStoredConsultation() {
+  try {
+    if (
+      localStorage.getItem("hostora:consultation:completed") !== "true" &&
+      !localStorage.getItem("hostora:requirements")
+    )
+      return undefined;
+    const saved = JSON.parse(
+      localStorage.getItem("hostora:requirements") ?? "null",
+    ) as Record<string, unknown> | null;
+    if (!saved) return undefined;
+    return {
+      websiteType: saved.websiteType,
+      monthlyVisits: saved.monthlyVisits,
+      monthlyBudget: saved.monthlyBudget,
+      needsDomain: saved.needsDomain,
+      ecommerce: saved.ecommerce,
+    };
+  } catch {
+    return undefined;
+  }
+}
+
+export function AiAssistant({
+  selectedPlan,
+}: {
+  selectedPlan?: ChatCheckoutQuote | null;
+}) {
+  const router = useRouter();
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
@@ -76,6 +118,10 @@ export function AiAssistant() {
   const [sourceNotice, setSourceNotice] = useState("");
   const [urlInput, setUrlInput] = useState("");
   const [clearBusy, setClearBusy] = useState(false);
+  const [checkoutBusy, setCheckoutBusy] = useState(false);
+  const [conversations, setConversations] = useState<ChatThreadSummary[]>([]);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [historyNotice, setHistoryNotice] = useState("");
   const bottom = useRef<HTMLDivElement>(null);
   const imageInput = useRef<HTMLInputElement>(null);
   const sourceInput = useRef<HTMLInputElement>(null);
@@ -113,12 +159,14 @@ export function AiAssistant() {
               fromAdmin?: boolean;
             }>;
             supportStatus?: SupportStatus;
+            conversations?: ChatThreadSummary[];
           };
           const sourceData = (await sourcesResponse.json()) as {
             sources?: KnowledgeSource[];
           };
           setConversationId(history.conversationId ?? null);
           setSupportStatus(history.supportStatus ?? "active");
+          setConversations(history.conversations ?? []);
           setKnowledgeSources(sourceData.sources ?? []);
           if (history.messages?.length)
             setMessages(
@@ -249,19 +297,7 @@ export function AiAssistant() {
     setBusy(true);
     try {
       const contextMessages = next.map(({ role, content }) => ({ role, content }));
-      let consultation: Record<string, unknown> | undefined;
-      try {
-        if (localStorage.getItem("hostora:consultation:completed") === "true" || localStorage.getItem("hostora:requirements")) {
-          const saved = JSON.parse(localStorage.getItem("hostora:requirements") ?? "null") as Record<string, unknown> | null;
-          if (saved) consultation = {
-            websiteType: saved.websiteType,
-            monthlyVisits: saved.monthlyVisits,
-            monthlyBudget: saved.monthlyBudget,
-            needsDomain: saved.needsDomain,
-            ecommerce: saved.ecommerce,
-          };
-        }
-      } catch {}
+      const consultation = readStoredConsultation();
       const res = await fetch("/api/ai/chat", {
         method: "POST",
         headers: {
@@ -282,6 +318,13 @@ export function AiAssistant() {
       const sources = readChatSources(res.headers.get("x-hostora-sources"));
       const ragMode = res.headers.get("x-hostora-rag-mode") ?? undefined;
       const nextActionHeader = res.headers.get("x-hostora-next-action");
+      let checkout: ChatCheckoutQuote | undefined;
+      const checkoutHeader = res.headers.get("x-hostora-checkout");
+      if (checkoutHeader) {
+        try {
+          checkout = JSON.parse(decodeURIComponent(checkoutHeader)) as ChatCheckoutQuote;
+        } catch {}
+      }
       const responseConversationId = res.headers.get(
         "x-hostora-conversation-id",
       );
@@ -298,7 +341,9 @@ export function AiAssistant() {
         setSupportStatus(responseSupportStatus);
       const nextAction =
         nextActionHeader === "create-site" ||
-        nextActionHeader === "upload-screen"
+        nextActionHeader === "upload-screen" ||
+        nextActionHeader === "checkout" ||
+        nextActionHeader === "login"
           ? nextActionHeader
           : undefined;
       const reader = res.body.getReader();
@@ -310,7 +355,7 @@ export function AiAssistant() {
         answer += decoder.decode(chunk, { stream: true });
         setMessages([
           ...next,
-          { role: "assistant", content: answer, sources, ragMode, nextAction },
+          { role: "assistant", content: answer, sources, ragMode, nextAction, checkout },
         ]);
       }
     } catch (e) {
@@ -325,6 +370,112 @@ export function AiAssistant() {
     } finally {
       setBusy(false);
     }
+  }
+
+  async function createCheckout(
+    quote: Pick<ChatCheckoutQuote, "planId">,
+    recordSelection = false,
+  ) {
+    if (checkoutBusy) return;
+    setCheckoutBusy(true);
+    setSourceNotice("");
+    try {
+      const response = await fetch("/api/ai/checkout", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          planId: quote.planId,
+          ...(conversationId ? { conversationId } : {}),
+          ...(readStoredConsultation()
+            ? { consultation: readStoredConsultation() }
+            : {}),
+          ...(recordSelection ? { recordSelection: true } : {}),
+        }),
+      });
+      const result = (await response.json()) as {
+        checkoutUrl?: string;
+        error?: string;
+      };
+      if (response.status === 401) {
+        router.push(
+          `/account/login?next=${encodeURIComponent(`/ai-assistant?planId=${quote.planId}`)}`,
+        );
+        return;
+      }
+      if (!response.ok || !result.checkoutUrl)
+        throw new Error(result.error ?? "Chưa tạo được hóa đơn.");
+      router.push(result.checkoutUrl);
+    } catch (error) {
+      setSourceNotice(
+        error instanceof Error ? error.message : "Chưa tạo được hóa đơn.",
+      );
+    } finally {
+      setCheckoutBusy(false);
+    }
+  }
+
+  async function openConversation(id: string) {
+    if (historyLoading || id === conversationId) {
+      setHistoryOpen(false);
+      return;
+    }
+    setHistoryLoading(true);
+    setHistoryNotice("");
+    try {
+      const response = await fetch(
+        `/api/account/chat-history?conversationId=${encodeURIComponent(id)}`,
+        { cache: "no-store" },
+      );
+      const history = (await response.json()) as {
+        error?: string;
+        conversationId?: string;
+        messages?: Array<{
+          id: string;
+          role: Message["role"];
+          content: string;
+          sources?: unknown[];
+          fromAdmin?: boolean;
+        }>;
+        supportStatus?: SupportStatus;
+        conversations?: ChatThreadSummary[];
+      };
+      if (!response.ok)
+        throw new Error(history.error ?? "Chưa mở được cuộc trò chuyện này.");
+      setConversationId(history.conversationId ?? id);
+      setSupportStatus(history.supportStatus ?? "active");
+      setConversations(history.conversations ?? conversations);
+      setMessages(
+        (history.messages ?? []).map((message) => ({
+          id: message.id,
+          role: message.role,
+          content: message.content,
+          sources: parseChatSources(message.sources),
+          fromAdmin: message.fromAdmin,
+        })),
+      );
+      setHistoryOpen(false);
+    } catch (error) {
+      setHistoryNotice(
+        error instanceof Error ? error.message : "Chưa mở được lịch sử chat.",
+      );
+    } finally {
+      setHistoryLoading(false);
+    }
+  }
+
+  function startNewConversation() {
+    setConversationId(crypto.randomUUID());
+    setConversationAccess(null);
+    setSupportStatus("active");
+    setMessages([
+      {
+        role: "assistant",
+        content:
+          "Đây là cuộc trò chuyện mới. Dựa trên hồ sơ hiện tại của bạn, mình có thể tư vấn gói, website hoặc chi phí ngay.",
+      },
+    ]);
+    setHistoryOpen(false);
+    setHistoryNotice("");
   }
 
   async function refreshSources() {
@@ -590,6 +741,68 @@ export function AiAssistant() {
           ))}
         </div>
         <div className="mt-6 border-t border-slate-200 pt-5">
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              disabled={accountState !== "authenticated" || historyLoading}
+              onClick={() => setHistoryOpen((current) => !current)}
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-3 text-xs font-black text-slate-700 transition-colors hover:border-emerald-700 hover:text-emerald-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 disabled:cursor-not-allowed disabled:opacity-45"
+              aria-expanded={historyOpen}
+            >
+              <Clock3 aria-hidden="true" size={16} />
+              Lịch sử chat
+            </button>
+            <button
+              type="button"
+              disabled={busy || historyLoading}
+              onClick={startNewConversation}
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-ink px-3 text-xs font-black text-white transition-colors hover:bg-emerald-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 disabled:cursor-not-allowed disabled:opacity-45"
+            >
+              <MessageSquarePlus aria-hidden="true" size={16} />
+              Chat mới
+            </button>
+          </div>
+          {accountState !== "authenticated" ? (
+            <p className="mt-2 text-xs leading-5 text-slate-500">
+              Đăng nhập để xem và tiếp tục các cuộc trò chuyện cũ.
+            </p>
+          ) : null}
+          {historyOpen ? (
+            <div className="mt-3 max-h-72 space-y-2 overflow-y-auto rounded-xl border border-slate-200 bg-slate-50 p-2" aria-label="Các cuộc trò chuyện cũ">
+              {historyLoading ? (
+                <p className="flex items-center gap-2 p-3 text-xs text-slate-500" role="status">
+                  <LoaderCircle aria-hidden="true" className="animate-spin" size={14} />
+                  Đang tải lịch sử…
+                </p>
+              ) : conversations.length ? (
+                conversations.map((thread) => (
+                  <button
+                    type="button"
+                    key={thread.conversationId}
+                    aria-current={thread.conversationId === conversationId ? "true" : undefined}
+                    onClick={() => void openConversation(thread.conversationId)}
+                    className={`block min-h-16 w-full rounded-lg border p-3 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 ${thread.conversationId === conversationId ? "border-emerald-700 bg-emerald-50" : "border-slate-200 bg-white hover:border-emerald-500"}`}
+                  >
+                    <span className="block line-clamp-2 text-xs font-black leading-5 text-slate-800">
+                      {thread.title}
+                    </span>
+                    <span className="mt-1 block text-[11px] text-slate-500">
+                      {thread.messageCount} tin · {new Date(thread.latestMessageAt).toLocaleDateString("vi-VN")}
+                    </span>
+                  </button>
+                ))
+              ) : (
+                <div className="p-3 text-xs leading-5 text-slate-500">
+                  Chưa có cuộc trò chuyện cũ. Bắt đầu bằng nút “Chat mới”.
+                </div>
+              )}
+              {historyNotice ? (
+                <p className="p-2 text-xs text-red-700" role="alert">{historyNotice}</p>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+        <div className="mt-6 border-t border-slate-200 pt-5">
           <div className="flex items-start gap-3">
             <FileText className="mt-0.5 shrink-0 text-emerald-800" size={18} />
             <div>
@@ -740,6 +953,40 @@ export function AiAssistant() {
             khi tạo hóa đơn.
           </p>
         </div>
+        {selectedPlan ? (
+          <div className="mx-4 mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 sm:mx-5" aria-label="Gói đang chọn">
+            <p className="text-[11px] font-black uppercase tracking-wider text-emerald-800">
+              Gói bạn vừa chọn
+            </p>
+            <div className="mt-1 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="font-black text-slate-900">{selectedPlan.title}</p>
+                <p className="mt-1 text-xs leading-5 text-slate-600">
+                  {selectedPlan.monthlyVnd.toLocaleString("vi-VN")}đ/tháng · kỳ đầu {selectedPlan.billingMonths} tháng. HOSTORA sẽ xác nhận lại tổng tiền trên hóa đơn.
+                </p>
+              </div>
+              <div className="flex shrink-0 flex-wrap gap-2">
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => void send(`Tôi đang chọn ${selectedPlan.title}. Hãy tư vấn ưu nhược điểm và cách dùng gói này cho hồ sơ hiện tại của tôi.`)}
+                  className="min-h-11 rounded-xl border border-emerald-700 bg-white px-4 text-xs font-black text-emerald-800 transition-colors hover:bg-emerald-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 disabled:opacity-50"
+                >
+                  Tư vấn gói này
+                </button>
+                <button
+                  type="button"
+                  disabled={checkoutBusy}
+                  onClick={() => void createCheckout(selectedPlan, true)}
+                  className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-ink px-4 text-xs font-black text-white transition-colors hover:bg-emerald-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 disabled:opacity-50"
+                >
+                  {checkoutBusy ? <LoaderCircle aria-hidden="true" className="animate-spin" size={15} /> : <CreditCard aria-hidden="true" size={15} />}
+                  {checkoutBusy ? "Đang tạo hóa đơn…" : "Thanh toán gói này"}
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
         {supportStatus === "escalated" ? (
           <div className="mx-4 mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950" role="status">
             <p className="font-black">Đã chuyển cho quản trị viên</p>
@@ -825,6 +1072,31 @@ export function AiAssistant() {
                     Gửi ảnh màn hình
                   </button>
                 )}
+                {m.role === "assistant" && m.nextAction === "login" && (
+                  <Link
+                    href="/account/login?next=%2Fai-assistant"
+                    className="mt-4 inline-flex min-h-11 items-center justify-center rounded-lg bg-[#0f695c] px-4 py-2 font-black text-white transition-colors hover:bg-[#0a5148] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0f695c]"
+                  >
+                    Đăng nhập để chốt đơn
+                  </Link>
+                )}
+                {m.role === "assistant" &&
+                  m.nextAction === "checkout" &&
+                  m.checkout && (
+                    <button
+                      type="button"
+                      disabled={checkoutBusy}
+                      onClick={() => void createCheckout(m.checkout!)}
+                      className="mt-4 inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#0f695c] px-4 py-2 font-black text-white transition-colors hover:bg-[#0a5148] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0f695c] disabled:opacity-50"
+                    >
+                      {checkoutBusy ? (
+                        <LoaderCircle aria-hidden="true" className="animate-spin" size={16} />
+                      ) : (
+                        <CreditCard aria-hidden="true" size={16} />
+                      )}
+                      {checkoutBusy ? "Đang tạo hóa đơn…" : "Chốt & mở thanh toán"}
+                    </button>
+                  )}
                 {m.role === "assistant" &&
                   m.content &&
                   m.sources &&

@@ -58,21 +58,22 @@ phương án → dựng website mẫu → gửi yêu cầu mua → theo dõi đ�
 
 | Bề mặt                 | Chức năng chính                                                                                                                                                                             | Điểm kỹ thuật nổi bật                                                                                                        |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| **Website khách hàng** | Catalog dịch vụ, wizard tư vấn, so sánh top 3, trợ lý AI có nguồn, gợi ý tên miền, Website Studio, launch readiness, chấm SEO/AI visibility, tài khoản, voucher, yêu cầu mua và tra cứu đơn | Next.js App Router, Server Components, structured metadata, JSON-LD, sitemap, `llms.txt`, responsive desktop/mobile          |
-| **Ứng dụng Android**   | Trang chủ, danh mục, chọn gói, chat AI, đính kèm ảnh/tài liệu, Website Studio, SEO analyzer, readiness, kiến thức, tài khoản, đơn hàng và hồ sơ giám khảo                                   | Expo Router, React Native, cinematic cold-start 12,4 giây, Skia shader, Reanimated, haptic, SecureStore, APK universal 4 ABI |
-| **Web quản trị**       | Dashboard doanh thu, catalog CRUD, hộp thư hội thoại AI, phản hồi người thật, yêu cầu mua, hóa đơn, đối soát, hủy và hoàn tiền                                                              | OTP email, session HMAC, Recharts, dự báo số học tất định, phân quyền route và dữ liệu SQLite                                |
-| **Backend dùng chung** | AI/RAG, account memory, ingestion nguồn riêng, catalog, thanh toán, email, analytics và Website Studio                                                                                      | Route handlers TypeScript, Zod, Node SQLite, Ollama loopback, Stripe/VNPay sandbox, Nodemailer/Mailpit                       |
+| **Website khách hàng** | Catalog dịch vụ, wizard tư vấn, so sánh top 3, tồn kho theo gói, trợ lý AI có nguồn, gợi ý tên miền, Website Studio, launch readiness, chấm SEO/AI visibility, tài khoản, voucher, yêu cầu mua và tra cứu đơn | Next.js App Router, Server Components, structured metadata, JSON-LD, sitemap, `llms.txt`, responsive desktop/mobile          |
+| **Ứng dụng Android**   | Trang chủ, danh mục, chọn gói, chat AI nhớ hồ sơ/đơn/website, checkout ngay trong chat, tồn kho, Website Studio, SEO analyzer, tài khoản, đơn hàng và hồ sơ giám khảo                              | Expo Router, React Native, cinematic cold-start 12,4 giây, Skia shader, Reanimated, haptic, SecureStore, APK universal 4 ABI |
+| **Web quản trị**       | Dashboard donut/doanh thu/bar/treemap, kiểm soát số suất từng gói, catalog CRUD, hộp thư AI, yêu cầu mua, tạo hóa đơn, đối soát, hủy và hoàn tiền                                               | OTP email, session HMAC, Recharts, dự báo số học tất định, phân quyền route và dữ liệu SQLite                                |
+| **Backend dùng chung** | AI/RAG, account memory, ingestion nguồn riêng, catalog, tồn kho, thanh toán, email, analytics và Website Studio                                                                             | Route handlers TypeScript, Zod, Node SQLite, giao dịch tồn kho idempotent, Ollama loopback, Stripe/VNPay sandbox, Nodemailer |
 
 ### Luồng trải nghiệm end-to-end
 
 1. Khách mô tả nhu cầu tự nhiên hoặc điền wizard bốn bước.
 2. Qwen trích xuất dữ kiện có cấu trúc; Zod từ chối output sai schema.
-3. Engine tất định lọc catalog, tính tiền trả trước, kiểm tra ngân sách và xếp
-   tối đa ba phương án.
+3. Engine tất định lọc catalog và tồn kho, tính tiền trả trước, kiểm tra ngân
+   sách rồi xếp tối đa ba phương án.
 4. Trợ lý giải thích bằng tiếng Việt, đính nguồn và nêu rõ điều chưa xác minh.
 5. Khách có thể dùng Website Studio để tạo bản xem trước và tải website mẫu.
-6. Khách gửi yêu cầu mua; hệ thống tạo hóa đơn demo/sandbox và theo dõi toàn bộ
-   vòng đời đơn hàng.
+6. Khách chọn gói ngay trong đề xuất hoặc hội thoại, tạo hóa đơn và thanh toán
+   demo/sandbox không bị đẩy về danh mục. Chỉ thanh toán thành công mới trừ một
+   suất; hoàn tiền hoàn tất trả lại suất và mỗi giao dịch được chống ghi hai lần.
 7. Trợ lý tiếp tục giải thích phần có căn cứ khi câu hỏi khó hoặc thiếu dữ kiện;
    với tài khoản đã đăng nhập, trợ lý đọc website Studio, hồ sơ đã gửi và trạng
    thái đơn hiện tại để tư vấn tiếp, phân biệt yêu cầu mới với gói đã thanh toán;
@@ -242,26 +243,27 @@ thứ hạng cuộc thi.
 
 | Nội dung                         | Liên kết                                                                                                                                   | Trạng thái                                                         |
 | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------ |
-| Web khách hàng                   | [Mở HOSTORA](https://admin123-system-product-name.tailfeea7a.ts.net:8443/)                                                                 | HTTPS ổn định qua Tailscale Funnel, kiểm tra 05/11/2026            |
+| Web khách hàng                   | [Mở HOSTORA](https://admin123-system-product-name.tailfeea7a.ts.net:8443/)                                                                 | HTTPS cố định qua Tailscale Funnel, kiểm tra 07/11/2026            |
 | Web quản trị                     | [Mở trang admin](https://admin123-system-product-name.tailfeea7a.ts.net:8443/admin)                                                        | Chuyển tới cổng đăng nhập admin                                    |
 | Hộp thư AI của admin             | [Mở hộp thư hỗ trợ](https://admin123-system-product-name.tailfeea7a.ts.net:8443/admin/support)                                             | Cần phiên quản trị hợp lệ                                          |
 | Chấm SEO + AI visibility         | [Mở công cụ kiểm tra](https://admin123-system-product-name.tailfeea7a.ts.net:8443/website-analyzer)                                        | Tách điểm Google, AI crawler và kế hoạch sửa tất định              |
-| APK Android mới nhất             | [Tải HOSTORA AI 2.2.5 universal](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/download/v2.2.5/HOSTORA-AI-2.2.5-universal.apk)     | Android 7.0+, 4 ABI, package `com.hostora.ai`                      |
-| Link APK tương thích biểu mẫu cũ | [Tải qua tên `arm64.apk`](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/download/v2.2.5/HOSTORA-AI-2.2.5-arm64.apk)                | Cùng binary universal; không phải bản chỉ có ARM64                 |
-| SHA-256 APK                      | [Tải checksum](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/download/v2.2.5/HOSTORA-AI-2.2.5-universal.apk.sha256)                | Kiểm tra checksum sau khi tải                                      |
+| APK Android mới nhất             | [Tải HOSTORA AI 2.2.6 universal](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/download/v2.2.6/HOSTORA-AI-2.2.6-universal.apk)     | Android 7.0+, 4 ABI, package `com.hostora.ai`                      |
+| Link APK tương thích biểu mẫu cũ | [Tải qua tên `arm64.apk`](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/download/v2.2.6/HOSTORA-AI-2.2.6-arm64.apk)                | Cùng binary universal; không phải bản chỉ có ARM64                 |
+| SHA-256 APK                      | [Tải checksum](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/download/v2.2.6/HOSTORA-AI-2.2.6-universal.apk.sha256)                | `91220925…41667c3f`; đối chiếu file checksum đầy đủ                |
 | Web tĩnh “Kiểm thử”              | [Mở báo cáo 20 ca](https://minhnhatdepzai.github.io/HOSTORA-AI/)                                                                           | GitHub Pages tự deploy bằng GitHub Actions                         |
-| Source ZIP mới nhất              | [Tải Source ZIP](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/download/v2.2.5/HOSTORA-source-2.2.5-2026-11-06.zip)                | Web, admin, app, README, tài liệu, training source và cấu hình mẫu |
-| Adapter fine-tuning              | [Tải gói fine-tuning 2.2.5](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/download/v2.2.5/HOSTORA-finetuning-2.2.5-2026-11-06.zip) | Hai LoRA adapter candidate và bằng chứng; không nhân bản base model |
+| Source ZIP mới nhất              | [Tải Source ZIP](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/download/v2.2.6/HOSTORA-source-2.2.6-2026-11-07.zip)                | Web, admin, app, README, tài liệu, training source và cấu hình mẫu |
+| Adapter fine-tuning              | [Tải gói fine-tuning 2.2.6](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/download/v2.2.6/HOSTORA-finetuning-2.2.6-2026-11-07.zip) | Hai LoRA adapter candidate và bằng chứng; không nhân bản base model |
 | Source                           | [GitHub repository](https://github.com/minhnhatdepzai/HOSTORA-AI)                                                                          | Nhánh `main`                                                       |
 
 > URL `*.ts.net:8443` là hostname HTTPS cố định của Tailscale Funnel và không cần mua tên miền. HOSTORA production cùng Funnel tự chạy lại trên máy demo; máy tắt hoặc mất mạng thì website vẫn offline. Link APK trên GitHub Release hoạt động độc lập với máy demo.
 
-## Trạng thái bản 2.2.5
+## Trạng thái bản 2.2.6
 
-- Source cuối: typecheck, lint, **339/339** unit/API test và production build đạt; Ollama local qua `pnpm ai:check` đạt.
-- Browser production cách ly: **57 ca đạt, 1 ca mobile CRUD bỏ qua có chủ đích**; audit 12 màn desktop/mobile không báo lỗi tự động.
-- APK universal `versionCode 28`: đủ bốn ABI, cài đè trên Android Emulator và giữ preset backend `http://10.0.2.2:3200`.
-- [Báo cáo ca khó Android ảo](docs/submission/CHAT_ADVISOR_HARD_CASES_2026-11-05.md) ghi cả ca lỗi đã tìm được và kết quả sửa, kèm ảnh trực tiếp. Maestro driver chưa khởi động trên emulator; Mobile MCP/ADB được dùng để nghiệm thu native.
+- Source cuối: typecheck, lint, **350/350** unit/API test và production build đạt; Ollama local qua `pnpm ai:check` đạt với đúng model runtime.
+- Browser production cách ly: **60 ca đạt, 2 ca mobile bỏ qua có chủ đích**; audit 12 tổ hợp desktop/mobile có 0 lỗi accessibility tự động và 0 page error.
+- APK universal `versionCode 29`, 165.342.928 byte: đủ `arm64-v8a`, `armeabi-v7a`, `x86`, `x86_64`. Bản x86_64 đã cài đè lên Android Emulator 16 bằng `adb install -r`, giữ phiên, lịch sử và website.
+- Native 2.2.6 đã kiểm tra trực tiếp: composer nằm trên bàn phím, không còn banner nổi toàn app, gợi ý hiển thị số suất, chatbot đọc hồ sơ/website/đơn, lịch sử chat còn nguyên và nút website mở đúng bản đã tạo trong Chrome.
+- Admin live dùng cùng backend đã render donut tổng đơn, doanh thu 30 ngày, bar theo gói, treemap, bảng fallback và điều khiển tăng/giảm/đặt hết hàng; không có console error trong lượt kiểm tra 07/11/2026.
 
 ### Snapshot lịch sử 2.2.2
 
@@ -290,7 +292,7 @@ bên dưới.
 
 ### Bước 1 — tải và giải nén Source ZIP
 
-1. Tải [HOSTORA Source ZIP mới nhất](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/download/v2.2.5/HOSTORA-source-2.2.5-2026-11-06.zip).
+1. Tải [HOSTORA Source ZIP mới nhất](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/download/v2.2.6/HOSTORA-source-2.2.6-2026-11-07.zip).
 2. Windows: bấm chuột phải file ZIP → **Extract All / Giải nén tất cả**.
 3. macOS: bấm đúp file ZIP. Linux: dùng trình quản lý file và chọn **Extract**.
 4. Mở thư mục vừa giải nén. Đúng thư mục project sẽ nhìn thấy `README.md`,
@@ -385,7 +387,7 @@ và toàn bộ dữ liệu runtime, khiến lần sau phải tải/tạo lại t
 
 ### Kết nối app Android với backend Docker
 
-1. Cài [APK universal 2.2.5](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/download/v2.2.5/HOSTORA-AI-2.2.5-universal.apk).
+1. Cài [APK universal 2.2.6](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/download/v2.2.6/HOSTORA-AI-2.2.6-universal.apk).
 2. Điện thoại thật cùng Wi-Fi: trong app mở **Công cụ → Kết nối local AI**, nhập
    `http://<IP-LAN-của-máy-tính>:3000`, lưu và kiểm tra kết nối.
 3. Android Emulator trên cùng máy: nhập thủ công `http://10.0.2.2:3000`.
@@ -468,10 +470,10 @@ Xem [hướng dẫn Docker](docs/DOCKER_DEPLOYMENT.md).
 Tải APK universal ở bảng “Truy cập nhanh”, sau đó mở trên điện thoại Android 7.0 trở lên hoặc cài bằng ADB. File chứa `arm64-v8a`, `armeabi-v7a`, `x86` và `x86_64`, vì vậy dùng được cho điện thoại ARM 32/64-bit và máy ảo Android tương ứng:
 
 ```bash
-adb install -r HOSTORA-AI-2.2.5-universal.apk
+adb install -r HOSTORA-AI-2.2.6-universal.apk
 ```
 
-`-r` cài đè và giữ dữ liệu app. Android 6 trở xuống không được Expo 58/React Native 0.88 hỗ trợ; cần một ứng dụng legacy riêng nếu buộc phải chạy trên các máy đó. APK 2.2.5 hiện dùng chữ ký debug cục bộ để chấm vòng loại, chưa phải bản ký production cho Google Play.
+`-r` cài đè và giữ dữ liệu app. Android 6 trở xuống không được Expo 58/React Native 0.88 hỗ trợ; cần một ứng dụng legacy riêng nếu buộc phải chạy trên các máy đó. APK 2.2.6 hiện dùng chữ ký debug cục bộ để chấm vòng loại, chưa phải bản ký production cho Google Play.
 
 ### Chạy app với backend qua USB
 
@@ -548,19 +550,19 @@ Các tài liệu dành cho vòng loại:
 
 HTTP 200, browser mobile viewport hoặc APK build thành công không thay thế kiểm thử luồng thật. Bằng chứng Android phải đến từ APK cài trên thiết bị; ca sự cố mô phỏng phải được ghi rõ là mô phỏng.
 
-> **Bản đang nghiệm thu:** source và APK universal 2.2.5 được cài đè trên Android Emulator, giữ dữ liệu và kiểm tra thông báo có nút đóng, chat đọc website/hồ sơ/đơn theo tài khoản. Các ca Android 2.2.4 và 2.2.3 là bằng chứng lịch sử riêng.
+> **Bản đang nghiệm thu:** source và APK universal 2.2.6. Bản x86_64 cùng source đã được cài đè trên Android Emulator, giữ dữ liệu và kiểm tra trực tiếp tồn kho, chat theo tài khoản, lịch sử, bàn phím/composer và link website. Các ca Android 2.2.4 và 2.2.3 là bằng chứng lịch sử riêng.
 
 ## Gói nộp vòng loại
 
 HOSTORA là **một project duy nhất**: website khách hàng, web admin, Android và training source nằm chung một repository. Không cần nộp ba project rời. Bộ hồ sơ nên gồm:
 
-1. `HOSTORA-source-2.2.5-2026-11-06.zip` — file bắt buộc để giám khảo tải và chạy; chứa README, web/admin, app source, cinematic source/assets, bảng 20 ca, test, training source/data/config và cấu hình mẫu. Không chứa secret, database thật hoặc model nền nhiều GB.
-2. `HOSTORA-AI-2.2.5-universal.apk` — artifact cài nhanh trên Android 7.0+, kèm file `.sha256`. Tên `arm64.apk` trong release là alias của cùng APK universal để giữ tương thích với biểu mẫu cũ.
-3. `HOSTORA-finetuning-2.2.5-2026-11-06.zip` — tài liệu bổ sung, chứa adapter `chatbot-v8` và `studio-v3`, tokenizer/config, manifest, đánh giá và trạng thái train. Đây là candidate để tái lập/đánh giá; `promotion.json` là nguồn xác nhận trạng thái, không được hiểu là model đang chạy production.
+1. `HOSTORA-source-2.2.6-2026-11-07.zip` — file bắt buộc để giám khảo tải và chạy; chứa README, web/admin, app source, cinematic source/assets, bảng 20 ca, test, training source/data/config và cấu hình mẫu. Không chứa secret, database thật hoặc model nền nhiều GB.
+2. `HOSTORA-AI-2.2.6-universal.apk` — artifact cài nhanh trên Android 7.0+, kèm file `.sha256`. Tên `arm64.apk` trong release là alias của cùng APK universal để giữ tương thích với biểu mẫu cũ.
+3. `HOSTORA-finetuning-2.2.6-2026-11-07.zip` — tài liệu bổ sung, chứa adapter `chatbot-v8` và `studio-v3`, tokenizer/config, manifest, đánh giá và trạng thái train. Đây là candidate để tái lập/đánh giá; `promotion.json` là nguồn xác nhận trạng thái, không được hiểu là model đang chạy production.
 4. Video demo tối đa 02 phút — nộp link riêng trên cổng thi; mở trực tiếp APK/web và thể hiện đủ 05 tính năng.
 
 Các file checksum trong GitHub Release dùng để kiểm tra đúng artifact sau khi tải. Base model `unsloth/Qwen3.5-4B` không được sao chép vào gói fine-tuning; người chạy tải base model theo tài liệu rồi gắn LoRA adapter.
-Hồ sơ mới dùng đúng hai gói ngày `2026-11-05` trong bảng “Truy cập nhanh”; các
+Hồ sơ mới dùng đúng hai gói ngày `2026-11-07` trong bảng “Truy cập nhanh”; các
 gói ngày cũ chỉ giữ để đối chiếu lịch sử và không nên nộp nhầm.
 
 ## Giới hạn hiện tại

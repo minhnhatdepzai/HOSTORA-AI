@@ -5,9 +5,12 @@ import { clearCustomerSessionToken, readCustomerSessionToken, saveCustomerSessio
 export type MobileCustomer = { id: string; email: string; name: string; createdAt: string; updatedAt: string };
 export type MobileVoucher = { code: string; amountVnd: number; minOrderVnd: number; status: "active" | "redeemed" | "revoked"; expiresAt: string; issuedInvoiceId: string; redeemedInvoiceId: string | null };
 export type MobileOrder = { id: string; title: string; amountVnd: number; status: "pending" | "cancel_requested" | "paid" | "refund_requested" | "refund_pending" | "refunded" | "cancelled"; updatedAt: string };
+export type MobilePurchaseRequest = { id: string; productName: string; provider: string; status: "new" | "invoiced" | "declined" | "cancelled"; invoiceId: string | null; createdAt: string; profile: { websiteGoal: string; targetCustomers: string } };
+export type MobileStudioProject = { id: string; brand: string; headline: string; goal: "sell" | "book" | "showcase" | "contact"; generationMode: "local-ai" | "template-fallback"; updatedAt: string; url: string };
+export type MobileChatSummary = { conversationId: string | null; messageCount: number; latestMessageAt: string | null; latestPreview: string | null };
 export type MobileSupportCase = { id: string; subject: string; category: "order" | "payment" | "refund" | "website" | "account" | "other"; message: string; status: "new" | "in_progress" | "resolved"; createdAt: string };
 
-type AccountSnapshot = { customer: MobileCustomer | null; vouchers: MobileVoucher[]; orders: MobileOrder[]; supportCases: MobileSupportCase[] };
+type AccountSnapshot = { customer: MobileCustomer | null; vouchers: MobileVoucher[]; orders: MobileOrder[]; purchaseRequests: MobilePurchaseRequest[]; studioProjects: MobileStudioProject[]; chat: MobileChatSummary; supportCases: MobileSupportCase[] };
 type CustomerAuthState = AccountSnapshot & {
   hydrated: boolean;
   login: (email: string, password: string) => Promise<void>;
@@ -17,7 +20,7 @@ type CustomerAuthState = AccountSnapshot & {
   createSupportCase: (input: { subject: string; category: MobileSupportCase["category"]; message: string }) => Promise<MobileSupportCase>;
 };
 
-const empty: AccountSnapshot = { customer: null, vouchers: [], orders: [], supportCases: [] };
+const empty: AccountSnapshot = { customer: null, vouchers: [], orders: [], purchaseRequests: [], studioProjects: [], chat: { conversationId: null, messageCount: 0, latestMessageAt: null, latestPreview: null }, supportCases: [] };
 const CustomerAuthContext = createContext<CustomerAuthState | null>(null);
 
 export function CustomerAuthProvider({ children }: PropsWithChildren) {

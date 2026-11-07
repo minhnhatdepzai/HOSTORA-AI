@@ -455,6 +455,7 @@ export function AdminOrders() {
           requestId: request.id,
           amountVnd: Number(quoteAmounts[request.id]),
           description: quoteDescriptions[request.id],
+          repeatPurchase: request.status === "invoiced",
         }),
       });
       const data = await response.json();
@@ -462,7 +463,9 @@ export function AdminOrders() {
         throw new Error(data.error || "Không tạo được hóa đơn.");
       setCreated(data as CreatedInvoice);
       setMessage(
-        `Đã tạo hóa đơn cho ${request.productName}; email xác nhận đang được gửi tới khách.`,
+        request.status === "invoiced"
+          ? `Đã tạo đơn mua thêm cho ${request.productName}; email hóa đơn mới đang được gửi tới khách.`
+          : `Đã tạo hóa đơn cho ${request.productName}; email xác nhận đang được gửi tới khách.`,
       );
       await Promise.all([loadRequests(), loadOrders()]);
     } catch (error) {
@@ -556,7 +559,7 @@ export function AdminOrders() {
           </div>
         )}
 
-        {!configured ? (
+        {!configured && !authenticated ? (
           <section className="admin-access-card">
             <span className="admin-access-icon">
               <ShieldCheck size={22} />
@@ -1270,7 +1273,7 @@ export function AdminOrders() {
                             <strong>Hóa đơn:</strong> {request.invoiceId}
                           </p>
                         )}
-                        {request.status === "new" && (
+                        {(request.status === "new" || request.status === "invoiced") && (
                           <div className="admin-quote-form">
                             <input
                               aria-label={`Tổng tiền đơn ${request.id}`}
@@ -1304,11 +1307,13 @@ export function AdminOrders() {
                               disabled={
                                 Boolean(busy) ||
                                 Number(quoteAmounts[request.id]) < 5000 ||
-                                !(quoteDescriptions[request.id] ?? "").trim()
+                                (quoteDescriptions[request.id] ?? "").trim().length < 5
                               }
                               onClick={() => void createRequestInvoice(request)}
                             >
-                              Xác nhận giá & gửi hóa đơn
+                              {request.status === "invoiced"
+                                ? "Tạo hóa đơn mua thêm"
+                                : "Xác nhận giá & gửi hóa đơn"}
                             </button>
                           </div>
                         )}

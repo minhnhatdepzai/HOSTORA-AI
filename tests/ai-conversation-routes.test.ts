@@ -1,7 +1,5 @@
 import { beforeAll, describe, expect, it } from "vitest";
-import {
-  GET as getConversation,
-} from "@/app/api/ai/conversations/[id]/route";
+import { GET as getConversation } from "@/app/api/ai/conversations/[id]/route";
 import {
   GET as listAdminConversations,
   PATCH as replyToAdminConversation,
@@ -59,7 +57,9 @@ describe("AI conversation inbox routes", () => {
     await expect(accepted.json()).resolves.toMatchObject({
       conversation: {
         id: conversationId,
-        messages: [{ role: "user", content: "Câu hỏi đã được ẩn thông tin liên hệ." }],
+        messages: [
+          { role: "user", content: "Câu hỏi đã được ẩn thông tin liên hệ." },
+        ],
       },
     });
   });
@@ -92,8 +92,24 @@ describe("AI conversation inbox routes", () => {
     expect(listed.status).toBe(200);
     const listBody = (await listed.json()) as {
       conversations: Array<{ id: string }>;
+      pagination: { page: number; pageSize: number; total: number };
     };
-    expect(listBody.conversations.some((item) => item.id === conversationId)).toBe(true);
+    expect(
+      listBody.conversations.some((item) => item.id === conversationId),
+    ).toBe(true);
+    expect(listBody.pagination).toMatchObject({ page: 1, pageSize: 10 });
+
+    const searched = await listAdminConversations(
+      new Request(
+        `${origin}/api/admin/ai-conversations?q=${encodeURIComponent("Quản trị viên có thể")}&page=1&limit=5`,
+        { headers: { cookie } },
+      ),
+    );
+    expect(searched.status).toBe(200);
+    await expect(searched.json()).resolves.toMatchObject({
+      conversations: [{ id: conversationId }],
+      pagination: { page: 1, pageSize: 5, total: 1 },
+    });
 
     const crossOrigin = await replyToAdminConversation(
       new Request(`${origin}/api/admin/ai-conversations`, {

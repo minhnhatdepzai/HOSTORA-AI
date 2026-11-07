@@ -27,6 +27,11 @@ type BackendPlan = {
   total: number;
   reasons: string[];
   cautions: string[];
+  inventory: {
+    quantity: number;
+    lowStockThreshold: number;
+    status: "available" | "low" | "sold_out";
+  } | null;
 };
 
 export type RecommendedPlan = {
@@ -50,6 +55,7 @@ export type RecommendedPlan = {
   caution: string;
   sourceUrl: string | null;
   verifiedAt: string | null;
+  inventory: BackendPlan["inventory"];
 };
 
 export function useRecommendedPlans(requirements: Requirements) {
@@ -75,7 +81,7 @@ export function useRecommendedPlans(requirements: Requirements) {
           key,
           status: "verified",
           plans: response.recommendations.map(
-            ({ plan, total, reasons, cautions, eligibility, upfrontVnd }) => ({
+            ({ plan, total, reasons, cautions, eligibility, upfrontVnd, inventory }) => ({
               eligibility,
               upfrontVnd,
               id: plan.id,
@@ -112,6 +118,7 @@ export function useRecommendedPlans(requirements: Requirements) {
                 "Xác nhận tổng tiền và điều khoản trước khi thanh toán.",
               sourceUrl: plan.sourceUrl,
               verifiedAt: plan.verifiedAt,
+              inventory,
             }),
           ),
         });

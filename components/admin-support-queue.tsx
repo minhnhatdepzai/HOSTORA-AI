@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -47,10 +47,22 @@ const escalationLabels: Record<AiEscalationReason, string> = {
 };
 const refreshErrorMessage =
   "Chưa tải được hộp thư hỗ trợ. Dữ liệu đang hiển thị vẫn được giữ.";
+const emptyConversationPagination = {
+  page: 1,
+  pageSize: 10,
+  total: 0,
+  totalPages: 1,
+  allTotal: 0,
+  escalatedTotal: 0,
+};
 
 export function AdminSupportQueue() {
   const [cases, setCases] = useState<AdminCustomerSupportCase[]>([]);
   const [conversations, setConversations] = useState<AdminAiConversation[]>([]);
+  const [conversationPage, setConversationPage] = useState(1);
+  const [conversationPagination, setConversationPagination] = useState(
+    emptyConversationPagination,
+  );
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<CustomerSupportCase["status"] | "all">(
     "all",
@@ -60,34 +72,67 @@ export function AdminSupportQueue() {
   const [loading, setLoading] = useState(true);
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
 
+  const loadConversations = useCallback(
+    async (nextQuery: string, nextPage: number) => {
+      const params = new URLSearchParams({
+        q: nextQuery.trim(),
+        page: String(nextPage),
+        limit: "10",
+      });
+      const response = await fetch(`/api/admin/ai-conversations?${params}`, {
+        cache: "no-store",
+      });
+      if (!response.ok) throw new Error("Chưa tải được hội thoại AI.");
+      const ai = (await response.json()) as {
+        conversations: AdminAiConversation[];
+        pagination: typeof emptyConversationPagination;
+      };
+      setConversations(ai.conversations);
+      setConversationPagination(ai.pagination);
+      if (ai.pagination.page !== nextPage)
+        setConversationPage(ai.pagination.page);
+    },
+    [],
+  );
+
+  const loadSupportCases = useCallback(async () => {
+    const response = await fetch("/api/admin/support", { cache: "no-store" });
+    if (!response.ok) throw new Error("Chưa tải được hộp thư hỗ trợ.");
+    const support = (await response.json()) as {
+      cases: AdminCustomerSupportCase[];
+    };
+    setCases(support.cases);
+  }, []);
+
   async function refresh() {
     setLoading(true);
     try {
-      const [supportResponse, conversationResponse] = await Promise.all([
-        fetch("/api/admin/support", { cache: "no-store" }),
-        fetch("/api/admin/ai-conversations", { cache: "no-store" }),
+      await Promise.all([
+        loadSupportCases(),
+        loadConversations(query, conversationPage),
       ]);
-      if (!supportResponse.ok || !conversationResponse.ok)
-        throw new Error("Chưa tải được hộp thư hỗ trợ.");
-      const support = (await supportResponse.json()) as {
-        cases: AdminCustomerSupportCase[];
-      };
-      const ai = (await conversationResponse.json()) as {
-        conversations: AdminAiConversation[];
-      };
-      setCases(support.cases);
-      setConversations(ai.conversations);
     } finally {
       setLoading(false);
     }
   }
   useEffect(() => {
     const timer = window.setTimeout(
-      () => void refresh().catch(() => setMessage(refreshErrorMessage)),
+      () =>
+        void loadSupportCases().catch(() => setMessage(refreshErrorMessage)),
       0,
     );
     return () => window.clearTimeout(timer);
-  }, []);
+  }, [loadSupportCases]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setLoading(true);
+      void loadConversations(query, conversationPage)
+        .catch(() => setMessage(refreshErrorMessage))
+        .finally(() => setLoading(false));
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [query, conversationPage, loadConversations]);
 
   const visible = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase("vi");
@@ -105,19 +150,7 @@ export function AdminSupportQueue() {
     );
   }, [cases, query, status]);
 
-  const visibleConversations = useMemo(() => {
-    const needle = query.trim().toLocaleLowerCase("vi");
-    return conversations.filter(
-      (item) =>
-        !needle ||
-        [
-          item.id,
-          item.customerName,
-          item.customerEmail ?? "",
-          ...item.messages.map((message) => message.content),
-        ].some((value) => value.toLocaleLowerCase("vi").includes(needle)),
-    );
-  }, [conversations, query]);
+  const visibleConversations = conversations;
 
   async function update(id: string, nextStatus: CustomerSupportCase["status"]) {
     setBusy(id);
@@ -210,7 +243,10 @@ export function AdminSupportQueue() {
           <input
             aria-label="Tìm yêu cầu hỗ trợ"
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) => {
+              setQuery(event.target.value);
+              setConversationPage(1);
+            }}
             placeholder="Mã, email, chủ đề hoặc nội dung…"
           />
         </label>
@@ -244,16 +280,11 @@ export function AdminSupportQueue() {
           <dl>
             <div>
               <dt>Chờ trả lời</dt>
-              <dd>
-                {
-                  conversations.filter((item) => item.status === "escalated")
-                    .length
-                }
-              </dd>
+              <dd>{conversationPagination.escalatedTotal}</dd>
             </div>
             <div>
               <dt>Tổng hội thoại</dt>
-              <dd>{conversations.length}</dd>
+              <dd>{conversationPagination.allTotal}</dd>
             </div>
           </dl>
         </div>
@@ -363,6 +394,39 @@ export function AdminSupportQueue() {
                 </footer>
               </article>
             ))}
+            <nav
+              className="admin-ai-pagination"
+              aria-label="Phân trang hội thoại AI"
+            >
+              <p>
+                Trang {conversationPagination.page} /{" "}
+                {conversationPagination.totalPages}
+                {query.trim()
+                  ? ` · ${conversationPagination.total} kết quả`
+                  : ""}
+              </p>
+              <div>
+                <button
+                  type="button"
+                  disabled={conversationPagination.page <= 1 || loading}
+                  onClick={() =>
+                    setConversationPage((current) => Math.max(1, current - 1))
+                  }
+                >
+                  Trang trước
+                </button>
+                <button
+                  type="button"
+                  disabled={
+                    conversationPagination.page >=
+                      conversationPagination.totalPages || loading
+                  }
+                  onClick={() => setConversationPage((current) => current + 1)}
+                >
+                  Trang sau
+                </button>
+              </div>
+            </nav>
           </div>
         ) : (
           <div className="admin-ai-empty">

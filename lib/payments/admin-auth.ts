@@ -82,15 +82,12 @@ export function sameOrigin(request: Request): boolean {
   try {
     const parsed = new URL(origin);
     const requestUrl = new URL(request.url);
-    const canonical = process.env.HOSTORA_PUBLIC_BASE_URL
-      ? new URL(process.env.HOSTORA_PUBLIC_BASE_URL)
-      : null;
-    if (canonical)
-      return (
-        parsed.origin === canonical.origin &&
-        !parsed.username &&
-        !parsed.password
-      );
+    if (
+      parsed.origin === requestUrl.origin &&
+      !parsed.username &&
+      !parsed.password
+    )
+      return true;
     const host = request.headers.get("host") ?? requestUrl.host;
     const trustedProxy =
       process.env.HOSTORA_TRUST_CLOUDFLARE_PROXY === "true" ||
@@ -99,7 +96,22 @@ export function sameOrigin(request: Request): boolean {
       ? request.headers.get("x-forwarded-proto") ??
         requestUrl.protocol.replace(":", "")
       : requestUrl.protocol.replace(":", "");
-    return parsed.host === host && parsed.protocol === `${protocol}:` && !parsed.username && !parsed.password;
+    if (
+      parsed.host === host &&
+      parsed.protocol === `${protocol}:` &&
+      !parsed.username &&
+      !parsed.password
+    )
+      return true;
+    const canonical = process.env.HOSTORA_PUBLIC_BASE_URL
+      ? new URL(process.env.HOSTORA_PUBLIC_BASE_URL)
+      : null;
+    return Boolean(
+      canonical &&
+        parsed.origin === canonical.origin &&
+        !parsed.username &&
+        !parsed.password,
+    );
   } catch {
     return false;
   }

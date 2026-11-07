@@ -115,7 +115,8 @@ export function customerAdviceContext(
 ) {
   const profile = requests[0]?.profile;
   return {
-    orders: orders.slice(0, 3).map((order) => ({
+    orders: orders.slice(0, 10).map((order) => ({
+      invoiceId: order.id,
       service: (() => {
         const matchingRequest = requests.find((request) => request.invoiceId === order.id);
         return matchingRequest
@@ -123,18 +124,27 @@ export function customerAdviceContext(
           : "Dịch vụ HOSTORA";
       })(),
       status: order.status,
+      amountVnd: order.amountVnd,
+      updatedAt: order.updatedAt,
     })),
-    requests: requests.slice(0, 3).map((request) => ({
+    requests: requests.slice(0, 10).map((request) => ({
+      requestId: request.id,
       service: `${safe(request.provider)} ${safe(request.productName)}`,
       status: request.status,
+      invoiceId: request.invoiceId,
+      createdAt: request.createdAt,
     })),
-    website: projects.slice(0, 2).map((project) => ({
+    website: projects.slice(0, 10).map((project) => ({
+      projectId: project.id,
+      brand: safe(project.idea.brand, 100),
+      headline: safe(project.brief.headline, 180),
       business: project.idea.business,
       goal: project.idea.goal,
       audience: safe(project.idea.audience, 300),
       monthlyVisits: project.idea.monthlyVisits,
       monthlyBudget: project.idea.monthlyBudget,
       needsDomain: project.idea.needsDomain,
+      updatedAt: project.updatedAt,
     })),
     ...(profile ? {
       profile: {
@@ -223,9 +233,19 @@ export function profileBasedAdviceAnswer(
     : latestPaidOrder
       ? `Tài khoản có ${safe(latestPaidOrder.title, 140)} và đơn hàng này ${orderStatus[latestPaidOrder.status]}.`
       : "Mình chưa thấy yêu cầu mua gắn với hồ sơ này, nên chưa coi bất kỳ gói nào là đã mua.";
+  const projectNames = projects
+    .slice(0, 3)
+    .map((item) => safe(item.idea.brand, 60))
+    .filter(Boolean);
+  const createdWebsites = projectNames.length
+    ? projects.length === 1
+      ? `Website đã tạo trong tài khoản là ${projectNames[0]}. Hãy tiếp tục chỉnh đúng bản này thay vì khai lại nhu cầu từ đầu.`
+      : `Bạn đã tạo ${projects.length} website trong tài khoản: ${projectNames.join(", ")}${projects.length > projectNames.length ? ", và các bản khác" : ""}. Hãy chọn một bản chính để hoàn thiện nội dung và gắn tên miền; giữ các bản còn lại làm phương án so sánh.`
+    : "Tài khoản chưa có bản website trong Xưởng; sau khi chốt mục tiêu, hãy tạo một bản đầu tiên để kiểm tra nội dung và luồng liên hệ thực tế.";
 
   return [
     `Dựa trên hồ sơ hiện tại của bạn, mình thấy ${known.join(", ") || "bạn đang chuẩn bị một website mới"}${websiteGoal ? `; mục tiêu website là ${websiteGoal}` : ""}.`,
+    createdWebsites,
     `1. Ưu tiên luồng tạo khách: đưa ${mainOffer} lên phần đầu trang, sau đó dẫn thẳng ${targetCustomers} đến một hành động chính như đặt mua, đặt lịch hoặc liên hệ phù hợp với mục tiêu đã khai. Đừng chia sự chú ý vào quá nhiều nút ngang nhau.`,
     `2. Ưu tiên nội dung dễ được tìm thấy: làm một trang hoặc cụm nội dung riêng cho ${mainOffer}${serviceArea ? ` tại ${serviceArea}` : ""}${seoGoals ? `, bám sát mục tiêu SEO “${seoGoals}”` : ""}. Nội dung cần trả lời vấn đề của khách, quy trình, phạm vi phục vụ và cách liên hệ trước khi viết nhiều bài rời rạc.`,
     `3. Ưu tiên hạ tầng và ra mắt: hồ sơ đang ở mức lưu lượng ${traffic}, ngân sách ${budget}. ${selected} Trước khi chốt, hãy đối chiếu giá kỳ đầu, giá gia hạn và thử trọn luồng liên hệ/đặt hàng ở giờ cao điểm; yêu cầu mua chưa có nghĩa là dịch vụ đã hoạt động.`,

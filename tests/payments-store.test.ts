@@ -235,6 +235,49 @@ describe("sổ đơn hàng HOSTORA", () => {
     store.close();
   });
 
+  it("không để voucher tự chọn chặn hóa đơn nhỏ và cho mua lại cùng gói", () => {
+    const store = new PaymentStore(":memory:");
+    const qualifying = store.createInvoice({
+      title: "Đơn phát voucher",
+      amountVnd: 1_200_000,
+      customerEmail: "repeat@example.com",
+    });
+    const paid = store.markPaid(
+      qualifying.id,
+      "stripe",
+      "pi_repeat_voucher",
+      1_200_000,
+      "vnd",
+    );
+    expect(paid.earnedVoucherCode).toBeTruthy();
+    const request = store.createSaleRequest({
+      productId: "hosting-repeat",
+      provider: "HOSTORA",
+      productName: "Hosting mua nhiều lần",
+      contact: "repeat@example.com",
+      profile: purchaseProfile,
+      consultationPreference: "ai",
+      consultationChannel: "email",
+      voucherCode: paid.earnedVoucherCode!,
+    });
+
+    const first = store.createInvoiceForSaleRequest(request.id, {
+      amountVnd: 300_000,
+      description: "Kỳ đầu mười hai tháng",
+    });
+    const second = store.createInvoiceForSaleRequest(request.id, {
+      amountVnd: 300_000,
+      description: "Mua thêm cho website thứ hai",
+      repeatPurchase: true,
+    });
+
+    expect(first.discountVnd).toBe(0);
+    expect(second.discountVnd).toBe(0);
+    expect(second.id).not.toBe(first.id);
+    expect(store.listInvoices()).toHaveLength(3);
+    store.close();
+  });
+
   it("lưu đầy đủ hồ sơ, lịch tư vấn và chỉ cho mã riêng hủy yêu cầu", () => {
     const store = new PaymentStore(":memory:");
     const consultationAt = new Date(
@@ -555,6 +598,74 @@ describe("sổ đơn hàng HOSTORA", () => {
     expect(analytics.current30Days).toEqual({ revenueVnd: 600_000, paidOrders: 1 });
     expect(analytics.statusMix.refunded).toBe(1);
     expect(analytics.daily.at(-1)).toMatchObject({ revenueVnd: 600_000, paidOrders: 1 });
+    store.close();
+  });
+
+  it("dùng một tồn kho cho tạo hóa đơn, thanh toán và hoàn tiền", () => {
+    const store = new PaymentStore(":memory:");
+    store.setPlanInventory("hostinger-single", 1, 1);
+    const createRequest = (email: string) => store.createSaleRequest({
+      productId: "hostinger-single",
+      provider: "Hostinger",
+      productName: "Đơn",
+      contact: email,
+      profile: purchaseProfile,
+      consultationPreference: "ai",
+      consultationChannel: "email",
+    });
+    const first = store.createInvoiceForSaleRequest(createRequest("stock-a@example.com").id, {
+      amountVnd: 955_200,
+    });
+    const second = store.createInvoiceForSaleRequest(createRequest("stock-b@example.com").id, {
+      amountVnd: 955_200,
+    });
+
+    store.markPaid(first.id, "stripe", "pi-stock-first", first.amountVnd, "vnd");
+    expect(store.getPlanInventory("hostinger-single")).toMatchObject({
+      quantity: 0,
+      status: "sold_out",
+    });
+    expect(() =>
+      store.markPaid(second.id, "stripe", "pi-stock-second", second.amountVnd, "vnd"),
+    ).toThrow("hết suất");
+    expect(store.getInvoice(second.id)?.status).toBe("pending");
+
+    store.requestRefund(first.id, first.accessCode, "Không còn phù hợp với nhu cầu");
+    store.startRefund(first.id, "re-stock-first");
+    store.markRefunded(first.id, "re-stock-first", first.amountVnd);
+    expect(store.getPlanInventory("hostinger-single")).toMatchObject({
+      quantity: 1,
+      status: "low",
+    });
+    store.close();
+  });
+
+  it("tổng hợp gói bán nhiều nhất cho biểu đồ quản trị", () => {
+    const store = new PaymentStore(":memory:");
+    const first = store.createInvoice({
+      productId: "hostinger-premium",
+      title: "Premium",
+      partnerProvider: "Hostinger",
+      saleType: "partner_service",
+      amountVnd: 1_867_200,
+    });
+    const second = store.createInvoice({
+      productId: "hostinger-premium",
+      title: "Premium",
+      partnerProvider: "Hostinger",
+      saleType: "partner_service",
+      amountVnd: 1_867_200,
+    });
+    store.markPaid(first.id, "stripe", "pi-mix-one", first.amountVnd, "vnd");
+    store.markPaid(second.id, "vnpay", "vnp-mix-two", second.amountVnd, "vnd");
+
+    expect(store.getRevenueAnalytics().productMix[0]).toMatchObject({
+      planId: "hostinger-premium",
+      provider: "Hostinger",
+      title: "Premium",
+      paidOrders: 2,
+      sharePercent: 100,
+    });
     store.close();
   });
 

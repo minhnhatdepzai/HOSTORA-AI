@@ -47,6 +47,7 @@ export type CustomerOrderSummary = {
 };
 
 export type CustomerPurchaseRequestSummary = {
+  id: string;
   productName: string;
   provider: string;
   status: "new" | "invoiced" | "declined" | "cancelled";
@@ -65,6 +66,32 @@ export type CustomerPurchaseRequestSummary = {
     estimatedTraffic: string;
     budgetRange: string;
   };
+};
+
+export type CustomerStudioProjectSummary = {
+  id: string;
+  brand: string;
+  headline: string;
+  goal: "sell" | "book" | "showcase" | "contact";
+  generationMode: "local-ai" | "template-fallback";
+  updatedAt: string;
+  url: string;
+};
+
+export type CustomerChatSummary = {
+  conversationId: string | null;
+  messageCount: number;
+  latestMessageAt: string | null;
+  latestPreview: string | null;
+};
+
+export type CustomerChatThreadSummary = {
+  conversationId: string;
+  title: string;
+  messageCount: number;
+  latestMessageAt: string;
+  latestPreview: string;
+  supportStatus: "active" | "escalated" | "answered" | "resolved";
 };
 
 export type CustomerSession = {

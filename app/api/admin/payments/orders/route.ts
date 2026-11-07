@@ -4,6 +4,7 @@ import { jsonError, noStoreJson, parseSmallJson } from "@/lib/payments/route-uti
 import { getPaymentStore } from "@/lib/payments/store";
 import { emailStatusFromEnv, notifyInvoiceCreated, scheduleOrderEmail } from "@/lib/payments/email";
 import type { InvoiceListQuery } from "@/lib/payments/types";
+import { getCustomerStore } from "@/lib/customer/store";
 
 export const runtime = "nodejs";
 
@@ -36,7 +37,11 @@ export async function GET(request: Request) {
   }).safeParse(raw);
   if (!parsed.success) return jsonError("Bộ lọc đơn hàng không hợp lệ.", 400);
   const page = getPaymentStore().listInvoicesPage(parsed.data as InvoiceListQuery);
-  return noStoreJson({ page, email: emailStatusFromEnv() });
+  return noStoreJson({
+    page,
+    email: emailStatusFromEnv(),
+    customers: getCustomerStore().countAccounts(),
+  });
 }
 
 export async function POST(request: Request) {

@@ -5,12 +5,13 @@ import * as Clipboard from "expo-clipboard";
 import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
 import { File } from "expo-file-system";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
   Linking,
+  Modal,
   Platform,
   ScrollView,
   type ScrollViewInstance,
@@ -22,6 +23,7 @@ import {
 import Markdown from "react-native-markdown-display";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Brand, CinematicScrollView, Pill } from "@/components/ui";
+import { KeyboardSafeView } from "@/components/keyboard-safe-view";
 import { colors, radii } from "@/constants/theme";
 import { deleteJson, getApiBase, getJson, postJson } from "@/lib/api";
 import { readCustomerSessionToken } from "@/lib/auth-session";
@@ -47,10 +49,30 @@ type Message = {
   content: string;
   sources?: ChatSource[];
   ragMode?: string;
-  nextAction?: "create-site" | "upload-screen";
+  nextAction?: "create-site" | "upload-screen" | "checkout" | "login";
+  checkout?: ChatCheckoutQuote;
   fromAdmin?: boolean;
 };
+type ChatCheckoutQuote = {
+  planId: string;
+  title: string;
+  amountVnd: number;
+  billingMonths: number;
+};
+type SelectedPlanInventory = {
+  planId: string;
+  quantity: number;
+  status: "available" | "low" | "sold_out";
+};
 type SupportStatus = "active" | "escalated" | "answered" | "resolved";
+type ChatThreadSummary = {
+  conversationId: string;
+  title: string;
+  messageCount: number;
+  latestMessageAt: string;
+  latestPreview: string;
+  supportStatus: SupportStatus;
+};
 // A new key keeps customer-facing copy separate from conversations created by older builds.
 const KEY = "hostora:mobile:chat:v3";
 const MEMORY_KEY = "hostora:mobile:chat-memory:v1";
@@ -76,6 +98,10 @@ function randomUuid() {
 }
 
 export default function AssistantScreen() {
+  const params = useLocalSearchParams<{
+    planId?: string;
+    planTitle?: string;
+  }>();
   const { customer, hydrated: authHydrated } = useCustomerAuth();
   const { requirements } = useApp();
   const [messages, setMessages] = useState<Message[]>([
@@ -89,6 +115,9 @@ export default function AssistantScreen() {
   const [loading, setLoading] = useState(false);
   const [imageLoading, setImageLoading] = useState(false);
   const [sourceLoading, setSourceLoading] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [selectedPlanInventory, setSelectedPlanInventory] =
+    useState<SelectedPlanInventory | null>(null);
   const [sendError, setSendError] = useState<string | null>(null);
   const [sourceCount, setSourceCount] = useState(0);
   const [memory, setMemory] = useState<MobileChatMemory | null>(null);
@@ -98,10 +127,41 @@ export default function AssistantScreen() {
   );
   const [supportStatus, setSupportStatus] = useState<SupportStatus>("active");
   const [historyLoading, setHistoryLoading] = useState(true);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [historyError, setHistoryError] = useState("");
+  const [conversations, setConversations] = useState<ChatThreadSummary[]>([]);
   const [copiedMessageIndex, setCopiedMessageIndex] = useState<number | null>(
     null,
   );
   const list = useRef<ScrollViewInstance>(null);
+  const selectedPlanId =
+    typeof params.planId === "string" ? params.planId : null;
+  const selectedPlanTitle =
+    typeof params.planTitle === "string"
+      ? params.planTitle
+      : "Gói hosting đã chọn";
+
+  useEffect(() => {
+    if (!selectedPlanId) {
+      setSelectedPlanInventory(null);
+      return;
+    }
+    let active = true;
+    void getJson<{ inventory: SelectedPlanInventory[] }>("/api/inventory")
+      .then((result) => {
+        if (active)
+          setSelectedPlanInventory(
+            result.inventory.find((item) => item.planId === selectedPlanId) ??
+              null,
+          );
+      })
+      .catch(() => {
+        if (active) setSelectedPlanInventory(null);
+      });
+    return () => {
+      active = false;
+    };
+  }, [selectedPlanId]);
 
   useEffect(() => {
     if (!authHydrated) return;
@@ -121,6 +181,7 @@ export default function AssistantScreen() {
               }[];
               memory: MobileChatMemory | null;
               supportStatus?: SupportStatus;
+              conversations?: ChatThreadSummary[];
             }>("/api/account/chat-history"),
             getJson<{ sources: { id: string }[] }>("/api/account/ai-sources"),
           ]);
@@ -129,6 +190,7 @@ export default function AssistantScreen() {
           setConversationId(history.conversationId);
           setMemory(history.memory);
           setSupportStatus(history.supportStatus ?? "active");
+          setConversations(history.conversations ?? []);
           if (history.messages.length)
             setMessages(
               history.messages.map((message) => ({
@@ -333,12 +395,21 @@ export default function AssistantScreen() {
           content: answer,
           sources: readChatSources(response.headers.get("x-hostora-sources")),
           ragMode: response.headers.get("x-hostora-rag-mode") ?? undefined,
-          nextAction: ["create-site", "upload-screen"].includes(
+          nextAction: ["create-site", "upload-screen", "checkout", "login"].includes(
             response.headers.get("x-hostora-next-action") ?? "",
           )
             ? (response.headers.get("x-hostora-next-action") as
-                "create-site" | "upload-screen")
+                "create-site" | "upload-screen" | "checkout" | "login")
             : undefined,
+          checkout: (() => {
+            const value = response.headers.get("x-hostora-checkout");
+            if (!value) return undefined;
+            try {
+              return JSON.parse(decodeURIComponent(value)) as ChatCheckoutQuote;
+            } catch {
+              return undefined;
+            }
+          })(),
         },
       ];
       setMessages(completed);
@@ -368,6 +439,125 @@ export default function AssistantScreen() {
     } finally {
       setLoading(false);
       setTimeout(() => list.current?.scrollToEnd({ animated: true }), 80);
+    }
+  }
+
+  async function createCheckout(
+    quote: Pick<ChatCheckoutQuote, "planId">,
+    recordSelection = false,
+  ) {
+    if (checkoutLoading) return;
+    if (!customer) {
+      router.push({
+        pathname: "/account-login",
+        params: {
+          next: selectedPlanId
+            ? `/assistant?planId=${encodeURIComponent(selectedPlanId)}&planTitle=${encodeURIComponent(selectedPlanTitle)}`
+            : "/assistant",
+        },
+      });
+      return;
+    }
+    setCheckoutLoading(true);
+    setSendError(null);
+    try {
+      const result = await postJson<{
+        invoice: { id: string };
+        accessCode: string;
+      }>("/api/ai/checkout", {
+        planId: quote.planId,
+        ...(conversationId ? { conversationId } : {}),
+        consultation: {
+          websiteType: requirements.websiteType,
+          monthlyVisits: requirements.monthlyVisits,
+          monthlyBudget: requirements.monthlyBudget,
+          needsDomain: requirements.needsDomain,
+          ecommerce: requirements.ecommerce,
+        },
+        ...(recordSelection ? { recordSelection: true } : {}),
+      });
+      router.push({
+        pathname: "/orders",
+        params: {
+          invoiceId: result.invoice.id,
+          accessCode: result.accessCode,
+        },
+      });
+    } catch (error) {
+      setSendError(
+        error instanceof Error
+          ? error.message
+          : "Chưa tạo được hóa đơn. Hãy thử lại.",
+      );
+    } finally {
+      setCheckoutLoading(false);
+    }
+  }
+
+  async function refreshHistory() {
+    if (!customer) {
+      Alert.alert(
+        "Đăng nhập để xem lịch sử",
+        "Lịch sử nhiều cuộc trò chuyện được lưu theo tài khoản để bạn mở lại trên các thiết bị.",
+      );
+      return;
+    }
+    setHistoryOpen(true);
+    setHistoryLoading(true);
+    setHistoryError("");
+    try {
+      const history = await getJson<{
+        conversations: ChatThreadSummary[];
+      }>("/api/account/chat-history");
+      setConversations(history.conversations ?? []);
+    } catch (error) {
+      setHistoryError(
+        error instanceof Error ? error.message : "Chưa tải được lịch sử chat.",
+      );
+    } finally {
+      setHistoryLoading(false);
+    }
+  }
+
+  async function openConversation(id: string) {
+    if (!customer) return;
+    setHistoryLoading(true);
+    setHistoryError("");
+    try {
+      const history = await getJson<{
+        conversationId: string;
+        messages: Array<{
+          role: Message["role"];
+          content: string;
+          sources?: unknown[];
+          fromAdmin?: boolean;
+        }>;
+        memory: MobileChatMemory | null;
+        supportStatus?: SupportStatus;
+        conversations?: ChatThreadSummary[];
+      }>(`/api/account/chat-history?conversationId=${encodeURIComponent(id)}`);
+      setConversationId(history.conversationId);
+      setMemory(history.memory);
+      setSupportStatus(history.supportStatus ?? "active");
+      setConversations(history.conversations ?? conversations);
+      setMessages(
+        history.messages.map((message) => ({
+          role: message.role,
+          content: message.content,
+          sources: parseChatSources(message.sources),
+          fromAdmin: message.fromAdmin,
+        })),
+      );
+      setHistoryOpen(false);
+      setTimeout(() => list.current?.scrollToEnd({ animated: false }), 80);
+    } catch (error) {
+      setHistoryError(
+        error instanceof Error
+          ? error.message
+          : "Chưa mở được cuộc trò chuyện này.",
+      );
+    } finally {
+      setHistoryLoading(false);
     }
   }
 
@@ -538,7 +728,7 @@ export default function AssistantScreen() {
     setMessages(initial);
     setInput("");
     setSendError(null);
-    setConversationId(null);
+    setConversationId(randomUuid());
     setConversationAccess(null);
     setSupportStatus("active");
     if (!customer) {
@@ -566,7 +756,7 @@ export default function AssistantScreen() {
     // bounded requirement memory. Anonymous memory remains device-local and
     // is cleared below together with the anonymous conversation.
     if (!customer) setMemory(null);
-    setConversationId(null);
+    setConversationId(randomUuid());
     setConversationAccess(null);
     setSupportStatus("active");
     setSendError(null);
@@ -649,7 +839,241 @@ export default function AssistantScreen() {
           {customer && sourceCount > 0 ? ` · ${sourceCount} nguồn của bạn` : ""}
           .
         </Text>
+        <View style={styles.chatActions}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Xem lịch sử chat"
+            onPress={() => void refreshHistory()}
+            style={({ pressed }) => [
+              styles.historyButton,
+              pressed && styles.actionPressed,
+            ]}
+          >
+            <Feather name="clock" color={colors.primary} size={16} />
+            <Text style={styles.historyButtonText}>Lịch sử chat</Text>
+            {customer && conversations.length ? (
+              <View style={styles.historyCount}>
+                <Text style={styles.historyCountText}>{conversations.length}</Text>
+              </View>
+            ) : null}
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Mở cuộc trò chuyện mới"
+            disabled={loading || imageLoading || sourceLoading}
+            onPress={() => void startNewConversation()}
+            style={({ pressed }) => [
+              styles.newChatButton,
+              pressed && styles.actionPressed,
+              (loading || imageLoading || sourceLoading) && { opacity: 0.45 },
+            ]}
+          >
+            <Feather name="plus" color="white" size={16} />
+            <Text style={styles.newChatButtonText}>Chat mới</Text>
+          </Pressable>
+        </View>
       </View>
+
+      {selectedPlanId ? (
+        <View style={styles.selectedPlan} accessibilityLabel={`Gói đang chọn ${selectedPlanTitle}`}>
+          <View style={styles.selectedPlanTop}>
+            <View style={styles.selectedPlanIcon}>
+              <Feather name="check" color={colors.primary} size={17} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.selectedPlanLabel}>GÓI BẠN VỪA CHỌN</Text>
+              <Text style={styles.selectedPlanTitle}>{selectedPlanTitle}</Text>
+            </View>
+          </View>
+          <Text style={styles.selectedPlanCopy}>
+            Hỏi sâu về gói này hoặc tạo hóa đơn ngay. Giá và kỳ hạn sẽ được
+            kiểm tra lại trên màn hình thanh toán.
+          </Text>
+          <View
+            style={[
+              styles.selectedPlanInventory,
+              selectedPlanInventory?.status === "sold_out" &&
+                styles.selectedPlanInventorySoldOut,
+            ]}
+          >
+            <Text style={styles.selectedPlanInventoryText}>
+              {selectedPlanInventory?.status === "sold_out"
+                ? "Hết hàng · chưa thể tạo hóa đơn"
+                : selectedPlanInventory
+                  ? `Còn ${selectedPlanInventory.quantity} suất bán qua HOSTORA`
+                  : "Đang đồng bộ số lượng"}
+            </Text>
+          </View>
+          <View style={styles.selectedPlanActions}>
+            <Pressable
+              accessibilityRole="button"
+              disabled={loading}
+              onPress={() =>
+                void send(
+                  `Tôi đang chọn ${selectedPlanTitle}. Hãy tư vấn ưu nhược điểm và cách dùng gói này cho hồ sơ hiện tại của tôi.`,
+                )
+              }
+              style={({ pressed }) => [
+                styles.planAdviceButton,
+                pressed && styles.actionPressed,
+                loading && { opacity: 0.45 },
+              ]}
+            >
+              <Feather name="message-circle" color={colors.primary} size={15} />
+              <Text style={styles.planAdviceText}>Tư vấn gói này</Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              disabled={
+                checkoutLoading ||
+                selectedPlanInventory?.status === "sold_out"
+              }
+              onPress={() =>
+                void createCheckout({ planId: selectedPlanId }, true)
+              }
+              style={({ pressed }) => [
+                styles.planCheckoutButton,
+                pressed && styles.actionPressed,
+                (checkoutLoading ||
+                  selectedPlanInventory?.status === "sold_out") && {
+                  opacity: 0.55,
+                },
+              ]}
+            >
+              {checkoutLoading ? (
+                <ActivityIndicator color="white" size="small" />
+              ) : (
+                <Feather name="credit-card" color="white" size={15} />
+              )}
+              <Text style={styles.planCheckoutText}>
+                {selectedPlanInventory?.status === "sold_out"
+                  ? "Hết hàng"
+                  : checkoutLoading
+                    ? "Đang tạo…"
+                    : "Thanh toán"}
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      ) : null}
+
+      <Modal
+        visible={historyOpen}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setHistoryOpen(false)}
+        statusBarTranslucent
+      >
+        <KeyboardSafeView style={styles.historyScrim}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Đóng lịch sử chat"
+            style={StyleSheet.absoluteFill}
+            onPress={() => setHistoryOpen(false)}
+          />
+          <View style={styles.historySheet}>
+            <View style={styles.historyHandle} />
+            <View style={styles.historyHeader}>
+              <View>
+                <Text style={styles.historyEyebrow}>TÀI KHOẢN CỦA BẠN</Text>
+                <Text style={styles.historyTitle}>Lịch sử chat</Text>
+              </View>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Đóng lịch sử chat"
+                hitSlop={10}
+                onPress={() => setHistoryOpen(false)}
+                style={({ pressed }) => [
+                  styles.historyClose,
+                  pressed && styles.actionPressed,
+                ]}
+              >
+                <Feather name="x" color={colors.text} size={18} />
+              </Pressable>
+            </View>
+            <Text style={styles.historyHelp}>
+              Chọn một cuộc trò chuyện để xem lại và tiếp tục từ đúng chỗ cũ.
+            </Text>
+            {historyLoading ? (
+              <View style={styles.historyState}>
+                <ActivityIndicator color={colors.primary} />
+                <Text style={styles.historyStateText}>Đang tải lịch sử…</Text>
+              </View>
+            ) : historyError ? (
+              <View style={styles.historyState}>
+                <Feather name="alert-circle" color={colors.danger} size={22} />
+                <Text style={styles.historyStateText}>{historyError}</Text>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => void refreshHistory()}
+                  style={styles.historyRetry}
+                >
+                  <Text style={styles.historyRetryText}>Thử lại</Text>
+                </Pressable>
+              </View>
+            ) : conversations.length ? (
+              <ScrollView
+                style={styles.historyList}
+                contentContainerStyle={styles.historyListContent}
+                showsVerticalScrollIndicator={false}
+              >
+                {conversations.map((thread) => {
+                  const selected = thread.conversationId === conversationId;
+                  return (
+                    <Pressable
+                      key={thread.conversationId}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected }}
+                      accessibilityLabel={`${thread.title}, ${thread.messageCount} tin nhắn`}
+                      onPress={() => void openConversation(thread.conversationId)}
+                      style={({ pressed }) => [
+                        styles.historyItem,
+                        selected && styles.historyItemSelected,
+                        pressed && styles.actionPressed,
+                      ]}
+                    >
+                      <View style={styles.historyItemTop}>
+                        <Text style={styles.historyItemTitle} numberOfLines={2}>
+                          {thread.title}
+                        </Text>
+                        {selected ? (
+                          <Feather name="check-circle" color={colors.primary} size={17} />
+                        ) : (
+                          <Feather name="chevron-right" color={colors.faint} size={17} />
+                        )}
+                      </View>
+                      <Text style={styles.historyPreview} numberOfLines={2}>
+                        {thread.latestPreview}
+                      </Text>
+                      <Text style={styles.historyMeta}>
+                        {thread.messageCount} tin · {new Date(thread.latestMessageAt).toLocaleDateString("vi-VN")}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+            ) : (
+              <View style={styles.historyState}>
+                <Feather name="message-circle" color={colors.primary} size={24} />
+                <Text style={styles.historyStateTitle}>Chưa có chat cũ</Text>
+                <Text style={styles.historyStateText}>
+                  Bắt đầu một cuộc trò chuyện; HOSTORA sẽ lưu lại theo tài khoản.
+                </Text>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => {
+                    setHistoryOpen(false);
+                    void startNewConversation();
+                  }}
+                  style={styles.historyRetry}
+                >
+                  <Text style={styles.historyRetryText}>Bắt đầu chat mới</Text>
+                </Pressable>
+              </View>
+            )}
+          </View>
+        </KeyboardSafeView>
+      </Modal>
 
       <CinematicScrollView
         scrollRef={list}
@@ -742,6 +1166,59 @@ export default function AssistantScreen() {
                           Gửi ảnh màn hình
                         </Text>
                         <Feather name="image" color="white" size={17} />
+                      </Pressable>
+                    ) : null}
+                    {message.nextAction === "login" ? (
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel="Đăng nhập để chốt đơn"
+                        onPress={() =>
+                          router.push({
+                            pathname: "/account-login",
+                            params: { next: "/assistant" },
+                          })
+                        }
+                        style={styles.nextAction}
+                      >
+                        <Text style={styles.nextActionText}>
+                          Đăng nhập để chốt đơn
+                        </Text>
+                        <Feather name="log-in" color="white" size={17} />
+                      </Pressable>
+                    ) : null}
+                    {message.nextAction === "checkout" && message.checkout ? (
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel={`Chốt ${message.checkout.title} và mở thanh toán`}
+                        disabled={checkoutLoading}
+                        onPress={() => void createCheckout(message.checkout!)}
+                        style={[
+                          styles.nextAction,
+                          checkoutLoading && { opacity: 0.55 },
+                        ]}
+                      >
+                        {checkoutLoading ? (
+                          <ActivityIndicator color="white" size="small" />
+                        ) : (
+                          <Feather name="credit-card" color="white" size={17} />
+                        )}
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.nextActionText}>
+                            {checkoutLoading
+                              ? "Đang tạo hóa đơn…"
+                              : "Chốt & mở thanh toán"}
+                          </Text>
+                          {!checkoutLoading ? (
+                            <Text style={styles.checkoutAmount}>
+                              {new Intl.NumberFormat("vi-VN").format(
+                                message.checkout.amountVnd,
+                              )}đ · {message.checkout.billingMonths} tháng
+                            </Text>
+                          ) : null}
+                        </View>
+                        {!checkoutLoading ? (
+                          <Feather name="arrow-right" color="white" size={17} />
+                        ) : null}
                       </Pressable>
                     ) : null}
                     {message.sources &&
@@ -1038,6 +1515,279 @@ const styles = StyleSheet.create({
     fontSize: 11,
     marginTop: 5,
   },
+  chatActions: {
+    marginTop: 14,
+    flexDirection: "row",
+    gap: 8,
+  },
+  historyButton: {
+    minHeight: 48,
+    flex: 1,
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.line,
+    backgroundColor: colors.surface,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 7,
+  },
+  historyButtonText: {
+    color: colors.primary,
+    fontFamily: "BeVietnamPro_700Bold",
+    fontSize: 11,
+  },
+  historyCount: {
+    minWidth: 20,
+    height: 20,
+    paddingHorizontal: 5,
+    borderRadius: 10,
+    backgroundColor: colors.primarySoft,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  historyCountText: {
+    color: colors.primary,
+    fontFamily: "BeVietnamPro_800ExtraBold",
+    fontSize: 9,
+  },
+  newChatButton: {
+    minHeight: 48,
+    flex: 1,
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    backgroundColor: colors.ink,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 7,
+  },
+  newChatButtonText: {
+    color: "white",
+    fontFamily: "BeVietnamPro_700Bold",
+    fontSize: 11,
+  },
+  actionPressed: { opacity: 0.72 },
+  selectedPlan: {
+    marginHorizontal: 16,
+    marginTop: 12,
+    padding: 14,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#A9D6C5",
+    backgroundColor: "#EDF8F3",
+    gap: 9,
+  },
+  selectedPlanTop: { flexDirection: "row", alignItems: "center", gap: 10 },
+  selectedPlanIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    backgroundColor: "white",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  selectedPlanLabel: {
+    color: colors.primary,
+    fontFamily: "BeVietnamPro_800ExtraBold",
+    fontSize: 8,
+    letterSpacing: 0.9,
+  },
+  selectedPlanTitle: {
+    marginTop: 2,
+    color: colors.ink,
+    fontFamily: "BeVietnamPro_800ExtraBold",
+    fontSize: 13,
+  },
+  selectedPlanCopy: {
+    color: colors.muted,
+    fontFamily: "BeVietnamPro_400Regular",
+    fontSize: 10,
+    lineHeight: 16,
+  },
+  selectedPlanInventory: {
+    minHeight: 38,
+    paddingHorizontal: 11,
+    justifyContent: "center",
+    borderLeftWidth: 4,
+    borderLeftColor: colors.success,
+    backgroundColor: colors.successSoft,
+  },
+  selectedPlanInventorySoldOut: {
+    borderLeftColor: colors.danger,
+    backgroundColor: "#FFF0ED",
+  },
+  selectedPlanInventoryText: {
+    color: colors.text,
+    fontFamily: "BeVietnamPro_700Bold",
+    fontSize: 10,
+  },
+  selectedPlanActions: { flexDirection: "row", gap: 8 },
+  planAdviceButton: {
+    minHeight: 46,
+    flex: 1.25,
+    paddingHorizontal: 12,
+    borderRadius: 13,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    backgroundColor: "white",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+  },
+  planAdviceText: {
+    color: colors.primary,
+    fontFamily: "BeVietnamPro_700Bold",
+    fontSize: 10,
+  },
+  planCheckoutButton: {
+    minHeight: 46,
+    flex: 0.8,
+    paddingHorizontal: 12,
+    borderRadius: 13,
+    backgroundColor: colors.primary,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+  },
+  planCheckoutText: {
+    color: "white",
+    fontFamily: "BeVietnamPro_700Bold",
+    fontSize: 10,
+  },
+  historyScrim: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(7,24,39,.46)",
+  },
+  historySheet: {
+    maxHeight: "82%",
+    minHeight: "52%",
+    paddingHorizontal: 18,
+    paddingTop: 10,
+    paddingBottom: Platform.OS === "ios" ? 30 : 22,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    backgroundColor: colors.canvas,
+  },
+  historyHandle: {
+    width: 42,
+    height: 4,
+    borderRadius: 2,
+    alignSelf: "center",
+    backgroundColor: colors.line,
+  },
+  historyHeader: {
+    marginTop: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  historyEyebrow: {
+    color: colors.primary,
+    fontFamily: "BeVietnamPro_800ExtraBold",
+    fontSize: 8,
+    letterSpacing: 1,
+  },
+  historyTitle: {
+    marginTop: 2,
+    color: colors.ink,
+    fontFamily: "BeVietnamPro_900Black",
+    fontSize: 23,
+  },
+  historyClose: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.line,
+    backgroundColor: colors.surface,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  historyHelp: {
+    marginTop: 8,
+    color: colors.muted,
+    fontFamily: "BeVietnamPro_400Regular",
+    fontSize: 11,
+    lineHeight: 17,
+  },
+  historyList: { marginTop: 14 },
+  historyListContent: { gap: 9, paddingBottom: 8 },
+  historyItem: {
+    minHeight: 102,
+    padding: 14,
+    borderRadius: 17,
+    borderWidth: 1,
+    borderColor: colors.line,
+    backgroundColor: colors.surface,
+  },
+  historyItemSelected: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primarySoft,
+  },
+  historyItemTop: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: 10,
+  },
+  historyItemTitle: {
+    flex: 1,
+    color: colors.text,
+    fontFamily: "BeVietnamPro_700Bold",
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  historyPreview: {
+    marginTop: 6,
+    color: colors.muted,
+    fontFamily: "BeVietnamPro_400Regular",
+    fontSize: 10,
+    lineHeight: 16,
+  },
+  historyMeta: {
+    marginTop: 7,
+    color: colors.faint,
+    fontFamily: "BeVietnamPro_600SemiBold",
+    fontSize: 9,
+  },
+  historyState: {
+    minHeight: 230,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 24,
+    gap: 10,
+  },
+  historyStateTitle: {
+    color: colors.text,
+    fontFamily: "BeVietnamPro_800ExtraBold",
+    fontSize: 14,
+  },
+  historyStateText: {
+    color: colors.muted,
+    fontFamily: "BeVietnamPro_400Regular",
+    fontSize: 11,
+    lineHeight: 18,
+    textAlign: "center",
+  },
+  historyRetry: {
+    minHeight: 46,
+    marginTop: 4,
+    paddingHorizontal: 18,
+    borderRadius: 14,
+    backgroundColor: colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  historyRetryText: {
+    color: "white",
+    fontFamily: "BeVietnamPro_700Bold",
+    fontSize: 11,
+  },
   chat: { flex: 1, marginTop: 14 },
   chatContent: { paddingHorizontal: 16, paddingBottom: 16, gap: 13 },
   messageRow: {
@@ -1112,6 +1862,12 @@ const styles = StyleSheet.create({
     color: "white",
     fontFamily: "BeVietnamPro_700Bold",
     fontSize: 12,
+  },
+  checkoutAmount: {
+    marginTop: 2,
+    color: "rgba(255,255,255,.78)",
+    fontFamily: "BeVietnamPro_500Medium",
+    fontSize: 10,
   },
   sourceList: {
     borderTopWidth: 1,
@@ -1317,8 +2073,8 @@ const styles = StyleSheet.create({
     fontFamily: "BeVietnamPro_500Medium",
     fontSize: 9,
     textAlign: "center",
-    paddingVertical: 7,
-    paddingBottom: Platform.OS === "ios" ? 78 : 85,
+    paddingTop: 6,
+    paddingBottom: 8,
   },
 });
 

@@ -27,11 +27,20 @@ export async function POST(request: Request) {
       requestId: z.string().regex(/^HSR-[A-F0-9]{10}$/),
       amountVnd: z.number().int().min(5000).max(1_000_000_000),
       description: z.string().trim().min(5).max(1000),
+      repeatPurchase: z.boolean().optional(),
     }));
     const invoice = getPaymentStore().createInvoiceForSaleRequest(input.requestId, input);
     scheduleOrderEmail(() => notifyInvoiceCreated(invoice));
     return noStoreJson(invoice, 201);
-  } catch {
-    return jsonError("Không thể tạo hóa đơn từ yêu cầu mua này.", 409);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    return jsonError(
+      message === "Voucher không đủ điều kiện áp dụng." ||
+        message.startsWith("Yêu cầu") ||
+        message.startsWith("Thông tin")
+        ? message
+        : "Không thể tạo hóa đơn từ yêu cầu mua này.",
+      409,
+    );
   }
 }

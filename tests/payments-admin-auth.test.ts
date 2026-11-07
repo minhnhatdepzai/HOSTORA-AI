@@ -43,6 +43,25 @@ describe("quản trị thanh toán", () => {
     expect(sameOrigin(internal)).toBe(true);
     expect(
       sameOrigin(
+        new Request("http://127.0.0.1:3200/api/admin/payments/requests", {
+          method: "POST",
+          headers: { origin: "http://127.0.0.1:3200" },
+        }),
+      ),
+    ).toBe(true);
+    expect(
+      sameOrigin(
+        new Request("http://localhost:3200/api/admin/payments/requests", {
+          method: "POST",
+          headers: {
+            host: "127.0.0.1:3200",
+            origin: "http://127.0.0.1:3200",
+          },
+        }),
+      ),
+    ).toBe(true);
+    expect(
+      sameOrigin(
         new Request(internal.url, {
           headers: {
             host: "hostora.example",
