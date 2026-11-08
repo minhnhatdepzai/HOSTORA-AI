@@ -4,14 +4,14 @@
 
 ## Tải và cài APK
 
-- APK hiện tại 2.2.6 universal: [tải từ GitHub Release](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-2.2.6-universal.apk). Bản này chứa `arm64-v8a`, `armeabi-v7a`, `x86`, `x86_64`. Link tên [`arm64.apk`](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-2.2.6-arm64.apk) phục vụ cùng binary universal để biểu mẫu cũ không bị hỏng.
-- Checksum SHA-256: `91220925ec56ea456cbc654da9f3748303e6dcb2517a7b9219719a1d41667c3f`; xem tệp `HOSTORA-AI-2.2.6-universal.apk.sha256` trong GitHub Release mới nhất.
+- APK hiện tại 2.2.7 universal: [tải từ GitHub Release](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-2.2.7-universal.apk). Bản này chứa `arm64-v8a`, `armeabi-v7a`, `x86`, `x86_64`. Link tên [`arm64.apk`](https://github.com/minhnhatdepzai/HOSTORA-AI/releases/latest/download/HOSTORA-AI-2.2.7-arm64.apk) phục vụ cùng binary universal để biểu mẫu cũ không bị hỏng.
+- Checksum SHA-256: `34bb4a93cb636e6b3bea0a13407a977ddd7ce0efbae1a0da920ab90c7171ce51`; xem tệp `HOSTORA-AI-2.2.7-universal.apk.sha256` trong GitHub Release mới nhất.
 - APK 2.1.0 trở về trước là bằng chứng lịch sử; không dùng làm link tải mặc định nữa.
 
 Cài bằng ADB:
 
 ```bash
-adb install -r HOSTORA-AI-2.2.6-universal.apk
+adb install -r HOSTORA-AI-2.2.7-universal.apk
 ```
 
 Android có thể yêu cầu cho phép “Cài ứng dụng không rõ nguồn gốc” nếu mở APK từ trình quản lý file. Bản hiện tại yêu cầu Android 7.0/API 24 trở lên; Android 6 trở xuống cần một ứng dụng legacy riêng vì Expo 58/React Native 0.88 không còn hỗ trợ.
@@ -73,6 +73,8 @@ Bản 2.2.2 giữ nguyên toàn bộ cinematic 2.2.1 và bổ sung bộ bàn gia
 
 Bản 2.2.6 hợp nhất luồng tư vấn–chọn gói–thanh toán và dữ liệu vận hành. Trợ lý đọc hồ sơ, website, yêu cầu mua và đơn gần nhất của đúng tài khoản; gói được chọn mở checkout ngay trong chat. Tồn kho 13 gói dùng chung với web/admin, chỉ trừ sau thanh toán thành công và trả lại khi hoàn tiền hoàn tất. App hiển thị Còn hàng/Sắp hết/Hết hàng, giữ lịch sử chat, mở website đã tạo bằng link, bỏ banner nổi toàn app và đặt composer đúng phía trên bàn phím.
 
+Bản 2.2.7 bổ sung nhập tiếng Việt VNI, lịch sử chat theo từng cuộc trò chuyện, xóa đồng bộ với admin, phiên tư vấn mới sạch nhưng giữ tên/email tài khoản khi mua lại, URL website chia sẻ được và luồng hóa đơn/hủy đơn đồng bộ với backend mới. APK universal đã cài đè giữ dữ liệu và vượt luồng native Maestro trên Android Emulator 16.
+
 ## Phát triển và build
 
 ```bash
@@ -88,4 +90,4 @@ APK sinh tại `android/app/build/outputs/apk/release/app-release.apk`. Android 
 
 ## Trạng thái ký
 
-APK 2.2.6 dùng chữ ký debug cục bộ; package `com.hostora.ai`, versionCode 29, min SDK 24, target SDK 36. APK **chưa phải bản ký production cho Google Play**. Trước khi phát hành qua store cần tạo keystore production và bảo quản ngoài Git.
+APK 2.2.7 dùng chữ ký debug cục bộ; package `com.hostora.ai`, versionCode 30, min SDK 24, target SDK 36. APK **chưa phải bản ký production cho Google Play**. Trước khi phát hành qua store cần tạo keystore production và bảo quản ngoài Git.

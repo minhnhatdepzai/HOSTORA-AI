@@ -1,6 +1,6 @@
-# HOSTORA AI 2.2.7 — source handoff 08/11/2026
+# HOSTORA AI 2.2.7 — đồng bộ web, admin, app và source
 
-Đây là bản source chốt sau 2.2.6 để giám khảo tải về và chạy web khách hàng, web quản trị, backend dùng chung và source ứng dụng Android từ một repository.
+Bản phát hành ngày 09/11/2026 đồng bộ website khách hàng, web quản trị, backend dùng chung, APK Android universal và Source ZIP trên cùng phiên bản 2.2.7.
 
 ## Thay đổi chính
 
@@ -11,15 +11,16 @@
 - SEO Analyzer chấp nhận tên miền không có tiền tố và chuẩn hóa sang HTTPS; thông báo quên mật khẩu giải thích rõ giới hạn gửi lại.
 - Website Studio hiển thị và chia sẻ đường dẫn ổn định của website đã tạo.
 
-## Bằng chứng kiểm tra trước khi đóng gói
+## Bằng chứng kiểm tra
 
-- TypeScript typecheck: đạt.
-- ESLint web và Expo: đạt.
+- TypeScript typecheck và ESLint web/Expo: đạt.
 - Vitest: 63 tệp, 371/371 ca đạt.
-- Next.js production build: đạt.
-- AI local smoke check: đạt với Qwen/Ollama loopback.
+- Next.js production build và AI local smoke check: đạt.
 - Playwright cách ly: 67 ca đạt, 3 ca bỏ qua có chủ đích trên desktop và mobile viewport.
-- Android native: chưa chạy lại trong lượt chốt source vì không có thiết bị được kết nối; APK universal 2.2.6 vẫn là artifact native gần nhất đã kiểm tra.
+- UI audit: 12 tổ hợp desktop/mobile không có lỗi accessibility tự động hoặc page error.
+- APK universal 2.2.7: đủ bốn ABI, chữ ký APK hợp lệ, cài đè giữ `firstInstallTime` và dữ liệu app.
+- Native Maestro: 1/1 luồng tư vấn đạt trên Android Emulator 16.
+- Native judge suite: 9/9 ca đạt trên chính APK 2.2.7, gồm 3 ca bình thường, 3 đầu vào không hợp lệ và 3 ca biên/sự cố; báo cáo HTML nằm tại `docs/submission/HOSTORA_MOBILE_9_CASES.html`.
 
 ## Chạy nhanh
 
