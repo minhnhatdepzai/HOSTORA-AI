@@ -7,7 +7,7 @@ const fold = (value: string) =>
     .replace(/\p{M}/gu, "");
 
 const HOSTORA_SCOPE =
-  /hostora|website|web\b|hosting|luu tru|ten mien|domain|dns|ssl|cdn|backup|vps|server|wordpress|woocommerce|seo|google|schema|sitemap|robots|email|thu dien tu|\bgia\b(?!\s+tri\b)|chi phi|ngan sach|gia han|goi (?:hosting|dich vu|nao|chinh|thay the)|nha cung cap|trang web|cua hang|ban hang|thanh toan|hoa don|don hang|hoan tien|tai khoan|xay dung trang/i;
+  /hostora|website|web\b|hosting|luu tru|ten mien|domain|dns|ssl|cdn|backup|vps|server|wordpress|woocommerce|seo|google|schema|sitemap|robots|email|thu dien tu|\bgia\b(?!\s+tri\b)|chi phi|ngan sach|gia han|goi (?:hosting|dich vu|nao|gi|chinh|thay the)|nha cung cap|trang web|cua hang|ban hang|thanh toan|hoa don|don hang|hoan tien|tai khoan|xay dung trang/i;
 const SOCIAL_ONLY = /^(xin chao|chao|hello|hi|cam on|cảm ơn|ok|oke|duoc|được)[!. ]*$/i;
 const HUMAN_REQUEST =
   /(?:(?:muon|can|cho toi|hay|xin|yeu cau).{0,24}(?:gap|noi chuyen|chuyen|ket noi).{0,24}|(?:gap|noi chuyen voi|chuyen cho|ket noi voi).{0,24})(?:nhan vien|quan tri vien|nguoi that|tu van vien)|(?:muon|can|xin).{0,20}ho tro truc tiep/i;

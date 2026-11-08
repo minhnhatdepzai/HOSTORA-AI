@@ -504,7 +504,7 @@ function Report({ result }: { result: AuditResult }) {
 }
 
 export function WebsiteAnalyzer() {
-  const [url, setUrl] = useState("https://example.com");
+  const [url, setUrl] = useState("");
   const [keyword, setKeyword] = useState("");
   const [result, setResult] = useState<AuditResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -512,6 +512,12 @@ export function WebsiteAnalyzer() {
 
   async function analyze(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const submittedUrl = url.trim();
+    if (!submittedUrl) {
+      setError("Hãy nhập địa chỉ website cần kiểm tra.");
+      return;
+    }
+    setUrl(submittedUrl);
     setLoading(true);
     setError("");
     setResult(null);
@@ -519,11 +525,17 @@ export function WebsiteAnalyzer() {
       const response = await fetch("/api/seo/audit", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ url, keyword }),
+        body: JSON.stringify({ url: submittedUrl, keyword: keyword.trim() }),
       });
-      const body = await response.json();
+      const body = (await response.json().catch(() => ({}))) as
+        | AuditResult
+        | { error?: string };
       if (!response.ok)
-        throw new Error(body.error ?? "Chưa thể kiểm tra website này.");
+        throw new Error(
+          "error" in body && body.error
+            ? body.error
+            : "Chưa thể kiểm tra website này.",
+        );
       setResult(body as AuditResult);
     } catch (cause) {
       setError(
@@ -553,14 +565,23 @@ export function WebsiteAnalyzer() {
             <input
               className="input"
               id="audit-url"
-              type="url"
+              type="text"
               inputMode="url"
               autoComplete="url"
               maxLength={2048}
               required
               value={url}
               onChange={(event) => setUrl(event.target.value)}
+              placeholder="tenmien.vn hoặc https://tenmien.vn"
+              aria-describedby="audit-url-hint"
             />
+            <small
+              className="mt-2 block text-xs leading-5 text-slate-500"
+              id="audit-url-hint"
+            >
+              Có thể dán tên miền không có https://. Chỉ kiểm tra website công
+              khai, không đọc địa chỉ nội bộ.
+            </small>
           </label>
           <label className="block" htmlFor="audit-keyword">
             <span className="label">Từ khóa khách thường tìm</span>

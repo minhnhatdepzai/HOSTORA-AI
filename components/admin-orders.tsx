@@ -43,9 +43,10 @@ const statusLabels: Record<Invoice["status"], string> = {
 };
 const requestLabels: Record<SaleRequest["status"], string> = {
   new: "Chờ báo giá",
+  cancel_requested: "Cần xác nhận hủy",
   invoiced: "Đã tạo hóa đơn",
   declined: "Đã từ chối",
-  cancelled: "Khách đã hủy",
+  cancelled: "Đã xác nhận hủy",
 };
 const websiteLabels = {
   idea: "Chưa có trang web",
@@ -77,6 +78,7 @@ type Filters = {
   pageSize: number;
 };
 type OrderDetail = { invoice: Invoice; events: InvoiceEvent[] };
+type AddOnDraft = { id: string; label: string; note: string; amountVnd: string };
 
 const initialFilters: Filters = {
   search: "",
@@ -138,6 +140,172 @@ function QueueButton({
   );
 }
 
+function RequestInvoiceComposer({
+  request,
+  busy,
+  onSubmit,
+}: {
+  request: SaleRequest;
+  busy: boolean;
+  onSubmit: (input: {
+    addOns: Array<{ label: string; note: string; amountVnd: number }>;
+    description: string;
+  }) => Promise<boolean>;
+}) {
+  const [addOns, setAddOns] = useState<AddOnDraft[]>([]);
+  const [description, setDescription] = useState("");
+  const addOnTotal = addOns.reduce(
+    (total, item) => total + (Number(item.amountVnd) || 0),
+    0,
+  );
+  const subtotal = (request.baseAmountVnd ?? 0) + addOnTotal;
+  const invalidAddOn = addOns.some(
+    (item) =>
+      item.label.trim().length < 2 ||
+      !Number.isSafeInteger(Number(item.amountVnd)) ||
+      Number(item.amountVnd) < 0,
+  );
+
+  function updateAddOn(id: string, patch: Partial<AddOnDraft>) {
+    setAddOns((current) =>
+      current.map((item) => (item.id === id ? { ...item, ...patch } : item)),
+    );
+  }
+
+  return (
+    <div className="admin-quote-form">
+      <div className="admin-locked-price" aria-label="Giá gói khách đã chọn">
+        <div>
+          <span>Gói khách đã chọn</span>
+          <strong>{request.provider} {request.productName}</strong>
+          {request.baseAmountVnd === null ? (
+            <small className="is-warning">Chưa có giá xác minh trong danh mục</small>
+          ) : (
+            <small>
+              {request.monthlyVnd !== null && request.billingMonths !== null
+                ? `${money(request.monthlyVnd)}/tháng × ${request.billingMonths} tháng`
+                : request.billingMonths !== null
+                  ? `Kỳ hạn ${request.billingMonths} tháng`
+                  : "Giá gói đã lưu khi khách chọn"}
+              {request.priceVerifiedAt ? ` · xác minh ${request.priceVerifiedAt}` : ""}
+            </small>
+          )}
+        </div>
+        <strong>{request.baseAmountVnd === null ? "Chưa có giá" : money(request.baseAmountVnd)}</strong>
+      </div>
+
+      <div className="admin-addon-editor">
+        <div className="admin-addon-heading">
+          <div>
+            <strong>Dịch vụ mua thêm</strong>
+            <span>Chỉ nhập phần phát sinh ngoài gói khách đã chọn.</span>
+          </div>
+          <button
+            type="button"
+            className="admin-quiet"
+            disabled={busy || addOns.length >= 8}
+            onClick={() =>
+              setAddOns((current) => [
+                ...current,
+                { id: crypto.randomUUID(), label: "", note: "", amountVnd: "" },
+              ])
+            }
+          >
+            <Plus size={15} /> Thêm hạng mục
+          </button>
+        </div>
+        {addOns.length === 0 ? (
+          <p className="admin-addon-empty">Không có dịch vụ phát sinh. Hóa đơn sẽ dùng đúng giá gói ở trên.</p>
+        ) : (
+          <div className="admin-addon-list">
+            {addOns.map((item, index) => (
+              <fieldset key={item.id} className="admin-addon-row">
+                <legend>Dịch vụ mua thêm {index + 1}</legend>
+                <label>
+                  Tên hạng mục
+                  <input
+                    value={item.label}
+                    maxLength={120}
+                    onChange={(event) => updateAddOn(item.id, { label: event.target.value })}
+                  />
+                </label>
+                <label>
+                  Ghi chú
+                  <input
+                    value={item.note}
+                    maxLength={500}
+                    onChange={(event) => updateAddOn(item.id, { note: event.target.value })}
+                  />
+                </label>
+                <label>
+                  Thành tiền (VND)
+                  <input
+                    type="number"
+                    min="0"
+                    max="1000000000"
+                    step="1"
+                    value={item.amountVnd}
+                    onChange={(event) => updateAddOn(item.id, { amountVnd: event.target.value })}
+                  />
+                </label>
+                <button
+                  type="button"
+                  className="admin-addon-remove"
+                  aria-label={`Xóa dịch vụ mua thêm ${index + 1}`}
+                  onClick={() => setAddOns((current) => current.filter((entry) => entry.id !== item.id))}
+                >
+                  <X size={16} />
+                </button>
+              </fieldset>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <label className="admin-invoice-note">
+        Ghi chú chung trên hóa đơn
+        <textarea
+          rows={2}
+          maxLength={1000}
+          value={description}
+          placeholder="Ví dụ: thời gian bàn giao, phạm vi hỗ trợ hoặc điều kiện VAT"
+          onChange={(event) => setDescription(event.target.value)}
+        />
+      </label>
+
+      <div className="admin-invoice-total">
+        <dl>
+          <div><dt>Giá gói đã chốt</dt><dd>{money(request.baseAmountVnd ?? 0)}</dd></div>
+          <div><dt>Dịch vụ mua thêm</dt><dd>{money(addOnTotal)}</dd></div>
+          <div className="is-total"><dt>Tạm tính trước voucher</dt><dd>{money(subtotal)}</dd></div>
+        </dl>
+        {request.voucherCode && <p>Voucher {request.voucherCode} sẽ được backend kiểm tra và trừ tự động nếu đơn đủ điều kiện.</p>}
+        <button
+          className="admin-primary"
+          type="button"
+          disabled={busy || request.baseAmountVnd === null || invalidAddOn}
+          onClick={async () => {
+            const created = await onSubmit({
+              addOns: addOns.map((item) => ({
+                label: item.label.trim(),
+                note: item.note.trim(),
+                amountVnd: Number(item.amountVnd),
+              })),
+              description: description.trim(),
+            });
+            if (created) {
+              setAddOns([]);
+              setDescription("");
+            }
+          }}
+        >
+          {request.status === "invoiced" ? "Tạo hóa đơn mua thêm" : "Tạo & gửi hóa đơn"} · {money(subtotal)}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function AdminOrders() {
   const [configured, setConfigured] = useState(true);
   const [authenticated, setAuthenticated] = useState(true);
@@ -157,17 +325,13 @@ export function AdminOrders() {
     page: 1,
     pageSize: 25,
     pageCount: 1,
-    counts: { all: 0, new: 0, invoiced: 0, declined: 0, cancelled: 0 },
+    counts: { all: 0, new: 0, cancelRequested: 0, invoiced: 0, declined: 0, cancelled: 0 },
   });
   const [requestPageNumber, setRequestPageNumber] = useState(1);
   const [requestSearch, setRequestSearch] = useState("");
   const [requestStatus, setRequestStatus] = useState<
     "" | SaleRequest["status"]
   >("");
-  const [quoteAmounts, setQuoteAmounts] = useState<Record<string, string>>({});
-  const [quoteDescriptions, setQuoteDescriptions] = useState<
-    Record<string, string>
-  >({});
   const [created, setCreated] = useState<CreatedInvoice | null>(null);
   const [saleType, setSaleType] =
     useState<Invoice["saleType"]>("hostora_service");
@@ -444,7 +608,13 @@ export function AdminOrders() {
     }
   }
 
-  async function createRequestInvoice(request: SaleRequest) {
+  async function createRequestInvoice(
+    request: SaleRequest,
+    input: {
+      addOns: Array<{ label: string; note: string; amountVnd: number }>;
+      description: string;
+    },
+  ) {
     setBusy(request.id);
     setMessage("");
     try {
@@ -453,8 +623,8 @@ export function AdminOrders() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           requestId: request.id,
-          amountVnd: Number(quoteAmounts[request.id]),
-          description: quoteDescriptions[request.id],
+          addOns: input.addOns,
+          description: input.description || undefined,
           repeatPurchase: request.status === "invoiced",
         }),
       });
@@ -468,10 +638,12 @@ export function AdminOrders() {
           : `Đã tạo hóa đơn cho ${request.productName}; email xác nhận đang được gửi tới khách.`,
       );
       await Promise.all([loadRequests(), loadOrders()]);
+      return true;
     } catch (error) {
       setMessage(
         error instanceof Error ? error.message : "Không tạo được hóa đơn.",
       );
+      return false;
     } finally {
       setBusy("");
     }
@@ -502,6 +674,44 @@ export function AdminOrders() {
     } catch (error) {
       setMessage(
         error instanceof Error ? error.message : "Không xử lý được yêu cầu.",
+      );
+    } finally {
+      setBusy("");
+    }
+  }
+
+  async function requestCancelAction(
+    request: SaleRequest,
+    decision: "approve" | "reject",
+  ) {
+    setBusy(`${request.id}-cancel-${decision}`);
+    setMessage("");
+    try {
+      const response = await fetch(
+        `/api/admin/payments/requests/${request.id}/cancel`,
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            action: decision,
+            note: notes[request.id] ?? "",
+          }),
+        },
+      );
+      const result = (await response.json()) as { error?: string };
+      if (!response.ok)
+        throw new Error(result.error ?? "Không xử lý được yêu cầu hủy.");
+      setMessage(
+        decision === "approve"
+          ? "Đã xác nhận hủy yêu cầu mua và gửi email cập nhật cho khách."
+          : "Đã từ chối hủy; yêu cầu mua trở lại hàng chờ báo giá.",
+      );
+      await loadRequests();
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Không xử lý được yêu cầu hủy.",
       );
     } finally {
       setBusy("");
@@ -1160,9 +1370,10 @@ export function AdminOrders() {
                   >
                     <option value="">Tất cả trạng thái</option>
                     <option value="new">Chờ báo giá</option>
+                    <option value="cancel_requested">Cần xác nhận hủy</option>
                     <option value="invoiced">Đã tạo hóa đơn</option>
                     <option value="declined">Đã từ chối</option>
-                    <option value="cancelled">Khách đã hủy</option>
+                    <option value="cancelled">Đã xác nhận hủy</option>
                   </select>
                 </div>
                 {requestPage.items.length === 0 ? (
@@ -1183,6 +1394,8 @@ export function AdminOrders() {
                               className={`order-status order-status-${
                                 request.status === "new"
                                   ? "pending"
+                                  : request.status === "cancel_requested"
+                                    ? "cancel_requested"
                                   : request.status === "cancelled"
                                     ? "cancelled"
                                     : request.status === "invoiced"
@@ -1268,54 +1481,63 @@ export function AdminOrders() {
                             <strong>Lý do hủy:</strong> {request.cancelReason}
                           </p>
                         )}
+                        {request.status === "cancel_requested" && (
+                          <div className="admin-refund-action">
+                            <h3>Xác nhận yêu cầu hủy mua</h3>
+                            <textarea
+                              rows={3}
+                              aria-label={`Ghi chú xử lý yêu cầu ${request.id}`}
+                              placeholder="Kết quả kiểm tra và lý do quyết định (ít nhất 8 ký tự)"
+                              value={notes[request.id] ?? ""}
+                              maxLength={500}
+                              onChange={(event) =>
+                                setNotes((old) => ({
+                                  ...old,
+                                  [request.id]: event.target.value,
+                                }))
+                              }
+                            />
+                            <div>
+                              <button
+                                className="admin-primary"
+                                type="button"
+                                disabled={
+                                  Boolean(busy) ||
+                                  (notes[request.id] ?? "").trim().length < 8
+                                }
+                                onClick={() =>
+                                  void requestCancelAction(request, "approve")
+                                }
+                              >
+                                <Check size={15} /> Xác nhận hủy
+                              </button>
+                              <button
+                                className="admin-danger"
+                                type="button"
+                                disabled={
+                                  Boolean(busy) ||
+                                  (notes[request.id] ?? "").trim().length < 8
+                                }
+                                onClick={() =>
+                                  void requestCancelAction(request, "reject")
+                                }
+                              >
+                                Từ chối hủy
+                              </button>
+                            </div>
+                          </div>
+                        )}
                         {request.invoiceId && (
                           <p className="admin-note">
                             <strong>Hóa đơn:</strong> {request.invoiceId}
                           </p>
                         )}
                         {(request.status === "new" || request.status === "invoiced") && (
-                          <div className="admin-quote-form">
-                            <input
-                              aria-label={`Tổng tiền đơn ${request.id}`}
-                              type="number"
-                              min="5000"
-                              max="1000000000"
-                              placeholder="Giá đã chốt (VND)"
-                              value={quoteAmounts[request.id] ?? ""}
-                              onChange={(event) =>
-                                setQuoteAmounts((old) => ({
-                                  ...old,
-                                  [request.id]: event.target.value,
-                                }))
-                              }
-                            />
-                            <textarea
-                              aria-label={`Điều kiện đơn ${request.id}`}
-                              rows={2}
-                              placeholder="Kỳ hạn, VAT, hỗ trợ và điều kiện đã chốt"
-                              value={quoteDescriptions[request.id] ?? ""}
-                              onChange={(event) =>
-                                setQuoteDescriptions((old) => ({
-                                  ...old,
-                                  [request.id]: event.target.value,
-                                }))
-                              }
-                            />
-                            <button
-                              className="admin-primary"
-                              type="button"
-                              disabled={
-                                Boolean(busy) ||
-                                Number(quoteAmounts[request.id]) < 5000 ||
-                                (quoteDescriptions[request.id] ?? "").trim().length < 5
-                              }
-                              onClick={() => void createRequestInvoice(request)}
-                            >
-                              {request.status === "invoiced"
-                                ? "Tạo hóa đơn mua thêm"
-                                : "Xác nhận giá & gửi hóa đơn"}
-                            </button>
-                          </div>
+                          <RequestInvoiceComposer
+                            request={request}
+                            busy={Boolean(busy)}
+                            onSubmit={(input) => createRequestInvoice(request, input)}
+                          />
                         )}
                       </article>
                     ))}
@@ -1351,11 +1573,11 @@ export function AdminOrders() {
               <section className="admin-create-workspace">
                 <div className="admin-create-intro">
                   <p className="admin-kicker">Phát hành thủ công</p>
-                  <h2>Tạo khoản cần thu</h2>
+                  <h2>Khoản thu không gắn yêu cầu mua</h2>
                   <p>
-                    Chỉ nhập giá đã thống nhất với khách. Email hóa đơn được gửi
-                    ngay sau khi tạo; giá danh mục không tự trở thành số tiền
-                    phải trả.
+                    Chỉ dùng màn này cho công việc riêng chưa có gói trong hệ thống.
+                    Với khách đã chọn gói trên web, app hoặc AI, hãy mở mục Yêu cầu
+                    mua để giá gói được lấy tự động và không phải nhập lại.
                   </p>
                   {[
                     "Số tiền được khóa sau khi phát hành",
@@ -1557,6 +1779,34 @@ export function AdminOrders() {
                 </dl>
               </section>
 
+              <section className="admin-detail-section admin-invoice-breakdown">
+                <div className="admin-detail-section-title">
+                  <div>
+                    <h3>Chi tiết số tiền đã chốt</h3>
+                    <p>Giá gói được khóa từ yêu cầu mua; phần phát sinh được lưu thành từng hạng mục.</p>
+                  </div>
+                </div>
+                <div className="admin-breakdown-list">
+                  {selected.invoice.lineItems.map((item, index) => (
+                    <div key={`${item.kind}-${index}`}>
+                      <span>
+                        <small>{item.kind === "base" ? "Gói đã chọn" : "Dịch vụ mua thêm"}</small>
+                        <strong>{item.label}</strong>
+                        {item.note && <em>{item.note}</em>}
+                      </span>
+                      <b>{money(item.amountVnd)}</b>
+                    </div>
+                  ))}
+                </div>
+                <dl className="admin-breakdown-total">
+                  <div><dt>Tạm tính</dt><dd>{money(selected.invoice.subtotalVnd)}</dd></div>
+                  {selected.invoice.discountVnd > 0 && (
+                    <div><dt>Voucher {selected.invoice.voucherCode}</dt><dd>-{money(selected.invoice.discountVnd)}</dd></div>
+                  )}
+                  <div className="is-total"><dt>Tổng thanh toán</dt><dd>{money(selected.invoice.amountVnd)}</dd></div>
+                </dl>
+              </section>
+
               <section className="admin-detail-section">
                 <div className="admin-detail-section-title">
                   <div>
@@ -1620,8 +1870,65 @@ export function AdminOrders() {
 
               {selected.invoice.refundReason && (
                 <section className="admin-detail-section">
-                  <h3>Lý do khách yêu cầu hoàn</h3>
+                  <h3>
+                    {selected.invoice.status === "cancel_requested"
+                      ? "Lý do khách yêu cầu hủy"
+                      : "Lý do khách yêu cầu hoàn"}
+                  </h3>
                   <p>{selected.invoice.refundReason}</p>
+                </section>
+              )}
+
+              {selected.invoice.status === "cancel_requested" && (
+                <section className="admin-refund-action">
+                  <h3>Xử lý yêu cầu hủy đơn chưa thanh toán</h3>
+                  <textarea
+                    rows={3}
+                    aria-label={`Ghi chú xử lý hủy đơn ${selected.invoice.id}`}
+                    placeholder="Kết quả kiểm tra và lý do quyết định (ít nhất 8 ký tự)"
+                    value={notes[selected.invoice.id] ?? ""}
+                    maxLength={500}
+                    onChange={(event) =>
+                      setNotes((old) => ({
+                        ...old,
+                        [selected.invoice.id]: event.target.value,
+                      }))
+                    }
+                  />
+                  <div>
+                    <button
+                      className="admin-primary"
+                      type="button"
+                      disabled={
+                        Boolean(busy) ||
+                        (notes[selected.invoice.id] ?? "").trim().length < 8
+                      }
+                      onClick={() =>
+                        void action(selected.invoice, "cancel", {
+                          action: "approve",
+                          note: notes[selected.invoice.id],
+                        })
+                      }
+                    >
+                      <Check size={15} /> Xác nhận hủy
+                    </button>
+                    <button
+                      className="admin-danger"
+                      type="button"
+                      disabled={
+                        Boolean(busy) ||
+                        (notes[selected.invoice.id] ?? "").trim().length < 8
+                      }
+                      onClick={() =>
+                        void action(selected.invoice, "cancel", {
+                          action: "reject",
+                          note: notes[selected.invoice.id],
+                        })
+                      }
+                    >
+                      Từ chối hủy
+                    </button>
+                  </div>
                 </section>
               )}
 

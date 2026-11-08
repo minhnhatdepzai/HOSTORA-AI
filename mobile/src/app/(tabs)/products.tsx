@@ -1,6 +1,7 @@
 import offlineProducts from "@/data/product-catalog.json";
 import { toCustomerLanguage } from "@/lib/customer-language";
 import { Pressable } from "@/components/pressable";
+import { VniTextInput as TextInput } from "@/components/vni-text-input";
 import { Stagger } from "@/components/motion";
 import { Feather } from "@expo/vector-icons";
 import { useLocalSearchParams, useFocusEffect, router } from "expo-router";
@@ -13,7 +14,6 @@ import {
   type ScrollViewInstance,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -24,6 +24,7 @@ import { formatVnd } from "@/lib/catalog";
 import { useApp } from "@/context/app-context";
 import { createAppNotification } from "@/lib/app-notifications";
 import { useCustomerAuth } from "@/context/customer-auth-context";
+import { resolveCustomerPrefill } from "@/lib/customer-prefill";
 import { KeyboardSafeView } from "@/components/keyboard-safe-view";
 
 type Product = {
@@ -97,8 +98,11 @@ function ProductsContent({ initialCategory }: { initialCategory: string }) {
   const [selected, setSelected] = useState<Product | null>(null);
   const [contactDraft, setContact] = useState<string | null>(null);
   const [customerNameDraft, setCustomerName] = useState<string | null>(null);
-  const contact = contactDraft ?? auth.customer?.email ?? "";
-  const customerName = customerNameDraft ?? auth.customer?.name ?? "";
+  const contact = resolveCustomerPrefill(contactDraft, auth.customer?.email);
+  const customerName = resolveCustomerPrefill(
+    customerNameDraft,
+    auth.customer?.name,
+  );
   const [phone, setPhone] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [businessType, setBusinessType] = useState("");
@@ -226,7 +230,8 @@ function ProductsContent({ initialCategory }: { initialCategory: string }) {
           route: `/orders?requestId=${encodeURIComponent(result.id)}&requestCode=${encodeURIComponent(result.accessCode)}`,
         }),
       );
-      setContact("");
+      setContact(null);
+      setCustomerName(null);
       setNote("");
     } catch (error) {
       Alert.alert(

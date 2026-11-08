@@ -3,6 +3,8 @@ import { mkdirSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { hostingCatalog } from "@/data/hosting-catalog";
+import { productCatalog } from "@/data/product-catalog";
+import { priceSnapshotForProductId, type CatalogPriceSnapshot } from "@/lib/pricing";
 import type {
   ConsultationChannel,
   ConsultationPreference,
@@ -13,6 +15,7 @@ import type {
   InvoiceListQuery,
   InvoicePage,
   InvoiceStatus,
+  InvoiceLineItem,
   PaymentMethod,
   PaymentProvider,
   PurchaseProfile,
@@ -30,6 +33,11 @@ type InvoiceRow = {
   title: string;
   description: string;
   amount_vnd: number;
+  base_amount_vnd: number | null;
+  monthly_vnd: number | null;
+  billing_months: number | null;
+  price_verified_at: string | null;
+  line_items_json: string | null;
   sale_type: "hostora_service" | "partner_service";
   partner_provider: string | null;
   status: InvoiceStatus;
@@ -50,6 +58,64 @@ type InvoiceRow = {
   updated_at: string;
 };
 
+type SaleRequestRow = {
+  id: string;
+  product_id: string;
+  provider: string;
+  product_name: string;
+  contact: string;
+  note: string;
+  profile_json: string;
+  consultation_preference: ConsultationPreference;
+  consultation_at: string | null;
+  consultation_channel: ConsultationChannel;
+  voucher_code: string | null;
+  base_amount_vnd: number | null;
+  monthly_vnd: number | null;
+  billing_months: number | null;
+  price_verified_at: string | null;
+  pricing_note: string | null;
+  cancel_reason: string | null;
+  status: SaleRequest["status"];
+  invoice_id: string | null;
+  created_at: string;
+};
+
+function parseLineItems(value: string | null, row: Pick<InvoiceRow, "title" | "description" | "subtotal_vnd" | "amount_vnd">): InvoiceLineItem[] {
+  try {
+    const parsed = JSON.parse(value ?? "[]") as unknown;
+    if (Array.isArray(parsed) && parsed.length > 0) return parsed as InvoiceLineItem[];
+  } catch {
+    // Legacy invoices are represented by one deterministic base line below.
+  }
+  return [{ kind: "base", label: row.title, note: row.description, amountVnd: row.subtotal_vnd ?? row.amount_vnd }];
+}
+
+function toSaleRequest(row: SaleRequestRow): SaleRequest {
+  return {
+    id: row.id,
+    productId: row.product_id,
+    provider: row.provider,
+    productName: row.product_name,
+    contact: row.contact,
+    note: row.note,
+    profile: parseProfile(row.profile_json),
+    consultationPreference: row.consultation_preference,
+    consultationAt: row.consultation_at,
+    consultationChannel: row.consultation_channel,
+    voucherCode: row.voucher_code,
+    baseAmountVnd: row.base_amount_vnd,
+    monthlyVnd: row.monthly_vnd,
+    billingMonths: row.billing_months,
+    priceVerifiedAt: row.price_verified_at,
+    pricingNote: row.pricing_note ?? "",
+    cancelReason: row.cancel_reason,
+    status: row.status,
+    invoiceId: row.invoice_id,
+    createdAt: row.created_at,
+  };
+}
+
 function toInvoice(row: InvoiceRow): Invoice {
   return {
     id: row.id,
@@ -58,6 +124,11 @@ function toInvoice(row: InvoiceRow): Invoice {
     title: row.title,
     description: row.description,
     amountVnd: row.amount_vnd,
+    baseAmountVnd: row.base_amount_vnd ?? row.subtotal_vnd ?? row.amount_vnd,
+    monthlyVnd: row.monthly_vnd,
+    billingMonths: row.billing_months,
+    priceVerifiedAt: row.price_verified_at,
+    lineItems: parseLineItems(row.line_items_json, row),
     saleType: row.sale_type,
     partnerProvider: row.partner_provider,
     status: row.status,
@@ -123,6 +194,11 @@ export class PaymentStore {
         title TEXT NOT NULL,
         description TEXT NOT NULL,
         amount_vnd INTEGER NOT NULL CHECK (amount_vnd > 0),
+        base_amount_vnd INTEGER,
+        monthly_vnd INTEGER,
+        billing_months INTEGER,
+        price_verified_at TEXT,
+        line_items_json TEXT NOT NULL DEFAULT '[]',
         sale_type TEXT NOT NULL DEFAULT 'hostora_service',
         partner_provider TEXT,
         status TEXT NOT NULL,
@@ -168,6 +244,11 @@ export class PaymentStore {
         consultation_at TEXT,
         consultation_channel TEXT NOT NULL DEFAULT 'email',
         voucher_code TEXT,
+        base_amount_vnd INTEGER,
+        monthly_vnd INTEGER,
+        billing_months INTEGER,
+        price_verified_at TEXT,
+        pricing_note TEXT NOT NULL DEFAULT '',
         cancel_reason TEXT,
         status TEXT NOT NULL DEFAULT 'new',
         invoice_id TEXT REFERENCES invoices(id),
@@ -214,6 +295,11 @@ export class PaymentStore {
     const columns = this.db.prepare("PRAGMA table_info(invoices)").all() as { name: string }[];
     if (!columns.some((column) => column.name === "product_id")) this.db.exec("ALTER TABLE invoices ADD COLUMN product_id TEXT");
     if (!columns.some((column) => column.name === "customer_email")) this.db.exec("ALTER TABLE invoices ADD COLUMN customer_email TEXT");
+    if (!columns.some((column) => column.name === "base_amount_vnd")) this.db.exec("ALTER TABLE invoices ADD COLUMN base_amount_vnd INTEGER");
+    if (!columns.some((column) => column.name === "monthly_vnd")) this.db.exec("ALTER TABLE invoices ADD COLUMN monthly_vnd INTEGER");
+    if (!columns.some((column) => column.name === "billing_months")) this.db.exec("ALTER TABLE invoices ADD COLUMN billing_months INTEGER");
+    if (!columns.some((column) => column.name === "price_verified_at")) this.db.exec("ALTER TABLE invoices ADD COLUMN price_verified_at TEXT");
+    if (!columns.some((column) => column.name === "line_items_json")) this.db.exec("ALTER TABLE invoices ADD COLUMN line_items_json TEXT NOT NULL DEFAULT '[]'");
     if (!columns.some((column) => column.name === "sale_type")) this.db.exec("ALTER TABLE invoices ADD COLUMN sale_type TEXT NOT NULL DEFAULT 'hostora_service'");
     if (!columns.some((column) => column.name === "partner_provider")) this.db.exec("ALTER TABLE invoices ADD COLUMN partner_provider TEXT");
     if (!columns.some((column) => column.name === "gateway_create_date")) this.db.exec("ALTER TABLE invoices ADD COLUMN gateway_create_date TEXT");
@@ -232,7 +318,23 @@ export class PaymentStore {
     if (!saleRequestColumns.some((column) => column.name === "consultation_at")) this.db.exec("ALTER TABLE sale_requests ADD COLUMN consultation_at TEXT");
     if (!saleRequestColumns.some((column) => column.name === "consultation_channel")) this.db.exec("ALTER TABLE sale_requests ADD COLUMN consultation_channel TEXT NOT NULL DEFAULT 'email'");
     if (!saleRequestColumns.some((column) => column.name === "voucher_code")) this.db.exec("ALTER TABLE sale_requests ADD COLUMN voucher_code TEXT");
+    if (!saleRequestColumns.some((column) => column.name === "base_amount_vnd")) this.db.exec("ALTER TABLE sale_requests ADD COLUMN base_amount_vnd INTEGER");
+    if (!saleRequestColumns.some((column) => column.name === "monthly_vnd")) this.db.exec("ALTER TABLE sale_requests ADD COLUMN monthly_vnd INTEGER");
+    if (!saleRequestColumns.some((column) => column.name === "billing_months")) this.db.exec("ALTER TABLE sale_requests ADD COLUMN billing_months INTEGER");
+    if (!saleRequestColumns.some((column) => column.name === "price_verified_at")) this.db.exec("ALTER TABLE sale_requests ADD COLUMN price_verified_at TEXT");
+    if (!saleRequestColumns.some((column) => column.name === "pricing_note")) this.db.exec("ALTER TABLE sale_requests ADD COLUMN pricing_note TEXT NOT NULL DEFAULT ''");
     if (!saleRequestColumns.some((column) => column.name === "cancel_reason")) this.db.exec("ALTER TABLE sale_requests ADD COLUMN cancel_reason TEXT");
+    const backfillRequestPrice = this.db.prepare(`UPDATE sale_requests
+      SET base_amount_vnd = ?, monthly_vnd = ?, billing_months = ?, price_verified_at = ?, pricing_note = ?
+      WHERE product_id = ? AND base_amount_vnd IS NULL`);
+    for (const plan of hostingCatalog) {
+      const pricing = priceSnapshotForProductId(plan.id)!;
+      backfillRequestPrice.run(pricing.baseAmountVnd, pricing.monthlyVnd, pricing.billingMonths, pricing.verifiedAt, pricing.note ?? "", plan.id);
+    }
+    for (const product of productCatalog) {
+      const pricing = priceSnapshotForProductId(product.id);
+      if (pricing) backfillRequestPrice.run(pricing.baseAmountVnd, pricing.monthlyVnd, pricing.billingMonths, pricing.verifiedAt, pricing.note ?? "", product.id);
+    }
     const seedInventory = this.db.prepare(
       "INSERT OR IGNORE INTO plan_inventory (plan_id, quantity, low_stock_threshold, updated_at) VALUES (?, 12, 3, ?)",
     );
@@ -344,6 +446,7 @@ export class PaymentStore {
     consultationAt?: string | null;
     consultationChannel: ConsultationChannel;
     voucherCode?: string;
+    pricing?: CatalogPriceSnapshot | null;
   }): CreatedSaleRequest {
     const productId = input.productId.trim();
     const provider = input.provider.trim();
@@ -353,6 +456,9 @@ export class PaymentStore {
     const profile = input.profile;
     const consultationAt = input.consultationAt ? new Date(input.consultationAt) : null;
     const voucherCode = (input.voucherCode ?? "").trim().toUpperCase() || null;
+    const pricing = input.pricing === undefined
+      ? priceSnapshotForProductId(productId)
+      : input.pricing;
     const now = Date.now();
     if (
       !/^[a-z0-9-]{2,80}$/.test(productId) || !provider || provider.length > 100 ||
@@ -370,7 +476,13 @@ export class PaymentStore {
       !["scheduled", "ai"].includes(input.consultationPreference) ||
       !["email", "phone", "video"].includes(input.consultationChannel) ||
       (input.consultationPreference === "scheduled" && input.consultationChannel === "phone" && profile.phone.trim().length < 8) ||
-      (input.consultationPreference === "scheduled" && (!consultationAt || Number.isNaN(consultationAt.valueOf()) || consultationAt.valueOf() < now + 30 * 60 * 1000 || consultationAt.valueOf() > now + 90 * 24 * 60 * 60 * 1000))
+      (input.consultationPreference === "scheduled" && (!consultationAt || Number.isNaN(consultationAt.valueOf()) || consultationAt.valueOf() < now + 30 * 60 * 1000 || consultationAt.valueOf() > now + 90 * 24 * 60 * 60 * 1000)) ||
+      (pricing !== null && (
+        !Number.isSafeInteger(pricing.baseAmountVnd) || pricing.baseAmountVnd < 5000 || pricing.baseAmountVnd > 1_000_000_000 ||
+        (pricing.monthlyVnd !== null && (!Number.isSafeInteger(pricing.monthlyVnd) || pricing.monthlyVnd < 0)) ||
+        (pricing.billingMonths !== null && (!Number.isSafeInteger(pricing.billingMonths) || pricing.billingMonths < 1 || pricing.billingMonths > 120)) ||
+        !/^\d{4}-\d{2}-\d{2}$/.test(pricing.verifiedAt) || (pricing.note ?? "").length > 500
+      ))
     ) {
       throw new Error("Thông tin yêu cầu mua chưa hợp lệ.");
     }
@@ -381,13 +493,18 @@ export class PaymentStore {
     const id = `HSR-${randomBytes(5).toString("hex").toUpperCase()}`;
     const accessCode = randomBytes(24).toString("base64url");
     const createdAt = new Date().toISOString();
-    this.db.prepare("INSERT INTO sale_requests (id, access_hash, product_id, provider, product_name, contact, note, profile_json, consultation_preference, consultation_at, consultation_channel, voucher_code, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new', ?)")
-      .run(id, hashAccessCode(accessCode), productId, provider, productName, contact.toLowerCase(), note, JSON.stringify(profile), input.consultationPreference, consultationAt?.toISOString() ?? null, input.consultationChannel, voucherCode, createdAt);
+    this.db.prepare("INSERT INTO sale_requests (id, access_hash, product_id, provider, product_name, contact, note, profile_json, consultation_preference, consultation_at, consultation_channel, voucher_code, base_amount_vnd, monthly_vnd, billing_months, price_verified_at, pricing_note, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new', ?)")
+      .run(id, hashAccessCode(accessCode), productId, provider, productName, contact.toLowerCase(), note, JSON.stringify(profile), input.consultationPreference, consultationAt?.toISOString() ?? null, input.consultationChannel, voucherCode, pricing?.baseAmountVnd ?? null, pricing?.monthlyVnd ?? null, pricing?.billingMonths ?? null, pricing?.verifiedAt ?? null, pricing?.note ?? "", createdAt);
     return {
       id, accessCode, productId, provider, productName, contact: contact.toLowerCase(), note,
       profile, consultationPreference: input.consultationPreference,
       consultationAt: consultationAt?.toISOString() ?? null,
       consultationChannel: input.consultationChannel, voucherCode, cancelReason: null,
+      baseAmountVnd: pricing?.baseAmountVnd ?? null,
+      monthlyVnd: pricing?.monthlyVnd ?? null,
+      billingMonths: pricing?.billingMonths ?? null,
+      priceVerifiedAt: pricing?.verifiedAt ?? null,
+      pricingNote: pricing?.note ?? "",
       status: "new", invoiceId: null, createdAt,
     };
   }
@@ -395,10 +512,8 @@ export class PaymentStore {
   listSaleRequests(): SaleRequest[] {
     const retentionCutoff = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
     this.db.prepare("DELETE FROM sale_requests WHERE created_at < ?").run(retentionCutoff);
-    const rows = this.db.prepare("SELECT id, product_id, provider, product_name, contact, note, profile_json, consultation_preference, consultation_at, consultation_channel, voucher_code, cancel_reason, status, invoice_id, created_at FROM sale_requests ORDER BY created_at DESC").all() as {
-      id: string; product_id: string; provider: string; product_name: string; contact: string; note: string; profile_json: string; consultation_preference: ConsultationPreference; consultation_at: string | null; consultation_channel: ConsultationChannel; voucher_code: string | null; cancel_reason: string | null; status: SaleRequest["status"]; invoice_id: string | null; created_at: string;
-    }[];
-    return rows.map((row) => ({ id: row.id, productId: row.product_id, provider: row.provider, productName: row.product_name, contact: row.contact, note: row.note, profile: parseProfile(row.profile_json), consultationPreference: row.consultation_preference, consultationAt: row.consultation_at, consultationChannel: row.consultation_channel, voucherCode: row.voucher_code, cancelReason: row.cancel_reason, status: row.status, invoiceId: row.invoice_id, createdAt: row.created_at }));
+    const rows = this.db.prepare("SELECT id, product_id, provider, product_name, contact, note, profile_json, consultation_preference, consultation_at, consultation_channel, voucher_code, base_amount_vnd, monthly_vnd, billing_months, price_verified_at, pricing_note, cancel_reason, status, invoice_id, created_at FROM sale_requests ORDER BY created_at DESC").all() as SaleRequestRow[];
+    return rows.map(toSaleRequest);
   }
 
   findPasswordRecoveryIdentity(email: string): { name: string } | null {
@@ -452,25 +567,24 @@ export class PaymentStore {
     }
     const whereSql = where.length ? ` WHERE ${where.join(" AND ")}` : "";
     const total = (this.db.prepare(`SELECT COUNT(*) AS count FROM sale_requests${whereSql}`).get(...values) as { count: number }).count;
-    const rows = this.db.prepare(`SELECT id, product_id, provider, product_name, contact, note, profile_json, consultation_preference, consultation_at, consultation_channel, voucher_code, cancel_reason, status, invoice_id, created_at FROM sale_requests${whereSql} ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?`)
-      .all(...values, pageSize, (page - 1) * pageSize) as {
-        id: string; product_id: string; provider: string; product_name: string; contact: string; note: string; profile_json: string; consultation_preference: ConsultationPreference; consultation_at: string | null; consultation_channel: ConsultationChannel; voucher_code: string | null; cancel_reason: string | null; status: SaleRequest["status"]; invoice_id: string | null; created_at: string;
-      }[];
+    const rows = this.db.prepare(`SELECT id, product_id, provider, product_name, contact, note, profile_json, consultation_preference, consultation_at, consultation_channel, voucher_code, base_amount_vnd, monthly_vnd, billing_months, price_verified_at, pricing_note, cancel_reason, status, invoice_id, created_at FROM sale_requests${whereSql} ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?`)
+      .all(...values, pageSize, (page - 1) * pageSize) as SaleRequestRow[];
     const counts = this.db.prepare(`
       SELECT COUNT(*) AS all_count,
         SUM(CASE WHEN status = 'new' THEN 1 ELSE 0 END) AS new_count,
+        SUM(CASE WHEN status = 'cancel_requested' THEN 1 ELSE 0 END) AS cancel_requested,
         SUM(CASE WHEN status = 'invoiced' THEN 1 ELSE 0 END) AS invoiced,
         SUM(CASE WHEN status = 'declined' THEN 1 ELSE 0 END) AS declined,
         SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled
       FROM sale_requests
-    `).get() as { all_count: number; new_count: number; invoiced: number; declined: number; cancelled: number };
+    `).get() as { all_count: number; new_count: number; cancel_requested: number; invoiced: number; declined: number; cancelled: number };
     return {
-      items: rows.map((row) => ({ id: row.id, productId: row.product_id, provider: row.provider, productName: row.product_name, contact: row.contact, note: row.note, profile: parseProfile(row.profile_json), consultationPreference: row.consultation_preference, consultationAt: row.consultation_at, consultationChannel: row.consultation_channel, voucherCode: row.voucher_code, cancelReason: row.cancel_reason, status: row.status, invoiceId: row.invoice_id, createdAt: row.created_at })),
+      items: rows.map(toSaleRequest),
       total,
       page,
       pageSize,
       pageCount: Math.max(1, Math.ceil(total / pageSize)),
-      counts: { all: counts.all_count, new: counts.new_count, invoiced: counts.invoiced, declined: counts.declined, cancelled: counts.cancelled },
+      counts: { all: counts.all_count, new: counts.new_count, cancelRequested: counts.cancel_requested, invoiced: counts.invoiced, declined: counts.declined, cancelled: counts.cancelled },
     };
   }
 
@@ -489,7 +603,34 @@ export class PaymentStore {
     if (!request || request.status !== "new" || detail.length < 5 || detail.length > 500) {
       throw new Error("Yêu cầu mua không thể hủy hoặc lý do chưa hợp lệ.");
     }
-    this.db.prepare("UPDATE sale_requests SET status = 'cancelled', cancel_reason = ? WHERE id = ? AND status = 'new'").run(detail, id);
+    this.db.prepare("UPDATE sale_requests SET status = 'cancel_requested', cancel_reason = ? WHERE id = ? AND status = 'new'").run(detail, id);
+    return this.listSaleRequests().find((item) => item.id === id)!;
+  }
+
+  resolveSaleRequestCancel(
+    id: string,
+    action: "approve" | "reject",
+    note: string,
+  ): SaleRequest {
+    const request = this.listSaleRequests().find((item) => item.id === id);
+    const detail = note.trim();
+    if (
+      !request ||
+      request.status !== "cancel_requested" ||
+      detail.length < 8 ||
+      detail.length > 500
+    )
+      throw new Error("Yêu cầu hủy mua chưa sẵn sàng để xử lý.");
+    const status = action === "approve" ? "cancelled" : "new";
+    const cancelReason =
+      action === "approve"
+        ? `${request.cancelReason ?? "Khách yêu cầu hủy"}\nAdmin xác nhận: ${detail}`
+        : `${request.cancelReason ?? "Khách yêu cầu hủy"}\nAdmin từ chối: ${detail}`;
+    this.db
+      .prepare(
+        "UPDATE sale_requests SET status = ?, cancel_reason = ? WHERE id = ? AND status = 'cancel_requested'",
+      )
+      .run(status, cancelReason.slice(0, 1000), id);
     return this.listSaleRequests().find((item) => item.id === id)!;
   }
 
@@ -518,13 +659,25 @@ export class PaymentStore {
   createInvoiceForSaleRequest(
     id: string,
     input: {
-      amountVnd: number;
+      addOns?: Array<{ label: string; note?: string; amountVnd: number }>;
       description?: string;
       repeatPurchase?: boolean;
       createdBy?: "admin" | "ai";
     },
   ): CreatedInvoice {
-    const row = this.db.prepare("SELECT product_id, provider, product_name, contact, voucher_code, status FROM sale_requests WHERE id = ?").get(id) as { product_id: string; provider: string; product_name: string; contact: string; voucher_code: string | null; status: SaleRequest["status"] } | undefined;
+    const row = this.db.prepare("SELECT product_id, provider, product_name, contact, voucher_code, base_amount_vnd, monthly_vnd, billing_months, price_verified_at, pricing_note, status FROM sale_requests WHERE id = ?").get(id) as {
+      product_id: string;
+      provider: string;
+      product_name: string;
+      contact: string;
+      voucher_code: string | null;
+      base_amount_vnd: number | null;
+      monthly_vnd: number | null;
+      billing_months: number | null;
+      price_verified_at: string | null;
+      pricing_note: string;
+      status: SaleRequest["status"];
+    } | undefined;
     const canCreate = row?.status === "new" || (row?.status === "invoiced" && input.repeatPurchase === true);
     if (!row || !canCreate)
       throw new Error(
@@ -533,6 +686,44 @@ export class PaymentStore {
           : "Yêu cầu mua không còn chờ báo giá.",
       );
     this.assertPlanAvailable(row.product_id);
+    const fallbackPricing = priceSnapshotForProductId(row.product_id);
+    const baseAmountVnd = row.base_amount_vnd ?? fallbackPricing?.baseAmountVnd ?? null;
+    if (baseAmountVnd === null)
+      throw new Error("Yêu cầu chưa có giá gói đã xác minh. Hãy cập nhật giá trong danh mục trước khi lập hóa đơn.");
+    const monthlyVnd = row.monthly_vnd ?? fallbackPricing?.monthlyVnd ?? null;
+    const billingMonths = row.billing_months ?? fallbackPricing?.billingMonths ?? null;
+    const priceVerifiedAt = row.price_verified_at ?? fallbackPricing?.verifiedAt ?? null;
+    const pricingNote = row.pricing_note || fallbackPricing?.note || "";
+    const addOns: InvoiceLineItem[] = (input.addOns ?? []).map((item) => ({
+      kind: "addon",
+      label: item.label.trim(),
+      note: (item.note ?? "").trim(),
+      amountVnd: item.amountVnd,
+    }));
+    if (
+      addOns.length > 8 ||
+      addOns.some((item) =>
+        item.label.length < 2 || item.label.length > 120 || item.note.length > 500 ||
+        !Number.isSafeInteger(item.amountVnd) || item.amountVnd < 0 || item.amountVnd > 1_000_000_000
+      )
+    ) throw new Error("Thông tin dịch vụ mua thêm chưa hợp lệ.");
+    const addOnTotalVnd = addOns.reduce((total, item) => total + item.amountVnd, 0);
+    const subtotalVnd = baseAmountVnd + addOnTotalVnd;
+    if (!Number.isSafeInteger(subtotalVnd) || subtotalVnd > 1_000_000_000)
+      throw new Error("Tổng hóa đơn vượt giới hạn cho phép.");
+    const baseNote = [
+      monthlyVnd !== null && billingMonths !== null
+        ? `${monthlyVnd.toLocaleString("vi-VN")}đ/tháng × ${billingMonths} tháng`
+        : billingMonths !== null ? `Kỳ hạn ${billingMonths} tháng` : "",
+      priceVerifiedAt ? `Giá xác minh ${priceVerifiedAt}` : "",
+      pricingNote,
+    ].filter(Boolean).join(" · ");
+    const lineItems: InvoiceLineItem[] = [{
+      kind: "base",
+      label: `${row.provider} ${row.product_name}`,
+      note: baseNote,
+      amountVnd: baseAmountVnd,
+    }, ...addOns];
 
     // A voucher is selected automatically when the customer submits a
     // request. It must never block invoicing later when the confirmed total is
@@ -550,14 +741,19 @@ export class PaymentStore {
       voucher &&
       voucher.status === "active" &&
       new Date(voucher.expires_at).valueOf() > Date.now() &&
-      input.amountVnd >= voucher.min_order_vnd
+      subtotalVnd >= voucher.min_order_vnd
         ? row.voucher_code ?? undefined
         : undefined;
     const invoice = this.createInvoice({
       title: row.product_name,
       productId: row.product_id,
       description: input.description,
-      amountVnd: input.amountVnd,
+      amountVnd: subtotalVnd,
+      baseAmountVnd,
+      monthlyVnd,
+      billingMonths,
+      priceVerifiedAt,
+      lineItems,
       saleType: "partner_service",
       partnerProvider: row.provider,
       customerEmail: row.contact,
@@ -569,13 +765,31 @@ export class PaymentStore {
     return invoice;
   }
 
-  createInvoice(input: { title: string; productId?: string; amountVnd: number; description?: string; saleType?: "hostora_service" | "partner_service"; partnerProvider?: string; customerEmail?: string; voucherCode?: string; createdBy?: "admin" | "ai" }): CreatedInvoice {
+  createInvoice(input: {
+    title: string;
+    productId?: string;
+    amountVnd: number;
+    baseAmountVnd?: number;
+    monthlyVnd?: number | null;
+    billingMonths?: number | null;
+    priceVerifiedAt?: string | null;
+    lineItems?: InvoiceLineItem[];
+    description?: string;
+    saleType?: "hostora_service" | "partner_service";
+    partnerProvider?: string;
+    customerEmail?: string;
+    voucherCode?: string;
+    createdBy?: "admin" | "ai";
+  }): CreatedInvoice {
     const title = input.title.trim();
     const description = (input.description ?? "").trim();
     const saleType = input.saleType ?? "hostora_service";
     const partnerProvider = (input.partnerProvider ?? "").trim();
     const customerEmail = (input.customerEmail ?? "").trim().toLowerCase();
     const voucherCode = (input.voucherCode ?? "").trim().toUpperCase() || null;
+    const lineItems = input.lineItems ?? [{ kind: "base" as const, label: title, note: description, amountVnd: input.amountVnd }];
+    const baseAmountVnd = input.baseAmountVnd ?? lineItems.find((item) => item.kind === "base")?.amountVnd ?? input.amountVnd;
+    const lineItemTotal = lineItems.reduce((total, item) => total + item.amountVnd, 0);
     let discountVnd = 0;
     if (voucherCode) {
       const voucher = this.db.prepare("SELECT amount_vnd, min_order_vnd, status, expires_at FROM vouchers WHERE code = ?").get(voucherCode) as { amount_vnd: number; min_order_vnd: number; status: string; expires_at: string } | undefined;
@@ -584,6 +798,12 @@ export class PaymentStore {
     }
     const payableVnd = input.amountVnd - discountVnd;
     if (!title || title.length > 160 || description.length > 1000 || !Number.isSafeInteger(input.amountVnd) || input.amountVnd < 5000 || input.amountVnd > 1_000_000_000 ||
+      lineItems.length < 1 || lineItems.length > 9 || lineItems.filter((item) => item.kind === "base").length !== 1 || lineItemTotal !== input.amountVnd ||
+      !Number.isSafeInteger(baseAmountVnd) || baseAmountVnd < 5000 || baseAmountVnd > input.amountVnd ||
+      lineItems.some((item) => !["base", "addon"].includes(item.kind) || item.label.trim().length < 2 || item.label.trim().length > 120 || item.note.trim().length > 500 || !Number.isSafeInteger(item.amountVnd) || item.amountVnd < 0 || item.amountVnd > 1_000_000_000) ||
+      (input.monthlyVnd !== undefined && input.monthlyVnd !== null && (!Number.isSafeInteger(input.monthlyVnd) || input.monthlyVnd < 0)) ||
+      (input.billingMonths !== undefined && input.billingMonths !== null && (!Number.isSafeInteger(input.billingMonths) || input.billingMonths < 1 || input.billingMonths > 120)) ||
+      (input.priceVerifiedAt !== undefined && input.priceVerifiedAt !== null && !/^\d{4}-\d{2}-\d{2}$/.test(input.priceVerifiedAt)) ||
       (saleType === "partner_service" && (!partnerProvider || partnerProvider.length > 100)) ||
       (customerEmail && (customerEmail.length > 160 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail)))) {
       throw new Error("Thông tin hóa đơn hoặc số tiền không hợp lệ.");
@@ -592,8 +812,8 @@ export class PaymentStore {
     const accessCode = randomBytes(24).toString("base64url");
     const now = new Date().toISOString();
     this.transaction(() => {
-      this.db.prepare("INSERT INTO invoices (id, product_id, access_hash, customer_email, title, description, amount_vnd, subtotal_vnd, discount_vnd, voucher_code, sale_type, partner_provider, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)")
-        .run(id, input.productId ?? null, hashAccessCode(accessCode), customerEmail || null, title, description, payableVnd, input.amountVnd, discountVnd, voucherCode, saleType, saleType === "partner_service" ? partnerProvider : null, now, now);
+      this.db.prepare("INSERT INTO invoices (id, product_id, access_hash, customer_email, title, description, amount_vnd, base_amount_vnd, monthly_vnd, billing_months, price_verified_at, line_items_json, subtotal_vnd, discount_vnd, voucher_code, sale_type, partner_provider, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)")
+        .run(id, input.productId ?? null, hashAccessCode(accessCode), customerEmail || null, title, description, payableVnd, baseAmountVnd, input.monthlyVnd ?? null, input.billingMonths ?? null, input.priceVerifiedAt ?? null, JSON.stringify(lineItems), input.amountVnd, discountVnd, voucherCode, saleType, saleType === "partner_service" ? partnerProvider : null, now, now);
       if (voucherCode) this.db.prepare("UPDATE vouchers SET status = 'redeemed', redeemed_invoice_id = ?, redeemed_at = ? WHERE code = ? AND status = 'active'").run(id, now, voucherCode);
       this.addEvent(
         id,
@@ -877,14 +1097,44 @@ export class PaymentStore {
       if (!invoice || invoice.status !== "pending") throw new Error("Hóa đơn không thể hủy ở trạng thái này.");
       const detail = reason.trim();
       if (detail.length < 5 || detail.length > 500) throw new Error("Lý do hủy không hợp lệ.");
-      const status = invoice.provider ? "cancel_requested" : "cancelled";
-      this.db.prepare("UPDATE invoices SET status = ?, refund_reason = ?, updated_at = ? WHERE id = ?")
-        .run(status, detail, new Date().toISOString(), id);
-      if (status === "cancelled" && invoice.voucherCode) {
-        this.db.prepare("UPDATE vouchers SET status = 'active', redeemed_invoice_id = NULL, redeemed_at = NULL WHERE code = ? AND status = 'redeemed' AND redeemed_invoice_id = ?")
+      this.db.prepare("UPDATE invoices SET status = 'cancel_requested', refund_reason = ?, updated_at = ? WHERE id = ?")
+        .run(detail, new Date().toISOString(), id);
+      this.addEvent(id, "cancel_requested", "Khách gửi yêu cầu hủy; đang chờ quản trị viên xác nhận.");
+      return this.getInvoice(id)!;
+    });
+  }
+
+  resolveCancel(
+    id: string,
+    action: "approve" | "reject",
+    note: string,
+  ): Invoice {
+    return this.transaction(() => {
+      const invoice = this.getInvoice(id);
+      const detail = note.trim();
+      if (
+        !invoice ||
+        invoice.status !== "cancel_requested" ||
+        detail.length < 8 ||
+        detail.length > 500
+      )
+        throw new Error("Yêu cầu hủy chưa sẵn sàng để xử lý.");
+      const status = action === "approve" ? "cancelled" : "pending";
+      this.db
+        .prepare("UPDATE invoices SET status = ?, updated_at = ? WHERE id = ?")
+        .run(status, new Date().toISOString(), id);
+      if (action === "approve" && invoice.voucherCode) {
+        this.db
+          .prepare(
+            "UPDATE vouchers SET status = 'active', redeemed_invoice_id = NULL, redeemed_at = NULL WHERE code = ? AND status = 'redeemed' AND redeemed_invoice_id = ?",
+          )
           .run(invoice.voucherCode, id);
       }
-      this.addEvent(id, status, status === "cancelled" ? "Khách hủy trước khi thanh toán." : "Khách yêu cầu hủy khi phiên thanh toán đang mở.");
+      this.addEvent(
+        id,
+        action === "approve" ? "cancel_approved" : "cancel_rejected",
+        `Quản trị viên ${action === "approve" ? "xác nhận hủy" : "từ chối hủy"}: ${detail}`,
+      );
       return this.getInvoice(id)!;
     });
   }

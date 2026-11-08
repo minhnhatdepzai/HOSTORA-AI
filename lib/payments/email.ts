@@ -185,11 +185,18 @@ export async function notifySaleRequestCreated(request: CreatedSaleRequest) {
     ["Lượt truy cập dự kiến", trafficCopy[request.profile.estimatedTraffic]], ["Ngân sách", budgetCopy[request.profile.budgetRange]],
     ["Tư vấn", consultationCopy(request)],
   ];
-  const customerBody = rows(detailRows) + notice("Bước tiếp theo", request.consultationPreference === "ai" ? "Bạn có thể mở AI HOSTORA ngay. Báo giá và điều kiện vẫn do HOSTORA xác nhận trước khi phát hành hóa đơn." : "HOSTORA sẽ xác nhận lại lịch tư vấn qua email. Bạn chưa bị tính tiền.");
+  if (request.baseAmountVnd !== null) {
+    detailRows.splice(2, 0,
+      ["Giá gói đã chọn", money(request.baseAmountVnd)],
+      ["Kỳ hạn", request.monthlyVnd !== null && request.billingMonths !== null ? `${money(request.monthlyVnd)}/tháng × ${request.billingMonths} tháng` : request.billingMonths !== null ? `${request.billingMonths} tháng` : "Theo gói đã chọn"],
+      ["Giá xác minh", request.priceVerifiedAt ? dateOnly(request.priceVerifiedAt) : "Chưa có ngày xác minh"],
+    );
+  }
+  const customerBody = rows(detailRows) + notice("Bước tiếp theo", request.baseAmountVnd !== null ? "Giá gói ở trên đã được lưu cùng yêu cầu. Nếu bạn mua thêm dịch vụ, quản trị viên phải ghi rõ từng hạng mục và số tiền trước khi gửi hóa đơn." : request.consultationPreference === "ai" ? "Bạn có thể mở AI HOSTORA ngay. Gói này chưa có giá cố định nên HOSTORA chưa thể phát hành hóa đơn tự động." : "HOSTORA sẽ xác nhận lại lịch tư vấn qua email. Bạn chưa bị tính tiền.");
   await safelySend("sale_request_created", request.id, [
     { to: request.contact, subject: `HOSTORA đã nhận yêu cầu ${request.id}`, reference: request.id,
-      text: `HOSTORA đã nhận yêu cầu ${request.id} cho ${request.productName}. ${consultationCopy(request)}. Theo dõi hoặc hủy: ${manageUrl}`,
-      html: emailDocument({ preheader: `Yêu cầu ${request.id} đã được ghi nhận`, eyebrow: "ĐÃ NHẬN YÊU CẦU", title: `Chào ${request.profile.customerName}, hồ sơ đã sẵn sàng`, intro: "HOSTORA đã lưu nhu cầu của bạn. Chúng tôi sẽ chỉ tạo hóa đơn sau khi xác nhận giá, kỳ hạn và điều kiện.", body: customerBody, actions: [{ label: request.consultationPreference === "ai" ? "Tư vấn với AI ngay" : "Theo dõi yêu cầu", url: request.consultationPreference === "ai" ? aiUrl() : manageUrl }, { label: "Hủy yêu cầu", url: manageUrl, tone: "danger" }], reference: request.id }) },
+      text: `HOSTORA đã nhận yêu cầu ${request.id} cho ${request.provider} ${request.productName}${request.baseAmountVnd !== null ? `, giá gói ${money(request.baseAmountVnd)}` : ""}. ${consultationCopy(request)}. Theo dõi hoặc hủy: ${manageUrl}`,
+      html: emailDocument({ preheader: `Yêu cầu ${request.id} đã được ghi nhận`, eyebrow: "ĐÃ NHẬN YÊU CẦU", title: `Chào ${request.profile.customerName}, hồ sơ đã sẵn sàng`, intro: request.baseAmountVnd !== null ? "HOSTORA đã lưu đúng gói, kỳ hạn và giá đang hiển thị khi bạn chọn. Chưa có khoản mua thêm nào được tự ý cộng vào." : "HOSTORA đã lưu nhu cầu của bạn. Gói này chưa có giá cố định nên chưa thể phát hành hóa đơn tự động.", body: customerBody, actions: [{ label: request.consultationPreference === "ai" ? "Tư vấn với AI ngay" : "Theo dõi yêu cầu", url: request.consultationPreference === "ai" ? aiUrl() : manageUrl }, { label: "Hủy yêu cầu", url: manageUrl, tone: "danger" }], reference: request.id }) },
   ]);
 }
 
@@ -203,16 +210,71 @@ export async function notifySaleRequestCancelled(request: SaleRequest) {
   }]);
 }
 
+export async function notifySaleRequestStatusChanged(request: SaleRequest) {
+  if (request.status === "cancelled")
+    return notifySaleRequestCancelled(request);
+  if (!emailConfigFromEnv()) return;
+  const status =
+    request.status === "cancel_requested"
+      ? "Đang chờ quản trị viên xác nhận hủy"
+      : request.status === "new"
+        ? "Yêu cầu hủy không được duyệt; hồ sơ tiếp tục chờ báo giá"
+        : request.status === "invoiced"
+          ? "Đã tạo hóa đơn"
+          : "Không tiếp nhận";
+  const body = rows([
+    ["Mã yêu cầu", request.id],
+    ["Dịch vụ", request.productName],
+    ["Trạng thái", status],
+    ["Ghi chú", request.cancelReason || "Không có"],
+  ]);
+  await safelySend("sale_request_status", request.id, [
+    {
+      to: request.contact,
+      subject: `[HOSTORA] Cập nhật yêu cầu ${request.id}`,
+      reference: request.id,
+      text: `Yêu cầu ${request.id}: ${status}.`,
+      html: emailDocument({
+        preheader: `Yêu cầu ${request.id}: ${status}`,
+        eyebrow: "CẬP NHẬT YÊU CẦU",
+        title: status,
+        intro:
+          request.status === "cancel_requested"
+            ? "HOSTORA đã nhận lý do hủy. Yêu cầu chỉ được hủy sau khi quản trị viên kiểm tra và xác nhận."
+            : "HOSTORA đã cập nhật quyết định xử lý trên hồ sơ của bạn.",
+        body,
+        reference: request.id,
+      }),
+    },
+  ]);
+}
+
 export async function notifyInvoiceCreated(invoice: CreatedInvoice) {
   if (!emailConfigFromEnv() || !invoice.customerEmail) return;
   const portalUrl = invoicePortalUrl(invoice);
-  const priceRows: Array<[string, string]> = [["Mã hóa đơn", invoice.id], ["Dịch vụ", invoice.title]];
+  const priceRows: Array<[string, string]> = [
+    ["Mã hóa đơn", invoice.id],
+    ["Gói đã chọn", invoice.title],
+    ["Nhà cung cấp", invoice.partnerProvider ?? "HOSTORA"],
+  ];
+  if (invoice.monthlyVnd !== null && invoice.billingMonths !== null)
+    priceRows.push(["Kỳ hạn", `${money(invoice.monthlyVnd)}/tháng × ${invoice.billingMonths} tháng`]);
+  if (invoice.priceVerifiedAt)
+    priceRows.push(["Ngày xác minh giá", dateOnly(invoice.priceVerifiedAt)]);
+  for (const [index, item] of invoice.lineItems.entries()) {
+    priceRows.push([
+      item.kind === "base" ? "Giá gói gốc" : `Mua thêm ${index}`,
+      `${item.label}${item.note ? ` · ${item.note}` : ""} · ${money(item.amountVnd)}`,
+    ]);
+  }
+  if (invoice.lineItems.some((item) => item.kind === "addon"))
+    priceRows.push(["Tạm tính", money(invoice.subtotalVnd)]);
   if (invoice.discountVnd > 0) priceRows.push(["Giá trước giảm", money(invoice.subtotalVnd)], ["Voucher", `-${money(invoice.discountVnd)} · ${invoice.voucherCode}`]);
   priceRows.push(["Tổng cần thanh toán", money(invoice.amountVnd)], ["Mã truy cập", invoice.accessCode]);
   const voucherNotice = invoice.amountVnd >= 1_000_000 ? notice("Quà cho đơn từ 1 triệu", "Sau khi thanh toán được xác nhận, bạn nhận voucher 100.000đ cho đơn tiếp theo từ 1.000.000đ, hiệu lực 30 ngày.") : "";
   const body = rows(priceRows) + voucherNotice;
   const messages: Parameters<typeof sendMail>[0][] = [{ to: invoice.customerEmail, subject: `Hóa đơn HOSTORA ${invoice.id} · ${money(invoice.amountVnd)}`, reference: invoice.id,
-    text: `Hóa đơn ${invoice.id} - ${invoice.title} - ${money(invoice.amountVnd)}. Mã truy cập: ${invoice.accessCode}. Xem, thanh toán hoặc hủy: ${portalUrl}`,
+    text: `Hóa đơn ${invoice.id} - ${invoice.partnerProvider ?? "HOSTORA"} ${invoice.title}. ${invoice.lineItems.map((item) => `${item.label}: ${money(item.amountVnd)}${item.note ? ` (${item.note})` : ""}`).join("; ")}. Tổng thanh toán: ${money(invoice.amountVnd)}. Mã truy cập: ${invoice.accessCode}. Xem, thanh toán hoặc hủy: ${portalUrl}`,
     html: emailDocument({ preheader: `Hóa đơn ${invoice.id} đã sẵn sàng`, eyebrow: "HÓA ĐƠN HOSTORA", title: "Kiểm tra trước khi thanh toán", intro: "Hãy kiểm tra dịch vụ, số tiền và điều kiện. Bạn có thể hủy trước khi thanh toán ngay trên HOSTORA.", body, actions: [{ label: "Xem và thanh toán", url: portalUrl }, { label: "Hủy trước thanh toán", url: portalUrl, tone: "danger" }], reference: invoice.id }) }];
   await safelySend("invoice_created", invoice.id, messages);
 }

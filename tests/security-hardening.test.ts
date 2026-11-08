@@ -212,6 +212,10 @@ describe("adaptive abuse protection", () => {
     const blocked = await protectPublicAuthAction(input);
     expect(blocked?.status).toBe(429);
     expect(Number(blocked?.headers.get("retry-after"))).toBeGreaterThan(0);
+    await expect(blocked?.json()).resolves.toMatchObject({
+      code: "RATE_LIMITED",
+      retryAfterSeconds: expect.any(Number),
+    });
     store.close();
   });
 

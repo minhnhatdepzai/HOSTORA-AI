@@ -7,6 +7,9 @@ import {
   progressForStep,
 } from "@/mobile/src/lib/motion-spec";
 import { defaultRequirements } from "@/mobile/src/lib/catalog";
+import { resolveDefaultApiBase } from "@/mobile/src/lib/api-base";
+import { createFreshConsultationDraft } from "@/mobile/src/lib/consult-session";
+import { resolveCustomerPrefill } from "@/mobile/src/lib/customer-prefill";
 import { shouldPlayIntroOnLaunch } from "@/mobile/src/lib/intro";
 import {
   judgeCases,
@@ -56,6 +59,14 @@ describe("HOSTORA mobile motion contract", () => {
 });
 
 describe("HOSTORA consultation guards", () => {
+  it("starts every consultation from a new default draft", () => {
+    const first = createFreshConsultationDraft();
+    first.monthlyVisits = 99_999;
+    first.notes = "Dữ liệu của phiên trước";
+
+    expect(createFreshConsultationDraft()).toEqual(defaultRequirements);
+  });
+
   it("accepts the existing first-step website selection", () => {
     expect(canContinueConsult(0, defaultRequirements)).toBe(true);
   });
@@ -110,6 +121,45 @@ describe("HOSTORA consultation guards", () => {
     expect(
       canContinueConsult(3, { ...defaultRequirements, needsDomain: false }),
     ).toBe(true);
+  });
+});
+
+describe("HOSTORA mobile API defaults", () => {
+  it("always uses the Android host gateway on an emulator", () => {
+    expect(
+      resolveDefaultApiBase({
+        platform: "android",
+        isPhysicalDevice: false,
+        envBase: "http://192.168.100.10:3000",
+      }),
+    ).toBe("http://10.0.2.2:3200");
+  });
+
+  it("keeps an explicit server for a physical Android device", () => {
+    expect(
+      resolveDefaultApiBase({
+        platform: "android",
+        isPhysicalDevice: true,
+        envBase: "http://192.168.1.20:3000/",
+      }),
+    ).toBe("http://192.168.1.20:3000");
+  });
+});
+
+describe("HOSTORA repeat purchase identity", () => {
+  it("prefills account name and email when a new form has no draft", () => {
+    expect(resolveCustomerPrefill(null, "Nguyễn Minh Nhật")).toBe(
+      "Nguyễn Minh Nhật",
+    );
+    expect(resolveCustomerPrefill(null, "nhat@example.com")).toBe(
+      "nhat@example.com",
+    );
+  });
+
+  it("keeps a deliberate edit for the current form", () => {
+    expect(resolveCustomerPrefill("Tên người phụ trách", "Tên tài khoản")).toBe(
+      "Tên người phụ trách",
+    );
   });
 });
 

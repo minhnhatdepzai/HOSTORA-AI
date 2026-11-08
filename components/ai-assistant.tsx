@@ -463,6 +463,51 @@ export function AiAssistant({
     }
   }
 
+  async function deleteConversation(thread: ChatThreadSummary) {
+    if (
+      !confirm(
+        `Xóa cuộc trò chuyện “${thread.title}”? Tin nhắn sẽ biến mất ở cả ứng dụng và trang quản trị.`,
+      )
+    )
+      return;
+    setHistoryLoading(true);
+    setHistoryNotice("");
+    try {
+      const response = await fetch(
+        `/api/account/chat-history?conversationId=${encodeURIComponent(thread.conversationId)}`,
+        { method: "DELETE" },
+      );
+      const output = (await response.json()) as { error?: string };
+      if (!response.ok)
+        throw new Error(output.error ?? "Chưa xóa được cuộc trò chuyện.");
+      setConversations((current) =>
+        current.filter(
+          (item) => item.conversationId !== thread.conversationId,
+        ),
+      );
+      if (conversationId === thread.conversationId) {
+        setConversationId(null);
+        setConversationAccess(null);
+        setSupportStatus("active");
+        setMessages([
+          {
+            role: "assistant",
+            content:
+              "Cuộc trò chuyện đã được xóa. Hồ sơ tài khoản vẫn được giữ để bạn bắt đầu câu hỏi mới.",
+          },
+        ]);
+      }
+    } catch (error) {
+      setHistoryNotice(
+        error instanceof Error
+          ? error.message
+          : "Chưa xóa được cuộc trò chuyện.",
+      );
+    } finally {
+      setHistoryLoading(false);
+    }
+  }
+
   function startNewConversation() {
     setConversationId(crypto.randomUUID());
     setConversationAccess(null);
@@ -776,20 +821,32 @@ export function AiAssistant({
                 </p>
               ) : conversations.length ? (
                 conversations.map((thread) => (
-                  <button
-                    type="button"
+                  <div
                     key={thread.conversationId}
-                    aria-current={thread.conversationId === conversationId ? "true" : undefined}
-                    onClick={() => void openConversation(thread.conversationId)}
-                    className={`block min-h-16 w-full rounded-lg border p-3 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 ${thread.conversationId === conversationId ? "border-emerald-700 bg-emerald-50" : "border-slate-200 bg-white hover:border-emerald-500"}`}
+                    className={`grid min-h-16 grid-cols-[1fr_44px] overflow-hidden rounded-lg border ${thread.conversationId === conversationId ? "border-emerald-700 bg-emerald-50" : "border-slate-200 bg-white"}`}
                   >
-                    <span className="block line-clamp-2 text-xs font-black leading-5 text-slate-800">
-                      {thread.title}
-                    </span>
-                    <span className="mt-1 block text-[11px] text-slate-500">
-                      {thread.messageCount} tin · {new Date(thread.latestMessageAt).toLocaleDateString("vi-VN")}
-                    </span>
-                  </button>
+                    <button
+                      type="button"
+                      aria-current={thread.conversationId === conversationId ? "true" : undefined}
+                      onClick={() => void openConversation(thread.conversationId)}
+                      className="min-w-0 p-3 text-left transition-colors hover:bg-emerald-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-emerald-700"
+                    >
+                      <span className="block line-clamp-2 text-xs font-black leading-5 text-slate-800">
+                        {thread.title}
+                      </span>
+                      <span className="mt-1 block text-[11px] text-slate-500">
+                        {thread.messageCount} tin · {new Date(thread.latestMessageAt).toLocaleDateString("vi-VN")}
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      aria-label={`Xóa cuộc trò chuyện ${thread.title}`}
+                      onClick={() => void deleteConversation(thread)}
+                      className="grid min-h-11 min-w-11 place-items-center border-l border-slate-200 text-red-700 transition-colors hover:bg-red-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-red-700"
+                    >
+                      <Trash2 aria-hidden="true" size={16} />
+                    </button>
+                  </div>
                 ))
               ) : (
                 <div className="p-3 text-xs leading-5 text-slate-500">

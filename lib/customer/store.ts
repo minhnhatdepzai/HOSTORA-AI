@@ -390,6 +390,33 @@ export class CustomerStore {
     }));
   }
 
+  deleteAiConversation(customerId: string, conversationId: string) {
+    const owned = this.db
+      .prepare(
+        "SELECT 1 AS found FROM ai_conversations WHERE id = ? AND customer_id = ?",
+      )
+      .get(conversationId, customerId) as { found: number } | undefined;
+    if (!owned) return false;
+    this.db.exec("BEGIN IMMEDIATE");
+    try {
+      this.db
+        .prepare(
+          "DELETE FROM customer_chat_messages WHERE customer_id = ? AND conversation_id = ?",
+        )
+        .run(customerId, conversationId);
+      this.db
+        .prepare(
+          "DELETE FROM ai_conversations WHERE id = ? AND customer_id = ?",
+        )
+        .run(conversationId, customerId);
+      this.db.exec("COMMIT");
+      return true;
+    } catch (error) {
+      this.db.exec("ROLLBACK");
+      throw error;
+    }
+  }
+
   clearAiHistory(customerId: string, clearMemory = false) {
     this.db.exec("BEGIN IMMEDIATE");
     try {

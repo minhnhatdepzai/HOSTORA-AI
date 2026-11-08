@@ -7,6 +7,7 @@ import {
   Download,
   LoaderCircle,
   Send,
+  Share2,
   ThumbsDown,
   ThumbsUp,
 } from "lucide-react";
@@ -101,6 +102,22 @@ export function StudioSharedProject({
     window.setTimeout(() => setCopied(false), 1800);
   }
 
+  async function shareLink() {
+    if (typeof navigator.share === "function") {
+      try {
+        await navigator.share({
+          title: `Website ${idea.brand}`,
+          text: `Xem website ${idea.brand} được tạo bằng HOSTORA`,
+          url: shareUrl,
+        });
+        return;
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+      }
+    }
+    await copyLink();
+  }
+
   async function saveDesign(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (designBusy) return;
@@ -182,6 +199,13 @@ export function StudioSharedProject({
           >
             {copied ? <Check size={16} /> : <Copy size={16} />}
             {copied ? "Đã chép" : "Sao chép"}
+          </button>
+          <button
+            type="button"
+            onClick={() => void shareLink()}
+            aria-label="Chia sẻ link website"
+          >
+            <Share2 size={16} aria-hidden="true" /> Chia sẻ
           </button>
         </div>
       </div>

@@ -11,7 +11,7 @@ export async function GET(request: Request) {
   const raw = Object.fromEntries(new URL(request.url).searchParams);
   const parsed = z.object({
     search: z.string().trim().max(160).optional(),
-    status: z.enum(["new", "invoiced", "declined", "cancelled"]).optional(),
+    status: z.enum(["new", "cancel_requested", "invoiced", "declined", "cancelled"]).optional(),
     page: z.coerce.number().int().min(1).max(1_000_000).default(1),
     pageSize: z.coerce.number().int().min(10).max(100).default(25),
   }).safeParse(raw);
@@ -25,10 +25,14 @@ export async function POST(request: Request) {
   try {
     const input = await parseSmallJson(request, z.object({
       requestId: z.string().regex(/^HSR-[A-F0-9]{10}$/),
-      amountVnd: z.number().int().min(5000).max(1_000_000_000),
-      description: z.string().trim().min(5).max(1000),
+      description: z.string().trim().max(1000).optional(),
+      addOns: z.array(z.object({
+        label: z.string().trim().min(2).max(120),
+        note: z.string().trim().max(500).optional(),
+        amountVnd: z.number().int().min(0).max(1_000_000_000),
+      }).strict()).max(8).default([]),
       repeatPurchase: z.boolean().optional(),
-    }));
+    }).strict());
     const invoice = getPaymentStore().createInvoiceForSaleRequest(input.requestId, input);
     scheduleOrderEmail(() => notifyInvoiceCreated(invoice));
     return noStoreJson(invoice, 201);

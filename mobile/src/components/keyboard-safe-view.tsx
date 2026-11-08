@@ -1,7 +1,6 @@
 import type { PropsWithChildren } from "react";
 import {
   KeyboardAvoidingView,
-  Platform,
   StyleSheet,
   type KeyboardAvoidingViewProps,
 } from "react-native";
@@ -13,7 +12,7 @@ export function KeyboardSafeView({
 }: PropsWithChildren<KeyboardAvoidingViewProps>) {
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      behavior="padding"
       style={[styles.root, style]}
       {...props}
     >

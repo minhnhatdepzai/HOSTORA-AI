@@ -30,9 +30,7 @@ describe("mobile keyboard layout", () => {
     expect(app.expo.android.softwareKeyboardLayoutMode).toBe("resize");
     expect(rootLayout).toContain("<KeyboardSafeView>");
     expect(rootLayout).toMatch(/<KeyboardSafeView>[\s\S]*<Stack/);
-    expect(keyboardSafeView).toContain(
-      'Platform.OS === "ios" ? "padding" : "height"',
-    );
+    expect(keyboardSafeView).toContain('behavior="padding"');
   });
 
   it("keeps input modals above the keyboard in their own native window", () => {

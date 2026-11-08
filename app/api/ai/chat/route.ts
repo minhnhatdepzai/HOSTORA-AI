@@ -397,7 +397,7 @@ export async function POST(request: Request) {
   if (asksAboutOwnPurchase(latest))
     return respondText(
       customer && customerStore
-        ? ownPurchaseAnswer(accountOrders, accountRequests)
+        ? ownPurchaseAnswer(accountOrders, accountRequests, latest)
         : "Để xem bạn đã đăng ký hoặc mua gói nào, hãy đăng nhập đúng tài khoản HOSTORA rồi hỏi lại. Mình không thể xem đơn hàng cá nhân khi chưa xác thực.",
       [],
       undefined,

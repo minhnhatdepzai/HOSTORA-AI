@@ -1,4 +1,5 @@
 import { Pressable } from "@/components/pressable";
+import { VniTextInput as TextInput } from "@/components/vni-text-input";
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
@@ -6,7 +7,6 @@ import {
   ActivityIndicator,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";

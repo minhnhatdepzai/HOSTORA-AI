@@ -1,10 +1,10 @@
 import { Feather } from "@expo/vector-icons";
+import { VniTextInput as TextInput } from "@/components/vni-text-input";
 import { useState } from "react";
 import {
   ActivityIndicator,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";

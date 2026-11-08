@@ -9,6 +9,7 @@ import { getPaymentStore } from "@/lib/payments/store";
 import { buildFallbackBrief, type SiteIdea } from "@/lib/site-studio";
 import { saveStudioProject } from "@/lib/site-studio-store";
 import {
+  asksAboutOwnPurchase,
   asksAboutOwnProfile,
   asksForProfileBasedAdvice,
   customerAdviceContext,
@@ -150,6 +151,12 @@ test("chat reads only the signed-in customer's paid and pending hosting orders",
   expect(asksAboutOwnProfile(
     "Dựa trên thông tin tôi đã điền, hãy tư vấn 3 việc ưu tiên tiếp theo.",
   )).toBe(false);
+  expect(asksAboutOwnProfile(
+    "Nếu vẫn phải nâng cấp, hãy đưa ra ba phương án phù hợp với ngân sách trong hồ sơ của tôi. Nói rõ tiền phải trả trước, giá gia hạn, giới hạn và thông tin nào chưa xác minh.",
+  )).toBe(false);
+  expect(asksAboutOwnPurchase(
+    "Tôi vừa mua gói gì, trạng thái hiện tại ra sao và tôi cần làm gì tiếp theo trước khi chạy quảng cáo?",
+  )).toBe(true);
   expect(asksForProfileBasedAdvice(
     "Dựa trên thông tin tôi đã điền, hãy tư vấn 3 việc ưu tiên tiếp theo.",
   )).toBe(true);
@@ -225,6 +232,33 @@ test("chat reads only the signed-in customer's paid and pending hosting orders",
   expect(correctedAdvice).toContain("500.000đ/tháng");
   expect(correctedAdvice).not.toContain("dưới 500.000đ/tháng");
   expect(correctedAdvice).not.toContain("300.000đ/tháng");
+
+  const threeOptions = await (
+    await chat(
+      "Nếu vẫn phải nâng cấp, hãy đưa ra ba phương án phù hợp với ngân sách trong hồ sơ của tôi. Nói rõ tiền phải trả trước, giá gia hạn, giới hạn và thông tin nào chưa xác minh.",
+      ownerToken,
+      staleConsultation,
+    )
+  ).text();
+  expect(threeOptions).toContain("Gói chính:");
+  expect(threeOptions).toContain("Thay thế 1:");
+  expect(threeOptions).toContain("Thay thế 2:");
+  expect(threeOptions).toContain("gia hạn");
+  expect(threeOptions).toContain("tiền hosting kỳ đầu");
+
+  const postPurchase = await chat(
+    "Tôi vừa mua gói gì, trạng thái hiện tại ra sao và tôi cần làm gì tiếp theo trước khi chạy quảng cáo?",
+    ownerToken,
+  );
+  const postPurchaseAnswer = await postPurchase.text();
+  expect(postPurchase.headers.get("x-hostora-support-status")).toBe("active");
+  expect(postPurchaseAnswer).toContain("Hosting Gói A thử nghiệm: đã thanh toán");
+  expect(postPurchaseAnswer).toContain("gói mua gần nhất");
+  expect(postPurchaseAnswer).not.toContain("Hosting Gói B đang chờ");
+  expect(postPurchaseAnswer).not.toContain("Hosting Shop thử nghiệm");
+  expect(postPurchaseAnswer).toContain("Trước khi chạy quảng cáo");
+  expect(postPurchaseAnswer).toContain("Bạn không cần mua lại gói");
+  expect(postPurchaseAnswer).not.toContain("đã chuyển");
 
   const modelContext = JSON.stringify(customerAdviceContext(
     store.listOrders(owner.email),

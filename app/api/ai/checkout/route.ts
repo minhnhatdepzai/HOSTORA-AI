@@ -107,7 +107,6 @@ export async function POST(request: Request) {
     const invoice = getPaymentStore().createInvoiceForSaleRequest(
       requestRecord.id,
       {
-        amountVnd: quote.amountVnd,
         description: `${quote.provider} ${quote.planName} · kỳ đầu ${quote.billingMonths} tháng · giá theo dữ liệu xác minh ${quote.verifiedAt}. Thuế và dịch vụ mua thêm chỉ áp dụng khi được ghi rõ trên hóa đơn này.`,
         createdBy: "ai",
       },

@@ -1,4 +1,5 @@
 import { LinearGradient } from "expo-linear-gradient";
+import { VniTextInput as TextInput } from "@/components/vni-text-input";
 import { Feather } from "@expo/vector-icons";
 import { useMemo, useState } from "react";
 import {
@@ -7,7 +8,6 @@ import {
   Pressable,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import { colors } from "@/constants/theme";

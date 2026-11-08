@@ -246,6 +246,17 @@ test("live flash sale outage gets immediate order triage, not a new hosting pitc
   expect(result?.sources).toHaveLength(1);
 });
 
+test("slow flash sale with dropping orders is triaged before a hosting migration", () => {
+  const result = urgentStoreOutageAnswer(
+    "Shop của tôi bị chậm khi flash sale khoảng 300 người, đơn đang rớt. Tôi phải làm gì ngay trước khi đổi hosting?",
+  );
+  expect(result?.answer).toContain("Ưu tiên giữ đơn");
+  expect(result?.answer).toContain("khoảng 300 khách");
+  expect(result?.answer).toContain("Trước khi đổi hosting");
+  expect(result?.answer).toContain("giỏ hàng → đặt hàng → thanh toán");
+  expect(result?.answer).not.toContain("giữ tên miền cũ");
+});
+
 test("checkout failure after migration prioritizes orders and payments over DNS checklist", () => {
   const result = checkoutAfterMigrationAnswer("Sau khi chuyển hosting, khách bấm thanh toán bị lỗi nhưng email vẫn nhận. Tôi làm gì ngay để không mất đơn?");
   expect(result?.answer).toContain("đơn");

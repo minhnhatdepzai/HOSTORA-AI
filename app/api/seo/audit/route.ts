@@ -177,6 +177,7 @@ export async function POST(request: Request) {
         aiOutput,
         aiFormat,
         "seo_audit",
+        12_000,
       );
       const allowedCitations = new Set(
         sources.map((_, index) => `[K${index + 1}]`),

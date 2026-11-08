@@ -266,12 +266,14 @@ function knowledgeSource(id: string, citation: string) {
 export function urgentStoreOutageAnswer(question: string) {
   const folded = foldedQuestion(question);
   if (!/(shop|cua hang|woocommerce|website ban hang|web ban hang)/i.test(folded) ||
-      !/(sap|khong truy cap|khong vao duoc|qua tai|loi 5\d\d)/i.test(folded) ||
+      !/(sap|khong truy cap|khong vao duoc|qua tai|loi 5\d\d|cham|lag|treo|mat don|rot don|don.{0,16}(?:rot|roi|loi|that bai))/i.test(folded) ||
       !/(flash sale|dang ban|don hang|khach|ngay|gap)/i.test(folded)) return null;
   const source = knowledgeSource("performance-limits", "K1");
-  const concurrent = folded.match(/(\d[\d.,]*)\s*(?:khach|nguoi)\s*(?:cung luc|dong thoi)/i)?.[1];
+  const concurrent = folded.match(
+    /(\d[\d.,]*)\s*(?:khach|nguoi)(?:\s*(?:cung luc|dong thoi))?/i,
+  )?.[1];
   return {
-    answer: `Ưu tiên giữ đơn và ngừng gửi thêm khách vào trang đang lỗi. ${concurrent ? `Với ${concurrent} khách cùng lúc, ` : ""}hãy tạm dừng quảng cáo hoặc đợt flash sale, báo khách cách liên hệ để giữ đơn và ghi lại thời điểm lỗi. Đừng yêu cầu khách thanh toán lại nếu chưa đối soát giao dịch.\n\nNgay sau đó, kiểm tra trạng thái máy chủ và log lỗi, tạm tắt plugin vừa cập nhật nếu lỗi xuất hiện sau thay đổi, rồi thử một lượt xem sản phẩm → đặt hàng → thanh toán. Chỉ bật lại lưu lượng khi luồng đặt hàng ổn; sau sự cố hãy đo tải thực tế trước khi đổi gói.${source ? " [K1]" : ""}`,
+    answer: `Ưu tiên giữ đơn và ngừng gửi thêm khách vào trang đang lỗi. ${concurrent ? `Với khoảng ${concurrent} khách trong đợt bán, ` : ""}hãy tạm dừng quảng cáo hoặc flash sale, mở một kênh liên hệ dự phòng để giữ đơn và ghi lại thời điểm lỗi. Đừng yêu cầu khách thanh toán lại nếu chưa đối soát giao dịch.\n\nTrước khi đổi hosting, hãy kiểm tra trạng thái máy chủ và nhật ký lỗi, mức sử dụng bộ xử lý và bộ nhớ, truy vấn cơ sở dữ liệu, cache/CDN và plugin vừa cập nhật. Sau đó thử đúng luồng xem sản phẩm → giỏ hàng → đặt hàng → thanh toán; chỉ mở lại lưu lượng khi luồng này ổn. Nếu vẫn nghẽn, đo tải tăng dần và dùng kết quả đó để quyết định có cần nâng cấp hay không, thay vì đổi hosting theo cảm tính.${source ? " [K1]" : ""}`,
     sources: source ? [source] : [],
   };
 }

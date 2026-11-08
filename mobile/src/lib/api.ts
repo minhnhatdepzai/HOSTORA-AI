@@ -2,14 +2,13 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Device from "expo-device";
 import { Platform } from "react-native";
 import { readCustomerSessionToken } from "@/lib/auth-session";
+import { resolveDefaultApiBase } from "@/lib/api-base";
 
-export const DEFAULT_API_BASE =
-  process.env.EXPO_PUBLIC_API_BASE_URL ??
-  (Platform.OS === "web"
-    ? "http://127.0.0.1:3000"
-    : Platform.OS === "android" && !Device.isDevice
-      ? "http://10.0.2.2:3200"
-      : "");
+export const DEFAULT_API_BASE = resolveDefaultApiBase({
+  platform: Platform.OS,
+  isPhysicalDevice: Device.isDevice,
+  envBase: process.env.EXPO_PUBLIC_API_BASE_URL,
+});
 const SERVER_KEY = "hostora:mobile:api-base";
 
 export async function getApiBase() {

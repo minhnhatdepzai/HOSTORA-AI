@@ -1,4 +1,5 @@
 import { Pressable } from "@/components/pressable";
+import { VniTextInput as TextInput } from "@/components/vni-text-input";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Feather } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
@@ -17,12 +18,11 @@ import {
   type ScrollViewInstance,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import Markdown from "react-native-markdown-display";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Brand, CinematicScrollView, Pill } from "@/components/ui";
+import { Brand, CinematicScrollView } from "@/components/ui";
 import { KeyboardSafeView } from "@/components/keyboard-safe-view";
 import { colors, radii } from "@/constants/theme";
 import { deleteJson, getApiBase, getJson, postJson } from "@/lib/api";
@@ -118,8 +118,8 @@ export default function AssistantScreen() {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [selectedPlanInventory, setSelectedPlanInventory] =
     useState<SelectedPlanInventory | null>(null);
+  const [selectedPlanExpanded, setSelectedPlanExpanded] = useState(true);
   const [sendError, setSendError] = useState<string | null>(null);
-  const [sourceCount, setSourceCount] = useState(0);
   const [memory, setMemory] = useState<MobileChatMemory | null>(null);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [conversationAccess, setConversationAccess] = useState<string | null>(
@@ -170,8 +170,7 @@ export default function AssistantScreen() {
       setHistoryLoading(true);
       try {
         if (customer) {
-          const [history, sourceData] = await Promise.all([
-            getJson<{
+          const history = await getJson<{
               conversationId: string | null;
               messages: {
                 role: Message["role"];
@@ -182,11 +181,8 @@ export default function AssistantScreen() {
               memory: MobileChatMemory | null;
               supportStatus?: SupportStatus;
               conversations?: ChatThreadSummary[];
-            }>("/api/account/chat-history"),
-            getJson<{ sources: { id: string }[] }>("/api/account/ai-sources"),
-          ]);
+            }>("/api/account/chat-history");
           if (!active) return;
-          setSourceCount(sourceData.sources.length);
           setConversationId(history.conversationId);
           setMemory(history.memory);
           setSupportStatus(history.supportStatus ?? "active");
@@ -561,6 +557,56 @@ export default function AssistantScreen() {
     }
   }
 
+  async function deleteConversation(id: string) {
+    if (!customer) return;
+    setHistoryLoading(true);
+    setHistoryError("");
+    try {
+      await deleteJson<{ deleted: boolean }>(
+        `/api/account/chat-history?conversationId=${encodeURIComponent(id)}`,
+      );
+      setConversations((current) =>
+        current.filter((thread) => thread.conversationId !== id),
+      );
+      if (conversationId === id) {
+        setConversationId(null);
+        setConversationAccess(null);
+        setSupportStatus("active");
+        setSendError(null);
+        setMessages([
+          {
+            role: "assistant",
+            content:
+              "Cuộc trò chuyện đã được xóa. Bạn có thể bắt đầu câu hỏi mới; hồ sơ tài khoản vẫn được giữ để tư vấn đúng nhu cầu.",
+          },
+        ]);
+      }
+    } catch (error) {
+      setHistoryError(
+        error instanceof Error
+          ? error.message
+          : "Chưa xóa được cuộc trò chuyện.",
+      );
+    } finally {
+      setHistoryLoading(false);
+    }
+  }
+
+  function confirmDeleteConversation(thread: ChatThreadSummary) {
+    Alert.alert(
+      "Xóa cuộc trò chuyện?",
+      "Toàn bộ tin nhắn trong khung chat này sẽ biến mất ở cả ứng dụng và trang quản trị.",
+      [
+        { text: "Giữ lại", style: "cancel" },
+        {
+          text: "Xóa",
+          style: "destructive",
+          onPress: () => void deleteConversation(thread.conversationId),
+        },
+      ],
+    );
+  }
+
   async function inspectScreenshot() {
     if (loading || imageLoading) return;
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -699,7 +745,6 @@ export default function AssistantScreen() {
         mimeType,
         base64,
       });
-      setSourceCount((current) => current + 1);
       Alert.alert(
         "Đã thêm tài liệu",
         "HOSTORA sẽ dùng nguồn này cho câu hỏi tiếp theo khi nội dung liên quan.",
@@ -713,31 +758,6 @@ export default function AssistantScreen() {
       );
     } finally {
       setSourceLoading(false);
-    }
-  }
-
-  async function performClear() {
-    if (customer)
-      await deleteJson<{ deleted: boolean }>("/api/account/chat-history");
-    const initial: Message[] = [
-      {
-        role: "assistant",
-        content: "Lịch sử đã được xóa. Bạn muốn tìm hiểu gì về lưu trữ?",
-      },
-    ];
-    setMessages(initial);
-    setInput("");
-    setSendError(null);
-    setConversationId(randomUuid());
-    setConversationAccess(null);
-    setSupportStatus("active");
-    if (!customer) {
-      setMemory(null);
-      await AsyncStorage.setItem(KEY, JSON.stringify(initial));
-      await AsyncStorage.removeItem(MEMORY_KEY);
-      await AsyncStorage.removeItem(CONVERSATION_KEY);
-      await AsyncStorage.removeItem(CONVERSATION_ACCESS_KEY);
-      await AsyncStorage.removeItem(SUPPORT_STATUS_KEY);
     }
   }
 
@@ -772,30 +792,6 @@ export default function AssistantScreen() {
     setTimeout(() => list.current?.scrollToEnd({ animated: true }), 80);
   }
 
-  function clear() {
-    Alert.alert(
-      "Xóa lịch sử trò chuyện?",
-      customer
-        ? "Lịch sử sẽ được xóa khỏi tài khoản trên các thiết bị. Ghi nhớ nhu cầu vẫn được giữ."
-        : "Thao tác này chỉ xóa dữ liệu trên thiết bị.",
-      [
-        { text: "Hủy", style: "cancel" },
-        {
-          text: "Xóa",
-          style: "destructive",
-          onPress: () => {
-            void performClear().catch(() =>
-              Alert.alert(
-                "Chưa xóa được lịch sử",
-                "Kiểm tra kết nối rồi thử lại.",
-              ),
-            );
-          },
-        },
-      ],
-    );
-  }
-
   async function copyMessage(index: number, content: string) {
     await Clipboard.setStringAsync(content);
     setCopiedMessageIndex(index);
@@ -806,9 +802,22 @@ export default function AssistantScreen() {
       <View style={styles.header}>
         <Brand />
         <View style={styles.headerRight}>
-          <Pill tone="mint" icon="shield">
-            RIÊNG TƯ
-          </Pill>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Xem lịch sử chat"
+            onPress={() => void refreshHistory()}
+            style={({ pressed }) => [
+              styles.historyIcon,
+              pressed && styles.actionPressed,
+            ]}
+          >
+            <Feather name="clock" color={colors.primary} size={20} />
+            {customer && conversations.length ? (
+              <View style={styles.historyCount}>
+                <Text style={styles.historyCountText}>{conversations.length}</Text>
+              </View>
+            ) : null}
+          </Pressable>
           <Pressable
             disabled={loading || imageLoading || sourceLoading}
             onPress={() => void startNewConversation()}
@@ -819,64 +828,23 @@ export default function AssistantScreen() {
             accessibilityRole="button"
             accessibilityLabel="Mở cuộc trò chuyện mới"
           >
-            <Feather name="plus" color="white" size={18} />
-          </Pressable>
-          <Pressable
-            onPress={clear}
-            style={styles.trash}
-            accessibilityRole="button"
-            accessibilityLabel="Xóa lịch sử trò chuyện"
-          >
-            <Feather name="trash-2" color={colors.muted} size={17} />
-          </Pressable>
-        </View>
-      </View>
-      <View style={styles.heading}>
-        <Text style={styles.kicker}>TRỢ LÝ HOSTORA</Text>
-        <Text style={styles.title}>Hỏi về lưu trữ, xem rõ lựa chọn.</Text>
-        <Text style={styles.copy}>
-          Câu trả lời dựa trên bảng giá và tài liệu đã được kiểm tra
-          {customer && sourceCount > 0 ? ` · ${sourceCount} nguồn của bạn` : ""}
-          .
-        </Text>
-        <View style={styles.chatActions}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Xem lịch sử chat"
-            onPress={() => void refreshHistory()}
-            style={({ pressed }) => [
-              styles.historyButton,
-              pressed && styles.actionPressed,
-            ]}
-          >
-            <Feather name="clock" color={colors.primary} size={16} />
-            <Text style={styles.historyButtonText}>Lịch sử chat</Text>
-            {customer && conversations.length ? (
-              <View style={styles.historyCount}>
-                <Text style={styles.historyCountText}>{conversations.length}</Text>
-              </View>
-            ) : null}
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Mở cuộc trò chuyện mới"
-            disabled={loading || imageLoading || sourceLoading}
-            onPress={() => void startNewConversation()}
-            style={({ pressed }) => [
-              styles.newChatButton,
-              pressed && styles.actionPressed,
-              (loading || imageLoading || sourceLoading) && { opacity: 0.45 },
-            ]}
-          >
-            <Feather name="plus" color="white" size={16} />
-            <Text style={styles.newChatButtonText}>Chat mới</Text>
+            <Feather name="plus" color="white" size={21} />
           </Pressable>
         </View>
       </View>
 
       {selectedPlanId ? (
         <View style={styles.selectedPlan} accessibilityLabel={`Gói đang chọn ${selectedPlanTitle}`}>
-          <View style={styles.selectedPlanTop}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`${selectedPlanExpanded ? "Thu gọn" : "Mở rộng"} gói đang chọn ${selectedPlanTitle}`}
+            accessibilityState={{ expanded: selectedPlanExpanded }}
+            onPress={() => setSelectedPlanExpanded((expanded) => !expanded)}
+            style={({ pressed }) => [
+              styles.selectedPlanTop,
+              pressed && styles.actionPressed,
+            ]}
+          >
             <View style={styles.selectedPlanIcon}>
               <Feather name="check" color={colors.primary} size={17} />
             </View>
@@ -884,76 +852,87 @@ export default function AssistantScreen() {
               <Text style={styles.selectedPlanLabel}>GÓI BẠN VỪA CHỌN</Text>
               <Text style={styles.selectedPlanTitle}>{selectedPlanTitle}</Text>
             </View>
-          </View>
-          <Text style={styles.selectedPlanCopy}>
-            Hỏi sâu về gói này hoặc tạo hóa đơn ngay. Giá và kỳ hạn sẽ được
-            kiểm tra lại trên màn hình thanh toán.
-          </Text>
-          <View
-            style={[
-              styles.selectedPlanInventory,
-              selectedPlanInventory?.status === "sold_out" &&
-                styles.selectedPlanInventorySoldOut,
-            ]}
-          >
-            <Text style={styles.selectedPlanInventoryText}>
-              {selectedPlanInventory?.status === "sold_out"
-                ? "Hết hàng · chưa thể tạo hóa đơn"
-                : selectedPlanInventory
-                  ? `Còn ${selectedPlanInventory.quantity} suất bán qua HOSTORA`
-                  : "Đang đồng bộ số lượng"}
-            </Text>
-          </View>
-          <View style={styles.selectedPlanActions}>
-            <Pressable
-              accessibilityRole="button"
-              disabled={loading}
-              onPress={() =>
-                void send(
-                  `Tôi đang chọn ${selectedPlanTitle}. Hãy tư vấn ưu nhược điểm và cách dùng gói này cho hồ sơ hiện tại của tôi.`,
-                )
-              }
-              style={({ pressed }) => [
-                styles.planAdviceButton,
-                pressed && styles.actionPressed,
-                loading && { opacity: 0.45 },
-              ]}
-            >
-              <Feather name="message-circle" color={colors.primary} size={15} />
-              <Text style={styles.planAdviceText}>Tư vấn gói này</Text>
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              disabled={
-                checkoutLoading ||
-                selectedPlanInventory?.status === "sold_out"
-              }
-              onPress={() =>
-                void createCheckout({ planId: selectedPlanId }, true)
-              }
-              style={({ pressed }) => [
-                styles.planCheckoutButton,
-                pressed && styles.actionPressed,
-                (checkoutLoading ||
-                  selectedPlanInventory?.status === "sold_out") && {
-                  opacity: 0.55,
-                },
-              ]}
-            >
-              {checkoutLoading ? (
-                <ActivityIndicator color="white" size="small" />
-              ) : (
-                <Feather name="credit-card" color="white" size={15} />
-              )}
-              <Text style={styles.planCheckoutText}>
-                {selectedPlanInventory?.status === "sold_out"
-                  ? "Hết hàng"
-                  : checkoutLoading
-                    ? "Đang tạo…"
-                    : "Thanh toán"}
+            <View style={styles.selectedPlanChevron}>
+              <Feather
+                name={selectedPlanExpanded ? "chevron-up" : "chevron-down"}
+                color={colors.primary}
+                size={20}
+              />
+            </View>
+          </Pressable>
+          {selectedPlanExpanded ? (
+            <>
+              <Text style={styles.selectedPlanCopy}>
+                Hỏi sâu về gói này hoặc tạo hóa đơn ngay. Giá và kỳ hạn sẽ được
+                kiểm tra lại trên màn hình thanh toán.
               </Text>
-            </Pressable>
-          </View>
+              <View
+                style={[
+                  styles.selectedPlanInventory,
+                  selectedPlanInventory?.status === "sold_out" &&
+                    styles.selectedPlanInventorySoldOut,
+                ]}
+              >
+                <Text style={styles.selectedPlanInventoryText}>
+                  {selectedPlanInventory?.status === "sold_out"
+                    ? "Hết hàng · chưa thể tạo hóa đơn"
+                    : selectedPlanInventory
+                      ? `Còn ${selectedPlanInventory.quantity} suất bán qua HOSTORA`
+                      : "Đang đồng bộ số lượng"}
+                </Text>
+              </View>
+              <View style={styles.selectedPlanActions}>
+                <Pressable
+                  accessibilityRole="button"
+                  disabled={loading}
+                  onPress={() =>
+                    void send(
+                      `Tôi đang chọn ${selectedPlanTitle}. Hãy tư vấn ưu nhược điểm và cách dùng gói này cho hồ sơ hiện tại của tôi.`,
+                    )
+                  }
+                  style={({ pressed }) => [
+                    styles.planAdviceButton,
+                    pressed && styles.actionPressed,
+                    loading && { opacity: 0.45 },
+                  ]}
+                >
+                  <Feather name="message-circle" color={colors.primary} size={15} />
+                  <Text style={styles.planAdviceText}>Tư vấn gói này</Text>
+                </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  disabled={
+                    checkoutLoading ||
+                    selectedPlanInventory?.status === "sold_out"
+                  }
+                  onPress={() =>
+                    void createCheckout({ planId: selectedPlanId }, true)
+                  }
+                  style={({ pressed }) => [
+                    styles.planCheckoutButton,
+                    pressed && styles.actionPressed,
+                    (checkoutLoading ||
+                      selectedPlanInventory?.status === "sold_out") && {
+                      opacity: 0.55,
+                    },
+                  ]}
+                >
+                  {checkoutLoading ? (
+                    <ActivityIndicator color="white" size="small" />
+                  ) : (
+                    <Feather name="credit-card" color="white" size={15} />
+                  )}
+                  <Text style={styles.planCheckoutText}>
+                    {selectedPlanInventory?.status === "sold_out"
+                      ? "Hết hàng"
+                      : checkoutLoading
+                        ? "Đang tạo…"
+                        : "Thanh toán"}
+                  </Text>
+                </Pressable>
+              </View>
+            </>
+          ) : null}
         </View>
       ) : null}
 
@@ -1020,35 +999,52 @@ export default function AssistantScreen() {
                 {conversations.map((thread) => {
                   const selected = thread.conversationId === conversationId;
                   return (
-                    <Pressable
+                    <View
                       key={thread.conversationId}
-                      accessibilityRole="button"
-                      accessibilityState={{ selected }}
-                      accessibilityLabel={`${thread.title}, ${thread.messageCount} tin nhắn`}
-                      onPress={() => void openConversation(thread.conversationId)}
-                      style={({ pressed }) => [
+                      style={[
                         styles.historyItem,
                         selected && styles.historyItemSelected,
-                        pressed && styles.actionPressed,
                       ]}
                     >
-                      <View style={styles.historyItemTop}>
-                        <Text style={styles.historyItemTitle} numberOfLines={2}>
-                          {thread.title}
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityState={{ selected }}
+                        accessibilityLabel={`${thread.title}, ${thread.messageCount} tin nhắn`}
+                        onPress={() => void openConversation(thread.conversationId)}
+                        style={({ pressed }) => [
+                          styles.historyItemOpen,
+                          pressed && styles.actionPressed,
+                        ]}
+                      >
+                        <View style={styles.historyItemTop}>
+                          <Text style={styles.historyItemTitle} numberOfLines={2}>
+                            {thread.title}
+                          </Text>
+                          {selected ? (
+                            <Feather name="check-circle" color={colors.primary} size={17} />
+                          ) : (
+                            <Feather name="chevron-right" color={colors.faint} size={17} />
+                          )}
+                        </View>
+                        <Text style={styles.historyPreview} numberOfLines={2}>
+                          {thread.latestPreview}
                         </Text>
-                        {selected ? (
-                          <Feather name="check-circle" color={colors.primary} size={17} />
-                        ) : (
-                          <Feather name="chevron-right" color={colors.faint} size={17} />
-                        )}
-                      </View>
-                      <Text style={styles.historyPreview} numberOfLines={2}>
-                        {thread.latestPreview}
-                      </Text>
-                      <Text style={styles.historyMeta}>
-                        {thread.messageCount} tin · {new Date(thread.latestMessageAt).toLocaleDateString("vi-VN")}
-                      </Text>
-                    </Pressable>
+                        <Text style={styles.historyMeta}>
+                          {thread.messageCount} tin · {new Date(thread.latestMessageAt).toLocaleDateString("vi-VN")}
+                        </Text>
+                      </Pressable>
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel={`Xóa cuộc trò chuyện ${thread.title}`}
+                        onPress={() => confirmDeleteConversation(thread)}
+                        style={({ pressed }) => [
+                          styles.historyDelete,
+                          pressed && styles.historyDeletePressed,
+                        ]}
+                      >
+                        <Feather name="trash-2" color={colors.danger} size={18} />
+                      </Pressable>
+                    </View>
                   );
                 })}
               </ScrollView>
@@ -1479,94 +1475,42 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,.9)",
   },
   headerRight: { flexDirection: "row", alignItems: "center", gap: 7 },
+  historyIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.line,
+    backgroundColor: colors.surface,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   newConversationIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 48,
+    height: 48,
+    borderRadius: 16,
     backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
   },
-  trash: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.surfaceAlt,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  heading: { paddingHorizontal: 18, paddingTop: 22 },
-  kicker: {
-    color: colors.primary,
-    fontFamily: "BeVietnamPro_800ExtraBold",
-    fontSize: 9,
-    letterSpacing: 1.3,
-  },
-  title: {
-    color: colors.text,
-    fontFamily: "BeVietnamPro_900Black",
-    fontSize: 27,
-    letterSpacing: -1,
-    marginTop: 5,
-  },
-  copy: {
-    color: colors.muted,
-    fontFamily: "BeVietnamPro_400Regular",
-    fontSize: 11,
-    marginTop: 5,
-  },
-  chatActions: {
-    marginTop: 14,
-    flexDirection: "row",
-    gap: 8,
-  },
-  historyButton: {
-    minHeight: 48,
-    flex: 1,
-    paddingHorizontal: 14,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.line,
-    backgroundColor: colors.surface,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 7,
-  },
-  historyButtonText: {
-    color: colors.primary,
-    fontFamily: "BeVietnamPro_700Bold",
-    fontSize: 11,
-  },
   historyCount: {
-    minWidth: 20,
-    height: 20,
-    paddingHorizontal: 5,
+    position: "absolute",
+    top: -3,
+    right: -3,
+    minWidth: 19,
+    height: 19,
+    paddingHorizontal: 4,
     borderRadius: 10,
-    backgroundColor: colors.primarySoft,
+    borderWidth: 2,
+    borderColor: colors.canvas,
+    backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
   },
   historyCountText: {
-    color: colors.primary,
-    fontFamily: "BeVietnamPro_800ExtraBold",
-    fontSize: 9,
-  },
-  newChatButton: {
-    minHeight: 48,
-    flex: 1,
-    paddingHorizontal: 14,
-    borderRadius: 14,
-    backgroundColor: colors.ink,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 7,
-  },
-  newChatButtonText: {
     color: "white",
-    fontFamily: "BeVietnamPro_700Bold",
-    fontSize: 11,
+    fontFamily: "BeVietnamPro_800ExtraBold",
+    fontSize: 8,
   },
   actionPressed: { opacity: 0.72 },
   selectedPlan: {
@@ -1579,7 +1523,20 @@ const styles = StyleSheet.create({
     backgroundColor: "#EDF8F3",
     gap: 9,
   },
-  selectedPlanTop: { flexDirection: "row", alignItems: "center", gap: 10 },
+  selectedPlanTop: {
+    minHeight: 48,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  selectedPlanChevron: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: "white",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   selectedPlanIcon: {
     width: 36,
     height: 36,
@@ -1719,12 +1676,15 @@ const styles = StyleSheet.create({
   historyListContent: { gap: 9, paddingBottom: 8 },
   historyItem: {
     minHeight: 102,
-    padding: 14,
     borderRadius: 17,
     borderWidth: 1,
     borderColor: colors.line,
     backgroundColor: colors.surface,
+    flexDirection: "row",
+    alignItems: "center",
+    overflow: "hidden",
   },
+  historyItemOpen: { flex: 1, alignSelf: "stretch", padding: 14 },
   historyItemSelected: {
     borderColor: colors.primary,
     backgroundColor: colors.primarySoft,
@@ -1755,6 +1715,18 @@ const styles = StyleSheet.create({
     fontFamily: "BeVietnamPro_600SemiBold",
     fontSize: 9,
   },
+  historyDelete: {
+    width: 48,
+    minHeight: 48,
+    margin: 8,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#F2C4BA",
+    backgroundColor: "#FFF5F2",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  historyDeletePressed: { backgroundColor: "#FFE7E1", opacity: 0.82 },
   historyState: {
     minHeight: 230,
     alignItems: "center",
@@ -1788,7 +1760,7 @@ const styles = StyleSheet.create({
     fontFamily: "BeVietnamPro_700Bold",
     fontSize: 11,
   },
-  chat: { flex: 1, marginTop: 14 },
+  chat: { flex: 1, marginTop: 8 },
   chatContent: { paddingHorizontal: 16, paddingBottom: 16, gap: 13 },
   messageRow: {
     flexDirection: "row",

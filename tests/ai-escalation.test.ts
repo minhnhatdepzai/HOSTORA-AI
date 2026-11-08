@@ -24,6 +24,15 @@ describe("AI human handoff", () => {
     ).toBeNull();
   });
 
+  it("keeps a customer's just-purchased package status in scope", () => {
+    expect(
+      evaluateAiEscalation({
+        question:
+          "Tôi vừa mua gói gì, trạng thái hiện tại ra sao và tôi cần làm gì tiếp theo trước khi chạy quảng cáo?",
+      }),
+    ).toBeNull();
+  });
+
   it("does not hand off a difficult in-scope question just because the answer asks for missing inputs", () => {
     expect(
       evaluateAiEscalation({

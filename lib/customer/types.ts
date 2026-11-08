@@ -50,7 +50,7 @@ export type CustomerPurchaseRequestSummary = {
   id: string;
   productName: string;
   provider: string;
-  status: "new" | "invoiced" | "declined" | "cancelled";
+  status: "new" | "cancel_requested" | "invoiced" | "declined" | "cancelled";
   invoiceId: string | null;
   createdAt: string;
   profile: {

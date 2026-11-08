@@ -86,6 +86,11 @@ describe("email đơn hàng HOSTORA", () => {
       consultationAt: "2026-11-01T02:00:00.000Z",
       consultationChannel: "video",
       voucherCode: null,
+      baseAmountVnd: 1_200_000,
+      monthlyVnd: 100_000,
+      billingMonths: 12,
+      priceVerifiedAt: "2026-10-23",
+      pricingNote: "Giá gói đã chốt",
       cancelReason: null,
       status: "new",
       invoiceId: null,
@@ -118,6 +123,14 @@ describe("email đơn hàng HOSTORA", () => {
       title: "Gói HOSTORA Business",
       description: "Dịch vụ 12 tháng",
       amountVnd: 1_100_000,
+      baseAmountVnd: 1_000_000,
+      monthlyVnd: 100_000,
+      billingMonths: 10,
+      priceVerifiedAt: "2026-10-23",
+      lineItems: [
+        { kind: "base", label: "Gói HOSTORA Business", note: "100.000đ/tháng × 10 tháng", amountVnd: 1_000_000 },
+        { kind: "addon", label: "Thiết lập email", note: "5 tài khoản", amountVnd: 200_000 },
+      ],
       subtotalVnd: 1_200_000,
       discountVnd: 100_000,
       voucherCode: "HOSTORA-OLD123456",
@@ -145,6 +158,9 @@ describe("email đơn hàng HOSTORA", () => {
     expect(customer.html).toContain("Xem và thanh toán");
     expect(customer.html).toContain("Hủy trước thanh toán");
     expect(customer.html).toContain("Voucher");
+    expect(customer.html).toContain("Giá gói gốc");
+    expect(customer.html).toContain("Thiết lập email");
+    expect(customer.html).toContain("Nhà cung cấp");
     expect(customer.html).toContain("Quà cho đơn từ 1 triệu");
     expect(customer.html).toContain("#invoiceId=");
 

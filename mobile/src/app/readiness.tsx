@@ -1,11 +1,11 @@
 import { Pressable } from "@/components/pressable";
+import { VniTextInput as TextInput } from "@/components/vni-text-input";
 import { Feather } from "@expo/vector-icons";
 import { useState } from "react";
 import {
   ActivityIndicator,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import { router } from "expo-router";

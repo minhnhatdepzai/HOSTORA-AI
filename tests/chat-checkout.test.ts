@@ -7,6 +7,7 @@ import {
   selectedPlanAdviceAnswer,
 } from "@/lib/chat-checkout";
 import type { ChatFacts } from "@/lib/chat-memory";
+import { recommendPlans } from "@/lib/recommendation";
 
 const facts: ChatFacts = {
   websiteType: "store",
@@ -23,6 +24,14 @@ describe("chốt đơn trong hội thoại", () => {
     (message) => expect(isPurchaseConfirmation(message)).toBe(true),
   );
 
+  it("nhận ra lựa chọn phương án thứ hai kèm yêu cầu thanh toán ngay", () => {
+    expect(
+      isPurchaseConfirmation(
+        "Tôi chọn phương án thứ hai. Hãy tư vấn ngắn gọn lần cuối rồi cho tôi thanh toán ngay trong cuộc trò chuyện này.",
+      ),
+    ).toBe(true);
+  });
+
   it("giữ đúng gói vừa được nhắc và tính kỳ đầu tất định", () => {
     const quote = quoteForConversation(facts, [
       {
@@ -37,6 +46,28 @@ describe("chốt đơn trong hội thoại", () => {
       billingMonths: 12,
     });
     expect(checkoutPrompt(quote!)).toContain("mỗi lần chốt tạo một hóa đơn riêng");
+  });
+
+  it("ánh xạ phương án thứ hai sang đúng gói xếp hạng thứ hai", () => {
+    const recommended = recommendPlans({
+      websiteType: facts.websiteType!,
+      ecommerce: facts.ecommerce!,
+      monthlyVisits: facts.monthlyVisits!,
+      monthlyBudget: facts.monthlyBudget!,
+      needsDomain: facts.needsDomain!,
+    });
+    const quote = quoteForConversation(facts, [
+      {
+        role: "assistant",
+        content: `Gói chính: ${recommended[0].plan.provider} ${recommended[0].plan.name}. Thay thế 1: ${recommended[1].plan.provider} ${recommended[1].plan.name}. Thay thế 2: ${recommended[2].plan.provider} ${recommended[2].plan.name}.`,
+      },
+      {
+        role: "user",
+        content:
+          "Tôi chọn phương án thứ hai. Hãy tư vấn ngắn gọn lần cuối rồi cho tôi thanh toán ngay trong cuộc trò chuyện này.",
+      },
+    ]);
+    expect(quote?.planId).toBe(recommended[1].plan.id);
   });
 
   it("tư vấn sâu đúng gói đã chọn và không mời chốt lại khi đã thanh toán", () => {

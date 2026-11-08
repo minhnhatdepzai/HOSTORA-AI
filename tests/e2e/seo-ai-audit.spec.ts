@@ -124,7 +124,11 @@ test("shows an actionable SEO and AI visibility report", async ({ page }) => {
     page.getByText("Bắt đầu bằng một địa chỉ website công khai"),
   ).toBeVisible();
 
-  await page.getByLabel("Địa chỉ website").fill("https://example.com");
+  await expect(page.getByLabel("Địa chỉ website")).toHaveAttribute(
+    "placeholder",
+    "tenmien.vn hoặc https://tenmien.vn",
+  );
+  await page.getByLabel("Địa chỉ website").fill("example.com");
   await page
     .getByLabel("Từ khóa khách thường tìm")
     .fill("hosting doanh nghiệp");
@@ -205,6 +209,7 @@ test("shows a clear API error and keeps the form usable", async ({ page }) => {
     });
   });
   await page.goto("/website-analyzer");
+  await page.getByLabel("Địa chỉ website").fill("example.com");
   await page.getByRole("button", { name: "Chấm điểm website" }).click();
 
   await expect(

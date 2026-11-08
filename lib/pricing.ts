@@ -1,4 +1,49 @@
 import type { HostingPlan } from "@/lib/types";
+import { hostingCatalog } from "@/data/hosting-catalog";
+import { productCatalog, type ProductOffering } from "@/data/product-catalog";
+
+export type CatalogPriceSnapshot = {
+  baseAmountVnd: number;
+  monthlyVnd: number | null;
+  billingMonths: number | null;
+  verifiedAt: string;
+  note?: string;
+};
+
+function priceSnapshotForPlan(plan: HostingPlan): CatalogPriceSnapshot {
+  return {
+    baseAmountVnd: plan.promoMonthlyVnd * plan.billingMonths,
+    monthlyVnd: plan.promoMonthlyVnd,
+    billingMonths: plan.billingMonths,
+    verifiedAt: plan.verifiedAt,
+    note: `Giá ưu đãi ${plan.billingMonths} tháng; kiểm tra điều kiện gia hạn tại nguồn.`,
+  };
+}
+
+export function priceSnapshotForOffering(product: ProductOffering): CatalogPriceSnapshot | null {
+  if (product.priceFromVnd === null) return null;
+  const exactPlan = hostingCatalog.find(
+    (plan) =>
+      plan.provider.toLocaleLowerCase("vi") === product.provider.toLocaleLowerCase("vi") &&
+      plan.promoMonthlyVnd === product.priceFromVnd,
+  );
+  if (exactPlan) return priceSnapshotForPlan(exactPlan);
+  return {
+    baseAmountVnd: product.priceFromVnd,
+    monthlyVnd: product.billingUnit === "month" ? product.priceFromVnd : null,
+    billingMonths:
+      product.billingUnit === "month" ? 1 : product.billingUnit === "year" ? 12 : null,
+    verifiedAt: product.verifiedAt,
+    note: product.priceNote ?? `Giá theo đơn vị ${product.billingUnit}.`,
+  };
+}
+
+export function priceSnapshotForProductId(productId: string): CatalogPriceSnapshot | null {
+  const plan = hostingCatalog.find((item) => item.id === productId);
+  if (plan) return priceSnapshotForPlan(plan);
+  const product = productCatalog.find((item) => item.id === productId);
+  return product ? priceSnapshotForOffering(product) : null;
+}
 
 export function calculateCost(
   plan: HostingPlan,

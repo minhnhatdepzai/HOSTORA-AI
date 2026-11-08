@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { jsonError, noStoreJson, parseSmallJson } from "@/lib/payments/route-utils";
-import { notifySaleRequestCancelled, scheduleOrderEmail } from "@/lib/payments/email";
+import { notifySaleRequestStatusChanged, scheduleOrderEmail } from "@/lib/payments/email";
 import { getPaymentStore } from "@/lib/payments/store";
 
 export const runtime = "nodejs";
@@ -14,7 +14,7 @@ export async function POST(request: Request, context: RouteContext<"/api/payment
       reason: z.string().trim().min(5).max(500),
     }));
     const saleRequest = getPaymentStore().cancelSaleRequest(id, input.accessCode, input.reason);
-    scheduleOrderEmail(() => notifySaleRequestCancelled(saleRequest));
+    scheduleOrderEmail(() => notifySaleRequestStatusChanged(saleRequest));
     return noStoreJson({ request: saleRequest });
   } catch {
     return jsonError("Không thể hủy yêu cầu này hoặc yêu cầu đã được xử lý.", 409);

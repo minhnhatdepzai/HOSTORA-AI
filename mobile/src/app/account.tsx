@@ -1,17 +1,18 @@
 import { DetailHeader } from "@/components/detail-header";
+import { VniTextInput as TextInput } from "@/components/vni-text-input";
 import { Button, CinematicScrollView } from "@/components/ui";
 import { colors } from "@/constants/theme";
 import { type MobileSupportCase, useCustomerAuth } from "@/context/customer-auth-context";
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, Linking, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Linking, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getApiBase } from "@/lib/api";
 
 const money = (value: number) => `${new Intl.NumberFormat("vi-VN").format(value)} ₫`;
 const orderStatus = { pending: "Chờ thanh toán", cancel_requested: "Đang xem yêu cầu hủy", paid: "Đã thanh toán", refund_requested: "Chờ duyệt hoàn tiền", refund_pending: "Đang hoàn tiền", refunded: "Đã hoàn tiền", cancelled: "Đã hủy" } as const;
-const requestStatus = { new: "Chờ báo giá", invoiced: "Đã có hóa đơn", declined: "Không tiếp nhận", cancelled: "Đã hủy" } as const;
+const requestStatus = { new: "Chờ báo giá", cancel_requested: "Chờ xác nhận hủy", invoiced: "Đã có hóa đơn", declined: "Không tiếp nhận", cancelled: "Đã hủy" } as const;
 const supportStatus = { new: "Đã tiếp nhận", in_progress: "Đang xử lý", resolved: "Đã giải quyết" } as const;
 
 export default function AccountScreen() {

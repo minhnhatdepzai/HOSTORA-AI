@@ -1,14 +1,14 @@
 import { Pressable } from "@/components/pressable";
+import { VniTextInput as TextInput } from "@/components/vni-text-input";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AnimatedProgress, Reveal, StepTransition } from "@/components/motion";
 import { Feather } from "@expo/vector-icons";
-import { router } from "expo-router";
-import { type PropsWithChildren, useState } from "react";
+import { router, useFocusEffect } from "expo-router";
+import { type PropsWithChildren, useCallback, useState } from "react";
 import {
   ActivityIndicator,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import {
@@ -26,6 +26,7 @@ import { useApp } from "@/context/app-context";
 import { postJson } from "@/lib/api";
 import type { Requirements, WebsiteType } from "@/lib/catalog";
 import { canContinueConsult } from "@/lib/consult-guard";
+import { createFreshConsultationDraft } from "@/lib/consult-session";
 import { getStepDirection, progressForStep } from "@/lib/motion-spec";
 
 const websiteTypes: {
@@ -59,16 +60,28 @@ const budgets = [100000, 300000, 600000, 1000000];
 type AnalyzeResult = Partial<Requirements> & { followUpQuestion?: string };
 
 export default function ConsultScreen() {
-  const { requirements, setRequirements } = useApp();
-  const [data, setData] = useState(requirements);
+  const { setRequirements } = useApp();
+  const [data, setData] = useState(createFreshConsultationDraft);
   const [step, setStep] = useState(0);
   const [stepDirection, setStepDirection] = useState<"forward" | "backward">(
     "forward",
   );
-  const [natural, setNatural] = useState(requirements.notes ?? "");
+  const [natural, setNatural] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [showDescription, setShowDescription] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      setData(createFreshConsultationDraft());
+      setStep(0);
+      setStepDirection("forward");
+      setNatural("");
+      setLoading(false);
+      setMessage("");
+      setShowDescription(false);
+    }, []),
+  );
 
   function update(next: Partial<Requirements>) {
     setData((current) => ({ ...current, ...next }));
@@ -91,7 +104,6 @@ export default function ConsultScreen() {
         notes: natural,
       };
       setData(next);
-      setRequirements(next);
       setMessage(
         out.followUpQuestion ||
           "HOSTORA đã điền những thông tin nhận diện được.",

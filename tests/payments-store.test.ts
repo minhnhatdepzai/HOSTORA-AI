@@ -40,6 +40,11 @@ describe("sổ đơn hàng HOSTORA", () => {
       customerEmail: "finance@example.com",
     });
     store.requestCancel(third.id, third.accessCode, "Không còn nhu cầu");
+    store.resolveCancel(
+      third.id,
+      "approve",
+      "Đã kiểm tra, đơn chưa phát sinh thanh toán.",
+    );
 
     const searched = store.listInvoicesPage({
       search: "mocan@",
@@ -147,9 +152,9 @@ describe("sổ đơn hàng HOSTORA", () => {
       },
       consultationPreference: "ai",
       consultationChannel: "email",
+      pricing: { baseAmountVnd: 1_200_000, monthlyVnd: 100_000, billingMonths: 12, verifiedAt: "2026-10-23" },
     });
     const invoice = store.createInvoiceForSaleRequest(request.id, {
-      amountVnd: 1_200_000,
       description: "Gói một năm",
     });
 
@@ -225,13 +230,73 @@ describe("sổ đơn hàng HOSTORA", () => {
       profile: purchaseProfile,
       consultationPreference: "ai",
       consultationChannel: "email",
+      pricing: { baseAmountVnd: 150_000, monthlyVnd: null, billingMonths: 12, verifiedAt: "2026-10-23" },
     });
     const invoice = store.createInvoiceForSaleRequest(request.id, {
-      amountVnd: 150000,
       description: "Gói 12 tháng",
     });
     expect(invoice.customerEmail).toBe("nguoi.mua@example.com");
     expect(store.listSaleRequests()[0].invoiceId).toBe(invoice.id);
+    store.close();
+  });
+
+  it("khóa giá gói từ snapshot và chỉ cộng các dịch vụ mua thêm hợp lệ", () => {
+    const store = new PaymentStore(":memory:");
+    const request = store.createSaleRequest({
+      productId: "hostinger-premium",
+      provider: "Hostinger",
+      productName: "Premium",
+      contact: "addons@example.com",
+      profile: purchaseProfile,
+      consultationPreference: "ai",
+      consultationChannel: "email",
+    });
+
+    const invoice = store.createInvoiceForSaleRequest(request.id, {
+      addOns: [
+        { label: "Thiết lập email doanh nghiệp", note: "5 tài khoản", amountVnd: 250_000 },
+        { label: "Chuyển dữ liệu website", note: "Một website WordPress", amountVnd: 400_000 },
+      ],
+    });
+
+    expect(request.baseAmountVnd).toBe(1_867_200);
+    expect(invoice.baseAmountVnd).toBe(1_867_200);
+    expect(invoice.subtotalVnd).toBe(2_517_200);
+    expect(invoice.amountVnd).toBe(2_517_200);
+    expect(invoice.lineItems).toEqual([
+      expect.objectContaining({ kind: "base", label: "Hostinger Premium", amountVnd: 1_867_200 }),
+      expect.objectContaining({ kind: "addon", label: "Thiết lập email doanh nghiệp", amountVnd: 250_000 }),
+      expect.objectContaining({ kind: "addon", label: "Chuyển dữ liệu website", amountVnd: 400_000 }),
+    ]);
+    store.close();
+  });
+
+  it("từ chối khoản mua thêm âm, tên rỗng và yêu cầu chưa có giá xác minh", () => {
+    const store = new PaymentStore(":memory:");
+    const priced = store.createSaleRequest({
+      productId: "hostinger-single",
+      provider: "Hostinger",
+      productName: "Đơn",
+      contact: "invalid-addon@example.com",
+      profile: purchaseProfile,
+      consultationPreference: "ai",
+      consultationChannel: "email",
+    });
+    expect(() => store.createInvoiceForSaleRequest(priced.id, {
+      addOns: [{ label: "", amountVnd: -1 }],
+    })).toThrow("mua thêm");
+
+    const unpriced = store.createSaleRequest({
+      productId: "custom-contact-only",
+      provider: "HOSTORA",
+      productName: "Dịch vụ cần khảo sát",
+      contact: "unpriced@example.com",
+      profile: purchaseProfile,
+      consultationPreference: "ai",
+      consultationChannel: "email",
+      pricing: null,
+    });
+    expect(() => store.createInvoiceForSaleRequest(unpriced.id, {})).toThrow("chưa có giá gói đã xác minh");
     store.close();
   });
 
@@ -259,14 +324,13 @@ describe("sổ đơn hàng HOSTORA", () => {
       consultationPreference: "ai",
       consultationChannel: "email",
       voucherCode: paid.earnedVoucherCode!,
+      pricing: { baseAmountVnd: 300_000, monthlyVnd: 25_000, billingMonths: 12, verifiedAt: "2026-10-23" },
     });
 
     const first = store.createInvoiceForSaleRequest(request.id, {
-      amountVnd: 300_000,
       description: "Kỳ đầu mười hai tháng",
     });
     const second = store.createInvoiceForSaleRequest(request.id, {
-      amountVnd: 300_000,
       description: "Mua thêm cho website thứ hai",
       repeatPurchase: true,
     });
@@ -312,9 +376,16 @@ describe("sổ đơn hàng HOSTORA", () => {
         "Tôi đổi kế hoạch",
       ),
     ).toMatchObject({
-      status: "cancelled",
+      status: "cancel_requested",
       cancelReason: "Tôi đổi kế hoạch",
     });
+    expect(
+      store.resolveSaleRequestCancel(
+        request.id,
+        "approve",
+        "Đã đối chiếu hồ sơ và xác nhận hủy.",
+      ).status,
+    ).toBe("cancelled");
     store.close();
   });
 
@@ -420,12 +491,32 @@ describe("sổ đơn hàng HOSTORA", () => {
 
   it("hủy chưa thanh toán và giữ yêu cầu hủy khi cổng báo đã thu sau đó", () => {
     const store = new PaymentStore(":memory:");
+    const retained = store.createInvoice({
+      title: "Dịch vụ giữ lại",
+      amountVnd: 90000,
+    });
+    store.requestCancel(retained.id, retained.accessCode, "Muốn kiểm tra lại");
+    expect(
+      store.resolveCancel(
+        retained.id,
+        "reject",
+        "Dịch vụ đã được giữ chỗ theo thỏa thuận với khách.",
+      ).status,
+    ).toBe("pending");
+
     const plain = store.createInvoice({
       title: "Dịch vụ A",
       amountVnd: 100000,
     });
     expect(
       store.requestCancel(plain.id, plain.accessCode, "Tôi đổi ý").status,
+    ).toBe("cancel_requested");
+    expect(
+      store.resolveCancel(
+        plain.id,
+        "approve",
+        "Đơn chưa thanh toán, xác nhận hủy theo yêu cầu.",
+      ).status,
     ).toBe("cancelled");
     expect(() =>
       store.markPaid(plain.id, "stripe", "pi_late", 100000, "vnd"),
@@ -562,6 +653,11 @@ describe("sổ đơn hàng HOSTORA", () => {
     ).toThrow();
 
     store.requestCancel(next.id, next.accessCode, "Tôi muốn đổi gói khác");
+    store.resolveCancel(
+      next.id,
+      "approve",
+      "Đơn chưa thanh toán, hoàn lại voucher để khách đổi gói.",
+    );
     expect(() =>
       store.createInvoice({
         title: "Gói thay thế",
@@ -613,12 +709,8 @@ describe("sổ đơn hàng HOSTORA", () => {
       consultationPreference: "ai",
       consultationChannel: "email",
     });
-    const first = store.createInvoiceForSaleRequest(createRequest("stock-a@example.com").id, {
-      amountVnd: 955_200,
-    });
-    const second = store.createInvoiceForSaleRequest(createRequest("stock-b@example.com").id, {
-      amountVnd: 955_200,
-    });
+    const first = store.createInvoiceForSaleRequest(createRequest("stock-a@example.com").id, {});
+    const second = store.createInvoiceForSaleRequest(createRequest("stock-b@example.com").id, {});
 
     store.markPaid(first.id, "stripe", "pi-stock-first", first.amountVnd, "vnd");
     expect(store.getPlanInventory("hostinger-single")).toMatchObject({

@@ -87,7 +87,7 @@ describe("SEO audit route", () => {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          url: "https://example.com/",
+          url: "example.com",
           keyword: "hosting doanh nghiep",
         }),
       }),
@@ -101,6 +101,7 @@ describe("SEO audit route", () => {
       aiVisibility: 64,
     });
     expect(body.score).toBe(82);
+    expect(body.url).toBe("https://example.com/");
     expect(body.aiCrawlers).toHaveLength(9);
     expect(
       body.aiCrawlers.find((crawler: { id: string }) =>

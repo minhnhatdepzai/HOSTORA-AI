@@ -60,8 +60,27 @@ export async function DELETE(request: Request) {
     return Response.json({ error: "Bạn cần đăng nhập." }, { status: 401 });
   if (!requestUsesBearer(request) && !sameOrigin(request))
     return Response.json({ error: "Nguồn yêu cầu không hợp lệ." }, { status: 403 });
-  const clearMemory = new URL(request.url).searchParams.get("scope") === "all";
-  getCustomerStore().clearAiHistory(customer.id, clearMemory);
+  const url = new URL(request.url);
+  const conversationId = url.searchParams.get("conversationId");
+  const store = getCustomerStore();
+  if (conversationId) {
+    if (!conversationIdPattern.test(conversationId))
+      return Response.json(
+        { error: "Mã cuộc trò chuyện không hợp lệ." },
+        { status: 400 },
+      );
+    if (!store.deleteAiConversation(customer.id, conversationId))
+      return Response.json(
+        { error: "Không tìm thấy cuộc trò chuyện của tài khoản này." },
+        { status: 404 },
+      );
+    return Response.json(
+      { deleted: true, conversationId, memoryDeleted: false },
+      { headers: { "cache-control": "no-store" } },
+    );
+  }
+  const clearMemory = url.searchParams.get("scope") === "all";
+  store.clearAiHistory(customer.id, clearMemory);
   return Response.json(
     { deleted: true, memoryDeleted: clearMemory },
     { headers: { "cache-control": "no-store" } },

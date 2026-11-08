@@ -1,7 +1,10 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { POST as createStudioWebsite } from "@/app/api/ai/site-studio/route";
 import { POST as requestRefund } from "@/app/api/payments/orders/[id]/refund-request/route";
-import { GET as getChatHistory } from "@/app/api/account/chat-history/route";
+import {
+  DELETE as deleteChatHistory,
+  GET as getChatHistory,
+} from "@/app/api/account/chat-history/route";
 import {
   GET as getAiSources,
   POST as addAiSource,
@@ -186,6 +189,40 @@ describe("guarded customer flows", () => {
       }),
     );
     expect((await otherSources.json()).sources).toEqual([]);
+
+    const forbiddenDelete = await deleteChatHistory(
+      new Request(
+        `${origin}/api/account/chat-history?conversationId=${conversationId}`,
+        {
+          method: "DELETE",
+          headers: {
+            "x-hostora-client": "mobile",
+            authorization: `Bearer ${otherToken}`,
+          },
+        },
+      ),
+    );
+    expect(forbiddenDelete.status).toBe(404);
+
+    const deleted = await deleteChatHistory(
+      new Request(
+        `${origin}/api/account/chat-history?conversationId=${conversationId}`,
+        {
+          method: "DELETE",
+          headers: {
+            "x-hostora-client": "mobile",
+            authorization: `Bearer ${ownerToken}`,
+          },
+        },
+      ),
+    );
+    expect(deleted.status).toBe(200);
+    expect(store.listChatMessages(owner.id, conversationId)).toEqual([]);
+    expect(
+      store
+        .listAllAiConversations()
+        .some((conversation) => conversation.id === conversationId),
+    ).toBe(false);
   });
 
   it("rate-limits expensive AI chat and source extraction per account", async () => {

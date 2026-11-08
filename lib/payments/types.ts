@@ -19,7 +19,12 @@ export type PurchaseProfile = {
   budgetRange: "under_500k" | "500k_1m" | "1m_3m" | "over_3m";
 };
 
-export type SaleRequestStatus = "new" | "invoiced" | "declined" | "cancelled";
+export type SaleRequestStatus =
+  | "new"
+  | "cancel_requested"
+  | "invoiced"
+  | "declined"
+  | "cancelled";
 export type SaleRequest = {
   id: string;
   productId: string;
@@ -32,6 +37,11 @@ export type SaleRequest = {
   consultationAt: string | null;
   consultationChannel: ConsultationChannel;
   voucherCode: string | null;
+  baseAmountVnd: number | null;
+  monthlyVnd: number | null;
+  billingMonths: number | null;
+  priceVerifiedAt: string | null;
+  pricingNote: string;
   cancelReason: string | null;
   status: SaleRequestStatus;
   invoiceId: string | null;
@@ -47,6 +57,7 @@ export type SaleRequestPage = {
   counts: {
     all: number;
     new: number;
+    cancelRequested: number;
     invoiced: number;
     declined: number;
     cancelled: number;
@@ -121,6 +132,11 @@ export type Invoice = {
   title: string;
   description: string;
   amountVnd: number;
+  baseAmountVnd: number;
+  monthlyVnd: number | null;
+  billingMonths: number | null;
+  priceVerifiedAt: string | null;
+  lineItems: InvoiceLineItem[];
   saleType: "hostora_service" | "partner_service";
   partnerProvider: string | null;
   status: InvoiceStatus;
@@ -139,6 +155,13 @@ export type Invoice = {
   earnedVoucherExpiresAt: string | null;
   createdAt: string;
   updatedAt: string;
+};
+
+export type InvoiceLineItem = {
+  kind: "base" | "addon";
+  label: string;
+  note: string;
+  amountVnd: number;
 };
 
 export type PlanInventory = {

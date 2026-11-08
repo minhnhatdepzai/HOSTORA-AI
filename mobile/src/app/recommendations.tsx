@@ -1,4 +1,5 @@
 import { Pressable } from "@/components/pressable";
+import { VniTextInput as TextInput } from "@/components/vni-text-input";
 import { Reveal, Stagger } from "@/components/motion";
 import { Feather } from "@expo/vector-icons";
 import { useState } from "react";
@@ -8,7 +9,6 @@ import {
   Share,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import { router } from "expo-router";
@@ -25,8 +25,10 @@ import {
 } from "@/components/ui";
 import { colors, radii } from "@/constants/theme";
 import { useApp } from "@/context/app-context";
+import { useCustomerAuth } from "@/context/customer-auth-context";
 import { postJson } from "@/lib/api";
 import { normalizeContact } from "@/lib/contact";
+import { resolveCustomerPrefill } from "@/lib/customer-prefill";
 import { formatVnd } from "@/lib/catalog";
 import {
   useRecommendedPlans,
@@ -63,12 +65,14 @@ const faqItems: [string, string][] = [
 ];
 export default function RecommendationsScreen() {
   const { requirements, addLead } = useApp();
+  const auth = useCustomerAuth();
   const { plans: ranked, status, retry } = useRecommendedPlans(requirements);
   const [explanation, setExplanation] = useState("");
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
   const [leadOpen, setLeadOpen] = useState(false);
-  const [name, setName] = useState("");
+  const [nameDraft, setName] = useState<string | null>(null);
+  const name = resolveCustomerPrefill(nameDraft, auth.customer?.name);
   const [phone, setPhone] = useState("");
   const [saved, setSaved] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
@@ -114,7 +118,7 @@ export default function RecommendationsScreen() {
       plan: `${selectedPlan.provider} ${selectedPlan.name}`,
       planId: selectedPlan.id,
     });
-    setName("");
+    setName(null);
     setPhone("");
     setSaved(true);
     setLeadOpen(false);
@@ -373,14 +377,18 @@ export default function RecommendationsScreen() {
             </Stagger>
           ))}
 
-          <ComparisonTable plans={ranked} />
-          <Button
-            label="Chia sẻ tóm tắt 3 gói"
-            variant="secondary"
-            icon="share-2"
-            disabled={status === "loading"}
-            onPress={() => void shareSummary()}
-          />
+          {ranked.length === 3 ? (
+            <>
+              <ComparisonTable plans={ranked} />
+              <Button
+                label="Chia sẻ tóm tắt 3 gói"
+                variant="secondary"
+                icon="share-2"
+                disabled={status === "loading"}
+                onPress={() => void shareSummary()}
+              />
+            </>
+          ) : null}
 
           <Card style={{ gap: 12 }}>
             <Text style={styles.formTitle}>Đăng ký tư vấn</Text>

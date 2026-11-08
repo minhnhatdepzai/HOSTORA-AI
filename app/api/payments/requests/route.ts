@@ -14,6 +14,7 @@ import {
   readLimitedText,
   RequestBodyTooLargeError,
 } from "@/lib/api-validation";
+import { priceSnapshotForOffering } from "@/lib/pricing";
 
 export const runtime = "nodejs";
 
@@ -148,6 +149,7 @@ export async function POST(request: Request) {
       consultationAt: input.consultationAt,
       consultationChannel: input.consultationChannel,
       voucherCode,
+      pricing: priceSnapshotForOffering(product),
     });
     scheduleOrderEmail(() => notifySaleRequestCreated(created));
     return noStoreJson({ id: created.id, accessCode: created.accessCode, productName: created.productName, status: created.status, consultationPreference: created.consultationPreference }, 201);

@@ -77,6 +77,7 @@ const statusStyles: Record<LeadStatus, string> = {
 
 const requestStatusLabels: Record<SaleRequest["status"], string> = {
   new: "Chờ xử lý",
+  cancel_requested: "Chờ xác nhận hủy",
   invoiced: "Đã lên hóa đơn",
   declined: "Đã từ chối",
   cancelled: "Đã hủy",

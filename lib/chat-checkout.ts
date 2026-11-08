@@ -28,8 +28,9 @@ const folded = (value: string) =>
 
 export function isPurchaseConfirmation(value: string) {
   const text = folded(value).trim();
-  return /(?:^|\b)(?:toi|minh|em|tui)?\s*(?:chot|dong y mua|mua luon|dat mua|tao hoa don|thanh toan luon|lay goi (?:nay|do))\b/.test(
-    text,
+  return (
+    /(?:^|\b)(?:toi|minh|em|tui)?\s*(?:chot|dong y mua|mua luon|dat mua|tao hoa don|thanh toan (?:luon|ngay)|lay goi (?:nay|do))\b/.test(text) ||
+    /(?:toi|minh|em|tui)\s+chon\s+(?:phuong an|goi)\s+(?:(?:thu|so)\s*)?(?:1|2|3|mot|hai|ba|dau tien)/.test(text)
   );
 }
 
@@ -63,7 +64,7 @@ function completeFacts(facts: ChatFacts) {
 }
 
 function planMentionedIn(messages: ChatMemoryMessage[]) {
-  const recent = [...messages].reverse();
+  const recent = [...messages].reverse().filter((message) => message.role === "user");
   for (const message of recent) {
     const text = folded(message.content);
     const explicit = hostingCatalog.find((plan) => {
@@ -75,6 +76,42 @@ function planMentionedIn(messages: ChatMemoryMessage[]) {
   return null;
 }
 
+function singlePlanInPreviousAssistant(messages: ChatMemoryMessage[]) {
+  const latestUserIndex = messages.findLastIndex(
+    (message) => message.role === "user",
+  );
+  if (latestUserIndex < 1) return null;
+  const userText = folded(messages[latestUserIndex].content);
+  if (!/(?:goi|phuong an)\s+(?:nay|do)|chot\s+goi\s+do/.test(userText))
+    return null;
+  const previous = [...messages.slice(0, latestUserIndex)]
+    .reverse()
+    .find((message) => message.role === "assistant");
+  if (!previous) return null;
+  const text = folded(previous.content);
+  const found = hostingCatalog.filter((plan) =>
+    text.includes(folded(`${plan.provider} ${plan.name}`)),
+  );
+  return found.length === 1 ? found[0] : null;
+}
+
+function selectedRecommendationIndex(messages: ChatMemoryMessage[]) {
+  const latestUser = [...messages]
+    .reverse()
+    .find((message) => message.role === "user");
+  if (!latestUser) return null;
+  const text = folded(latestUser.content);
+  const selection = text.match(
+    /(?:phuong an|goi)\s+(?:(?:thu|so)\s*)?(1|2|3|mot|hai|ba|dau tien)/,
+  )?.[1];
+  if (!selection) return null;
+  if (selection === "1" || selection === "mot" || selection === "dau tien")
+    return 0;
+  if (selection === "2" || selection === "hai") return 1;
+  if (selection === "3" || selection === "ba") return 2;
+  return null;
+}
+
 export function quoteForConversation(
   facts: ChatFacts,
   messages: ChatMemoryMessage[],
@@ -82,9 +119,13 @@ export function quoteForConversation(
   const requirements = completeFacts(facts);
   if (!requirements) return null;
   const mentioned = planMentionedIn(messages);
+  const previousSinglePlan = singlePlanInPreviousAssistant(messages);
   const recommended = recommendPlans(requirements);
+  const selectedIndex = selectedRecommendationIndex(messages);
   const plan =
     mentioned ??
+    (selectedIndex === null ? null : recommended[selectedIndex]?.plan) ??
+    previousSinglePlan ??
     recommended.find((item) => item.eligibility === "eligible")?.plan ??
     null;
   if (!plan) return null;

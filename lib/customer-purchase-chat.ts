@@ -13,7 +13,7 @@ export function asksAboutOwnPurchase(question: string) {
   const text = fold(question);
   return /(?:toi|minh|em|tui|cua toi|cua minh|da dang ky|da mua|dang dung|dang ky|don hang cua)/.test(text) &&
     /(?:goi|hosting|host|dich vu|don hang|mua gi|dang ky gi)/.test(text) &&
-    /(?:da mua|da dang ky|dang dung|dang ky goi|goi cua|goi toi mua|goi minh mua|hosting cua|don hang cua|mua goi nao|mua hosting gi)/.test(text);
+    /(?:da mua|vua mua|moi mua|da dang ky|dang dung|dang ky goi|goi cua|goi toi mua|goi minh mua|hosting cua|don hang cua|mua goi (?:nao|gi)|mua hosting gi)/.test(text);
 }
 
 export function asksAboutOwnWebsite(question: string) {
@@ -25,7 +25,7 @@ export function asksAboutOwnWebsite(question: string) {
 
 export function asksAboutOwnProfile(question: string) {
   const text = fold(question);
-  if (/(?:tu van|nen lam|uu tien|ke hoach|chien luoc|toi uu|goi y|buoc tiep)/.test(text))
+  if (/(?:tu van|nen lam|uu tien|ke hoach|chien luoc|toi uu|goi y|buoc tiep|phuong an|chon goi|nang cap|gia han|tra truoc)/.test(text))
     return false;
   const ownsQuestion = /(?:toi|minh|em|tui|cua toi|cua minh)/.test(text);
   return ownsQuestion && (
@@ -90,7 +90,7 @@ export function ownProfileAnswer(requests: CustomerPurchaseRequestSummary[], pro
   const lines: string[] = [];
   if (request) {
     const profile = request.profile;
-    lines.push(`Hồ sơ mua gần nhất: ${safe(request.provider)} ${safe(request.productName)} (${request.status === "new" ? "đang chờ xử lý" : request.status === "invoiced" ? "đã có hóa đơn" : request.status === "cancelled" ? "đã hủy" : "đã bị từ chối"}).`);
+    lines.push(`Hồ sơ mua gần nhất: ${safe(request.provider)} ${safe(request.productName)} (${request.status === "new" ? "đang chờ xử lý" : request.status === "cancel_requested" ? "đang chờ quản trị viên xác nhận hủy" : request.status === "invoiced" ? "đã có hóa đơn" : request.status === "cancelled" ? "đã hủy" : "đã bị từ chối"}).`);
     for (const [label, value] of [
       ["Doanh nghiệp", profile.companyName], ["Ngành", profile.businessType],
       ["Website hiện tại", profile.currentWebsite], ["Sản phẩm chính", profile.mainOffer],
@@ -164,6 +164,7 @@ export function customerAdviceContext(
 
 const requestStatus: Record<CustomerPurchaseRequestSummary["status"], string> = {
   new: "đã gửi yêu cầu, đang chờ xử lý và chưa phải gói đã mua",
+  cancel_requested: "đã gửi yêu cầu hủy và đang chờ quản trị viên xác nhận",
   invoiced: "đã có hóa đơn nhưng cần xem trạng thái thanh toán trước khi coi là đã mua",
   declined: "yêu cầu đã bị từ chối",
   cancelled: "yêu cầu đã hủy",
@@ -256,23 +257,44 @@ export function profileBasedAdviceAnswer(
 export function ownPurchaseAnswer(
   orders: CustomerOrderSummary[],
   requests: CustomerPurchaseRequestSummary[],
+  question = "",
 ) {
   const paid = orders.filter((order) => order.status === "paid");
   const otherOrders = orders.filter((order) => order.status !== "paid");
+  const asksRecentPurchase = /(?:vua mua|moi mua)/i.test(fold(question));
   const outstandingRequests = requests.filter(
     (request) => !request.invoiceId && request.status !== "cancelled",
   );
   if (!paid.length && !otherOrders.length && !outstandingRequests.length)
     return "Mình chưa thấy gói hosting hay yêu cầu mua nào gắn với tài khoản bạn đang đăng nhập. Yêu cầu tư vấn chỉ lưu trên thiết bị chưa phải gói đã mua. Nếu bạn dùng email khác khi gửi hồ sơ, hãy đăng nhập đúng tài khoản hoặc mở mục Đơn hàng để kiểm tra.";
 
+  const orderLabel = (order: CustomerOrderSummary) => {
+    const linkedRequest = requests.find(
+      (request) => request.invoiceId === order.id,
+    );
+    return linkedRequest
+      ? `${linkedRequest.provider} ${linkedRequest.productName}`
+      : order.title;
+  };
   const lines = [
-    ...paid.slice(0, 3).map((order) => `• ${order.title}: đã thanh toán.`),
-    ...otherOrders.slice(0, 3).map((order) =>
+    ...paid.slice(0, asksRecentPurchase ? 1 : 3).map((order) =>
+      `• ${orderLabel(order)}: đã thanh toán.`,
+    ),
+    ...otherOrders.slice(0, asksRecentPurchase ? 0 : 3).map((order) =>
       `• ${order.title}: ${orderStatus[order.status]}.`,
     ),
-    ...outstandingRequests.slice(0, 3).map((request) =>
+    ...outstandingRequests.slice(0, asksRecentPurchase ? 0 : 3).map((request) =>
       `• ${request.provider} ${request.productName}: ${request.status === "new" ? "đã gửi yêu cầu mua, chưa có hóa đơn hoặc xác nhận thanh toán" : "yêu cầu đã bị từ chối"}.`,
     ),
   ];
-  return `Theo tài khoản bạn đang đăng nhập, mình thấy:\n${lines.join("\n")}\n\nYêu cầu mua chưa có nghĩa là đã mua xong. Bạn mở mục Đơn hàng để xem chi tiết và trạng thái mới nhất.`;
+  const asksForLaunchSteps = /(?:lam gi tiep|buoc tiep|truoc khi).{0,40}(?:quang cao|chay ads|ra mat)|(?:quang cao|chay ads|ra mat).{0,40}(?:lam gi|can gi|chuan bi)/i.test(
+    fold(question),
+  );
+  const nextSteps = asksForLaunchSteps && paid.length
+    ? "\n\nTrước khi chạy quảng cáo: (1) mở Đơn hàng và xác nhận đúng đơn đang ở trạng thái đã thanh toán; (2) kiểm tra dịch vụ đã được kích hoạt, tên miền, HTTPS và bản sao lưu — thanh toán thành công chưa tự chứng minh hosting đã hoạt động; (3) thử trên điện thoại toàn bộ luồng xem sản phẩm → giỏ hàng → đặt hàng → thanh toán; (4) chạy thử tải tăng dần, theo dõi thời gian phản hồi và lỗi rồi mới mở ngân sách quảng cáo. Bạn không cần mua lại gói chỉ để làm các bước này."
+    : "";
+  const heading = asksRecentPurchase && paid.length
+    ? "Theo tài khoản bạn đang đăng nhập, gói mua gần nhất là:"
+    : "Theo tài khoản bạn đang đăng nhập, mình thấy:";
+  return `${heading}\n${lines.join("\n")}\n\nYêu cầu mua chưa có nghĩa là đã mua xong. Bạn mở mục Đơn hàng để xem chi tiết và trạng thái mới nhất.${nextSteps}`;
 }

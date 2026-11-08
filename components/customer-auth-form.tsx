@@ -69,12 +69,24 @@ export function CustomerAuthForm({
           ? "/api/account/reset-password"
           : `/api/account/${mode}`;
       const body = mode === "register"
-        ? { name, email, password, turnstileToken: turnstileToken || undefined }
+        ? {
+            name,
+            email: email.trim().toLowerCase(),
+            password,
+            turnstileToken: turnstileToken || undefined,
+          }
         : mode === "forgot"
-          ? { email, turnstileToken: turnstileToken || undefined }
+          ? {
+              email: email.trim().toLowerCase(),
+              turnstileToken: turnstileToken || undefined,
+            }
           : mode === "reset"
             ? { token: resetToken, password }
-            : { email, password, turnstileToken: turnstileToken || undefined };
+            : {
+                email: email.trim().toLowerCase(),
+                password,
+                turnstileToken: turnstileToken || undefined,
+              };
       const response = await fetch(endpoint, {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -85,8 +97,21 @@ export function CustomerAuthForm({
         code?: string;
         error?: string;
         message?: string;
+        retryAfterSeconds?: number;
       };
       if (!response.ok) {
+        if (mode === "forgot" && output.code === "RATE_LIMITED") {
+          const retryAfter = Number(
+            output.retryAfterSeconds ?? response.headers.get("retry-after"),
+          );
+          const minutes = Number.isFinite(retryAfter)
+            ? Math.max(1, Math.ceil(retryAfter / 60))
+            : null;
+          setMessage(
+            `Các yêu cầu trước đã được ghi nhận. Hãy dùng liên kết mới nhất trong hộp thư hoặc thư rác${minutes ? `; bạn có thể gửi lại sau khoảng ${minutes} phút` : " rồi thử lại sau"}.`,
+          );
+          return;
+        }
         if (output.code === "CAPTCHA_REQUIRED" && output.action) {
           setTurnstileAction(output.action);
           setTurnstileToken("");
@@ -128,7 +153,7 @@ export function CustomerAuthForm({
             <label>Họ và tên<input value={name} onChange={(event) => setName(event.target.value)} autoComplete="name" minLength={2} maxLength={100} required /></label>
           ) : null}
           {mode !== "reset" ? (
-            <label>Email nhận hóa đơn<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" maxLength={160} required /></label>
+            <label>Email nhận hóa đơn<input type="email" value={email} onChange={(event) => setEmail(event.target.value.trim())} autoComplete="email" maxLength={160} required /></label>
           ) : null}
           {passwordMode ? (
             <label>{mode === "reset" ? "Mật khẩu mới" : "Mật khẩu"}

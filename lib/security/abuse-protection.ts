@@ -16,6 +16,7 @@ export function rateLimitResponse(retryAfterSeconds: number) {
     {
       error: "Bạn thao tác quá nhanh. Hãy chờ một lúc rồi thử lại.",
       code: "RATE_LIMITED",
+      retryAfterSeconds,
     },
     {
       status: 429,

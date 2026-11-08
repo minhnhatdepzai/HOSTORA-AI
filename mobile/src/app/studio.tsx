@@ -1,4 +1,5 @@
 import { DetailHeader } from "@/components/detail-header";
+import { VniTextInput as TextInput } from "@/components/vni-text-input";
 import { RevealWords, ScrollReveal } from "@/components/motion";
 import { Pressable } from "@/components/pressable";
 import { Body, Button, Eyebrow, Screen, Title } from "@/components/ui";
@@ -16,7 +17,6 @@ import {
   type ScrollViewInstance,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
 

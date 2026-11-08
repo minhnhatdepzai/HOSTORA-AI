@@ -22,7 +22,7 @@ const orderStatus: Record<CustomerOrderSummary["status"], string> = {
   refund_requested: "Chờ duyệt hoàn tiền", refund_pending: "Đang hoàn tiền", refunded: "Đã hoàn tiền", cancelled: "Đã hủy",
 };
 const supportStatus: Record<CustomerSupportCase["status"], string> = { new: "Đã tiếp nhận", in_progress: "Đang xử lý", resolved: "Đã giải quyết" };
-const purchaseStatus: Record<CustomerPurchaseRequestSummary["status"], string> = { new: "Chờ báo giá", invoiced: "Đã có hóa đơn", declined: "Không tiếp nhận", cancelled: "Đã hủy" };
+const purchaseStatus: Record<CustomerPurchaseRequestSummary["status"], string> = { new: "Chờ báo giá", cancel_requested: "Chờ xác nhận hủy", invoiced: "Đã có hóa đơn", declined: "Không tiếp nhận", cancelled: "Đã hủy" };
 
 export function CustomerAccountPortal({ initialCustomer }: { initialCustomer: CustomerAccount }) {
   const router = useRouter();

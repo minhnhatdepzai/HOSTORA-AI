@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { POST as login } from "@/app/api/admin/payments/login/route";
 import { GET as listOrders, POST as createOrder } from "@/app/api/admin/payments/orders/route";
 import { GET as getOrderDetail } from "@/app/api/admin/payments/orders/[id]/route";
-import { GET as listSaleRequests } from "@/app/api/admin/payments/requests/route";
+import { GET as listSaleRequests, POST as createInvoiceFromRequest } from "@/app/api/admin/payments/requests/route";
 import { POST as lookupOrder } from "@/app/api/payments/orders/route";
 import { POST as createSaleRequest } from "@/app/api/payments/requests/route";
 import { getCatalogStore } from "@/lib/admin/catalog-store";
@@ -64,6 +64,32 @@ describe("API hóa đơn", () => {
       request("/api/payments/requests", base),
     );
     expect(created.status).toBe(201);
+    const createdRequest = await created.json() as { id: string };
+
+    const session = await login(request("/api/admin/payments/login", { password: "test-admin-password-long-enough" }));
+    const cookie = session.headers.get("set-cookie")?.split(";")[0] ?? "";
+    const spoofed = await createInvoiceFromRequest(request("/api/admin/payments/requests", {
+      requestId: createdRequest.id,
+      amountVnd: 1,
+      addOns: [],
+    }, cookie));
+    expect(spoofed.status).toBe(409);
+
+    const invoiced = await createInvoiceFromRequest(request("/api/admin/payments/requests", {
+      requestId: createdRequest.id,
+      description: "Bàn giao tài khoản quản trị sau khi thanh toán",
+      addOns: [{ label: "Thiết lập theo dõi", note: "Cấu hình một lần", amountVnd: 100_000 }],
+    }, cookie));
+    expect(invoiced.status).toBe(201);
+    expect(await invoiced.json()).toMatchObject({
+      baseAmountVnd: 490_000,
+      subtotalVnd: 590_000,
+      amountVnd: 590_000,
+      lineItems: [
+        { kind: "base", amountVnd: 490_000 },
+        { kind: "addon", label: "Thiết lập theo dõi", amountVnd: 100_000 },
+      ],
+    });
 
     const invalid = await createSaleRequest(
       request("/api/payments/requests", {
@@ -128,11 +154,16 @@ describe("API hóa đơn", () => {
     const session = await login(request("/api/admin/payments/login", { password: "test-admin-password-long-enough" }));
     const cookie = session.headers.get("set-cookie")?.split(";")[0] ?? "";
     const response = await listSaleRequests(new Request(`${origin}/api/admin/payments/requests`, { headers: { cookie } }));
-    const result = await response.json() as { page: { items: { profile: { mainOffer: string; serviceArea: string; seoGoals: string } }[] } };
+    const result = await response.json() as { page: { items: { baseAmountVnd: number | null; monthlyVnd: number | null; billingMonths: number | null; profile: { mainOffer: string; serviceArea: string; seoGoals: string } }[] } };
     expect(result.page.items[0].profile).toMatchObject({
       mainOffer: "Thiết kế và thi công nội thất căn hộ",
       serviceArea: "TP.HCM và Bình Dương",
       seoGoals: "thiết kế nội thất căn hộ, thi công nội thất",
+    });
+    expect(result.page.items[0]).toMatchObject({
+      baseAmountVnd: 955_200,
+      monthlyVnd: 19_900,
+      billingMonths: 48,
     });
   });
 

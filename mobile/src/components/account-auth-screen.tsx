@@ -1,4 +1,5 @@
 import { DetailHeader } from "@/components/detail-header";
+import { VniTextInput as TextInput } from "@/components/vni-text-input";
 import { Button, CinematicScrollView } from "@/components/ui";
 import { colors } from "@/constants/theme";
 import { useCustomerAuth } from "@/context/customer-auth-context";
@@ -6,7 +7,7 @@ import { postJson } from "@/lib/api";
 import { Feather } from "@expo/vector-icons";
 import { router, useLocalSearchParams, type Href } from "expo-router";
 import { useState } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type Mode = "login" | "register" | "forgot";

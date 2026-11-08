@@ -5,7 +5,7 @@ import { clearCustomerSessionToken, readCustomerSessionToken, saveCustomerSessio
 export type MobileCustomer = { id: string; email: string; name: string; createdAt: string; updatedAt: string };
 export type MobileVoucher = { code: string; amountVnd: number; minOrderVnd: number; status: "active" | "redeemed" | "revoked"; expiresAt: string; issuedInvoiceId: string; redeemedInvoiceId: string | null };
 export type MobileOrder = { id: string; title: string; amountVnd: number; status: "pending" | "cancel_requested" | "paid" | "refund_requested" | "refund_pending" | "refunded" | "cancelled"; updatedAt: string };
-export type MobilePurchaseRequest = { id: string; productName: string; provider: string; status: "new" | "invoiced" | "declined" | "cancelled"; invoiceId: string | null; createdAt: string; profile: { websiteGoal: string; targetCustomers: string } };
+export type MobilePurchaseRequest = { id: string; productName: string; provider: string; status: "new" | "cancel_requested" | "invoiced" | "declined" | "cancelled"; invoiceId: string | null; createdAt: string; profile: { websiteGoal: string; targetCustomers: string } };
 export type MobileStudioProject = { id: string; brand: string; headline: string; goal: "sell" | "book" | "showcase" | "contact"; generationMode: "local-ai" | "template-fallback"; updatedAt: string; url: string };
 export type MobileChatSummary = { conversationId: string | null; messageCount: number; latestMessageAt: string | null; latestPreview: string | null };
 export type MobileSupportCase = { id: string; subject: string; category: "order" | "payment" | "refund" | "website" | "account" | "other"; message: string; status: "new" | "in_progress" | "resolved"; createdAt: string };
